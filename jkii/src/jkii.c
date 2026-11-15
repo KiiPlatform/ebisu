@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <errno.h>
 #include <float.h>
+#include <stdbool.h>
 #ifndef EBISU_NO_STRTOD
 #include <locale.h>
 #endif
@@ -1171,6 +1172,281 @@ jkii_parse_err_t jkii_root_value(
     out_value->type = _jkii_to_jkii_field_type(root.type, out_value->value,
             out_value->value_length, &integer, &integer_res);
     return JKII_ERR_OK;
+}
+
+jkii_parse_err_t jkii_find_member(
+        const char* json_string,
+        size_t json_string_len,
+        const char* path,
+        jkii_member_t* out_member)
+{
+    _jkii_value_t root;
+    _jkii_value_t value;
+    int64_t integer = 0;
+    jkii_primitive_err_t integer_res = JKII_PRIMITIVE_ERR_INVALID;
+
+    M_JKII_ASSERT(json_string != NULL);
+    M_JKII_ASSERT(path != NULL);
+    M_JKII_ASSERT(out_member != NULL);
+
+    jkii_parse_err_t res = _jkii_root(json_string, json_string_len, &root);
+    if (res != JKII_ERR_OK) {
+        return res;
+    }
+    if (root.type != JSONArray && root.type != JSONObject) {
+        return JKII_ERR_ROOT_TYPE;
+    }
+    if (path[0] == '\0' || _jkii_find_by_path(&root, path, &value) != 0) {
+        return JKII_ERR_NOT_FOUND;
+    }
+    out_member->key = NULL;
+    out_member->key_length = 0;
+    out_member->value = value.ptr;
+    out_member->value_length = value.len;
+    out_member->type = _jkii_to_jkii_field_type(value.type, value.ptr, value.len,
+            &integer, &integer_res);
+    return JKII_ERR_OK;
+}
+
+jkii_field_err_t jkii_member_string(
+        const jkii_member_t* member,
+        char* buff,
+        size_t buff_size)
+{
+    M_JKII_ASSERT(member != NULL);
+    if (buff_size > 0) {
+        buff[0] = '\0';
+    }
+    if (member->type != JKII_FIELD_TYPE_STRING) {
+        return JKII_FIELD_ERR_TYPE_MISMATCH;
+    }
+    if (jkii_unescape_str(member->value, member->value_length, buff, buff_size) < 0) {
+        return JKII_FIELD_ERR_COPY;
+    }
+    return JKII_FIELD_ERR_OK;
+}
+
+/* A JSON number's value as an integer, read from its digits: the integer
+ * part's, then the fraction's, with the decimal point moved by the exponent.
+ * Those after the point have to be zeros, or the number isn't whole. The
+ * number is valid JSON, as coreJSON has checked it. */
+static jkii_field_err_t _jkii_whole_number(const char* s, size_t len, int64_t* out_value)
+{
+    size_t i = 0;
+    bool negative = false;
+    size_t int_start = 0;
+    size_t int_len = 0;
+    size_t frac_start = 0;
+    size_t frac_len = 0;
+    int64_t exponent = 0;
+    bool exponent_negative = false;
+    /* How many of the digits come before the point, as the exponent puts it:
+       less than 0, or more than there are digits, as it may. */
+    int64_t point = 0;
+    size_t digits = 0;
+    size_t k = 0;
+    uint64_t magnitude = 0;
+    uint64_t limit = 0;
+
+    if (i < len && s[i] == '-') {
+        negative = true;
+        ++i;
+    }
+    int_start = i;
+    while (i < len && s[i] >= '0' && s[i] <= '9') {
+        ++i;
+    }
+    int_len = i - int_start;
+    if (i < len && s[i] == '.') {
+        frac_start = ++i;
+        while (i < len && s[i] >= '0' && s[i] <= '9') {
+            ++i;
+        }
+        frac_len = i - frac_start;
+    }
+    if (i < len && (s[i] == 'e' || s[i] == 'E')) {
+        ++i;
+        if (i < len && (s[i] == '+' || s[i] == '-')) {
+            exponent_negative = (s[i] == '-');
+            ++i;
+        }
+        while (i < len && s[i] >= '0' && s[i] <= '9') {
+            /* Held there, far past int64_t's digits either way: a number that
+               big overflows, and one that small isn't whole, unless 0. */
+            if (exponent < 100000) {
+                exponent = exponent * 10 + (s[i] - '0');
+            }
+            ++i;
+        }
+    }
+    digits = int_len + frac_len;
+    point = (int64_t)int_len + (exponent_negative ? -exponent : exponent);
+    limit = negative ? (uint64_t)INT64_MAX + 1u : (uint64_t)INT64_MAX;
+    for (k = 0; k < digits; ++k) {
+        unsigned int digit = (unsigned int)((k < int_len ?
+                    s[int_start + k] : s[frac_start + (k - int_len)]) - '0');
+        if ((int64_t)k >= point) {
+            if (digit != 0) {
+                return JKII_FIELD_ERR_TYPE_MISMATCH;
+            }
+            continue;
+        }
+        if (magnitude > (limit - digit) / 10u) {
+            return negative ? JKII_FIELD_ERR_NUM_UNDERFLOW : JKII_FIELD_ERR_NUM_OVERFLOW;
+        }
+        magnitude = magnitude * 10u + digit;
+    }
+    /* The zeros the exponent puts after the digits. */
+    for (k = digits; (int64_t)k < point && magnitude != 0; ++k) {
+        if (magnitude > limit / 10u) {
+            return negative ? JKII_FIELD_ERR_NUM_UNDERFLOW : JKII_FIELD_ERR_NUM_OVERFLOW;
+        }
+        magnitude *= 10u;
+    }
+    if (negative) {
+        *out_value = magnitude == (uint64_t)INT64_MAX + 1u ? INT64_MIN : -(int64_t)magnitude;
+    } else {
+        *out_value = (int64_t)magnitude;
+    }
+    return JKII_FIELD_ERR_OK;
+}
+
+jkii_field_err_t jkii_member_integer(
+        const jkii_member_t* member,
+        int64_t min,
+        int64_t max,
+        int64_t* out_value)
+{
+    int64_t value = 0;
+    jkii_field_err_t res;
+    M_JKII_ASSERT(member != NULL);
+    M_JKII_ASSERT(out_value != NULL);
+    if (member->type != JKII_FIELD_TYPE_INTEGER && member->type != JKII_FIELD_TYPE_LONG &&
+            member->type != JKII_FIELD_TYPE_DOUBLE) {
+        return JKII_FIELD_ERR_TYPE_MISMATCH;
+    }
+    res = _jkii_whole_number(member->value, member->value_length, &value);
+    if (res != JKII_FIELD_ERR_OK) {
+        return res;
+    }
+    if (value < min) {
+        return JKII_FIELD_ERR_NUM_UNDERFLOW;
+    }
+    if (value > max) {
+        return JKII_FIELD_ERR_NUM_OVERFLOW;
+    }
+    *out_value = value;
+    return JKII_FIELD_ERR_OK;
+}
+
+jkii_field_err_t jkii_member_double(
+        const jkii_member_t* member,
+        double* out_value)
+{
+    double value = 0;
+    M_JKII_ASSERT(member != NULL);
+    M_JKII_ASSERT(out_value != NULL);
+    if (member->type != JKII_FIELD_TYPE_INTEGER && member->type != JKII_FIELD_TYPE_LONG &&
+            member->type != JKII_FIELD_TYPE_DOUBLE) {
+        return JKII_FIELD_ERR_TYPE_MISMATCH;
+    }
+    switch (_jkii_to_double(member->value, member->value_length, &value)) {
+        case JKII_PRIMITIVE_ERR_OK:
+            *out_value = value;
+            return JKII_FIELD_ERR_OK;
+        case JKII_PRIMITIVE_ERR_OVERFLOW:
+            return JKII_FIELD_ERR_NUM_OVERFLOW;
+        case JKII_PRIMITIVE_ERR_UNDERFLOW:
+            return JKII_FIELD_ERR_NUM_UNDERFLOW;
+        default:
+            /* Too long for the buffer strtod() is given, or not a number at
+             * all, in a member not from jkii. */
+            return JKII_FIELD_ERR_TYPE_MISMATCH;
+    }
+}
+
+jkii_field_err_t jkii_member_boolean(
+        const jkii_member_t* member,
+        jkii_boolean_t* out_value)
+{
+    M_JKII_ASSERT(member != NULL);
+    M_JKII_ASSERT(out_value != NULL);
+    if (member->type != JKII_FIELD_TYPE_BOOLEAN ||
+            _jkii_to_boolean(member->value, member->value_length, out_value) != 0) {
+        return JKII_FIELD_ERR_TYPE_MISMATCH;
+    }
+    return JKII_FIELD_ERR_OK;
+}
+
+/* Whether s is exactly a JSON number, as ECMA-404 has it:
+ * -?(0|[1-9][0-9]*)(.[0-9]+)?([eE][+-]?[0-9]+)? */
+static bool _jkii_is_json_number(const char* s, size_t len)
+{
+    size_t i = 0;
+    size_t start = 0;
+    if (i < len && s[i] == '-') {
+        ++i;
+    }
+    if (i < len && s[i] == '0') {
+        ++i;
+    } else if (i < len && s[i] >= '1' && s[i] <= '9') {
+        while (i < len && M_JKII_IS_DIGIT(s[i])) {
+            ++i;
+        }
+    } else {
+        return false;
+    }
+    if (i < len && s[i] == '.') {
+        start = ++i;
+        while (i < len && M_JKII_IS_DIGIT(s[i])) {
+            ++i;
+        }
+        if (i == start) {
+            return false;
+        }
+    }
+    if (i < len && (s[i] == 'e' || s[i] == 'E')) {
+        ++i;
+        if (i < len && (s[i] == '+' || s[i] == '-')) {
+            ++i;
+        }
+        start = i;
+        while (i < len && M_JKII_IS_DIGIT(s[i])) {
+            ++i;
+        }
+        if (i == start) {
+            return false;
+        }
+    }
+    return i == len;
+}
+
+const jkii_member_t* jkii_member_unquote(
+        const jkii_member_t* member,
+        jkii_member_t* unquoted)
+{
+    JSONTypes_t json_type = JSONInvalid;
+    int64_t integer = 0;
+    jkii_primitive_err_t integer_res = JKII_PRIMITIVE_ERR_INVALID;
+
+    M_JKII_ASSERT(member != NULL);
+    M_JKII_ASSERT(unquoted != NULL);
+    if (member->type != JKII_FIELD_TYPE_STRING) {
+        return member;
+    }
+    if (M_JKII_EQ_LITERAL(member->value, member->value_length, "true")) {
+        json_type = JSONTrue;
+    } else if (M_JKII_EQ_LITERAL(member->value, member->value_length, "false")) {
+        json_type = JSONFalse;
+    } else if (_jkii_is_json_number(member->value, member->value_length)) {
+        json_type = JSONNumber;
+    } else {
+        return member;
+    }
+    *unquoted = *member;
+    unquoted->type = _jkii_to_jkii_field_type(json_type, member->value,
+            member->value_length, &integer, &integer_res);
+    return unquoted;
 }
 
 jkii_primitive_err_t jkii_parse_primitive(

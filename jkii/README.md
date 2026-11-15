@@ -109,6 +109,48 @@ if (jkii_unescape_str(member.key, member.key_length, key, sizeof(key)) >= 0) {
 }
 ```
 
+`jkii_find_member()` gives the value one path leads to, as `jkii_parse()`
+finds it, and as a member: the path is `jkii_field_t`'s, `/a/b/[0]`. A member
+is read, whichever function gave it, with `jkii_member_string()`, its string
+unescaped into a buffer, `jkii_member_integer()`, its number as an integer
+within a range, `jkii_member_double()`, its number as a double, and
+`jkii_member_boolean()`, its true or false. An object's or an array's span is
+the member's `value` itself, for `jkii_next_member()` or `jkii_parse()` to read
+on. The integer is read exactly from the number's digits: one
+written with a fraction or an exponent whose value is whole, as `30.0`, `3e1`
+or `300e-1`, is that integer, `1e18` is 10^18, and one that isn't whole, as
+`30.5`, is a type mismatch, as a number in a string, `"30"`, is. Each read
+takes only its own JSON type: `"true"`, a string, is no boolean.
+
+For JSON that sends numbers and booleans in strings, `jkii_member_unquote()`
+gives a string that is exactly a JSON number, `true` or `false`, with nothing
+around it and no escape, as that value, for any of the reads; anything else it
+gives as it is. So `"30"` and `30` both read as 30, while `" 30"`, `"+30"`,
+`"030"` and `"0x1E"` are still type mismatches.
+
+```c
+jkii_member_t unquoted;
+if (jkii_find_member(reply, reply_length, "/config/timeout", &m) == JKII_ERR_OK &&
+        jkii_member_integer(jkii_member_unquote(&m, &unquoted), 1, 3600,
+                &timeout) == JKII_FIELD_ERR_OK) {
+    // timeout is within [1, 3600], whether it came as 30 or as "30".
+}
+```
+
+```c
+jkii_member_t m;
+int64_t timeout = 0;
+char name[32];
+if (jkii_find_member(reply, reply_length, "/config/timeout", &m) == JKII_ERR_OK &&
+        jkii_member_integer(&m, 1, 3600, &timeout) == JKII_FIELD_ERR_OK) {
+    // timeout is within [1, 3600].
+}
+if (jkii_find_member(reply, reply_length, "/config/name", &m) == JKII_ERR_OK &&
+        jkii_member_string(&m, name, sizeof(name)) == JKII_FIELD_ERR_OK) {
+    // name holds the string, unescaped and terminated.
+}
+```
+
 ## Writing JSON
 
 A `jkii_writer_t` writes JSON into a buffer, or out through a callback a buffer

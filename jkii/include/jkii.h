@@ -389,6 +389,120 @@ jkii_parse_err_t jkii_root_value(
         size_t json_string_len,
         jkii_member_t* out_value);
 
+/** Gives the value a path leads to in a JSON string, as jkii_next_member()
+ * gives a member: one value, where jkii_parse() reads several.
+ * The string is checked as jkii_parse() does. The path is as
+ * jkii_field_t#path has it: "/name" for a member of the root, "/a/b/[0]"
+ * through objects and arrays, with `\/`, `\[`, `\]` and `\\` for those
+ * characters in a name. A name is compared as the document writes it, escapes
+ * and all, and an object's first member of that name is taken, as
+ * jkii_parse() takes it. The value comes with jkii_member_t#key NULL.
+ * \param [in] json_string The document.
+ * \param [in] json_string_len Its length.
+ * \param [in] path The path, null-terminated.
+ * \param [out] out_member The value, set only when JKII_ERR_OK is returned.
+ * \return JKII_ERR_OK, JKII_ERR_NOT_FOUND if the path leads to nothing or
+ * isn't one, JKII_ERR_ROOT_TYPE if the root is neither an object nor an
+ * array, or JKII_ERR_INVALID_INPUT if the string is not JSON.
+ */
+jkii_parse_err_t jkii_find_member(
+        const char* json_string,
+        size_t json_string_len,
+        const char* path,
+        jkii_member_t* out_member);
+
+/** Copies a member's string, unescaped as jkii_unescape_str() does, into a
+ * buffer, null-terminated.
+ * \param [in] member The member, as jkii_next_member(), jkii_root_value() or
+ * jkii_find_member() gives it.
+ * \param [out] buff The string. On failure, an empty string, if buff_size
+ * isn't 0.
+ * \param [in] buff_size Its size, the terminator included: the member's
+ * jkii_member_t#value_length + 1 always suffices.
+ * \return JKII_FIELD_ERR_OK; JKII_FIELD_ERR_TYPE_MISMATCH if the member isn't
+ * a string, null included; or JKII_FIELD_ERR_COPY if it doesn't fit, or holds
+ * `\u0000`, which a C string can't.
+ */
+jkii_field_err_t jkii_member_string(
+        const jkii_member_t* member,
+        char* buff,
+        size_t buff_size);
+
+/** Reads a member's number as an integer within [min, max].
+ * The number's value, read exactly from its digits, without rounding: an
+ * integer as written, or a number with a fraction or an exponent whose value
+ * is whole, as 30.0, 3e1 or 300e-1 for 30, or 1e18 for 10^18. One that isn't
+ * whole, as 30.5 or 1e-1, is a type mismatch, as is anything but a number,
+ * null included. Numbers in strings, as "30", are left to the caller.
+ * \param [in] member The member, as jkii_next_member(), jkii_root_value() or
+ * jkii_find_member() gives it.
+ * \param [in] min The least it may be.
+ * \param [in] max The most it may be.
+ * \param [out] out_value The integer, set only when JKII_FIELD_ERR_OK is
+ * returned.
+ * \return JKII_FIELD_ERR_OK; JKII_FIELD_ERR_TYPE_MISMATCH; or
+ * JKII_FIELD_ERR_NUM_OVERFLOW if it is above max, or
+ * JKII_FIELD_ERR_NUM_UNDERFLOW below min, int64_t's range included.
+ */
+jkii_field_err_t jkii_member_integer(
+        const jkii_member_t* member,
+        int64_t min,
+        int64_t max,
+        int64_t* out_value);
+
+/** Reads a member's number as a double.
+ * A number of any form, an integer, a fraction or one with an exponent, as
+ * jkii_parse() reads a double, to the nearest double. Anything but a number,
+ * null and a number in a string included, is a type mismatch.
+ * \param [in] member The member, as jkii_next_member(), jkii_root_value() or
+ * jkii_find_member() gives it.
+ * \param [out] out_value The double, never NaN nor an infinity, set only when
+ * JKII_FIELD_ERR_OK is returned.
+ * \return JKII_FIELD_ERR_OK; JKII_FIELD_ERR_TYPE_MISMATCH; or, as jkii_parse()
+ * reports them, JKII_FIELD_ERR_NUM_OVERFLOW for a magnitude past a double's,
+ * and JKII_FIELD_ERR_NUM_UNDERFLOW for one too small for it.
+ */
+jkii_field_err_t jkii_member_double(
+        const jkii_member_t* member,
+        double* out_value);
+
+/** Reads a member's true or false.
+ * \param [in] member The member, as jkii_next_member(), jkii_root_value() or
+ * jkii_find_member() gives it.
+ * \param [out] out_value JKII_TRUE or JKII_FALSE, set only when
+ * JKII_FIELD_ERR_OK is returned.
+ * \return JKII_FIELD_ERR_OK, or JKII_FIELD_ERR_TYPE_MISMATCH for anything
+ * else, null and "true" as a string included.
+ */
+jkii_field_err_t jkii_member_boolean(
+        const jkii_member_t* member,
+        jkii_boolean_t* out_value);
+
+/** A string holding a number, true or false, as that value, for the readers.
+ * For JSON that sends a number or a boolean in a string: "30", "-2.5", "3e1",
+ * "true". The readers take only their own JSON type: through this, a caller
+ * takes such a string too, as in
+ * jkii_member_integer(jkii_member_unquote(&m, &u), 1, 3600, &value).
+ *
+ * A string is taken only if its characters, as written between its quotes,
+ * are exactly a JSON number, true or false, as ECMA-404 has them. So " 30",
+ * "30 ", "+30", "030", ".5", "0x1E", "NaN", "Infinity", "TRUE", "null" and ""
+ * are not, nor is a string with an escape, `"\u0033\u0030"` included. A string
+ * taken reads as the value would: "30.5" is no integer, and "1e400" is
+ * JKII_FIELD_ERR_NUM_OVERFLOW as a double.
+ *
+ * \param [in] member The member, as jkii_next_member(), jkii_root_value() or
+ * jkii_find_member() gives it.
+ * \param [out] unquoted Set, if member is such a string, to the member with
+ * the type of what the string holds, as the value would have it; with the
+ * same key and the same characters.
+ * \return unquoted, if member is such a string; member itself otherwise, a
+ * string or not, for the readers to read or refuse as it is.
+ */
+const jkii_member_t* jkii_member_unquote(
+        const jkii_member_t* member,
+        jkii_member_t* unquoted);
+
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC visibility pop
 #endif
