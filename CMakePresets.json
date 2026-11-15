@@ -246,6 +246,15 @@
       "execution": { "repeat": { "mode": "until-pass", "count": 2 } }
     },
     {
+      "name": "broker-msvc",
+      "inherits": "base",
+      "configurePreset": "msvc",
+      "configuration": "Debug",
+      "displayName": "Broker tests, 64-bit Windows, MSVC",
+      "description": "Against a Mosquitto broker on this machine, over platform's Schannel port: configure with -DEBISU_TEST_BROKER=ON, and run under tests/broker_test/with_broker.py --windows, which adds the run's CA to the machine's root store",
+      "filter": { "include": { "label": "broker" } }
+    },
+    {
       "name": "small-msvc",
       "inherits": "base",
       "configurePreset": "msvc",
