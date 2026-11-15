@@ -5,7 +5,9 @@
 // a builder with a buffer the input sizes, fed appends the input chooses, some
 // written into its room by a writer of their own: it never writes past its
 // buffer, always leaves it terminated, and holds exactly the appends that
-// fitted.
+// fitted. The same bytes, up to a NUL, are read as a level's name, which only
+// the names take, in any case, and whose name reads back as the level.
+#include <ebisu_log.h>
 #include <ebisu_str.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -201,6 +203,27 @@ void check_builder(FuzzInput* in) {
     if (size > 0 && (mem[sb.len] != '\0' || memcmp(mem.data(), expected.data(), expected.size()) != 0)) abort();
 }
 
+void check_level_name(const std::vector<char>& bytes) {
+    const std::string name(bytes.begin(), bytes.end());
+    // A level as it was, as an enum can't hold anything else.
+    ebisu_log_level_t level = EBISU_LOG_INFO;
+    bool parsed = ebisu_log_level_parse(name.c_str(), &level);
+    // A C string ends at its first NUL.
+    std::string lower = name.substr(0, name.find('\0'));
+    for (char& c : lower) {
+        if (c >= 'A' && c <= 'Z') c = (char)(c - 'A' + 'a');
+    }
+    bool is_name = lower == "error" || lower == "warn" || lower == "warning" ||
+        lower == "info" || lower == "debug" || lower == "trace";
+    if (parsed != is_name) abort();
+    if (!parsed) {
+        if (level != EBISU_LOG_INFO) abort();
+        return;
+    }
+    ebisu_log_level_t back = level == EBISU_LOG_ERROR ? EBISU_LOG_DEBUG : EBISU_LOG_ERROR;
+    if (!ebisu_log_level_parse(ebisu_log_level_name(level), &back) || back != level) abort();
+}
+
 } // namespace
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
@@ -214,6 +237,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     in.size -= len;
     check_parsers(bytes, decimals);
     check_spans(bytes, delim);
+    check_level_name(bytes);
     check_builder(&in);
     return 0;
 }

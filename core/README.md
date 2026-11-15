@@ -54,8 +54,12 @@ set on.
   go, each with a level, such as the application's own log or syslog.
   `ebisu_log()` logs a message of the application's through one, and
   `ebisu_log_fanout_t` gives each message to several, such as `stderr` and a
-  syslog server. platform's `ebisu_loggers.h` has loggers to a stdio stream, to
-  syslog and to a syslog server over UDP.
+  syslog server. `ebisu_log_level_filter_t` gives another the messages of a
+  level that can change while it logs, and `ebisu_log_slot_t` holds a logger
+  that can be changed or taken out while it logs, each under an `ebisu_lock_t`.
+  `ebisu_log_level_parse()` reads a level's name, and `ebisu_log_level_name()`
+  writes it. platform's `ebisu_loggers.h` has loggers to a stdio stream, to a
+  file kept under a size, to syslog and to a syslog server over UDP.
 - **Clearing secrets** (`ebisu_mem.h`): `ebisu_secure_zero()` sets memory to 0
   in a way the compiler can't take for a store nothing reads, and leave out, as
   it may a `memset()` just before memory is freed or goes out of scope. ebisu

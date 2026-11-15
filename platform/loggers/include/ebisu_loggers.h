@@ -60,6 +60,80 @@ void ebisu_stdio_logger_init(
         FILE* file,
         ebisu_log_level_t level);
 
+/**
+ * \brief Room for the path of a file ebisu_file_logger_t writes to, with its
+ * NUL.
+ */
+#define EBISU_FILE_LOGGER_PATH_MAX 256
+
+/**
+ * \brief A logger to a file it keeps under a size, on POSIX and on Windows.
+ *
+ * Each message is a line of its level and itself, as ebisu_stdio_logger_t
+ * writes it. A message less important than the logger's level is dropped.
+ * When a line would take the file past its size, the file is first renamed
+ * to its path with ".1" after it, which replaces the one there, and a new one
+ * is started: what the device keeps of its log is at most twice the size, and
+ * the last of it is in the file. A line longer than the size goes in a file of
+ * its own.
+ *
+ * The line is formatted before the lock it is given is taken, and written,
+ * flushed and counted under it, as the file is renamed, so that it may be
+ * called from more than one task at once, which wait only for each other's
+ * writes. Nothing is lost but for the system failing to write: a file that
+ * can't be renamed is written past its size, and one that can't be opened is
+ * tried again with the next line.
+ *
+ * Initialize with ebisu_file_logger_init(), and close with
+ * ebisu_file_logger_close().
+ */
+typedef struct ebisu_file_logger_t {
+    ebisu_logger_t base; /**< \brief What ebisu is given. */
+    FILE* _file; /**< \private */
+    /** \private How much of the file there is. */
+    size_t _size;
+    size_t _max_bytes; /**< \private */
+    ebisu_log_level_t _level; /**< \private */
+    ebisu_lock_t* _lock; /**< \private */
+    /** \private The path, or empty once closed. */
+    char _path[EBISU_FILE_LOGGER_PATH_MAX];
+} ebisu_file_logger_t;
+
+/**
+ * \brief Initializes a logger to a file it keeps under a size, and makes base
+ * a logger of it.
+ *
+ * It opens the file to add to it, or makes it, and counts what it has.
+ *
+ * \param [out] logger The logger.
+ * \param [in] path The file's path, shorter than EBISU_FILE_LOGGER_PATH_MAX
+ * less 2, for ".1".
+ * \param [in] max_bytes How large the file may grow, or 0 for no bound.
+ * \param [in] level The least important level written: EBISU_LOG_WARNING
+ * writes errors and warnings.
+ * \param [in] lock The lock each line's write takes, which has to outlive the
+ * logger, or NULL for a logger one task logs to at a time.
+ * \return true if the file is open, false if the path is too long, when the
+ * logger drops every message until closed, or the file can't be opened, when
+ * it tries again with each message.
+ */
+bool ebisu_file_logger_init(
+        ebisu_file_logger_t* logger,
+        const char* path,
+        size_t max_bytes,
+        ebisu_log_level_t level,
+        ebisu_lock_t* lock);
+
+/**
+ * \brief Closes a logger to a file, which drops every message after.
+ *
+ * Nothing may be logging with it when it is called.
+ *
+ * \param [in,out] logger The logger, initialized whether or not that
+ * succeeded.
+ */
+void ebisu_file_logger_close(ebisu_file_logger_t* logger);
+
 #ifndef _WIN32
 /**
  * \brief A logger to the system's syslog, on POSIX.

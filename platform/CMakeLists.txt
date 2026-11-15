@@ -100,11 +100,13 @@ if(WIN32)
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
-# Loggers, for a system with a C library and sockets: to a stdio stream, to
-# syslog on POSIX, and to a syslog server over UDP, on POSIX and Windows alike.
+# Loggers, for a system with a C library and sockets: to a stdio stream, to a
+# file kept under a size, to syslog on POSIX, and to a syslog server over UDP,
+# on POSIX and Windows alike.
 if(UNIX OR WIN32)
     set(loggers_srcs
         loggers/src/ebisu_loggers_format.c
+        loggers/src/ebisu_file_logger.c
         loggers/src/ebisu_stdio_logger.c
         loggers/src/ebisu_syslog_udp_logger.c)
     if(UNIX)
