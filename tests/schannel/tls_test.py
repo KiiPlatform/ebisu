@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests platform's Schannel port, ebisu_schannel.c, under wine.
+"""Tests platform's Schannel port, ebisu_schannel.c, under wine or on Windows.
 
 Runs schannel_socket_test.exe against TLS servers on 127.0.0.1 that this script
 controls down to how the ciphertext is cut into TCP segments: large and
@@ -14,9 +14,19 @@ Wine looks hosts up with the C library's getaddrinfo(), so the tests of the
 connect timeout hold lookups back with lookup_gate.c, built with the system's
 C compiler and preloaded into wine. Without a compiler, they are skipped.
 
+With --windows, the test program runs on the Windows machine this script runs
+on, which has to be one of the run's own, such as a CI runner: until the test
+ends, its CA is in the machine's root store, and Windows' DNS client sends the
+names lookup_gate.c would hold back to a DNS server of the script's own, on
+127.0.0.1, by a rule of the name resolution policy table. Both need an
+administrator.
+
     tls_test.py <schannel_socket_test.exe> [--wine <wine>] [--workdir <directory>]
+    tls_test.py <schannel_socket_test.exe> --windows [--workdir <directory>]
 """
 import argparse
+import hashlib
+import itertools
 import os
 import random
 import re
@@ -33,6 +43,10 @@ import time
 TIMEOUT = 120
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+# The domain of the names whose lookups the test holds back. See lookup_gate.c
+# and DnsGate.
+GATED_DOMAIN = 'lookup-gate.invalid'
 
 
 def fnv1a(data):
@@ -56,7 +70,6 @@ new_certs_dir = .
 serial = serial
 default_md = sha256
 policy = policy_any
-copy_extensions = copy
 unique_subject = no
 [ policy_any ]
 commonName = supplied
@@ -64,12 +77,17 @@ commonName = supplied
 basicConstraints = critical, CA:TRUE
 keyUsage = critical, keyCertSign, cRLSign
 subjectKeyIdentifier = hash
+'''
+
+SERVER_EXTENSIONS = '''
 [ server ]
 basicConstraints = critical, CA:FALSE
 keyUsage = critical, digitalSignature, keyEncipherment
 extendedKeyUsage = serverAuth
 subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid
+subjectAltName = @names
+[ names ]
 '''
 
 
@@ -86,16 +104,23 @@ def make_certificates(d):
     openssl(d, 'x509', '-in', 'ca.pem', '-outform', 'der', '-out', 'ca.der')
 
     def issue(name, dns, dates, more_names=()):
-        san = ','.join('DNS:' + n for n in [dns] + list(more_names))
+        # The names in a file, as big's would make a command line longer than
+        # Windows takes.
+        with open(os.path.join(d, name + '.ext'), 'w') as f:
+            f.write(SERVER_EXTENSIONS)
+            for i, n in enumerate([dns] + list(more_names)):
+                f.write('DNS.%d = %s\n' % (i, n))
         openssl(d, 'req', '-newkey', 'rsa:2048', '-nodes', '-keyout', name + '.key', '-out', name + '.csr',
-                '-subj', '/CN=' + dns, '-addext', 'subjectAltName=' + san)
+                '-subj', '/CN=' + dns)
         # openssl ca rather than x509 -req, which cannot backdate.
         openssl(d, 'ca', '-batch', '-config', 'ca.cnf', '-cert', 'ca.pem', '-keyfile', 'ca.key',
-                '-in', name + '.csr', '-out', name + '.pem', '-extensions', 'server', '-notext', *dates)
+                '-in', name + '.csr', '-out', name + '.pem', '-extfile', name + '.ext', '-extensions', 'server',
+                '-notext', *dates)
 
     issue('good', 'localhost', ['-days', '2'])
-    # Some 38 kB, so that the Certificate message spans three records.
-    issue('big', 'localhost', ['-days', '2'], ['name%04d.some-long-subdomain.example.org' % i for i in range(900)])
+    # Some 24 kB, so that the Certificate message spans two records. Windows'
+    # Schannel refuses one larger than 32 kB unless told otherwise.
+    issue('big', 'localhost', ['-days', '2'], ['name%04d.some-long-subdomain.example.org' % i for i in range(540)])
     issue('wrongname', 'wrong.example', ['-days', '2'])
     issue('expired', 'localhost', ['-startdate', '20200101000000Z', '-enddate', '20200201000000Z'])
     openssl(d, 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', 'self.key', '-out', 'self.pem',
@@ -271,7 +296,9 @@ def serve_commands(conn):
             sock.shutdown(socket.SHUT_WR)
             return conn.wait_for_client_close()
         elif cmd == 'reset':
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 0))
+            # Winsock's struct linger is two u_shorts, the C library's two ints.
+            linger = struct.pack('HH' if sys.platform == 'win32' else 'ii', 1, 0)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, linger)
             return 'reset'
         else:
             raise ValueError(cmd)
@@ -346,23 +373,79 @@ def build_lookup_gate(d):
     return gate
 
 
+class DnsGate:
+    """lookup_gate.c's part on Windows: a DNS server on address, port 53, that
+    Windows' DNS client is to send the names under GATED_DOMAIN to. A query for
+    <ms>.<anything>.lookup-gate.invalid it answers ms milliseconds after it
+    came, with 127.0.0.1 for the name's address, to be cached for no time."""
+
+    def __init__(self, address, port=53):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind((address, port))
+        threading.Thread(target=self.serve, daemon=True).start()
+
+    def serve(self):
+        while True:
+            try:
+                query, peer = self.sock.recvfrom(4096)
+            except ConnectionResetError:
+                # Winsock's way of saying that an answer went to a port no
+                # longer open: the DNS client's, which had given up on it.
+                continue
+            threading.Thread(target=self.answer, args=(query, peer), daemon=True).start()
+
+    def answer(self, query, peer):
+        labels = []
+        pos = 12
+        while pos < len(query) and query[pos] != 0:
+            labels.append(query[pos + 1:pos + 1 + query[pos]].decode('ascii', 'replace'))
+            pos += 1 + query[pos]
+        if pos + 5 > len(query):
+            return
+        qtype = struct.unpack('>H', query[pos + 1:pos + 3])[0]
+        name = '.'.join(labels).lower()
+        ms = re.match(r'(\d+)\.', name)
+        records = b''
+        if ms is None or not name.endswith('.' + GATED_DOMAIN):
+            rcode = 3  # NXDOMAIN
+        else:
+            rcode = 0
+            time.sleep(int(ms.group(1)) / 1000)
+            if qtype == 1:  # A
+                records = b'\xc0\x0c' + struct.pack('>HHIH', 1, 1, 0, 4) + socket.inet_aton('127.0.0.1')
+        # A response, authoritative, recursion as the query desired and
+        # available.
+        flags = 0x8000 | 0x0400 | (query[2] & 0x01) << 8 | 0x0080 | rcode
+        header = query[:2] + struct.pack('>HHHHH', flags, 1, 1 if records else 0, 0, 0)
+        self.sock.sendto(header + query[12:pos + 5] + records, peer)
+
+
 class Test:
-    def __init__(self, exe, wine, prefix, gate):
-        self.exe = exe
-        self.wine = wine
-        self.env = dict(os.environ, WINEPREFIX=prefix, WINEDEBUG='-all')
-        self.gate = gate
+    def __init__(self, command, env, gated_env):
+        """command, a list, runs schannel_socket_test.exe, in env. gated_env is
+        the environment in which its lookups of gated_host()s are held back,
+        or None if they can't be."""
+        self.command = command
+        self.env = env
+        self.gated_env = gated_env
+        self.names = itertools.count(1)
         self.failures = 0
+
+    def gated_host(self, ms):
+        """A name no other run looks up, whose lookup ends ms milliseconds
+        later, with an address of localhost's. Of its own, so that no cache
+        has it."""
+        return '%d.%d.%s' % (ms, next(self.names), GATED_DOMAIN)
 
     def run(self, port, to_recv, *steps, host='localhost', stderr=False, gated=False, timeout=TIMEOUT):
         """The output of schannel_socket_test.exe, and the STEP lines in it, split
         into the step and the rest. With stderr, what it writes there is in the
-        output too. With gated, its lookups go through lookup_gate.c. Killed
-        after timeout seconds, it fails the checks of the steps it didn't
-        finish, rather than stop the test."""
-        env = dict(self.env, LD_PRELOAD=self.gate) if gated else self.env
+        output too. With gated, its lookups of gated_host()s are held back.
+        Killed after timeout seconds, it fails the checks of the steps it
+        didn't finish, rather than stop the test."""
+        env = self.gated_env if gated else self.env
         try:
-            out = subprocess.run([self.wine, self.exe, host, str(port), str(to_recv)] + list(steps),
+            out = subprocess.run(self.command + [host, str(port), str(to_recv)] + list(steps),
                                  env=env, stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT if stderr else subprocess.DEVNULL,
                                  text=True, timeout=timeout).stdout
@@ -594,15 +677,15 @@ def run_tests(t, d):
         filler.close()
     full.close()
 
-    if t.gate is None:
+    if t.gated_env is None:
         print('skipped: the lookup timeout, without a C compiler to build lookup_gate.c with', flush=True)
         return
-    # <ms>.lookup-gate.invalid is looked up as localhost, ms milliseconds later.
+    host = t.gated_host(3000)
     out, steps = t.run(port, 1, 'to_connect:1', 'connect', 'pause:3000', 'host:localhost', 'connect', 'close',
-                       host='3000.lookup-gate.invalid', gated=True)
+                       host=host, gated=True)
     t.check('lookup that outlasts the connect timeout: connect FAILs after the timeout, %s ms' % connect_ms(steps, 1),
             result_code(steps, 1) == ('connect', 'FAIL') and 900 <= connect_ms(steps, 1) <= 2500 and
-            'LOG error failed to look up 3000.lookup-gate.invalid in time.' in out, out)
+            'LOG error failed to look up %s in time.' % host in out, out)
     t.check('lookup that outlasts the connect timeout: last_error TIMEOUT',
             last_error(steps, 1) == ('TIMEOUT', '0'), out)
     t.check('lookup given up on ends while the socket connects again',
@@ -610,47 +693,67 @@ def run_tests(t, d):
 
     # The certificate is issued for localhost, not the name connected to: the
     # lookup ended, and the connect went on to the handshake.
-    out, steps = t.run(port, 1, 'to_connect:5', 'connect', 'close', host='1000.lookup-gate.invalid', gated=True)
+    out, steps = t.run(port, 1, 'to_connect:5', 'connect', 'close', host=t.gated_host(1000),
+                       gated=True)
     t.check('lookup that ends within the connect timeout: connects, %s ms' % connect_ms(steps, 1),
             last_error(steps, 1) == ('VERIFY', '800b010f') and connect_ms(steps, 1) >= 1000, out)
 
-    out, steps = t.run(port, 1, 'to_connect:0', 'connect', 'close', host='2500.lookup-gate.invalid', gated=True)
+    out, steps = t.run(port, 1, 'to_connect:0', 'connect', 'close', host=t.gated_host(2500),
+                       gated=True)
     t.check('connect timeout 0: the lookup takes as long as it does, %s ms' % connect_ms(steps, 1),
             last_error(steps, 1) == ('VERIFY', '800b010f') and connect_ms(steps, 1) >= 2500, out)
 
-    out, steps = t.run(port, 1, 'to_send:1', 'connect', 'close', host='3000.lookup-gate.invalid', gated=True)
+    out, steps = t.run(port, 1, 'to_send:1', 'connect', 'close', host=t.gated_host(3000),
+                       gated=True)
     t.check('send timeout bounds the lookup, without a connect timeout set, %s ms' % connect_ms(steps, 1),
             last_error(steps, 1) == ('TIMEOUT', '0') and 900 <= connect_ms(steps, 1) <= 2500, out)
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
-    parser.add_argument('exe', help='schannel_socket_test.exe')
-    parser.add_argument('--wine', default='wine')
-    parser.add_argument('--workdir', help='where to make the temporary directory, which holds a wine prefix '
-                        'of some hundreds of megabytes; the system default if left out')
-    args = parser.parse_args()
+def powershell(command, check=True):
+    subprocess.run(['powershell', '-NoProfile', '-NonInteractive', '-Command', command], check=check,
+                   stdout=subprocess.DEVNULL, timeout=TIMEOUT)
 
-    if args.workdir:
-        os.makedirs(args.workdir, exist_ok=True)
-    tmp = tempfile.mkdtemp(prefix='ebisu-schannel-tls-', dir=args.workdir)
-    prefix = os.path.join(tmp, 'wineprefix')
+
+def on_windows(exe, d):
+    """Runs the tests on this machine, as --windows says."""
+    ca = os.path.join(d, 'ca.der')
+    with open(ca, 'rb') as f:
+        thumbprint = hashlib.sha1(f.read()).hexdigest()
+    rule = "Get-DnsClientNrptRule | Where-Object { $_.Namespace -contains '.%s' }" % GATED_DOMAIN
+    try:
+        subprocess.run(['certutil', '-addstore', '-f', 'Root', ca], check=True, stdout=subprocess.DEVNULL,
+                       timeout=TIMEOUT)
+        DnsGate('127.0.0.1')
+        powershell("Add-DnsClientNrptRule -Namespace '.%s' -NameServers 127.0.0.1; Clear-DnsClientCache"
+                   % GATED_DOMAIN)
+        t = Test([exe], dict(os.environ), dict(os.environ))
+        run_tests(t, d)
+        return t
+    finally:
+        powershell(rule + ' | Remove-DnsClientNrptRule -Force; Clear-DnsClientCache', check=False)
+        subprocess.run(['certutil', '-delstore', 'Root', thumbprint], stdout=subprocess.DEVNULL, timeout=TIMEOUT)
+
+
+def under_wine(exe, wine, d):
+    """Runs the tests in a wine prefix of their own, made in d. None if the
+    test's CA can't be added to its root store."""
+    prefix = os.path.join(d, 'wineprefix')
     # Without Mono and Gecko, which wineboot would otherwise offer to install.
     env = dict(os.environ, WINEPREFIX=prefix, WINEDEBUG='-all', WINEDLLOVERRIDES='mscoree,mshtml=')
     try:
-        make_certificates(tmp)
-        subprocess.run([args.wine, 'wineboot', '-i'], env=env, check=True, timeout=600,
+        subprocess.run([wine, 'wineboot', '-i'], env=env, check=True, timeout=600,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        out = subprocess.run([args.wine, args.exe, 'trust', os.path.join(tmp, 'ca.der')], env=env,
+        out = subprocess.run([wine, exe, 'trust', os.path.join(d, 'ca.der')], env=env,
                              stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True,
                              timeout=TIMEOUT).stdout
         if 'trusted' not in out:
             print('cannot add the test CA to the wine prefix: ' + out)
-            return 1
-        t = Test(args.exe, args.wine, prefix, build_lookup_gate(tmp))
-        run_tests(t, tmp)
-        print('%d failed' % t.failures)
-        return 1 if t.failures else 0
+            return None
+        test_env = dict(os.environ, WINEPREFIX=prefix, WINEDEBUG='-all')
+        gate = build_lookup_gate(d)
+        t = Test([wine, exe], test_env, dict(test_env, LD_PRELOAD=gate) if gate else None)
+        run_tests(t, d)
+        return t
     finally:
         # The prefix's wineserver lingers for a few seconds after the last
         # process, holding the prefix.
@@ -659,6 +762,32 @@ def main():
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except (OSError, subprocess.TimeoutExpired):
             pass
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
+    parser.add_argument('exe', help='schannel_socket_test.exe')
+    parser.add_argument('--wine', default='wine')
+    parser.add_argument('--windows', action='store_true',
+                        help='run the test program on this machine, which has to be a Windows one of the '
+                        "run's own, such as a CI runner, with an administrator's rights: until the test ends, its "
+                        "CA is in the machine's root store, and the names it holds lookups back for are sent to a "
+                        "DNS server of the script's own")
+    parser.add_argument('--workdir', help='where to make the temporary directory, which holds a wine prefix '
+                        'of some hundreds of megabytes; the system default if left out')
+    args = parser.parse_args()
+
+    if args.workdir:
+        os.makedirs(args.workdir, exist_ok=True)
+    tmp = tempfile.mkdtemp(prefix='ebisu-schannel-tls-', dir=args.workdir)
+    try:
+        make_certificates(tmp)
+        t = on_windows(args.exe, tmp) if args.windows else under_wine(args.exe, args.wine, tmp)
+        if t is None:
+            return 1
+        print('%d failed' % t.failures)
+        return 1 if t.failures else 0
+    finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
 

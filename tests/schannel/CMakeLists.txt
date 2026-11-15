@@ -1,7 +1,8 @@
 # platform's Schannel port against TLS servers on 127.0.0.1 that tls_test.py
 # controls. Only when the tests run under wine: the script adds a CA of its own
 # to the root store of a wine prefix it makes for the purpose, which on a
-# Windows machine would be its real root store.
+# Windows machine would be its real root store. CI's windows job runs the
+# script on a Windows runner, one of the run's own, with --windows.
 find_package(Python3 3.9 COMPONENTS Interpreter)
 find_program(EBISU_OPENSSL_COMMAND openssl)
 if(Python3_FOUND AND EBISU_OPENSSL_COMMAND)

@@ -31,7 +31,9 @@ Ubuntu) and wine.
 The sample is built whenever `EBISU_BUILD_SAMPLES` is on and the target is
 Windows, where the linux sample is not. It avoids GNU extensions in its own
 code and links the Windows libraries by name, so a native MinGW or MSVC build
-on Windows should work too, but only mingw-w64 and wine are tested.
+on Windows should work too, but only mingw-w64's, cross-compiled, is tested:
+under wine, and the Schannel port's test on Windows as well (see
+[Test](#test)).
 
 ## Use
 
@@ -63,9 +65,18 @@ pieces TCP likes, and the MQTT task reads one byte at a time.
 
 - A connect looks the host up with `GetAddrInfoExW()` and tries its addresses
   in turn. `TO_SEND_SEC`, the send timeout, bounds the lookup and each attempt,
-  and a lookup it cuts short is cancelled.
+  and a lookup it cuts short is cancelled. On Windows Server 2025, an attempt
+  the server refused failed some 2 seconds after it began, not at once: a
+  connect to localhost, with nothing listening on `::1`, went on to
+  127.0.0.1 only then.
 - The handshake sends the host name as SNI. The protocol versions are those
   the system enables; with `SCHANNEL_CRED` that is TLS 1.2 at most.
+- Windows' Schannel takes handshake messages of 32 kB, 0x8000 bytes, at most,
+  unless `MessageLimitClient` in the registry raises that, up to 64 kB: a
+  server whose Certificate message, its chain, is larger fails the handshake
+  with `SEC_E_ILLEGAL_MESSAGE`. On Windows Server 2025, one of 32,562 bytes
+  went through and one of 32,856 failed. Under wine, one of 38,652 went
+  through.
 - The server certificate must chain to a root in the Windows root store, be
   issued for the host name and be in date. Revocation is not checked.
   Under wine the root store is the CA bundle of the system wine runs on.
@@ -105,3 +116,12 @@ For the connect timeout, it holds lookups back with
 the system's C compiler and preloads into wine, whose Winsock looks hosts up
 with the C library's `getaddrinfo()`; without a compiler, those tests are
 skipped.
+
+CI runs the script on a Windows runner too, with `--windows`, so that the
+test program, cross-compiled as above, runs against Windows' own Schannel,
+Winsock and DNS client: there, unlike under wine, a lookup the port gives up
+on is cancelled. That is for a machine of the run's own, and an
+administrator: until the test ends, its CA is in the machine's root store,
+and a rule of the name resolution policy table sends the names whose lookups
+it holds back to a DNS server of the script's own, on 127.0.0.1, which
+answers them as late as `lookup_gate.c` would.
