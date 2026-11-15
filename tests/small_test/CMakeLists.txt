@@ -129,6 +129,23 @@ if(TARGET ebisu_dns_probe)
         INCLUDES ${PROJECT_SOURCE_DIR}/platform/dns_probe/src)
 endif()
 
+# platform's sockets of plain TCP, the POSIX port's, or on Windows the Win32
+# port's, against servers of the test's own on the loopback.
+if(TARGET ebisu_posix)
+    set(small_test_tcp_socket_port ebisu_posix)
+elseif(TARGET ebisu_win32)
+    set(small_test_tcp_socket_port ebisu_win32)
+endif()
+if(small_test_tcp_socket_port)
+    ebisu_add_test_suite(small_test_tcp_socket
+        LABEL small
+        WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR}
+        SOURCES tcp_socket/tcp_socket_test.cpp
+        # Core's objects, as the other suites link them, so that a Windows
+        # build's test doesn't need its DLL.
+        LINK ${small_test_tcp_socket_port} ebisu_core_objs Threads::Threads)
+endif()
+
 # platform's POSIX port, which needs threads and nothing else. Linux only, as
 # the test reads a thread's attributes with pthread_getattr_np().
 if(TARGET ebisu_posix AND CMAKE_SYSTEM_NAME STREQUAL "Linux")

@@ -65,42 +65,18 @@ typedef enum {
 #define log_to(logger, level, ...) ((void)0)
 #define log_code(ctx, code, ...) ((void)0)
 #else
-#if defined(__GNUC__) || defined(__clang__)
-static void log_code(ebisu_schannel_socket_t* ctx, unsigned long code, const char* fmt, ...)
-    __attribute__((format(printf, 3, 4)));
-#endif
-
 /* Sends a diagnostic to logger. Without one, it goes nowhere. */
 #define log_to(logger, level, ...) ebisu_log((logger), (level), __VA_ARGS__)
 
-/* Logs what failed with a Winsock, Win32, SSPI or certificate error code, and
-   the system's text for it where there is one. */
-static void log_code(ebisu_schannel_socket_t* ctx, unsigned long code, const char* fmt, ...)
-{
-    char what[320];
-    va_list args;
-    if (ctx->logger == NULL) {
-        return;
-    }
-    va_start(args, fmt);
-    vsnprintf(what, sizeof(what), fmt, args);
-    va_end(args);
-    what[sizeof(what) - 1] = '\0';
-
-    char text[256];
-    DWORD len = FormatMessageA(
-            FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-            NULL, code, 0, text, sizeof(text), NULL);
-    while (len > 0 &&
-            (text[len - 1] == '\r' || text[len - 1] == '\n' ||
-             text[len - 1] == ' ' || text[len - 1] == '.')) {
-        --len;
-    }
-    text[len] = '\0';
-    log_to(ctx->logger, EBISU_LOG_ERROR, "%s: 0x%08lx%s%s", what, code,
-            len > 0 ? " " : "", text);
-}
+/* Logs what failed with a Winsock, Win32, SSPI or certificate error code, as
+   log_code_to() does, to the socket's logger. */
+#define log_code(ctx, code, ...) log_code_to((ctx)->logger, (code), __VA_ARGS__)
 #endif
+
+/* Looking the host up and connecting, with log_to() defined above. By its path
+   from here, so that a build of this file by hand needs no include directory
+   more. */
+#include "../../win32/src/ebisu_win32_connect.h"
 
 /* Says why the operation failing now failed, for last_error. */
 static void set_error(ebisu_schannel_socket_t* ctx, ebisu_sock_error_t error, long detail)
@@ -227,227 +203,14 @@ static void teardown(ebisu_schannel_socket_t* ctx)
     ctx->peer_closed = 0;
 }
 
-/* mingw-w64's headers, 13 at least, leave it out, though its import library
-   for ws2_32 has it. */
-#ifdef __MINGW32__
-WINSOCK_API_LINKAGE int WSAAPI GetAddrInfoExCancel(LPHANDLE lpHandle);
-#endif
-
-/* A lookup, which Winsock does while the connecting task waits for it, no
-   longer than its timeout. Winsock calls lookup_done() once it is done, on a
-   thread of its own. A task that gives up cancels it, and leaves it to be
-   freed once done, as Winsock writes to it until then. */
-typedef struct lookup_t {
-    OVERLAPPED overlapped;
-    /* Set once the lookup is done. */
-    HANDLE done;
-    /* For GetAddrInfoExCancel(). */
-    HANDLE cancel;
-    DWORD error;
-    ADDRINFOEXW* result;
-    /* The task, until it is done with the lookup, and Winsock, until the
-       lookup is done. Freed at none. */
-    LONG users;
-} lookup_t;
-
-/* Drops a user of lookup, and frees it after the last. */
-static void drop_user(lookup_t* lookup)
-{
-    if (InterlockedDecrement(&lookup->users) > 0) {
-        return;
-    }
-    if (lookup->result != NULL) {
-        FreeAddrInfoExW(lookup->result);
-    }
-    CloseHandle(lookup->done);
-    free(lookup);
-}
-
-static void CALLBACK lookup_done(DWORD error, DWORD bytes, LPWSAOVERLAPPED overlapped)
-{
-    (void)bytes;
-    lookup_t* lookup = EBISU_CONTAINER_OF(overlapped, lookup_t, overlapped);
-    lookup->error = error;
-    SetEvent(lookup->done);
-    drop_user(lookup);
-}
-
-/* The host's addresses, looked up within timeout_s, or for as long as the
-   system's resolver takes if that is 0, to be freed with FreeAddrInfoExW().
-   NULL if they weren't, with why in ctx's error. */
-static ADDRINFOEXW* look_up(ebisu_schannel_socket_t* ctx, uint16_t port,
-        unsigned int timeout_s)
-{
-    WCHAR name[sizeof(ctx->host)];
-    if (MultiByteToWideChar(CP_UTF8, 0, ctx->host, -1, name,
-                sizeof(name) / sizeof(name[0])) == 0) {
-        DWORD code = GetLastError();
-        log_code(ctx, code, "host name");
-        set_error(ctx, EBISU_SOCK_ERROR_DNS, (long)code);
-        return NULL;
-    }
-    char digits[6];
-    snprintf(digits, sizeof(digits), "%u", (unsigned int)port);
-    WCHAR service[sizeof(digits)];
-    size_t i = 0;
-    for (; digits[i] != '\0'; ++i) {
-        service[i] = (WCHAR)digits[i];
-    }
-    service[i] = L'\0';
-
-    ADDRINFOEXW hints;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-
-    lookup_t* lookup = (lookup_t*)calloc(1, sizeof(*lookup));
-    if (lookup == NULL) {
-        log_to(ctx->logger, EBISU_LOG_ERROR, "failed to allocate a lookup.");
-        set_error(ctx, EBISU_SOCK_ERROR_OTHER, 0);
-        return NULL;
-    }
-    lookup->done = CreateEventW(NULL, TRUE, FALSE, NULL);
-    if (lookup->done == NULL) {
-        DWORD code = GetLastError();
-        log_code(ctx, code, "CreateEvent");
-        set_error(ctx, EBISU_SOCK_ERROR_OTHER, (long)code);
-        free(lookup);
-        return NULL;
-    }
-    lookup->users = 2;
-    /* NS_ALL: every namespace provider's answers, not DNS's alone. */
-    int err = GetAddrInfoExW(name, service, NS_ALL, NULL, &hints, &lookup->result,
-            NULL, &lookup->overlapped, lookup_done, &lookup->cancel);
-    if (err != WSA_IO_PENDING) {
-        /* Done already, and lookup_done() won't be called: the task is the
-           only user. */
-        lookup->error = (DWORD)err;
-        lookup->users = 1;
-    } else {
-        DWORD timeout_ms = timeout_s == 0 ? INFINITE :
-            timeout_s >= (INFINITE - 1) / 1000 ? INFINITE - 1 : timeout_s * 1000;
-        DWORD waited = WaitForSingleObject(lookup->done, timeout_ms);
-        if (waited != WAIT_OBJECT_0) {
-            DWORD code = waited == WAIT_FAILED ? GetLastError() : 0;
-            /* Winsock ends the lookup, and calls lookup_done() with
-               WSA_E_CANCELLED, which Windows Server 2025 does at once, on
-               this thread, unless it has just ended by itself, which leaves
-               the handle no longer valid and the call changing nothing.
-               Either way, the last of the two frees the lookup. */
-            GetAddrInfoExCancel(&lookup->cancel);
-            drop_user(lookup);
-            if (waited == WAIT_TIMEOUT) {
-                log_to(ctx->logger, EBISU_LOG_ERROR, "failed to look up %s in time.",
-                        ctx->host);
-                set_error(ctx, EBISU_SOCK_ERROR_TIMEOUT, 0);
-            } else {
-                log_code(ctx, code, "failed to wait for the lookup of %s", ctx->host);
-                set_error(ctx, EBISU_SOCK_ERROR_OTHER, (long)code);
-            }
-            return NULL;
-        }
-    }
-
-    /* Done: lookup_done(), if it is called, writes to the lookup no more. */
-    DWORD error = lookup->error;
-    ADDRINFOEXW* result = lookup->result;
-    lookup->result = NULL;
-    drop_user(lookup);
-    if (error != 0) {
-        if (result != NULL) {
-            FreeAddrInfoExW(result);
-        }
-        log_code(ctx, error, "failed to look up %s", ctx->host);
-        set_error(ctx, EBISU_SOCK_ERROR_DNS, (long)error);
-        return NULL;
-    }
-    return result;
-}
-
-/* Connects sock to addr within timeout_s, or whenever TCP gives up if that is
-   0. 0 once connected, otherwise the Winsock error, which is WSAETIMEDOUT
-   for the timeout too. */
-static int connect_within(SOCKET sock, const struct sockaddr* addr, int addr_len,
-        unsigned int timeout_s)
-{
-    if (timeout_s == 0) {
-        return connect(sock, addr, addr_len) == 0 ? 0 : WSAGetLastError();
-    }
-    u_long nonblocking = 1;
-    if (ioctlsocket(sock, FIONBIO, &nonblocking) != 0) {
-        return WSAGetLastError();
-    }
-    int error = connect(sock, addr, addr_len) == 0 ? 0 : WSAGetLastError();
-    if (error == WSAEWOULDBLOCK) {
-        fd_set connected;
-        FD_ZERO(&connected);
-        FD_SET(sock, &connected);
-        fd_set failed;
-        FD_ZERO(&failed);
-        FD_SET(sock, &failed);
-        struct timeval timeout;
-        timeout.tv_sec = timeout_s > LONG_MAX ? LONG_MAX : (long)timeout_s;
-        timeout.tv_usec = 0;
-        /* Winsock says a connect that succeeded in the write set, one that
-           failed in the except set, and ignores the first argument. */
-        int ready = select(0, NULL, &connected, &failed, &timeout);
-        if (ready == SOCKET_ERROR) {
-            error = WSAGetLastError();
-        } else if (ready == 0) {
-            error = WSAETIMEDOUT;
-        } else if (FD_ISSET(sock, &failed)) {
-            int so_error = 0;
-            int len = (int)sizeof(so_error);
-            if (getsockopt(sock, SOL_SOCKET, SO_ERROR, (char*)&so_error, &len) != 0) {
-                error = WSAGetLastError();
-            } else {
-                error = so_error != 0 ? so_error : WSAECONNREFUSED;
-            }
-        } else {
-            error = 0;
-        }
-    }
-    /* Blocking again, for the handshake and what follows, which the receive
-       and send timeouts bound. */
-    u_long blocking = 0;
-    if (ioctlsocket(sock, FIONBIO, &blocking) != 0 && error == 0) {
-        error = WSAGetLastError();
-    }
-    return error;
-}
-
 static SOCKET tcp_connect(ebisu_schannel_socket_t* ctx, uint16_t port)
 {
-    ADDRINFOEXW* addrs = look_up(ctx, port, ctx->to_connect);
-    if (addrs == NULL) {
-        return INVALID_SOCKET;
-    }
-
-    /* The first address that accepts, IPv6 or IPv4. Each gets the whole
-       timeout: one that doesn't answer leaves the rest as much time as the
-       first had. */
-    SOCKET sock = INVALID_SOCKET;
-    int last_error = 0;
-    for (ADDRINFOEXW* addr = addrs; addr != NULL; addr = addr->ai_next) {
-        sock = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
-        if (sock == INVALID_SOCKET) {
-            last_error = WSAGetLastError();
-            continue;
-        }
-        last_error = connect_within(sock, addr->ai_addr, (int)addr->ai_addrlen,
-                ctx->to_connect);
-        if (last_error == 0) {
-            break;
-        }
-        closesocket(sock);
-        sock = INVALID_SOCKET;
-    }
-    FreeAddrInfoExW(addrs);
+    ebisu_sock_error_t error = EBISU_SOCK_ERROR_OTHER;
+    long detail = 0;
+    SOCKET sock = connect_to_host(ctx->host, port, ctx->to_connect, ctx->logger, &error,
+            &detail);
     if (sock == INVALID_SOCKET) {
-        log_code(ctx, (unsigned long)last_error, "failed to connect to %s", ctx->host);
-        set_error(ctx, last_error == WSAETIMEDOUT ?
-                EBISU_SOCK_ERROR_TIMEOUT : EBISU_SOCK_ERROR_CONNECT, last_error);
+        set_error(ctx, error, detail);
         return INVALID_SOCKET;
     }
 

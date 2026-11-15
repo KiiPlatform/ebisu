@@ -3,18 +3,26 @@
 #include <ebisu_dns_probe.h>
 #include "ebisu_dns_probe_impl.h"
 
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
+#else
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <unistd.h>
+#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <unistd.h>
 #include <atomic>
 #include <chrono>
 #include <mutex>
@@ -24,6 +32,57 @@
 #include <vector>
 
 namespace {
+
+#ifdef _WIN32
+typedef SOCKET fd_t;
+const fd_t NO_FD = INVALID_SOCKET;
+
+void close_fd(fd_t fd) {
+    closesocket(fd);
+}
+
+// Winsock, started for the run before any test, as the application starts it.
+struct Winsock {
+    Winsock() {
+        WSADATA data;
+        WSAStartup(MAKEWORD(2, 2), &data);
+    }
+    ~Winsock() {
+        WSACleanup();
+    }
+} winsock;
+#else
+typedef int fd_t;
+const fd_t NO_FD = -1;
+
+void close_fd(fd_t fd) {
+    close(fd);
+}
+#endif
+
+// Whether the system tells a datagram's sender that nothing listens where it
+// went, as ICMP's port unreachable says, so that the probe goes on at once:
+// wine's select() doesn't take that for something to read, and the probe
+// waits for its timeout.
+bool refusal_is_told() {
+#ifdef _WIN32
+    HMODULE ntdll = GetModuleHandleA("ntdll.dll");
+    return ntdll == nullptr || GetProcAddress(ntdll, "wine_get_version") == nullptr;
+#else
+    return true;
+#endif
+}
+
+// Whether fd has something to read within ms.
+bool readable(fd_t fd, int ms) {
+    fd_set set;
+    FD_ZERO(&set);
+    FD_SET(fd, &set);
+    timeval timeout;
+    timeout.tv_sec = ms / 1000;
+    timeout.tv_usec = (ms % 1000) * 1000;
+    return select((int)fd + 1, &set, nullptr, nullptr, &timeout) > 0;
+}
 
 std::string query_for(const char* host, uint16_t id) {
     unsigned char out[_EBISU_DNS_QUERY_MAX];
@@ -50,7 +109,7 @@ struct FakeServer {
         SILENT
     };
 
-    int sock;
+    fd_t sock;
     uint16_t port;
     bool listening;
     Mode mode;
@@ -60,7 +119,7 @@ struct FakeServer {
     std::thread thread;
 
     explicit FakeServer(Mode mode, int family = AF_INET)
-        : sock(-1), port(0), listening(false), mode(mode), stopping(false) {
+        : sock(NO_FD), port(0), listening(false), mode(mode), stopping(false) {
         sockaddr_storage addr;
         memset(&addr, 0, sizeof(addr));
         if (family == AF_INET) {
@@ -78,7 +137,7 @@ struct FakeServer {
 
     // On an IPv6 address of the system's, with its scope.
     FakeServer(Mode mode, const sockaddr_in6& at)
-        : sock(-1), port(0), listening(false), mode(mode), stopping(false) {
+        : sock(NO_FD), port(0), listening(false), mode(mode), stopping(false) {
         sockaddr_storage addr;
         memset(&addr, 0, sizeof(addr));
         memcpy(&addr, &at, sizeof(at));
@@ -89,7 +148,7 @@ struct FakeServer {
     void start(sockaddr_storage addr, socklen_t length) {
         int family = addr.ss_family;
         sock = socket(family, SOCK_DGRAM, 0);
-        if (sock < 0 || bind(sock, (sockaddr*)&addr, length) != 0 ||
+        if (sock == NO_FD || bind(sock, (sockaddr*)&addr, length) != 0 ||
                 getsockname(sock, (sockaddr*)&addr, &length) != 0) {
             return;
         }
@@ -104,8 +163,8 @@ struct FakeServer {
         if (thread.joinable()) {
             thread.join();
         }
-        if (sock >= 0) {
-            close(sock);
+        if (sock != NO_FD) {
+            close_fd(sock);
         }
     }
 
@@ -125,18 +184,14 @@ struct FakeServer {
                 send_to(other, peer, peer_length);
                 peer_length = 0;
             }
-            pollfd p;
-            p.fd = sock;
-            p.events = POLLIN;
-            p.revents = 0;
-            if (poll(&p, 1, 10) <= 0) {
+            if (!readable(sock, 10)) {
                 continue;
             }
             unsigned char datagram[512];
             sockaddr_storage from;
             socklen_t from_length = sizeof(from);
-            ssize_t n = recvfrom(sock, datagram, sizeof(datagram), 0, (sockaddr*)&from,
-                    &from_length);
+            int n = (int)recvfrom(sock, (char*)datagram, (int)sizeof(datagram), 0,
+                    (sockaddr*)&from, &from_length);
             if (n <= 0) {
                 continue;
             }
@@ -174,13 +229,13 @@ struct FakeServer {
     }
 
     void send_to(const std::string& datagram, const sockaddr_storage& to, socklen_t length) {
-        sendto(sock, datagram.data(), datagram.size(), 0, (const sockaddr*)&to, length);
+        sendto(sock, datagram.data(), (int)datagram.size(), 0, (const sockaddr*)&to, length);
     }
 };
 
 // A port of the loopback nothing listens on, as far as anything can tell.
 uint16_t unused_port() {
-    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    fd_t sock = socket(AF_INET, SOCK_DGRAM, 0);
     sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
@@ -191,7 +246,7 @@ uint16_t unused_port() {
             getsockname(sock, (sockaddr*)&addr, &length) == 0) {
         port = ntohs(addr.sin_port);
     }
-    close(sock);
+    close_fd(sock);
     return port;
 }
 
@@ -211,6 +266,7 @@ std::string text_of(const _ebisu_dns_addr_t& server) {
     return text + " " + std::to_string(server.port);
 }
 
+#ifndef _WIN32
 // The servers of a resolv.conf, as text, read as musl does or, with as_glibc,
 // as glibc does.
 std::vector<std::string> servers_of(const std::string& text, bool as_glibc = false) {
@@ -305,6 +361,7 @@ std::vector<std::string> read_servers(const char* path, bool as_glibc) {
     }
     return out;
 }
+#endif
 
 // The socket the probe's is put in front of, which counts what it is asked.
 struct Inner;
@@ -513,6 +570,8 @@ TEST_CASE("A probe tells which hosts need a name server to be looked up") {
     }
 }
 
+// What only POSIX has: inet_aton(), /etc/resolv.conf, and interfaces by name.
+#ifndef _WIN32
 TEST_CASE("A probe reads IPv4 addresses as inet_aton() does") {
     for (const char* s : { "127.0.0.1", "127.1", "10.1.2", "2130706433", "0x7f000001",
             "0177.0.0.1", "0x7f.0x0.0.1", "00", "0x0", "0xFF.0377.255.0", "255.255.255.255",
@@ -849,6 +908,8 @@ TEST_CASE("A probe asks a server repeated in resolv.conf once") {
     }
 }
 
+#endif
+
 TEST_CASE("A probe asks no server for a host that needs none, and none without servers") {
     FakeServer server(FakeServer::ANSWER);
     REQUIRE(server.listening);
@@ -943,8 +1004,12 @@ TEST_CASE("A probe asks a server") {
         auto start = std::chrono::steady_clock::now();
         CHECK(ebisu_dns_probe_servers("example.com", servers, 1, 5000, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_SILENT);
-        CHECK(elapsed_ms(start) < 5000);
-        CHECK(std::string(detail) == at(port) + " refused: nothing listens there");
+        if (refusal_is_told()) {
+            CHECK(elapsed_ms(start) < 5000);
+            CHECK(std::string(detail) == at(port) + " refused: nothing listens there");
+        } else {
+            WARN("under wine, which doesn't tell the probe nothing listens: not checked");
+        }
     }
     SECTION("which isn't an address") {
         const ebisu_dns_server_t servers[] = { { "dns.example.com", 53 } };
@@ -975,6 +1040,7 @@ TEST_CASE("A probe asks a server over IPv6") {
     CHECK(std::string(detail) == "[::1]:" + std::to_string(server.port) + " answered");
 }
 
+#ifndef _WIN32
 TEST_CASE("A probe asks a link-local server on its interface") {
     sockaddr_in6 link_local;
     std::string name;
@@ -1005,6 +1071,8 @@ TEST_CASE("A probe asks a link-local server on its interface") {
             "[" + std::string(address) + "]:" + port + " failed: " + strerror(EINVAL));
     CHECK(server.received().size() == 2);
 }
+
+#endif
 
 TEST_CASE("A probe asks the servers in turn, until one answers") {
     FakeServer silent(FakeServer::SILENT);
@@ -1038,7 +1106,9 @@ TEST_CASE("A probe asks the servers in turn, until one answers") {
         auto start = std::chrono::steady_clock::now();
         CHECK(ebisu_dns_probe_servers("example.com", servers, 3, 5000, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_ANSWERED);
-        CHECK(elapsed_ms(start) < 5000);
+        if (refusal_is_told()) {
+            CHECK(elapsed_ms(start) < 5000);
+        }
         CHECK(std::string(detail) == at(answering.port) + " answered");
     }
     SECTION("none, after each had its time, saying what the last did") {
@@ -1210,3 +1280,121 @@ TEST_CASE("A probing socket has recv_timed_out and recv_wait if the socket insid
         CHECK(detail == 0);
     }
 }
+
+#ifdef _WIN32
+namespace {
+
+// Adapters as GetAdaptersAddresses() gives them, with only what the probe
+// reads: whether each is up, and its name servers.
+struct Adapters {
+    struct Server {
+        sockaddr_storage addr;
+        IP_ADAPTER_DNS_SERVER_ADDRESS dns;
+    };
+    std::vector<IP_ADAPTER_ADDRESSES> adapters;
+    std::vector<std::vector<Server>> servers;
+
+    // An adapter, up or not, with servers as "address" or "address%scope".
+    void add(bool up, const std::vector<std::string>& addresses) {
+        IP_ADAPTER_ADDRESSES adapter;
+        memset(&adapter, 0, sizeof(adapter));
+        adapter.OperStatus = up ? IfOperStatusUp : IfOperStatusDown;
+        adapters.push_back(adapter);
+        std::vector<Server> list(addresses.size());
+        for (size_t i = 0; i < addresses.size(); ++i) {
+            Server& server = list[i];
+            memset(&server, 0, sizeof(server));
+            std::string address = addresses[i];
+            uint32_t scope = 0;
+            size_t percent = address.find('%');
+            if (percent != std::string::npos) {
+                scope = (uint32_t)std::stoul(address.substr(percent + 1));
+                address = address.substr(0, percent);
+            }
+            sockaddr_in* in = (sockaddr_in*)&server.addr;
+            sockaddr_in6* in6 = (sockaddr_in6*)&server.addr;
+            if (inet_pton(AF_INET, address.c_str(), &in->sin_addr) == 1) {
+                in->sin_family = AF_INET;
+                server.dns.Address.iSockaddrLength = (INT)sizeof(*in);
+            } else {
+                REQUIRE(inet_pton(AF_INET6, address.c_str(), &in6->sin6_addr) == 1);
+                in6->sin6_family = AF_INET6;
+                in6->sin6_scope_id = scope;
+                server.dns.Address.iSockaddrLength = (INT)sizeof(*in6);
+            }
+        }
+        servers.push_back(list);
+    }
+
+    // The list, linked as Windows links it.
+    const IP_ADAPTER_ADDRESSES* linked() {
+        for (size_t a = 0; a < adapters.size(); ++a) {
+            adapters[a].Next = a + 1 < adapters.size() ? &adapters[a + 1] : nullptr;
+            std::vector<Server>& list = servers[a];
+            for (size_t i = 0; i < list.size(); ++i) {
+                list[i].dns.Address.lpSockaddr = (SOCKADDR*)&list[i].addr;
+                list[i].dns.Next = i + 1 < list.size() ? &list[i + 1].dns : nullptr;
+            }
+            adapters[a].FirstDnsServerAddress = list.empty() ? nullptr : &list[0].dns;
+        }
+        return adapters.empty() ? nullptr : &adapters[0];
+    }
+
+    std::vector<std::string> asked(size_t max = _EBISU_DNS_SERVERS_MAX) {
+        std::vector<_ebisu_dns_addr_t> found(max);
+        size_t count = _ebisu_dns_probe_adapter_servers(linked(), found.data(), max);
+        std::vector<std::string> out;
+        for (size_t i = 0; i < count; ++i) {
+            out.push_back(text_of(found[i]));
+        }
+        return out;
+    }
+};
+
+} // namespace
+
+TEST_CASE("On Windows, a probe asks the name servers of the adapters that are up") {
+    Adapters a;
+
+    SECTION("in the order they come, IPv4 and IPv6, with a scope") {
+        a.add(true, { "10.0.0.1", "fe80::53%7" });
+        a.add(true, { "2001:db8::53" });
+        CHECK(a.asked() == std::vector<std::string>({
+                "10.0.0.1 53", "fe80::53%7 53", "2001:db8::53 53" }));
+    }
+
+    SECTION("as many as the C libraries take from resolv.conf") {
+        a.add(true, { "10.0.0.1", "10.0.0.2", "10.0.0.3", "10.0.0.4" });
+        CHECK(a.asked() == std::vector<std::string>({
+                "10.0.0.1 53", "10.0.0.2 53", "10.0.0.3 53" }));
+        CHECK(a.asked(1) == std::vector<std::string>({ "10.0.0.1 53" }));
+    }
+
+    SECTION("but not those of an adapter that is down") {
+        a.add(false, { "10.0.0.9" });
+        a.add(true, { "10.0.0.1" });
+        CHECK(a.asked() == std::vector<std::string>({ "10.0.0.1 53" }));
+    }
+
+    SECTION("each once, as adapters share servers") {
+        a.add(true, { "10.0.0.1", "10.0.0.2" });
+        a.add(true, { "10.0.0.2", "10.0.0.1", "10.0.0.3" });
+        CHECK(a.asked() == std::vector<std::string>({
+                "10.0.0.1 53", "10.0.0.2 53", "10.0.0.3 53" }));
+    }
+
+    SECTION("but not the placeholders Windows lists without an IPv6 server") {
+        a.add(true, { "fec0:0:0:ffff::1%1", "fec0:0:0:ffff::2%1", "fec0:0:0:ffff::3%1",
+                "10.0.0.1", "fec0:0:0:ffff::4" });
+        CHECK(a.asked() == std::vector<std::string>({ "10.0.0.1 53", "fec0:0:0:ffff::4 53" }));
+    }
+
+    SECTION("and none without any") {
+        CHECK(a.asked().empty());
+        a.add(true, {});
+        a.add(false, { "10.0.0.1" });
+        CHECK(a.asked().empty());
+    }
+}
+#endif
+

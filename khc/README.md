@@ -268,8 +268,8 @@ one to read for what socket callbacks have to do.
   OpenSSL.
 - **`SIGPIPE`**: sending on a connection the peer has closed raises `SIGPIPE`,
   which ends the process. Ignore it, as `linux-sample` does in `main()`, or use
-  `MSG_NOSIGNAL` or `SO_NOSIGPIPE`. A TLS library sends on its own too, as
-  OpenSSL does when closing.
+  `MSG_NOSIGNAL` or `SO_NOSIGPIPE`, as the POSIX port's plain TCP socket does.
+  A TLS library sends on its own too, as OpenSSL does when closing.
 - **Close after a failure**: the close callback is called on a connection that
   has failed as well, so it has to cope with one. OpenSSL's `SSL_shutdown()`
   must not be called after a fatal error, for one. What it returns doesn't change

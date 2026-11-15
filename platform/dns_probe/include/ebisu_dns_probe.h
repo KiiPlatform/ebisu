@@ -1,7 +1,7 @@
 /**
  * @file ebisu_dns_probe.h
  * @brief Whether the system's name servers answer, asked before a lookup that
- * can't be bounded.
+ * can't be bounded, on POSIX and on Windows.
  */
 #ifndef _EBISU_DNS_PROBE
 #define _EBISU_DNS_PROBE
@@ -80,6 +80,14 @@ typedef struct ebisu_dns_server_t {
  * ';' right after it makes it one no longer. Without a server, or without the
  * file, it is 127.0.0.1, as for the C libraries.
  *
+ * On Windows, the servers are those of the network adapters that are up, as
+ * GetAdaptersAddresses() gives them, in its order: IPv4 and IPv6, with an IPv6
+ * one's scope, but one an earlier adapter has too, and the placeholders
+ * fec0:0:0:ffff::1 to ::3, which Windows lists for an adapter without an IPv6
+ * server and which nothing answers on. The first 3 are asked. Without any, none
+ * is, and the result is EBISU_DNS_PROBE_SILENT for a host that needs one.
+ * Winsock has to have been started, with WSAStartup().
+ *
  * A name a lookup gets from elsewhere, such as /etc/hosts, still needs the
  * servers to answer: the probe tells only whether they do.
  *
@@ -128,7 +136,8 @@ ebisu_dns_probe_result_t ebisu_dns_probe_servers(
  * Its connect probes as ebisu_dns_probe() does, then has the other socket
  * connect, unless no server answered: then it fails, without the other socket
  * connecting, and its last_error is EBISU_SOCK_ERROR_DNS, with EAI_AGAIN,
- * getaddrinfo()'s error for a resolver that didn't answer. A connect the other
+ * getaddrinfo()'s error for a resolver that didn't answer, which on Windows is
+ * WSATRY_AGAIN. A connect the other
  * socket goes on with, after EBISU_SOCK_AGAIN, isn't probed again. Close
  * closes the other socket, or does nothing if it didn't connect.
  *
