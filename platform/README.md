@@ -131,9 +131,8 @@ where what it needs is found, which links `libebisu_core`. Link one with
   need mbedTLS built with `MBEDTLS_THREADING_C`.
 
 The Linux sample uses the POSIX and OpenSSL ports, the Windows sample the Win32
-and Schannel ones, and the FreeRTOS sample the FreeRTOS one, with a socket of
-its own, mbedTLS over FreeRTOS-Plus-TCP. The ESP32 sample has implementations of
-its own, under `tio`.
+and Schannel ones, and the FreeRTOS sample the FreeRTOS, FreeRTOS-Plus-TCP and
+mbedTLS ones. The ESP32 sample has implementations of its own, under `tio`.
 
 On FreeRTOS, in the application's `CMakeLists.txt`, as the FreeRTOS sample's:
 

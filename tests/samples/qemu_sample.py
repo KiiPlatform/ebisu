@@ -155,7 +155,9 @@ class Device:
 def refused(sample, image):
     device = Device(sample, image)
     try:
-        line = device.wait_for(r"server certificate for \S+ refused: expired", 180,
+        # As the sample says it, or as ebisu's mbedTLS port does, in mbedTLS's
+        # words: "The certificate validity has expired".
+        line = device.wait_for(r"server certificate for \S+ refused: .*expired", 180,
                 refuse=r"onboarded|author updated")
         step(f"refused as it should be: {line}")
         # The socket's last_error, through tio_handler_get_sock_error(): a

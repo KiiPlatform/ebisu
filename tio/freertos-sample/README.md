@@ -12,26 +12,36 @@ internet without privileges. CI runs it there against Kii Cloud.
   sample](../linux-sample/example.c) does, with the settings CMake is given.
 - [header_pool.c](header_pool.c): a pool for the request headers, which with
   the buffers main.c gives tio leaves ebisu nothing to take from the heap.
-- [sock_cb_freertos.c](sock_cb_freertos.c): the socket callbacks, mbedTLS over
-  FreeRTOS-Plus-TCP's sockets. Their `last_error` says why one failed, from
-  mbedTLS's error or FreeRTOS-Plus-TCP's, which the sample logs when
-  onboarding fails.
-
-Tasks, delays, the locks and the monotonic clock are ebisu's port to FreeRTOS,
-[`ebisu_freertos.h`](../../platform/freertos/include/ebisu_freertos.h).
 - [net.c](net.c): FreeRTOS-Plus-TCP on the board's Ethernet, with an address
   from DHCP, and its hooks.
-- [random.c](random.c): mbedTLS's random generator, which TLS and the TCP/IP
-  stack share.
+- [random.c](random.c): PSA's random generator, which TLS and the TCP/IP stack
+  share, seeded from the board's source of randomness.
+- [mbedtls_threading.c](mbedtls_threading.c): FreeRTOS mutexes for mbedTLS,
+  with `MBEDTLS_THREADING_ALT`, as the tasks' connections share PSA's random
+  generator.
+- [log.c](log.c): the console, as the sample writes to it, and a logger for
+  ebisu's ports, which say there why a connection failed.
 - [board](board/board.h): what is the board's: the start-up code, the linker
   script, the console, the source of randomness, and newlib's system calls.
 - [config](config): FreeRTOS's, FreeRTOS-Plus-TCP's and mbedTLS's configuration.
 
+The rest is ebisu's ports:
+
+- [`ebisu_freertos.h`](../../platform/freertos/include/ebisu_freertos.h): tasks,
+  delays, the locks and the monotonic clock;
+- [`ebisu_freertos_tcp.h`](../../platform/freertos/include/ebisu_freertos_tcp.h):
+  TCP over FreeRTOS-Plus-TCP;
+- [`ebisu_mbedtls.h`](../../platform/mbedtls/include/ebisu_mbedtls.h): TLS with
+  mbedTLS over it. Each connection's `last_error` says why it failed, which the
+  sample logs when onboarding fails.
+
 FreeRTOS V11.3.3, FreeRTOS-Plus-TCP V4.4.2 and mbedTLS 3.6.7 are downloaded
 when CMake configures the build, from their releases, and checked against
-their hashes. FreeRTOS is built with its own CMake, and ebisu with its own,
-added after it, which builds its port to FreeRTOS as the kernel's target is
-there, and generates its version header from the repository's git history.
+their hashes. FreeRTOS is built with its own CMake, and FreeRTOS-Plus-TCP and
+mbedTLS from their sources, mbedTLS's library under the name its own CMake
+gives it, `MbedTLS::mbedtls`. ebisu is built with its own CMake, added after
+them, which builds its ports as their targets are there, and generates its
+version header from the repository's git history.
 
 ## The server's certificate
 
@@ -39,7 +49,7 @@ The server's certificate has to chain to one of the CA certificates in
 [ca.pem](ca.pem), Amazon Trust Services' roots, which Kii Cloud's chain to, and
 be issued for the host. mbedTLS checks all of that, but not the validity
 periods: it would do so at the system's time, which the board does not have.
-The socket callbacks check them in mbedTLS's verify callback instead, during
+ebisu's mbedTLS port checks them in mbedTLS's verify callback instead, during
 the handshake, at the time an `ebisu_clock_t` keeps, which the device learns from
 the server. Until the first response, the clock has only a floor, a time it is
 known not to be earlier than, and only a certificate that expired before it can
@@ -47,8 +57,8 @@ be told. The [kii README](../../kii/README.md#the-time) describes the clock.
 
 ## Randomness
 
-TLS is only as secret as the random numbers its keys are made from, and
-mbedTLS takes them from `board_entropy()`. QEMU's board has no hardware random
+TLS is only as secret as the random numbers its keys are made from, which
+mbedTLS takes from PSA's generator, seeded from `board_entropy()`. QEMU's board has no hardware random
 number generator, so in QEMU it reads the host's `/dev/urandom`, through
 semihosting. A device has to use its own hardware random number generator, or
 another source of true randomness, instead.
@@ -105,4 +115,4 @@ The board's directory is what changes, and the configuration with it:
   in place of the LAN9118's, and its MAC address in [net.c](net.c);
 - the port of FreeRTOS for its processor, and `configCPU_CLOCK_HZ`.
 
-The socket callbacks, and ebisu's port, stay as they are.
+ebisu's ports stay as they are.

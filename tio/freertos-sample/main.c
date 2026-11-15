@@ -5,6 +5,8 @@
 #include <tio.h>
 
 #include <ebisu_freertos.h>
+#include <ebisu_freertos_tcp.h>
+#include <ebisu_mbedtls.h>
 
 #include <FreeRTOS.h>
 #include <task.h>
@@ -12,10 +14,10 @@
 #include "board.h"
 #include "header_pool.h"
 #include "log.h"
+#include "mbedtls_threading.h"
 #include "net.h"
 #include "random.h"
 #include "sample_config.h"
-#include "sock_cb_freertos.h"
 
 #define HANDLER_HTTP_BUFF_SIZE 4096
 #define HANDLER_MQTT_BUFF_SIZE 2048
@@ -57,9 +59,17 @@ static ebisu_freertos_system_t sample_system;
 static ebisu_clock_t device_clock;
 static ebisu_freertos_lock_t clock_lock;
 static ebisu_freertos_lock_t session_lock;
-static socket_context_t handler_http_ctx;
-static socket_context_t handler_mqtt_ctx;
-static socket_context_t updater_http_ctx;
+/* Each connection: TLS with ebisu's mbedTLS port, over TCP with its
+   FreeRTOS-Plus-TCP port. The connections share a TLS configuration, of the CA
+   certificates. */
+typedef struct {
+    ebisu_freertos_tcp_socket_t tcp;
+    ebisu_mbedtls_socket_t tls;
+} sample_socket_t;
+static ebisu_mbedtls_tls_t tls_config;
+static sample_socket_t handler_http_socket;
+static sample_socket_t handler_mqtt_socket;
+static sample_socket_t updater_http_socket;
 
 static const char state[] = EBISU_SAMPLE_STATE;
 static size_t state_read;
@@ -167,8 +177,8 @@ static void init_handler(void)
     tio_handler_set_cb_task_exit(&handler, task_exit, "handler");
     tio_handler_set_cb_err(&handler, task_error, "handler");
 
-    tio_handler_set_http_socket(&handler, &handler_http_ctx.base);
-    tio_handler_set_mqtt_socket(&handler, &handler_mqtt_ctx.base);
+    tio_handler_set_http_socket(&handler, &handler_http_socket.tls.base);
+    tio_handler_set_mqtt_socket(&handler, &handler_mqtt_socket.tls.base);
     tio_handler_set_mqtt_to_sock_recv(&handler, TO_RECV_SEC);
 
     tio_handler_set_http_buff(&handler, handler_http_buff, sizeof(handler_http_buff));
@@ -193,7 +203,7 @@ static void init_updater(void)
     tio_updater_set_cb_task_exit(&updater, task_exit, "updater");
     tio_updater_set_cb_error(&updater, task_error, "updater");
 
-    tio_updater_set_socket(&updater, &updater_http_ctx.base);
+    tio_updater_set_socket(&updater, &updater_http_socket.tls.base);
 
     tio_updater_set_buff(&updater, updater_http_buff, sizeof(updater_http_buff));
     tio_updater_set_stream_buff(&updater, updater_stream_buff, sizeof(updater_stream_buff));
@@ -205,11 +215,22 @@ static void init_updater(void)
     tio_updater_set_interval(&updater, EBISU_SAMPLE_UPDATE_PERIOD);
 }
 
+/* TCP with its timeouts, and TLS over it, whose certificates are checked at
+   the clock's time, each logging why it fails. */
+static void init_socket(sample_socket_t* sock)
+{
+    ebisu_freertos_tcp_socket_init(&sock->tcp, TO_RECV_SEC, TO_SEND_SEC);
+    ebisu_freertos_tcp_socket_set_logger(&sock->tcp, sample_logger());
+    ebisu_mbedtls_socket_init(&sock->tls, &sock->tcp.base, &tls_config);
+    ebisu_mbedtls_socket_set_clock(&sock->tls, &device_clock);
+    ebisu_mbedtls_socket_set_logger(&sock->tls, sample_logger());
+}
+
 static void app_task(void* arg)
 {
     net_wait_until_up();
 
-    int ret = sock_cb_init_tls(ca_pem, ca_pem_size);
+    int ret = ebisu_mbedtls_tls_init(&tls_config, (const unsigned char*)ca_pem, ca_pem_size);
     if (ret != 0) {
         board_fatal("failed to set up TLS: -0x%04x", (unsigned int)-ret);
     }
@@ -217,8 +238,8 @@ static void app_task(void* arg)
     /* The time the server's certificate is checked at, which this sample takes
        from the server, the board having no real-time clock: until the first
        response, the clock has only a floor, a time it is known not to be
-       earlier than. The clock has a lock of its own: the socket callbacks use
-       it while kii may hold the session's. */
+       earlier than. The clock has a lock of its own: the sockets use it while
+       kii may hold the session's. */
     if (!ebisu_freertos_lock_init(&clock_lock)) {
         board_fatal("failed to create the clock's lock");
     }
@@ -229,9 +250,9 @@ static void app_task(void* arg)
     }
     log_time();
 
-    sock_cb_init_context(&handler_http_ctx, TO_RECV_SEC, TO_SEND_SEC, &device_clock);
-    sock_cb_init_context(&handler_mqtt_ctx, TO_RECV_SEC, TO_SEND_SEC, &device_clock);
-    sock_cb_init_context(&updater_http_ctx, TO_RECV_SEC, TO_SEND_SEC, &device_clock);
+    init_socket(&handler_http_socket);
+    init_socket(&handler_mqtt_socket);
+    init_socket(&updater_http_socket);
 
     init_handler();
     init_updater();
@@ -291,9 +312,12 @@ int main(void)
     log_init();
     sample_log("ebisu %s", EBISU_VERSION_FULL);
 
+    /* mbedTLS's mutexes, before PSA's random generator, which TLS and
+       FreeRTOS-Plus-TCP take random numbers from, is started. */
+    mbedtls_threading_init_freertos();
     int ret = random_init();
     if (ret != 0) {
-        board_fatal("failed to seed the random generator: -0x%04x", (unsigned int)-ret);
+        board_fatal("failed to start PSA's random generator: %d", ret);
     }
     if (net_init() != pdPASS) {
         board_fatal("failed to start the network");

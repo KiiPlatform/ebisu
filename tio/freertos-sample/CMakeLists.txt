@@ -110,7 +110,9 @@ target_include_directories(freertos_plus_tcp
     PRIVATE ${tcp_driver}/ether_lan9118)
 target_link_libraries(freertos_plus_tcp PUBLIC freertos_kernel)
 
-# Configured by config/sample_mbedtls_config.h.
+# Configured by config/sample_mbedtls_config.h, with config/threading_alt.h.
+# Under the name mbedTLS's own CMake gives its library, MbedTLS::mbedtls, by
+# which ebisu's CMake finds it, and builds its mbedTLS port.
 set(mbedtls ${mbedtls_SOURCE_DIR})
 file(GLOB mbedtls_srcs ${mbedtls}/library/*.c)
 add_library(mbedtls STATIC ${mbedtls_srcs})
@@ -119,9 +121,10 @@ target_include_directories(mbedtls
     PRIVATE ${mbedtls}/library)
 target_compile_definitions(mbedtls PUBLIC
     MBEDTLS_CONFIG_FILE="sample_mbedtls_config.h")
+add_library(MbedTLS::mbedtls ALIAS mbedtls)
 
-# ebisu, with its own CMake: tio and what it needs, and the port to FreeRTOS,
-# which it builds as the kernel's target is there. Its version header comes
+# ebisu, with its own CMake: tio and what it needs, and the ports to FreeRTOS,
+# FreeRTOS-Plus-TCP and mbedTLS, which it builds as their targets are there. Its version header comes
 # from the repository's git history.
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(${ebisu_root} ebisu EXCLUDE_FROM_ALL)
@@ -131,8 +134,8 @@ add_executable(ebisu_freertos_sample
     header_pool.c
     log.c
     net.c
+    mbedtls_threading.c
     random.c
-    sock_cb_freertos.c
     board/board.c
     board/startup.c
     board/syscalls.c
@@ -149,7 +152,7 @@ target_include_directories(ebisu_freertos_sample PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_options(ebisu_freertos_sample PRIVATE -Wall -Werror)
 target_link_libraries(ebisu_freertos_sample PRIVATE
-    tio ebisu_freertos freertos_plus_tcp mbedtls)
+    tio ebisu_freertos ebisu_freertos_tcp ebisu_mbedtls freertos_plus_tcp mbedtls)
 # board/startup.c starts the program, not the C library's.
 target_link_options(ebisu_freertos_sample PRIVATE
     -nostartfiles

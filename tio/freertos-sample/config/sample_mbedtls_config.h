@@ -6,18 +6,25 @@
    with an ECDHE key exchange, and AES-GCM or ChaCha20-Poly1305. Not named
    mbedtls_config.h: mbedTLS would include its own by that name instead. */
 
-/* No MBEDTLS_HAVE_TIME_DATE: mbedTLS would check the certificates' validity
-   periods at the system's time, which a device without a real-time clock does
-   not have. sock_cb_freertos.c checks them at an ebisu_clock_t's instead. */
-
-/* No MBEDTLS_THREADING_C either: the tasks share only the TLS configuration,
-   which they read, and the random generator, which random.c locks. */
+/* No MBEDTLS_HAVE_TIME_DATE: the board has no real-time clock. ebisu's mbedTLS
+   port checks the certificates' validity periods at an ebisu_clock_t's
+   time. */
 
 /* The board's entropy source, mbedtls_hardware_poll(), and no other. */
 #define MBEDTLS_NO_PLATFORM_ENTROPY
 #define MBEDTLS_ENTROPY_HARDWARE_ALT
 #define MBEDTLS_ENTROPY_C
 #define MBEDTLS_CTR_DRBG_C
+
+/* PSA, whose random generator, seeded from those, ebisu's mbedTLS port takes
+   for TLS, as mbedTLS 4 always does. */
+#define MBEDTLS_PSA_CRYPTO_C
+
+/* Threads: the handler's, the MQTT task's and the updater's connections share
+   PSA's random generator. FreeRTOS mutexes, from mbedtls_threading.c, with
+   config/threading_alt.h. */
+#define MBEDTLS_THREADING_C
+#define MBEDTLS_THREADING_ALT
 
 #define MBEDTLS_SSL_TLS_C
 #define MBEDTLS_SSL_CLI_C
