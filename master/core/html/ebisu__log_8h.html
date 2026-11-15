@@ -87,7 +87,9 @@ $(function() {
 
 <p>Where a port's diagnostics go.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;stdarg.h&gt;</code><br />
+<div class="textblock"><code>#include &quot;<a class="el" href="ebisu__system_8h_source.html">ebisu_system.h</a>&quot;</code><br />
+<code>#include &lt;stdarg.h&gt;</code><br />
+<code>#include &lt;stdbool.h&gt;</code><br />
 <code>#include &lt;stddef.h&gt;</code><br />
 </div>
 <p><a href="ebisu__log_8h_source.html">Go to the source code of this file.</a></p>
@@ -100,6 +102,10 @@ Data Structures</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A logger: where diagnostics go, such as stderr, syslog or the device's own log.  <a href="structebisu__logger__t.html#details">More...</a><br /></td></tr>
 <tr class="memitem:ebisu_5Flog_5Ffanout_5Ft" id="r_ebisu_5Flog_5Ffanout_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__log__fanout__t.html">ebisu_log_fanout_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A logger that gives each message to several others.  <a href="structebisu__log__fanout__t.html#details">More...</a><br /></td></tr>
+<tr class="memitem:ebisu_5Flog_5Flevel_5Ffilter_5Ft" id="r_ebisu_5Flog_5Flevel_5Ffilter_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__log__level__filter__t.html">ebisu_log_level_filter_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A logger that gives another the messages of a level that can change while it logs.  <a href="structebisu__log__level__filter__t.html#details">More...</a><br /></td></tr>
+<tr class="memitem:ebisu_5Flog_5Fslot_5Ft" id="r_ebisu_5Flog_5Fslot_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__log__slot__t.html">ebisu_log_slot_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A place for a logger that can be filled, changed or emptied while other tasks log through it.  <a href="structebisu__log__slot__t.html#details">More...</a><br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-typedef-members" class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -114,6 +120,10 @@ typedef struct ebisu_logger_ops_t&#160;</td><td class="memItemRight" valign="bot
 <tr class="memdesc:a6a4379602c0457f39fa3a4eef936cc32"><td class="mdescLeft">&#160;</td><td class="mdescRight">What a logger does. <br /></td></tr>
 <tr class="memitem:a9dd37a633c3f347ef4cab58eeb55f93b" id="r_a9dd37a633c3f347ef4cab58eeb55f93b"><td class="memItemLeft" align="right" valign="top">typedef struct ebisu_log_fanout_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9dd37a633c3f347ef4cab58eeb55f93b">ebisu_log_fanout_t</a></td></tr>
 <tr class="memdesc:a9dd37a633c3f347ef4cab58eeb55f93b"><td class="mdescLeft">&#160;</td><td class="mdescRight">A logger that gives each message to several others.  <br /></td></tr>
+<tr class="memitem:a5aac9e1841103bcd403a4865d7ee36c9" id="r_a5aac9e1841103bcd403a4865d7ee36c9"><td class="memItemLeft" align="right" valign="top">typedef struct ebisu_log_level_filter_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5aac9e1841103bcd403a4865d7ee36c9">ebisu_log_level_filter_t</a></td></tr>
+<tr class="memdesc:a5aac9e1841103bcd403a4865d7ee36c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">A logger that gives another the messages of a level that can change while it logs.  <br /></td></tr>
+<tr class="memitem:ad68b71752ccb0e2a6b705c072ecc3165" id="r_ad68b71752ccb0e2a6b705c072ecc3165"><td class="memItemLeft" align="right" valign="top">typedef struct ebisu_log_slot_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad68b71752ccb0e2a6b705c072ecc3165">ebisu_log_slot_t</a></td></tr>
+<tr class="memdesc:ad68b71752ccb0e2a6b705c072ecc3165"><td class="mdescLeft">&#160;</td><td class="mdescRight">A place for a logger that can be filled, changed or emptied while other tasks log through it.  <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-enum-members" class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
@@ -130,6 +140,20 @@ Functions</h2></td></tr>
 <tr class="memdesc:a221be842a08c6b23d5083d8dad9ac203"><td class="mdescLeft">&#160;</td><td class="mdescRight">Logs a message, with the logger's log.  <br /></td></tr>
 <tr class="memitem:a4ee7810e4c2a3c1949e7fa1c969ffa4f" id="r_a4ee7810e4c2a3c1949e7fa1c969ffa4f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4ee7810e4c2a3c1949e7fa1c969ffa4f">ebisu_log_fanout_init</a> (<a class="el" href="structebisu__log__fanout__t.html">ebisu_log_fanout_t</a> *fanout, <a class="el" href="structebisu__logger__t.html">ebisu_logger_t</a> *const *loggers, size_t count)</td></tr>
 <tr class="memdesc:a4ee7810e4c2a3c1949e7fa1c969ffa4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes a logger that gives each message to the loggers of an array, and makes base a logger of it.  <br /></td></tr>
+<tr class="memitem:ad572d7af06c4d98c1a60c0bc71e43197" id="r_ad572d7af06c4d98c1a60c0bc71e43197"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad572d7af06c4d98c1a60c0bc71e43197">ebisu_log_level_parse</a> (const char *name, <a class="el" href="#a42e3fb546ca916214c4afd79eddce535">ebisu_log_level_t</a> *out)</td></tr>
+<tr class="memdesc:ad572d7af06c4d98c1a60c0bc71e43197"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads a level's name, as a configuration has it.  <br /></td></tr>
+<tr class="memitem:a4df11bd2caba0ba03ff32dc6f5d1c4b8" id="r_a4df11bd2caba0ba03ff32dc6f5d1c4b8"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4df11bd2caba0ba03ff32dc6f5d1c4b8">ebisu_log_level_name</a> (<a class="el" href="#a42e3fb546ca916214c4afd79eddce535">ebisu_log_level_t</a> level)</td></tr>
+<tr class="memdesc:a4df11bd2caba0ba03ff32dc6f5d1c4b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">A level's name: "error", "warning", "info" or "debug", as <a class="el" href="#ad572d7af06c4d98c1a60c0bc71e43197" title="Reads a level&#39;s name, as a configuration has it.">ebisu_log_level_parse()</a> reads it.  <br /></td></tr>
+<tr class="memitem:ad0dc3983617af9f298d9413c6f23b650" id="r_ad0dc3983617af9f298d9413c6f23b650"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad0dc3983617af9f298d9413c6f23b650">ebisu_log_level_filter_init</a> (<a class="el" href="structebisu__log__level__filter__t.html">ebisu_log_level_filter_t</a> *filter, <a class="el" href="structebisu__logger__t.html">ebisu_logger_t</a> *target, <a class="el" href="#a42e3fb546ca916214c4afd79eddce535">ebisu_log_level_t</a> level, <a class="el" href="structebisu__lock__t.html">ebisu_lock_t</a> *lock)</td></tr>
+<tr class="memdesc:ad0dc3983617af9f298d9413c6f23b650"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes a logger that gives target the messages of a level that can change, and makes base a logger of it.  <br /></td></tr>
+<tr class="memitem:aad9217cfd82d34099426c416a62e886f" id="r_aad9217cfd82d34099426c416a62e886f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aad9217cfd82d34099426c416a62e886f">ebisu_log_level_filter_set_level</a> (<a class="el" href="structebisu__log__level__filter__t.html">ebisu_log_level_filter_t</a> *filter, <a class="el" href="#a42e3fb546ca916214c4afd79eddce535">ebisu_log_level_t</a> level)</td></tr>
+<tr class="memdesc:aad9217cfd82d34099426c416a62e886f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the least important level the filter gives its logger.  <br /></td></tr>
+<tr class="memitem:ad4f43caf1dda0f2fd7df5bdf2710b1d7" id="r_ad4f43caf1dda0f2fd7df5bdf2710b1d7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a42e3fb546ca916214c4afd79eddce535">ebisu_log_level_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad4f43caf1dda0f2fd7df5bdf2710b1d7">ebisu_log_level_filter_level</a> (<a class="el" href="structebisu__log__level__filter__t.html">ebisu_log_level_filter_t</a> *filter)</td></tr>
+<tr class="memdesc:ad4f43caf1dda0f2fd7df5bdf2710b1d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">The least important level the filter gives its logger.  <br /></td></tr>
+<tr class="memitem:af593bd95317e340b8308c220fbe03149" id="r_af593bd95317e340b8308c220fbe03149"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af593bd95317e340b8308c220fbe03149">ebisu_log_slot_init</a> (<a class="el" href="structebisu__log__slot__t.html">ebisu_log_slot_t</a> *slot, <a class="el" href="structebisu__lock__t.html">ebisu_lock_t</a> *lock)</td></tr>
+<tr class="memdesc:af593bd95317e340b8308c220fbe03149"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes an empty place for a logger, and makes base a logger of it.  <br /></td></tr>
+<tr class="memitem:a919115858d3c97cc69ce1a158f900766" id="r_a919115858d3c97cc69ce1a158f900766"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structebisu__logger__t.html">ebisu_logger_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a919115858d3c97cc69ce1a158f900766">ebisu_log_slot_set</a> (<a class="el" href="structebisu__log__slot__t.html">ebisu_log_slot_t</a> *slot, <a class="el" href="structebisu__logger__t.html">ebisu_logger_t</a> *target)</td></tr>
+<tr class="memdesc:a919115858d3c97cc69ce1a158f900766"><td class="mdescLeft">&#160;</td><td class="mdescRight">Puts a logger in the place, or empties it.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Where a port's diagnostics go. </p>
@@ -149,6 +173,43 @@ Functions</h2></td></tr>
 <p>A logger that gives each message to several others. </p>
 <p>Each of them is given every message, in the order of the array, and decides what to do with it, as platform's loggers do with a level of their own. So one logger set on a port can send its diagnostics to, say, stderr and syslog at once. It may be called from more than one task at once if each of them may. It depends on nothing of the system's, so it serves an embedded device too.</p>
 <p>Initialize with <a class="el" href="#a4ee7810e4c2a3c1949e7fa1c969ffa4f" title="Initializes a logger that gives each message to the loggers of an array, and makes base a logger of i...">ebisu_log_fanout_init()</a>. </p>
+
+</div>
+</div>
+<a id="a5aac9e1841103bcd403a4865d7ee36c9" name="a5aac9e1841103bcd403a4865d7ee36c9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5aac9e1841103bcd403a4865d7ee36c9">&#9670;&#160;</a></span>ebisu_log_level_filter_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef struct ebisu_log_level_filter_t ebisu_log_level_filter_t</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>A logger that gives another the messages of a level that can change while it logs. </p>
+<p>A message less important than the level is dropped before the other logger is given it, so it isn't formatted at all. Its level can be set from any task while others log through it, as from a configuration a server sends: under the lock it is given, which each message takes for as long as it reads the level, and no longer. So a change is for the messages that read the level after it: one that read it before may still reach the other logger after the change returns. It may be called from more than one task at once if the other logger may.</p>
+<p>Initialize with <a class="el" href="#ad0dc3983617af9f298d9413c6f23b650" title="Initializes a logger that gives target the messages of a level that can change, and makes base a logg...">ebisu_log_level_filter_init()</a>. </p>
+
+</div>
+</div>
+<a id="ad68b71752ccb0e2a6b705c072ecc3165" name="ad68b71752ccb0e2a6b705c072ecc3165"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad68b71752ccb0e2a6b705c072ecc3165">&#9670;&#160;</a></span>ebisu_log_slot_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef struct ebisu_log_slot_t ebisu_log_slot_t</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>A place for a logger that can be filled, changed or emptied while other tasks log through it. </p>
+<p>It gives each message to the logger it holds, and drops it while it holds none. It takes the lock it is given for each message, while it gives it on, and to change the logger, so that a change returns once no message is going to the logger it held, which may then be closed: a logger to a syslog server is changed for one to another server, or one with another host name, by initializing the new one first, putting it in the place, and closing the old one. It may be called from more than one task at once, which take their turns at the lock, if the logger it holds may.</p>
+<p>The logger it holds mustn't log through it, as the lock is held while it logs.</p>
+<p>Initialize with <a class="el" href="#af593bd95317e340b8308c220fbe03149" title="Initializes an empty place for a logger, and makes base a logger of it.">ebisu_log_slot_init()</a>. </p>
 
 </div>
 </div>
@@ -255,6 +316,225 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="ad0dc3983617af9f298d9413c6f23b650" name="ad0dc3983617af9f298d9413c6f23b650"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad0dc3983617af9f298d9413c6f23b650">&#9670;&#160;</a></span>ebisu_log_level_filter_init()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_log_level_filter_init </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__log__level__filter__t.html">ebisu_log_level_filter_t</a> *</td>          <td class="paramname"><span class="paramname"><em>filter</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structebisu__logger__t.html">ebisu_logger_t</a> *</td>          <td class="paramname"><span class="paramname"><em>target</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="#a42e3fb546ca916214c4afd79eddce535">ebisu_log_level_t</a></td>          <td class="paramname"><span class="paramname"><em>level</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structebisu__lock__t.html">ebisu_lock_t</a> *</td>          <td class="paramname"><span class="paramname"><em>lock</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initializes a logger that gives target the messages of a level that can change, and makes base a logger of it. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">filter</td><td>The logger. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">target</td><td>The logger given the messages, which has to outlive filter. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">level</td><td>The least important level given to it: EBISU_LOG_WARNING gives errors and warnings. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">lock</td><td>The lock the level is read and set under, which has to outlive filter, or NULL for none, where its level is set only while nothing logs through it. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ad4f43caf1dda0f2fd7df5bdf2710b1d7" name="ad4f43caf1dda0f2fd7df5bdf2710b1d7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad4f43caf1dda0f2fd7df5bdf2710b1d7">&#9670;&#160;</a></span>ebisu_log_level_filter_level()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a42e3fb546ca916214c4afd79eddce535">ebisu_log_level_t</a> ebisu_log_level_filter_level </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__log__level__filter__t.html">ebisu_log_level_filter_t</a> *</td>          <td class="paramname"><span class="paramname"><em>filter</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The least important level the filter gives its logger. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">filter</td><td>The logger. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The level. </dd></dl>
+
+</div>
+</div>
+<a id="aad9217cfd82d34099426c416a62e886f" name="aad9217cfd82d34099426c416a62e886f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aad9217cfd82d34099426c416a62e886f">&#9670;&#160;</a></span>ebisu_log_level_filter_set_level()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_log_level_filter_set_level </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__log__level__filter__t.html">ebisu_log_level_filter_t</a> *</td>          <td class="paramname"><span class="paramname"><em>filter</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="#a42e3fb546ca916214c4afd79eddce535">ebisu_log_level_t</a></td>          <td class="paramname"><span class="paramname"><em>level</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets the least important level the filter gives its logger. </p>
+<p>With a lock, from any task, while others log through it.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">filter</td><td>The logger. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">level</td><td>The level. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a4df11bd2caba0ba03ff32dc6f5d1c4b8" name="a4df11bd2caba0ba03ff32dc6f5d1c4b8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4df11bd2caba0ba03ff32dc6f5d1c4b8">&#9670;&#160;</a></span>ebisu_log_level_name()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * ebisu_log_level_name </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="#a42e3fb546ca916214c4afd79eddce535">ebisu_log_level_t</a></td>          <td class="paramname"><span class="paramname"><em>level</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>A level's name: "error", "warning", "info" or "debug", as <a class="el" href="#ad572d7af06c4d98c1a60c0bc71e43197" title="Reads a level&#39;s name, as a configuration has it.">ebisu_log_level_parse()</a> reads it. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">level</td><td>The level. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Its name, or "unknown" for a value that is none of them. </dd></dl>
+
+</div>
+</div>
+<a id="ad572d7af06c4d98c1a60c0bc71e43197" name="ad572d7af06c4d98c1a60c0bc71e43197"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad572d7af06c4d98c1a60c0bc71e43197">&#9670;&#160;</a></span>ebisu_log_level_parse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ebisu_log_level_parse </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>name</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="#a42e3fb546ca916214c4afd79eddce535">ebisu_log_level_t</a> *</td>          <td class="paramname"><span class="paramname"><em>out</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Reads a level's name, as a configuration has it. </p>
+<p>"error", "warn" or "warning", "info", "debug", and "trace", which is debug's, in any case, and nothing else: no spaces.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">name</td><td>The name, or NULL, which isn't one. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out</td><td>The level, left as it was if the name isn't one. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Whether it is one. </dd></dl>
+
+</div>
+</div>
+<a id="af593bd95317e340b8308c220fbe03149" name="af593bd95317e340b8308c220fbe03149"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af593bd95317e340b8308c220fbe03149">&#9670;&#160;</a></span>ebisu_log_slot_init()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_log_slot_init </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__log__slot__t.html">ebisu_log_slot_t</a> *</td>          <td class="paramname"><span class="paramname"><em>slot</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structebisu__lock__t.html">ebisu_lock_t</a> *</td>          <td class="paramname"><span class="paramname"><em>lock</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initializes an empty place for a logger, and makes base a logger of it. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">slot</td><td>The logger. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">lock</td><td>The lock each message and each change take, which has to outlive slot. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a919115858d3c97cc69ce1a158f900766" name="a919115858d3c97cc69ce1a158f900766"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a919115858d3c97cc69ce1a158f900766">&#9670;&#160;</a></span>ebisu_log_slot_set()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structebisu__logger__t.html">ebisu_logger_t</a> * ebisu_log_slot_set </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__log__slot__t.html">ebisu_log_slot_t</a> *</td>          <td class="paramname"><span class="paramname"><em>slot</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structebisu__logger__t.html">ebisu_logger_t</a> *</td>          <td class="paramname"><span class="paramname"><em>target</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Puts a logger in the place, or empties it. </p>
+<p>From any task, while others log through it. It returns once no message is going to the logger the place held: the caller may close it then.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">slot</td><td>The place. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">target</td><td>The logger, which has to stay usable until it is taken out of the place, or NULL to empty it. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The logger the place held, or NULL. </dd></dl>
 
 </div>
 </div>

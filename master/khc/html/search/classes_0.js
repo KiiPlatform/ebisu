@@ -8,12 +8,14 @@ var searchData=
   ['ebisu_5flock_5fops_5ft_5',['ebisu_lock_ops_t',['../../../core/html/structebisu__lock__ops__t.html',1,'']]],
   ['ebisu_5flock_5ft_6',['ebisu_lock_t',['../../../core/html/structebisu__lock__t.html',1,'']]],
   ['ebisu_5flog_5ffanout_5ft_7',['ebisu_log_fanout_t',['../../../core/html/structebisu__log__fanout__t.html',1,'']]],
-  ['ebisu_5flogger_5fops_5ft_8',['ebisu_logger_ops_t',['../../../core/html/structebisu__logger__ops__t.html',1,'']]],
-  ['ebisu_5flogger_5ft_9',['ebisu_logger_t',['../../../core/html/structebisu__logger__t.html',1,'']]],
-  ['ebisu_5fsocket_5fops_5ft_10',['ebisu_socket_ops_t',['../../../core/html/structebisu__socket__ops__t.html',1,'']]],
-  ['ebisu_5fsocket_5ft_11',['ebisu_socket_t',['../../../core/html/structebisu__socket__t.html',1,'']]],
-  ['ebisu_5fspan_5ft_12',['ebisu_span_t',['../../../core/html/structebisu__span__t.html',1,'']]],
-  ['ebisu_5fstrbuf_5ft_13',['ebisu_strbuf_t',['../../../core/html/structebisu__strbuf__t.html',1,'']]],
-  ['ebisu_5fsystem_5fops_5ft_14',['ebisu_system_ops_t',['../../../core/html/structebisu__system__ops__t.html',1,'']]],
-  ['ebisu_5fsystem_5ft_15',['ebisu_system_t',['../../../core/html/structebisu__system__t.html',1,'']]]
+  ['ebisu_5flog_5flevel_5ffilter_5ft_8',['ebisu_log_level_filter_t',['../../../core/html/structebisu__log__level__filter__t.html',1,'']]],
+  ['ebisu_5flog_5fslot_5ft_9',['ebisu_log_slot_t',['../../../core/html/structebisu__log__slot__t.html',1,'']]],
+  ['ebisu_5flogger_5fops_5ft_10',['ebisu_logger_ops_t',['../../../core/html/structebisu__logger__ops__t.html',1,'']]],
+  ['ebisu_5flogger_5ft_11',['ebisu_logger_t',['../../../core/html/structebisu__logger__t.html',1,'']]],
+  ['ebisu_5fsocket_5fops_5ft_12',['ebisu_socket_ops_t',['../../../core/html/structebisu__socket__ops__t.html',1,'']]],
+  ['ebisu_5fsocket_5ft_13',['ebisu_socket_t',['../../../core/html/structebisu__socket__t.html',1,'']]],
+  ['ebisu_5fspan_5ft_14',['ebisu_span_t',['../../../core/html/structebisu__span__t.html',1,'']]],
+  ['ebisu_5fstrbuf_5ft_15',['ebisu_strbuf_t',['../../../core/html/structebisu__strbuf__t.html',1,'']]],
+  ['ebisu_5fsystem_5fops_5ft_16',['ebisu_system_ops_t',['../../../core/html/structebisu__system__ops__t.html',1,'']]],
+  ['ebisu_5fsystem_5ft_17',['ebisu_system_t',['../../../core/html/structebisu__system__t.html',1,'']]]
 ];

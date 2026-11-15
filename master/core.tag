@@ -216,9 +216,12 @@
     <name>ebisu_log.h</name>
     <path>include/</path>
     <filename>ebisu__log_8h.html</filename>
+    <includes id="ebisu__system_8h" name="ebisu_system.h" local="yes" import="no" module="no" objc="no">ebisu_system.h</includes>
     <class kind="struct">ebisu_logger_ops_t</class>
     <class kind="struct">ebisu_logger_t</class>
     <class kind="struct">ebisu_log_fanout_t</class>
+    <class kind="struct">ebisu_log_level_filter_t</class>
+    <class kind="struct">ebisu_log_slot_t</class>
     <member kind="typedef">
       <type>enum ebisu_log_level_t</type>
       <name>ebisu_log_level_t</name>
@@ -245,6 +248,20 @@
       <name>ebisu_log_fanout_t</name>
       <anchorfile>ebisu__log_8h.html</anchorfile>
       <anchor>a9dd37a633c3f347ef4cab58eeb55f93b</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_log_level_filter_t</type>
+      <name>ebisu_log_level_filter_t</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>a5aac9e1841103bcd403a4865d7ee36c9</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_log_slot_t</type>
+      <name>ebisu_log_slot_t</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>ad68b71752ccb0e2a6b705c072ecc3165</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumeration">
@@ -291,6 +308,55 @@
       <anchorfile>ebisu__log_8h.html</anchorfile>
       <anchor>a4ee7810e4c2a3c1949e7fa1c969ffa4f</anchor>
       <arglist>(ebisu_log_fanout_t *fanout, ebisu_logger_t *const *loggers, size_t count)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_log_level_parse</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>ad572d7af06c4d98c1a60c0bc71e43197</anchor>
+      <arglist>(const char *name, ebisu_log_level_t *out)</arglist>
+    </member>
+    <member kind="function">
+      <type>const char *</type>
+      <name>ebisu_log_level_name</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>a4df11bd2caba0ba03ff32dc6f5d1c4b8</anchor>
+      <arglist>(ebisu_log_level_t level)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_log_level_filter_init</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>ad0dc3983617af9f298d9413c6f23b650</anchor>
+      <arglist>(ebisu_log_level_filter_t *filter, ebisu_logger_t *target, ebisu_log_level_t level, ebisu_lock_t *lock)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_log_level_filter_set_level</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>aad9217cfd82d34099426c416a62e886f</anchor>
+      <arglist>(ebisu_log_level_filter_t *filter, ebisu_log_level_t level)</arglist>
+    </member>
+    <member kind="function">
+      <type>ebisu_log_level_t</type>
+      <name>ebisu_log_level_filter_level</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>ad4f43caf1dda0f2fd7df5bdf2710b1d7</anchor>
+      <arglist>(ebisu_log_level_filter_t *filter)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_log_slot_init</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>af593bd95317e340b8308c220fbe03149</anchor>
+      <arglist>(ebisu_log_slot_t *slot, ebisu_lock_t *lock)</arglist>
+    </member>
+    <member kind="function">
+      <type>ebisu_logger_t *</type>
+      <name>ebisu_log_slot_set</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>a919115858d3c97cc69ce1a158f900766</anchor>
+      <arglist>(ebisu_log_slot_t *slot, ebisu_logger_t *target)</arglist>
     </member>
   </compound>
   <compound kind="file">
@@ -948,6 +1014,28 @@
       <name>base</name>
       <anchorfile>structebisu__log__fanout__t.html</anchorfile>
       <anchor>ac8ac9936c9fe790257ec129b4cb5d635</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_log_level_filter_t</name>
+    <filename>structebisu__log__level__filter__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_logger_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__log__level__filter__t.html</anchorfile>
+      <anchor>a310479de70149a5fdd142958b3cc31bd</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_log_slot_t</name>
+    <filename>structebisu__log__slot__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_logger_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__log__slot__t.html</anchorfile>
+      <anchor>ae8aeae760e5f6a9d987c5fadae59a295</anchor>
       <arglist></arglist>
     </member>
   </compound>
