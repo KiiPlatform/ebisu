@@ -68,14 +68,14 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${EBISU_SAMPLE_CA
 add_compile_options(-ffunction-sections -fdata-sections)
 
 # FreeRTOS, FreeRTOS-Plus-TCP and mbedTLS, from their releases, checked against
-# the hashes of these. Their own CMake builds are not used: SOURCE_SUBDIR names
-# a directory none of them has, so they are only downloaded.
+# the hashes of these. FreeRTOS is built with its own CMake, as ebisu's port to
+# it needs. The others' own CMake builds are not used: SOURCE_SUBDIR names a
+# directory neither has, so they are only downloaded.
 include(FetchContent)
 FetchContent_Declare(freertos_kernel
-    URL https://github.com/FreeRTOS/FreeRTOS-Kernel/releases/download/V11.3.2/FreeRTOS-KernelV11.3.2.zip
-    URL_HASH SHA256=d9a800ad99b68bbd70345d3c04612a15e8cd73ad816fe300e55d92286254ab81
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    SOURCE_SUBDIR not-built)
+    URL https://github.com/FreeRTOS/FreeRTOS-Kernel/releases/download/V11.3.3/FreeRTOS-KernelV11.3.3.zip
+    URL_HASH SHA256=dd728be9ecfdcea4121b89ed015dff77eb0d3fa8ce2bff4b660da748b298990f
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
 FetchContent_Declare(freertos_plus_tcp
     URL https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/releases/download/V4.4.2/FreeRTOS-Plus-TCP-V4.4.2.zip
     URL_HASH SHA256=bea95f97c6eecfc957e3fba411a21055ef9f26906b3268bee911a7d2756bf181
@@ -86,24 +86,15 @@ FetchContent_Declare(mbedtls
     URL_HASH SHA256=a7e8bcbec0e6f761b4af24f25677626b35f762f68eef79c08677a363212d11f6
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     SOURCE_SUBDIR not-built)
+# The kernel, as its CMake asks: its configuration, config/FreeRTOSConfig.h, the
+# Cortex-M3 port, and heap_3: pvPortMalloc() is the C library's malloc(), which
+# mbedTLS allocates with too. ebisu is given buffers and a pool for its headers
+# instead, in main.c.
+add_library(freertos_config INTERFACE)
+target_include_directories(freertos_config SYSTEM INTERFACE config)
+set(FREERTOS_PORT GCC_ARM_CM3)
+set(FREERTOS_HEAP 3)
 FetchContent_MakeAvailable(freertos_kernel freertos_plus_tcp mbedtls)
-
-# The kernel, with the Cortex-M3 port and heap_3: pvPortMalloc() is the C
-# library's malloc(), which mbedTLS allocates with too. ebisu is given buffers
-# and a pool for its headers instead, in main.c.
-set(kernel ${freertos_kernel_SOURCE_DIR})
-add_library(freertos STATIC
-    ${kernel}/event_groups.c
-    ${kernel}/list.c
-    ${kernel}/queue.c
-    ${kernel}/tasks.c
-    ${kernel}/timers.c
-    ${kernel}/portable/GCC/ARM_CM3/port.c
-    ${kernel}/portable/MemMang/heap_3.c)
-target_include_directories(freertos SYSTEM PUBLIC
-    config
-    ${kernel}/include
-    ${kernel}/portable/GCC/ARM_CM3)
 
 # The TCP/IP stack, with the board's Ethernet driver.
 set(tcp ${freertos_plus_tcp_SOURCE_DIR}/source)
@@ -117,7 +108,7 @@ add_library(freertos_plus_tcp STATIC
 target_include_directories(freertos_plus_tcp
     SYSTEM PUBLIC ${tcp}/include ${tcp}/portable/Compiler/GCC
     PRIVATE ${tcp_driver}/ether_lan9118)
-target_link_libraries(freertos_plus_tcp PUBLIC freertos)
+target_link_libraries(freertos_plus_tcp PUBLIC freertos_kernel)
 
 # Configured by config/sample_mbedtls_config.h.
 set(mbedtls ${mbedtls_SOURCE_DIR})
@@ -129,38 +120,11 @@ target_include_directories(mbedtls
 target_compile_definitions(mbedtls PUBLIC
     MBEDTLS_CONFIG_FILE="sample_mbedtls_config.h")
 
-# ebisu's libraries, core, jkii, khc, kii and tio, from the repository's sources, as
-# strictly as their own build compiles them.
-file(GLOB ebisu_srcs
-    ${ebisu_root}/core/src/*.c
-    ${ebisu_root}/jkii/src/*.c
-    ${ebisu_root}/khc/src/*.c
-    ${ebisu_root}/kii/*.c
-    ${ebisu_root}/tio/*.c)
-add_library(ebisu STATIC ${ebisu_srcs})
-target_include_directories(ebisu
-    PUBLIC
-        ${ebisu_root}/core/include
-        ${ebisu_root}/jkii/include
-        ${ebisu_root}/khc/include
-        ${ebisu_root}/kii/include
-        ${ebisu_root}/tio/include
-    PRIVATE
-        ${ebisu_root}/jkii/libs
-        ${ebisu_root}/khc/src
-        ${ebisu_root}/kii
-        ${ebisu_root}/tio)
-set_target_properties(ebisu PROPERTIES
-    C_STANDARD 99
-    C_STANDARD_REQUIRED ON
-    C_EXTENSIONS OFF)
-target_compile_options(ebisu PRIVATE -Wall -Werror -pedantic-errors)
-# ebisu_version.h, generated as the libraries' own build does, from the
-# repository's git history.
-include(GNUInstallDirs)
-include(${ebisu_root}/version/EbisuVersion.cmake)
-set_git_version_and_generate_header()
-target_link_libraries(ebisu PUBLIC ebisu_version)
+# ebisu, with its own CMake: tio and what it needs, and the port to FreeRTOS,
+# which it builds as the kernel's target is there. Its version header comes
+# from the repository's git history.
+set(BUILD_SHARED_LIBS OFF)
+add_subdirectory(${ebisu_root} ebisu EXCLUDE_FROM_ALL)
 
 add_executable(ebisu_freertos_sample
     main.c
@@ -169,7 +133,6 @@ add_executable(ebisu_freertos_sample
     net.c
     random.c
     sock_cb_freertos.c
-    sys_cb_freertos.c
     board/board.c
     board/startup.c
     board/syscalls.c
@@ -186,7 +149,7 @@ target_include_directories(ebisu_freertos_sample PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_options(ebisu_freertos_sample PRIVATE -Wall -Werror)
 target_link_libraries(ebisu_freertos_sample PRIVATE
-    ebisu freertos_plus_tcp freertos mbedtls)
+    tio ebisu_freertos freertos_plus_tcp mbedtls)
 # board/startup.c starts the program, not the C library's.
 target_link_options(ebisu_freertos_sample PRIVATE
     -nostartfiles

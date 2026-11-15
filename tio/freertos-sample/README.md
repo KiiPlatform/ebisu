@@ -16,8 +16,9 @@ internet without privileges. CI runs it there against Kii Cloud.
   FreeRTOS-Plus-TCP's sockets. Their `last_error` says why one failed, from
   mbedTLS's error or FreeRTOS-Plus-TCP's, which the sample logs when
   onboarding fails.
-- [sys_cb_freertos.c](sys_cb_freertos.c): tasks, delays and locks, and the
-  monotonic clock on FreeRTOS's tick count.
+
+Tasks, delays, the locks and the monotonic clock are ebisu's port to FreeRTOS,
+[`ebisu_freertos.h`](../../platform/freertos/include/ebisu_freertos.h).
 - [net.c](net.c): FreeRTOS-Plus-TCP on the board's Ethernet, with an address
   from DHCP, and its hooks.
 - [random.c](random.c): mbedTLS's random generator, which TLS and the TCP/IP
@@ -26,10 +27,11 @@ internet without privileges. CI runs it there against Kii Cloud.
   script, the console, the source of randomness, and newlib's system calls.
 - [config](config): FreeRTOS's, FreeRTOS-Plus-TCP's and mbedTLS's configuration.
 
-FreeRTOS V11.3.2, FreeRTOS-Plus-TCP V4.4.2 and mbedTLS 3.6.7 are downloaded
+FreeRTOS V11.3.3, FreeRTOS-Plus-TCP V4.4.2 and mbedTLS 3.6.7 are downloaded
 when CMake configures the build, from their releases, and checked against
-their hashes. ebisu's libraries are built from this repository's sources, and
-its version header generated from its git history, as their own build does.
+their hashes. FreeRTOS is built with its own CMake, and ebisu with its own,
+added after it, which builds its port to FreeRTOS as the kernel's target is
+there, and generates its version header from the repository's git history.
 
 ## The server's certificate
 
@@ -103,4 +105,4 @@ The board's directory is what changes, and the configuration with it:
   in place of the LAN9118's, and its MAC address in [net.c](net.c);
 - the port of FreeRTOS for its processor, and `configCPU_CLOCK_HZ`.
 
-The socket and system callbacks stay as they are.
+The socket callbacks, and ebisu's port, stay as they are.

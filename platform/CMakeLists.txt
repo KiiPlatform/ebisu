@@ -103,6 +103,19 @@ endif()
 # Loggers, for a system with a C library and sockets: to a stdio stream, to a
 # file kept under a size, to syslog on POSIX, and to a syslog server over UDP,
 # on POSIX and Windows alike.
+# FreeRTOS, in an application's build that has FreeRTOS-Kernel's own target,
+# freertos_kernel, as adding the kernel's directory makes it, before ebisu's:
+# built with the application's FreeRTOSConfig.h, as the kernel is. Not
+# installed, as the kernel isn't.
+if(TARGET freertos_kernel)
+    add_library(ebisu_freertos STATIC freertos/src/ebisu_freertos.c)
+    target_include_directories(ebisu_freertos
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/freertos/include>)
+    target_link_libraries(ebisu_freertos PUBLIC ebisu_core freertos_kernel)
+    ebisu_configure_target(ebisu_freertos)
+endif()
+
 if(UNIX OR WIN32)
     set(loggers_srcs
         loggers/src/ebisu_loggers_format.c
