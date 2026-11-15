@@ -1067,6 +1067,16 @@ static jkii_parse_err_t _jkii_parse_fields(
     return ret;
 }
 
+/* Each field not found, in a string nothing can be looked up in, so that no
+   field reads as found from what its result was before the call. */
+static jkii_parse_err_t _jkii_none_found(jkii_field_t* fields, jkii_parse_err_t res)
+{
+    for (jkii_field_t* field = fields; field->name != NULL || field->path != NULL; ++field) {
+        field->result = JKII_FIELD_ERR_NOT_FOUND;
+    }
+    return res;
+}
+
 jkii_parse_err_t jkii_parse(
     const char* json_string,
     size_t json_string_len,
@@ -1074,13 +1084,14 @@ jkii_parse_err_t jkii_parse(
 {
     _jkii_value_t root;
     M_JKII_ASSERT(json_string != NULL);
+    M_JKII_ASSERT(fields != NULL);
 
     jkii_parse_err_t res = _jkii_root(json_string, json_string_len, &root);
     if (res != JKII_ERR_OK) {
-        return res;
+        return _jkii_none_found(fields, res);
     }
     if (root.type != JSONArray && root.type != JSONObject) {
-        return JKII_ERR_INVALID_INPUT;
+        return _jkii_none_found(fields, JKII_ERR_INVALID_INPUT);
     }
     return _jkii_parse_fields(json_string, &root, fields);
 }

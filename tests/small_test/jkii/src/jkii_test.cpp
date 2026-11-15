@@ -2094,6 +2094,25 @@ TEST_CASE("A root that is neither an object nor an array is still refused elsewh
     }
 }
 
+// A string nothing can be looked up in leaves no field reading as found from
+// what its result was before: zeroed, it would be JKII_FIELD_ERR_OK.
+TEST_CASE("KiiJson, NoFieldFoundInInvalidInput") {
+    for (const char* json : { "", "{", "{\"a\":1,}", "{x:1}", "42", "\"a\"", "null" }) {
+        INFO("\"" << json << "\"");
+        jkii_field_t fields[3];
+        memset(fields, 0x00, sizeof(fields));
+        fields[0].name = "a";
+        fields[0].type = JKII_FIELD_TYPE_ANY;
+        fields[1].path = "/a";
+        fields[1].type = JKII_FIELD_TYPE_INTEGER;
+        CHECK(jkii_parse(json, strlen(json), fields) == JKII_ERR_INVALID_INPUT);
+        CHECK(fields[0].result == JKII_FIELD_ERR_NOT_FOUND);
+        CHECK(fields[1].result == JKII_FIELD_ERR_NOT_FOUND);
+        // The end of the array, untouched.
+        CHECK(fields[2].result == JKII_FIELD_ERR_OK);
+    }
+}
+
 // coreJSON's JSON_MAX_DEPTH, 32 by default, keeps how deep its checks go
 // bounded, on a stack that may be small.
 TEST_CASE("KiiJson, NestingDeeperThan32IsInvalid") {

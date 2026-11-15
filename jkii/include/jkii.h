@@ -196,7 +196,9 @@ typedef struct jkii_field_t {
     const char* path;
 
     /** Field parse result. Output of
-     * jkii_parse().
+     * jkii_parse(), which sets it whatever it returns:
+     * jkii_field_err_t#JKII_FIELD_ERR_NOT_FOUND for each field when it
+     * returns jkii_parse_err_t#JKII_ERR_INVALID_INPUT.
      */
     jkii_field_err_t result;
 
@@ -305,7 +307,9 @@ typedef struct jkii_field_t {
  * The string has to be one JSON object or array, after whitespace if any,
  * and before whitespace if any: valid JSON, as ECMA-404 has it, which is
  * checked whole, nesting objects and arrays at most 32 levels deep. Nothing
- * is allocated, and the string is not changed.
+ * is allocated, and the string is not changed. Anything else is
+ * jkii_parse_err_t#JKII_ERR_INVALID_INPUT, and each field's
+ * jkii_field_t#result jkii_field_err_t#JKII_FIELD_ERR_NOT_FOUND.
  *
  *  \param [in] json_string of JSON string.
  *  \param [in] json_string_len of JSON string.

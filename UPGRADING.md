@@ -487,6 +487,10 @@ jkii:
   So is nesting objects and arrays deeper than 32 levels. 1.x, with jsmn's
   lenient grammar, took them all, `{x:1}` for an object whose key no lookup
   found and the key before a missing colon for the parent of what followed.
+- When `jkii_parse()` returns `JKII_ERR_INVALID_INPUT`, it sets each field's
+  `result` to `JKII_FIELD_ERR_NOT_FOUND`. It used to leave them as the caller
+  had them, so that a field zeroed before the call read `JKII_FIELD_ERR_OK`, as
+  if it had been found.
 - Fields looked up by name are found only in an object. In an array, 1.x took
   the elements for pairs of a name and a value. Fields looked up by path still
   reach an array's elements.
