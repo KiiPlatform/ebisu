@@ -208,7 +208,7 @@ $(function() {
 <li><a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c">platform's OpenSSL port</a>: BSD sockets and OpenSSL, which applications can link as it is.</li>
 <li><a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/schannel/src/ebisu_schannel.c">platform's Schannel port</a>: Winsock and Schannel, which applications on Windows can link as it is.</li>
 <li><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/main/sock_cb_esp32.c">esp32-sample</a>: ESP-IDF's esp-tls, mbedTLS over lwIP.</li>
-<li><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/freertos-sample/sock_cb_freertos.c">freertos-sample</a>: mbedTLS over FreeRTOS-Plus-TCP.</li>
+<li><a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/mbedtls/src/ebisu_mbedtls.c">platform's mbedTLS port</a>: mbedTLS over another socket of plain TCP, such as <a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/freertos/src/ebisu_freertos_tcp.c">platform's FreeRTOS-Plus-TCP socket</a>, as the FreeRTOS sample has it.</li>
 </ul>
 <h1>Writing callbacks</h1>
 <p>What <span class="tt"><a class="el" href="structkhc.html" title="khc object.">khc</a></span> leaves to the callbacks, which it can't check. <span class="tt">linux-sample</span> is the one to read for what socket callbacks have to do.</p>
