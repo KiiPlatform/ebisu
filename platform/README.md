@@ -87,6 +87,32 @@ where what it needs is found, which links `libebisu_core`. Link one with
   JSON at once, so each task needs its own: with newlib,
   `configUSE_NEWLIB_REENTRANT`.
 
+- **mbedTLS** (`ebisu_mbedtls.h`, library `ebisu_mbedtls`):
+  `ebisu_mbedtls_socket_t`, TLS 1.2 or later, 1.3 where mbedTLS has it, with
+  mbedTLS 3.6 or 4.x, over another socket of the system's, of plain TCP, which
+  connects, sends and receives the records, and whose timeouts are the
+  connection's: the POSIX port's `ebisu_posix_tcp_socket_t`, the Win32 port's,
+  or one over a microcontroller's TCP/IP stack. Its connections share an
+  `ebisu_mbedtls_tls_t`: the CA certificates the server's has to chain to, PEM
+  or DER, from memory, and mbedTLS's configuration, which
+  `ebisu_mbedtls_tls_config()` gives the application for settings of its own,
+  such as the cipher suites. It checks the server's certificate chain and host
+  name, and each certificate's dates at an `ebisu_clock_t`'s time, in place of
+  mbedTLS's own check at the system's, or at the system's time without one, as
+  mbedTLS has it with `MBEDTLS_HAVE_TIME_DATE`: a device without a real-time
+  clock connects with the clock alone. Random numbers come from PSA's
+  generator, which `ebisu_mbedtls_tls_init()` starts, from mbedTLS's entropy
+  sources. A receive that times out leaves the connection as it was, and
+  `recv_wait` counts what mbedTLS has and hasn't returned. Its `last_error`
+  says why an operation failed: what the socket under it said, for what failed
+  there, a certificate refused, with mbedTLS's verify flags, or another TLS
+  failure, with mbedTLS's error, which also goes to the logger set with
+  `ebisu_mbedtls_socket_set_logger()`, if any, unless it is built with
+  `-DEBISU_LOG=OFF`. Built where CMake finds mbedTLS: the application's,
+  added before ebisu's, or one installed, as its CMake package has it, both
+  `MbedTLS::mbedtls`. Sockets of a configuration on more than one task at once
+  need mbedTLS built with `MBEDTLS_THREADING_C`.
+
 The Linux sample uses the POSIX and OpenSSL ports, the Windows sample the Win32
 and Schannel ones, and the FreeRTOS sample the FreeRTOS one, with a socket of
 its own, mbedTLS over FreeRTOS-Plus-TCP. The ESP32 sample has implementations of
@@ -128,6 +154,29 @@ static ebisu_freertos_lock_t session_lock;
 CI runs the port's tests,
 [tests/freertos](https://github.com/KiiPlatform/ebisu/blob/master/tests/freertos/README.md),
 in QEMU, against the oldest kernel it supports and the latest.
+
+With mbedTLS over the POSIX port's socket, and the CA certificates of the
+application's:
+
+```c
+#include <ebisu_mbedtls.h>
+#include <ebisu_posix.h>
+
+static ebisu_mbedtls_tls_t tls;
+static ebisu_posix_tcp_socket_t tcp;
+static ebisu_mbedtls_socket_t sock;
+
+    /* ca_pem with its NUL, and its size counting it. */
+    int ret = ebisu_mbedtls_tls_init(&tls, (const unsigned char*)ca_pem, ca_pem_size);
+    if (ret != 0) {
+        /* mbedTLS's or PSA's error. */
+    }
+    ebisu_posix_tcp_socket_init(&tcp, 15, 15);
+    ebisu_mbedtls_socket_init(&sock, &tcp.base, &tls);
+    ebisu_mbedtls_socket_set_clock(&sock, &clock);
+    tio_handler_set_http_socket(&handler, &sock.base);
+```
+
 
 ## Loggers
 
