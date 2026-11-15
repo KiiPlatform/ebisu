@@ -116,6 +116,21 @@ if(TARGET freertos_kernel)
     ebisu_configure_target(ebisu_freertos)
 endif()
 
+# mbedTLS, 3.6 or 4.x: the application's, added before ebisu's, or one
+# installed, as its CMake package finds it. Each names its library
+# MbedTLS::mbedtls. Not installed, as the application's isn't.
+if(NOT TARGET MbedTLS::mbedtls)
+    find_package(MbedTLS CONFIG QUIET)
+endif()
+if(TARGET MbedTLS::mbedtls)
+    add_library(ebisu_mbedtls STATIC mbedtls/src/ebisu_mbedtls.c)
+    target_include_directories(ebisu_mbedtls
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/mbedtls/include>)
+    target_link_libraries(ebisu_mbedtls PUBLIC ebisu_core MbedTLS::mbedtls)
+    ebisu_configure_target(ebisu_mbedtls)
+endif()
+
 if(UNIX OR WIN32)
     set(loggers_srcs
         loggers/src/ebisu_loggers_format.c

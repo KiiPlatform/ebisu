@@ -1,0 +1,211 @@
+/**
+ * @file ebisu_mbedtls.h
+ * @brief TLS with mbedTLS, over another socket of the system's.
+ */
+#ifndef _EBISU_MBEDTLS
+#define _EBISU_MBEDTLS
+
+#include <ebisu_clock.h>
+#include <ebisu_log.h>
+#include <ebisu_socket.h>
+
+#include <mbedtls/ssl.h>
+#include <mbedtls/x509_crt.h>
+
+#include <stdbool.h>
+#include <stddef.h>
+
+/* The library is compiled with hidden visibility, so what this header declares
+   is exactly what a shared object built with it exports. */
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility push(default)
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * \brief The TLS configuration connections share.
+ *
+ * TLS 1.2 or later, 1.3 where mbedTLS is built with it, with mbedTLS's default
+ * cipher suites. The server's certificate has to chain to one of the
+ * configuration's CA certificates, and be issued for the host connected to.
+ *
+ * Random numbers come from PSA's generator, which ebisu_mbedtls_tls_init()
+ * starts with psa_crypto_init(), from mbedTLS's entropy sources: on a device,
+ * the hardware's, as mbedTLS is configured to take them, with
+ * MBEDTLS_ENTROPY_HARDWARE_ALT in mbedTLS 3.6, or
+ * MBEDTLS_PSA_DRIVER_GET_ENTROPY in 4.x. Connections share the generator: on
+ * more than one task at once, mbedTLS has to be built with
+ * MBEDTLS_THREADING_C, with MBEDTLS_THREADING_PTHREAD on POSIX, or
+ * MBEDTLS_THREADING_ALT and functions of the system's.
+ *
+ * mbedTLS 3.6 and 4.x. Initialize with ebisu_mbedtls_tls_init(), before the
+ * connections, and free with ebisu_mbedtls_tls_free() once none is open.
+ */
+typedef struct ebisu_mbedtls_tls_t {
+    mbedtls_ssl_config _config; /**< \private */
+    mbedtls_x509_crt _ca; /**< \private */
+} ebisu_mbedtls_tls_t;
+
+/**
+ * \brief Sets up a TLS configuration, with the CA certificates the server's
+ * has to chain to.
+ *
+ * Calls psa_crypto_init(), which may have been called already, and doesn't
+ * call mbedtls_psa_crypto_free(), which the application may, once it no
+ * longer uses PSA.
+ *
+ * \param [out] tls The configuration.
+ * \param [in] ca The CA certificates: PEM, one or more, with the terminating
+ * NUL, or one in DER.
+ * \param [in] ca_size The size of ca, its NUL included for PEM.
+ * \return 0, or mbedTLS's or PSA's error, in which case the configuration
+ * holds nothing to free.
+ */
+int ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, size_t ca_size);
+
+/**
+ * \brief mbedTLS's configuration, for settings of the application's.
+ *
+ * Such as the cipher suites, mbedtls_ssl_conf_ciphersuites(), or the lowest
+ * version, mbedtls_ssl_conf_min_tls_version(). Changed after
+ * ebisu_mbedtls_tls_init(), before the first connection. What
+ * ebisu_mbedtls_tls_init() set, the verification, the CA certificates and the
+ * random generator, are the socket's to keep.
+ *
+ * \param [in] tls The configuration.
+ * \return mbedTLS's configuration.
+ */
+mbedtls_ssl_config* ebisu_mbedtls_tls_config(ebisu_mbedtls_tls_t* tls);
+
+/**
+ * \brief Frees a TLS configuration, which no connection may use any more.
+ *
+ * \param [in,out] tls The configuration.
+ */
+void ebisu_mbedtls_tls_free(ebisu_mbedtls_tls_t* tls);
+
+/**
+ * \brief A TLS connection with mbedTLS, over another socket of the system's.
+ *
+ * The socket under it connects to the host, sends and receives the TLS
+ * records, and closes: a socket of plain TCP, such as ebisu_posix_tcp_socket_t,
+ * whose timeouts are the connection's. A receive that times out is
+ * EBISU_SOCK_FAIL, which recv_timed_out tells from a lost connection, and
+ * leaves the connection as it was. A send that times out fails too.
+ *
+ * The server's certificate is checked as the configuration says, and the
+ * validity period of each of its chain's at the time of the clock set by
+ * ebisu_mbedtls_socket_set_clock(), in place of the check mbedTLS makes itself
+ * with MBEDTLS_HAVE_TIME_DATE. Without a clock, mbedTLS checks them at the
+ * system's time, with MBEDTLS_HAVE_TIME_DATE; without that either, the socket
+ * doesn't connect, rather than not check them.
+ *
+ * A close_notify of the server's, or the end of the stream under it, is the end
+ * of the stream. A TLS 1.3 server's session tickets are taken and dropped.
+ * recv_wait, when the socket under it has one, counts what mbedTLS has
+ * received and not yet returned.
+ *
+ * Why an operation failed, its last_error says: what the socket under it said,
+ * for what failed there, as a host that didn't resolve or an address that
+ * refused, a certificate refused, with mbedTLS's verify flags,
+ * MBEDTLS_X509_BADCERT_*, another TLS failure, with mbedTLS's error, a
+ * timeout, or a peer that closed. The TLS failures also go to the logger set
+ * by ebisu_mbedtls_socket_set_logger(), if any; the socket under it logs its
+ * own, to the logger it is given.
+ *
+ * One serves one connection at a time, from one task at a time, and is used
+ * again for the next once closed. Initialize with ebisu_mbedtls_socket_init().
+ */
+typedef struct ebisu_mbedtls_socket_t {
+    ebisu_socket_t base; /**< \brief What ebisu is given. */
+    ebisu_socket_t* _transport; /**< \private */
+    ebisu_mbedtls_tls_t* _tls; /**< \private */
+    ebisu_clock_t* _clock; /**< \private */
+    ebisu_logger_t* _logger; /**< \private */
+    mbedtls_ssl_context _ssl; /**< \private */
+    /** \private Whether _ssl is set up, from connect to close. */
+    bool _open;
+    /** \private Whether mbedTLS ended the connection with an error, after
+     * which it sends no close_notify. */
+    bool _failed;
+    /** \private Whether the clock had the time, rather than its floor only,
+     * when the connection was made. */
+    bool _time_exact;
+    /** \private Whether the socket under it timed out in the last operation,
+     * which mbedTLS was told is wanting to read or write. */
+    bool _timed_out;
+    /** \private Whether it said to try again, EBISU_SOCK_AGAIN, as a socket
+     * that doesn't block does, which mbedTLS was told so too. */
+    bool _again;
+    /** \private Whether the last receive failed for its timeout. */
+    bool _recv_timed_out;
+    /** \private What the socket under it said of its last failure. */
+    ebisu_sock_error_t _transport_error;
+    long _transport_detail; /**< \private */
+    /** \private Why the last operation that returned EBISU_SOCK_FAIL failed,
+     * for last_error, and more of it. */
+    ebisu_sock_error_t _error;
+    long _error_detail; /**< \private */
+} ebisu_mbedtls_socket_t;
+
+/**
+ * \brief Clears the socket, over the socket under it and with the
+ * configuration, and makes base a socket of it.
+ *
+ * \param [out] sock The socket.
+ * \param [in] transport The socket under it, which has to outlive it, and
+ * isn't used by anything else meanwhile.
+ * \param [in] tls The configuration, set up with ebisu_mbedtls_tls_init(),
+ * which has to outlive the socket.
+ */
+void ebisu_mbedtls_socket_init(
+        ebisu_mbedtls_socket_t* sock,
+        ebisu_socket_t* transport,
+        ebisu_mbedtls_tls_t* tls);
+
+/**
+ * \brief Sets the clock the server's certificate is checked at the time of.
+ *
+ * While the clock has only its floor, a certificate that expired before it is
+ * refused, and one not valid yet is not, as it may have been issued since. A
+ * certificate not valid yet at a time the clock had is refused, and the
+ * clock's time forgotten, so that the next connection is checked at its floor
+ * and its response gives the clock the time again: more likely than a
+ * certificate from the future, the time fell behind. See
+ * ebisu_clock_forget_time().
+ *
+ * \param [out] sock The socket.
+ * \param [in] clock The clock, which has to outlive the socket, or NULL, as the
+ * socket starts, for the system's time.
+ */
+void ebisu_mbedtls_socket_set_clock(ebisu_mbedtls_socket_t* sock, ebisu_clock_t* clock);
+
+/**
+ * \brief Sets where the socket's diagnostics go.
+ *
+ * Why TLS failed, at EBISU_LOG_ERROR: the handshake, a certificate refused,
+ * with why, a send or a receive. A receive that times out isn't one, and the
+ * socket under it logs its own failures.
+ *
+ * Built with EBISU_NO_LOG, as -DEBISU_LOG=OFF builds it, the socket logs
+ * nothing.
+ *
+ * \param [out] sock The socket.
+ * \param [in] logger The logger, which has to outlive the socket, or NULL, as
+ * the socket starts, for the diagnostics to go nowhere.
+ */
+void ebisu_mbedtls_socket_set_logger(ebisu_mbedtls_socket_t* sock, ebisu_logger_t* logger);
+
+#ifdef __cplusplus
+}
+#endif
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility pop
+#endif
+
+#endif /* _EBISU_MBEDTLS */
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
