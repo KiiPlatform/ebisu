@@ -658,7 +658,9 @@ void kii_enable_insecure_http(
  *
  * MQTT over ssl/tls is used by default.
  * If you need to use MQTT over plain tcp,
- * you need to call this method.
+ * you need to call this method. The MQTT socket then has to be one of plain
+ * TCP, such as platform's ebisu_posix_tcp_socket_t or
+ * ebisu_win32_tcp_socket_t, and it connects to the endpoint's port_tcp.
  * \param [out] kii kii_t instance.
  * \param [in] enable_insecure_mqtt true indicates using insecure connection.
  */

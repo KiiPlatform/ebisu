@@ -1,10 +1,12 @@
 /**
  * @file ebisu_posix.h
- * @brief The system and a lock on POSIX.
+ * @brief The system, a lock and a socket of plain TCP on POSIX.
  */
 #ifndef _EBISU_POSIX
 #define _EBISU_POSIX
 
+#include <ebisu_log.h>
+#include <ebisu_socket.h>
 #include <ebisu_system.h>
 
 #include <pthread.h>
@@ -51,6 +53,100 @@ int ebisu_posix_lock_init(ebisu_posix_lock_t* lock);
  * \param [in,out] lock The lock.
  */
 void ebisu_posix_lock_destroy(ebisu_posix_lock_t* lock);
+
+/**
+ * \brief A TCP connection over a blocking BSD socket, without TLS.
+ *
+ * For a server that takes plain TCP, such as the MQTT broker's port without
+ * TLS, which kii_enable_insecure_mqtt() connects to. Nothing it sends or
+ * receives is encrypted or authenticated: anyone on the path can read it, and
+ * change it.
+ *
+ * It connects as ebisu_openssl_socket_t does, with the same code, but for the
+ * TLS: see ebisu_posix_tcp_socket_set_connect_timeout(). A receive that times
+ * out is EBISU_SOCK_FAIL, which recv_timed_out tells from a lost connection,
+ * and a peer that closes the connection is the end of the stream. A send to a
+ * peer that has gone fails, and never raises SIGPIPE. One serves one
+ * connection at a time, and is used again for the next once closed. Why an
+ * operation failed, its last_error says: a host that didn't resolve, with
+ * getaddrinfo()'s error, an address that refused, with errno, a timeout, a
+ * peer that closed or reset the connection, or another failure, with errno.
+ * It also goes to the logger set by ebisu_posix_tcp_socket_set_logger(), if
+ * any.
+ *
+ * Initialize with ebisu_posix_tcp_socket_init().
+ */
+typedef struct ebisu_posix_tcp_socket_t {
+    ebisu_socket_t base; /**< \brief What ebisu is given. */
+    int socket; /**< \private */
+    unsigned int to_recv; /**< \private */
+    unsigned int to_send; /**< \private */
+    /** \private Bounds looking up the host, and each attempt to connect to
+     * one of its addresses, in seconds, 0 for none. */
+    unsigned int to_connect;
+    /** \private errno after the last recv() that failed, for
+     * recv_timed_out. */
+    int recv_errno;
+    /** \private Where diagnostics go, or NULL for nowhere. */
+    ebisu_logger_t* logger;
+    /** \private Why the last operation that returned EBISU_SOCK_FAIL failed,
+     * for last_error, and more of it. */
+    ebisu_sock_error_t error;
+    long error_detail; /**< \private */
+} ebisu_posix_tcp_socket_t;
+
+/**
+ * \brief Clears the socket, with its timeouts, and makes base a socket of it.
+ *
+ * \param [out] sock The socket.
+ * \param [in] to_recv Receive timeout in seconds, 0 for none. For MQTT, the
+ * one given to kii_set_mqtt_to_sock_recv().
+ * \param [in] to_send Send timeout in seconds, 0 for none. It bounds looking
+ * up the host and each attempt to connect too, unless
+ * ebisu_posix_tcp_socket_set_connect_timeout() sets another.
+ */
+void ebisu_posix_tcp_socket_init(
+        ebisu_posix_tcp_socket_t* sock,
+        unsigned int to_recv,
+        unsigned int to_send);
+
+/**
+ * \brief Sets how long connecting may take.
+ *
+ * The host is looked up with getaddrinfo(), and its addresses tried in the
+ * order it gives them, IPv6 and IPv4, until one connects. The timeout bounds
+ * the lookup, and each attempt to connect to an address.
+ *
+ * getaddrinfo() can't be given a timeout: a lookup the timeout cuts short goes
+ * on, on a thread of its own, for as long as the system's resolver takes. A
+ * connect to the same host and port meanwhile, of any of these sockets, waits
+ * for that lookup, within its own timeout, rather than start another: lookups
+ * that don't end leave a thread for each host and port, however often
+ * connects time out on them.
+ *
+ * \param [out] sock The socket.
+ * \param [in] seconds 0 for no bound: the lookup takes as long as the system's
+ * resolver does, and an attempt as long as the system's TCP does.
+ */
+void ebisu_posix_tcp_socket_set_connect_timeout(ebisu_posix_tcp_socket_t* sock,
+        unsigned int seconds);
+
+/**
+ * \brief Sets where the socket's diagnostics go.
+ *
+ * Why an operation failed, at EBISU_LOG_ERROR: a host that didn't resolve or
+ * connect, a send or a receive that failed. A receive that times out isn't
+ * one.
+ *
+ * Built with EBISU_NO_LOG, as -DEBISU_LOG=OFF builds it, the socket logs
+ * nothing.
+ *
+ * \param [out] sock The socket.
+ * \param [in] logger The logger, which has to outlive the socket, or NULL, as
+ * the socket starts, for the diagnostics to go nowhere.
+ */
+void ebisu_posix_tcp_socket_set_logger(ebisu_posix_tcp_socket_t* sock,
+        ebisu_logger_t* logger);
 
 #ifdef __cplusplus
 }

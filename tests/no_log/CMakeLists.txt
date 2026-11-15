@@ -52,6 +52,13 @@ endif()
 if(TARGET ebisu_schannel)
   ebisu_check_no_log(ebisu_schannel "${port_messages}")
 endif()
+# Their sockets of plain TCP.
+if(TARGET ebisu_posix)
+  ebisu_check_no_log(ebisu_posix "failed to")
+endif()
+if(TARGET ebisu_win32)
+  ebisu_check_no_log(ebisu_win32 "failed to")
+endif()
 # That no name server answered, and that one answers again.
 if(TARGET ebisu_dns_probe)
   ebisu_check_no_log(ebisu_dns_probe "failed to look up |answers again")

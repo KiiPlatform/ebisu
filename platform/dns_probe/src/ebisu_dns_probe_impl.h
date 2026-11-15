@@ -4,6 +4,11 @@
 
 #include <ebisu_dns_probe.h>
 
+#ifdef _WIN32
+#include <winsock2.h>
+#include <iphlpapi.h>
+#endif
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -22,7 +27,8 @@ extern "C" {
 /* The longest query built: the header, the name and its type and class. */
 #define _EBISU_DNS_QUERY_MAX (12 + _EBISU_DNS_NAME_MAX + 2 + 4)
 
-/* As many servers as the C libraries take from /etc/resolv.conf, MAXNS. */
+/* As many servers as the C libraries take from /etc/resolv.conf, MAXNS, and
+   as many as are asked on Windows. */
 #define _EBISU_DNS_SERVERS_MAX 3
 
 /* Whether the C library reads /etc/resolv.conf as glibc does, or as musl does,
@@ -81,6 +87,7 @@ size_t _ebisu_dns_probe_parse_resolv_line(const char* line, size_t length,
 size_t _ebisu_dns_probe_parse_resolv_conf(const char* text, size_t length,
         _ebisu_dns_addr_t* servers, size_t max, bool as_glibc);
 
+#ifndef _WIN32
 /* The servers of the file at path, as the system's lookups ask them, as many as
    max, which is at least 1: 127.0.0.1 if it has none or can't be read. How
    many. Its lines are read as _ebisu_dns_probe_parse_resolv_line() has it,
@@ -88,12 +95,22 @@ size_t _ebisu_dns_probe_parse_resolv_conf(const char* text, size_t length,
    newline aside, skipped. */
 size_t _ebisu_dns_probe_read_servers(const char* path, _ebisu_dns_addr_t* servers,
         size_t max, bool as_glibc);
+#endif
 
 /* Asks each of count servers in turn, but one that an earlier one repeats,
    until one answers, as ebisu_dns_probe() asks the system's. */
 ebisu_dns_probe_result_t _ebisu_dns_probe_ask_servers(const char* host,
         const _ebisu_dns_addr_t* servers, size_t count, uint32_t timeout_ms, char* detail,
         size_t detail_size);
+
+#ifdef _WIN32
+/* The servers of the adapters that are up, in the order they come, as many as
+   max: IPv4 and IPv6, with an IPv6 one's scope, but a server an earlier one
+   has and the placeholders fec0:0:0:ffff::1 to ::3, which Windows lists for an
+   adapter without an IPv6 server. How many: it may be none. */
+size_t _ebisu_dns_probe_adapter_servers(const IP_ADAPTER_ADDRESSES* adapters,
+        _ebisu_dns_addr_t* servers, size_t max);
+#endif
 
 #ifdef __cplusplus
 }

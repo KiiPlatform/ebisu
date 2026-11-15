@@ -5,14 +5,14 @@
 if(UNIX)
     find_package(Threads)
     if(Threads_FOUND)
-        add_library(ebisu_posix STATIC posix/src/ebisu_posix.c)
+        add_library(ebisu_posix STATIC posix/src/ebisu_posix.c posix/src/ebisu_posix_tcp.c)
         target_include_directories(ebisu_posix
             PUBLIC
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/posix/include>)
         target_link_libraries(ebisu_posix PUBLIC ebisu_core Threads::Threads)
-        # nanosleep() and clock_gettime() are POSIX, which -std=c99 hides:
-        # glibc declares them with _DEFAULT_SOURCE, and macOS keeps declaring
-        # them unless something asks for strict POSIX.
+        # nanosleep(), clock_gettime() and BSD sockets are POSIX, which -std=c99
+        # hides: glibc declares them with _DEFAULT_SOURCE, and macOS keeps
+        # declaring them unless something asks for strict POSIX.
         target_compile_definitions(ebisu_posix PRIVATE _DEFAULT_SOURCE)
         ebisu_configure_target(ebisu_posix)
         install(FILES posix/include/ebisu_posix.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
@@ -60,35 +60,17 @@ if(UNIX)
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
             INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
     endif()
-
-    # The DNS probe: whether the name servers of /etc/resolv.conf answer, over
-    # BSD sockets, and a socket that asks before another connects.
-    add_library(ebisu_dns_probe STATIC dns_probe/src/ebisu_dns_probe.c)
-    target_include_directories(ebisu_dns_probe
-        PUBLIC
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/dns_probe/include>)
-    target_link_libraries(ebisu_dns_probe PUBLIC ebisu_core)
-    # BSD sockets, poll() and clock_gettime() are POSIX, which glibc declares
-    # under -std=c99 only with _DEFAULT_SOURCE.
-    target_compile_definitions(ebisu_dns_probe PRIVATE _DEFAULT_SOURCE)
-    ebisu_configure_target(ebisu_dns_probe)
-    install(FILES dns_probe/include/ebisu_dns_probe.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-    # ebisu::dns_probe in the CMake package.
-    set_target_properties(ebisu_dns_probe PROPERTIES EXPORT_NAME dns_probe)
-    install(TARGETS ebisu_dns_probe EXPORT ebisu-targets
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
-# The Windows ports: the system and a lock on the Win32 API, and TLS over
-# Winsock 2 with Schannel, with crypt32 to check the server's certificate, so
-# they need nothing beyond what Windows provides.
+# The Windows ports: the system, a lock and plain TCP on the Win32 API and
+# Winsock 2, and TLS over Winsock 2 with Schannel, with crypt32 to check the
+# server's certificate, so they need nothing beyond what Windows provides.
 if(WIN32)
-    add_library(ebisu_win32 STATIC win32/src/ebisu_win32.c)
+    add_library(ebisu_win32 STATIC win32/src/ebisu_win32.c win32/src/ebisu_win32_tcp.c)
     target_include_directories(ebisu_win32
         PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/win32/include>)
-    target_link_libraries(ebisu_win32 PUBLIC ebisu_core)
+    target_link_libraries(ebisu_win32 PUBLIC ebisu_core ws2_32)
     # Without it, windows.h pulls in winsock.h, the 1.1 API, which then
     # clashes with winsock2.h in what includes both.
     target_compile_definitions(ebisu_win32 PUBLIC WIN32_LEAN_AND_MEAN)
@@ -143,6 +125,33 @@ if(UNIX OR WIN32)
     # ebisu::loggers in the CMake package.
     set_target_properties(ebisu_loggers PROPERTIES EXPORT_NAME loggers)
     install(TARGETS ebisu_loggers EXPORT ebisu-targets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+endif()
+
+# The DNS probe: whether the system's name servers answer, those of
+# /etc/resolv.conf over BSD sockets, or of the network adapters over Winsock 2
+# on Windows, and a socket that asks before another connects.
+if(UNIX OR WIN32)
+    add_library(ebisu_dns_probe STATIC dns_probe/src/ebisu_dns_probe.c)
+    target_include_directories(ebisu_dns_probe
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/dns_probe/include>)
+    target_link_libraries(ebisu_dns_probe PUBLIC ebisu_core)
+    if(WIN32)
+        # GetAdaptersAddresses() is iphlpapi's.
+        target_link_libraries(ebisu_dns_probe PUBLIC ws2_32 iphlpapi)
+        target_compile_definitions(ebisu_dns_probe PRIVATE WIN32_LEAN_AND_MEAN)
+    else()
+        # BSD sockets, poll() and clock_gettime() are POSIX, which glibc
+        # declares under -std=c99 only with _DEFAULT_SOURCE.
+        target_compile_definitions(ebisu_dns_probe PRIVATE _DEFAULT_SOURCE)
+    endif()
+    ebisu_configure_target(ebisu_dns_probe)
+    install(FILES dns_probe/include/ebisu_dns_probe.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    # ebisu::dns_probe in the CMake package.
+    set_target_properties(ebisu_dns_probe PROPERTIES EXPORT_NAME dns_probe)
+    install(TARGETS ebisu_dns_probe EXPORT ebisu-targets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()

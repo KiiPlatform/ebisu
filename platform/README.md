@@ -15,8 +15,18 @@ where what it needs is found, which links `libebisu_core`. Link one with
 
 - **POSIX** (`ebisu_posix.h`, library `ebisu_posix`): `ebisu_posix_system()`,
   whose tasks are detached threads, whose delays are `nanosleep()` and whose
-  monotonic clock is `CLOCK_MONOTONIC`, and `ebisu_posix_lock_t`, a pthread
-  mutex. Needs POSIX threads.
+  monotonic clock is `CLOCK_MONOTONIC`, `ebisu_posix_lock_t`, a pthread
+  mutex, and `ebisu_posix_tcp_socket_t`, plain TCP over a blocking BSD socket,
+  for a server without TLS, as an MQTT broker's port is with
+  `kii_enable_insecure_mqtt()`. Nothing it sends is encrypted. It looks the
+  host up and connects as the OpenSSL port's socket does, with the same code,
+  and a lookup thread of its own for a host and port. A send to a peer that
+  has gone fails, with `MSG_NOSIGNAL`, or `SO_NOSIGPIPE` where send() has no
+  such flag, rather than raise `SIGPIPE`. Its `last_error` says why an
+  operation failed, which also goes to the logger set with
+  `ebisu_posix_tcp_socket_set_logger()`, if any, unless it is built with
+  `-DEBISU_LOG=OFF`, and its `recv_wait` waits with `poll()`. Needs POSIX
+  threads.
 - **OpenSSL** (`ebisu_openssl.h`, library `ebisu_openssl`):
   `ebisu_openssl_socket_t`, TLS 1.2 or later over a blocking BSD socket,
   taking in TLS 1.2 only suites with forward secrecy and authenticated
@@ -37,8 +47,13 @@ where what it needs is found, which links `libebisu_core`. Link one with
   what OpenSSL has decrypted. Needs OpenSSL 1.0.2 or later, and POSIX threads.
 - **Win32** (`ebisu_win32.h`, library `ebisu_win32`): `ebisu_win32_system()`,
   whose tasks are threads of their own, made with `_beginthreadex()`, whose
-  delays are `Sleep()` and whose monotonic clock is `GetTickCount64()`, and
-  `ebisu_win32_lock_t`, an SRWLOCK.
+  delays are `Sleep()` and whose monotonic clock is `GetTickCount64()`,
+  `ebisu_win32_lock_t`, an SRWLOCK, and `ebisu_win32_tcp_socket_t`, plain TCP
+  over Winsock 2, for a server without TLS. Nothing it sends is encrypted. It
+  looks the host up and connects as the Schannel port's socket does, with the
+  same code, and waits for a receive with `select()`, as it does too. Its
+  `last_error` and logger are as the Schannel port's. Needs only what Windows
+  provides, `ws2_32`, which it links.
 - **Schannel** (`ebisu_schannel.h`, library `ebisu_schannel`):
   `ebisu_schannel_socket_t`, TLS over Winsock 2 with Schannel, through SSPI,
   checking the server's certificate itself with crypt32, at an
@@ -120,22 +135,27 @@ time what it passes on.
 
 ## DNS probe
 
-`ebisu_dns_probe.h`, library `ebisu_dns_probe`, built on POSIX, asks whether
-the name servers answer before a host is looked up. `getaddrinfo()` can't be
+`ebisu_dns_probe.h`, library `ebisu_dns_probe`, built on POSIX and on Windows,
+asks whether the name servers answer before a host is looked up. `getaddrinfo()` can't be
 given a timeout: when the servers don't answer, a lookup waits for as long as
 the C library keeps asking them again, and so does the task that looked up:
 how long is below.
 
 `ebisu_dns_probe()` sends one query for the host to each server of
 `/etc/resolv.conf` in turn, as the C libraries read it, or 127.0.0.1 without
-one, until one answers, giving each the time it is given.
+one, until one answers, giving each the time it is given. On Windows, the
+servers are those of the network adapters that are up, as
+`GetAdaptersAddresses()` lists them, but the placeholders `fec0:0:0:ffff::1` to
+`::3`, which Windows lists for an adapter without an IPv6 server; without any,
+none is asked.
 `ebisu_dns_probe_servers()` asks the servers it is given instead. Any answer
 counts, that the name doesn't exist too: the probe tells only whether a server
 answers. A host that needs no server, an address or localhost, needs no probe.
 
 `ebisu_dns_probe_socket_t` probes before another socket connects, and fails the
 connect if no server answers, with `EBISU_SOCK_ERROR_DNS`, rather than have
-the other socket look the host up. The rest is the other socket's.
+the other socket look the host up. The rest is the other socket's, which may be
+any: the OpenSSL or Schannel port's, or the POSIX or Win32 port's of plain TCP.
 
 ```c
 #include <ebisu_dns_probe.h>
@@ -161,8 +181,8 @@ probe.
 ### How long a lookup waits
 
 When the name servers don't answer, a lookup ends when the C library gives up
-on them. The UDP logger's init waits that long, and the OpenSSL port's thread
-for a host and port lasts that long. Timed with servers that never answer, and
+on them. The UDP logger's init waits that long, and the thread for a host and
+port of the OpenSSL port, or of the POSIX port's plain socket, lasts that long. Timed with servers that never answer, and
 `/etc/resolv.conf`'s default options:
 
 | Servers                     | glibc 2.26, 2.39 | musl 1.1.24, 1.2.5 |
@@ -190,5 +210,6 @@ without one it fails with `EAI_AGAIN`.
 
 On Windows Server 2025, a lookup whose one server never answered ended after
 12 seconds, and failed as for a name that doesn't exist, `WSAHOST_NOT_FOUND`.
-The Schannel port's connect timeout cuts it short: the lookup is cancelled,
-and the connect fails with `EBISU_SOCK_ERROR_TIMEOUT`.
+The connect timeout of the Schannel port, or of the Win32 port's plain socket,
+cuts it short: the lookup is cancelled, and the connect fails with
+`EBISU_SOCK_ERROR_TIMEOUT`.
