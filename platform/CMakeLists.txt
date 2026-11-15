@@ -116,6 +116,19 @@ if(TARGET freertos_kernel)
     ebisu_configure_target(ebisu_freertos)
 endif()
 
+# FreeRTOS-Plus-TCP's socket, where the build has FreeRTOS-Plus-TCP's own
+# target too, freertos_plus_tcp, as adding its directory makes it, with the
+# application's FreeRTOSIPConfig.h. Not installed, as FreeRTOS-Plus-TCP isn't.
+if(TARGET freertos_kernel AND TARGET freertos_plus_tcp)
+    add_library(ebisu_freertos_tcp STATIC freertos/src/ebisu_freertos_tcp.c)
+    target_include_directories(ebisu_freertos_tcp
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/freertos/include>)
+    # FreeRTOS-Plus-TCP's target doesn't pass the kernel's headers on.
+    target_link_libraries(ebisu_freertos_tcp PUBLIC ebisu_core freertos_kernel freertos_plus_tcp)
+    ebisu_configure_target(ebisu_freertos_tcp)
+endif()
+
 # mbedTLS, 3.6 or 4.x: the application's, added before ebisu's, or one
 # installed, as its CMake package finds it. Each names its library
 # MbedTLS::mbedtls. Not installed, as the application's isn't.

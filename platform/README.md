@@ -86,6 +86,23 @@ where what it needs is found, which links `libebisu_core`. Link one with
   `errno` after `strtoll()`, and the handler's and the updater's tasks parse
   JSON at once, so each task needs its own: with newlib,
   `configUSE_NEWLIB_REENTRANT`.
+- **FreeRTOS-Plus-TCP** (`ebisu_freertos_tcp.h`, library `ebisu_freertos_tcp`):
+  `ebisu_freertos_tcp_socket_t`, plain TCP over FreeRTOS-Plus-TCP, for TLS over
+  it with the mbedTLS port's socket, or for a server without TLS. Nothing it
+  sends itself is encrypted. It connects to an IPv4 address as written, or
+  looks a name up with `FreeRTOS_getaddrinfo()`, IPv6 too with
+  `ipconfigUSE_IPv6`, and tries each address within its connect timeout: the
+  lookup takes as long as FreeRTOS-Plus-TCP's DNS client does. A receive that
+  times out leaves the connection as it was, a peer that closes or resets it
+  is the end of the stream, and `recv_wait` waits with a receive that peeks.
+  Its `last_error` says why an operation failed, with FreeRTOS-Plus-TCP's
+  error, which also goes to the logger set with
+  `ebisu_freertos_tcp_socket_set_logger()`, if any, unless it is built with
+  `-DEBISU_LOG=OFF`. Built where the application's build has
+  FreeRTOS-Plus-TCP's own target, `freertos_plus_tcp`, as well as the
+  kernel's, with its `FreeRTOSIPConfig.h`, and not installed. Needs
+  FreeRTOS-Plus-TCP V4.2 or later, that of FreeRTOS LTS 202406,
+  `ipconfigUSE_TCP` and `ipconfigUSE_DNS`.
 
 - **mbedTLS** (`ebisu_mbedtls.h`, library `ebisu_mbedtls`):
   `ebisu_mbedtls_socket_t`, TLS 1.2 or later, 1.3 where mbedTLS has it, with
@@ -153,7 +170,11 @@ static ebisu_freertos_lock_t session_lock;
 
 CI runs the port's tests,
 [tests/freertos](https://github.com/KiiPlatform/ebisu/blob/master/tests/freertos/README.md),
-in QEMU, against the oldest kernel it supports and the latest.
+in QEMU, against the oldest kernel it supports and the latest, and the
+FreeRTOS-Plus-TCP socket's,
+[tests/freertos_tcp](https://github.com/KiiPlatform/ebisu/blob/master/tests/freertos_tcp/README.md),
+in QEMU against servers on the host, against the oldest FreeRTOS-Plus-TCP and
+kernel it supports and the latest.
 
 With mbedTLS over the POSIX port's socket, and the CA certificates of the
 application's:
