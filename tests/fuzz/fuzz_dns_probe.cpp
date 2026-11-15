@@ -8,6 +8,7 @@
 // read back the same. Each from memory of exactly its length, so that a read
 // past it is an ASan finding.
 #include "ebisu_dns_probe_impl.h"
+#include "ebisu_posix_dns_impl.h"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -20,16 +21,17 @@
 namespace {
 
 void check_resolv_conf(const std::vector<char>& text, bool as_glibc) {
-    _ebisu_dns_addr_t servers[_EBISU_DNS_SERVERS_MAX];
-    size_t count = _ebisu_dns_probe_parse_resolv_conf(text.empty() ? nullptr : text.data(),
+    ebisu_dns_addr_t servers[_EBISU_DNS_SERVERS_MAX];
+    size_t count = _ebisu_posix_dns_parse_resolv_conf(text.empty() ? nullptr : text.data(),
             text.size(), servers, _EBISU_DNS_SERVERS_MAX, as_glibc);
     if (count > _EBISU_DNS_SERVERS_MAX) abort();
     for (size_t i = 0; i < count; ++i) {
         if (servers[i].port != 53) abort();
-        if (servers[i].family != AF_INET && servers[i].family != AF_INET6) abort();
-        if (servers[i].family == AF_INET && servers[i].scope_id != 0) abort();
+        if (servers[i].family != EBISU_DNS_IPV4 && servers[i].family != EBISU_DNS_IPV6) abort();
+        if (servers[i].family == EBISU_DNS_IPV4 && servers[i].scope_id != 0) abort();
         char address[INET6_ADDRSTRLEN];
-        if (inet_ntop(servers[i].family, servers[i].bytes, address, sizeof(address)) == nullptr) {
+        if (inet_ntop(servers[i].family == EBISU_DNS_IPV4 ? AF_INET : AF_INET6, servers[i].bytes,
+                    address, sizeof(address)) == nullptr) {
             abort();
         }
         // Its scope as a number, which any address takes, as musl reads it.
@@ -37,8 +39,8 @@ void check_resolv_conf(const std::vector<char>& text, bool as_glibc) {
         if (servers[i].scope_id != 0) {
             line += "%" + std::to_string(servers[i].scope_id);
         }
-        _ebisu_dns_addr_t back[1];
-        if (_ebisu_dns_probe_parse_resolv_line(line.data(), line.size(), back, 0, 1, false) != 1 ||
+        ebisu_dns_addr_t back[1];
+        if (_ebisu_posix_dns_parse_resolv_line(line.data(), line.size(), back, 0, 1, false) != 1 ||
                 back[0].family != servers[i].family || back[0].scope_id != servers[i].scope_id ||
                 memcmp(back[0].bytes, servers[i].bytes, 16) != 0) abort();
     }
@@ -85,17 +87,32 @@ void check_query(const std::vector<char>& bytes) {
     if (_ebisu_dns_probe_is_answer(exact.data(), length, 0x1235)) abort();
 }
 
-void check_ipv4(const std::vector<char>& bytes) {
-    unsigned char out[4];
-    if (!_ebisu_dns_probe_parse_ipv4(bytes.empty() ? nullptr : bytes.data(), bytes.size(),
-                out)) {
+// Core reads IPv6 as glibc's inet_pton() does, and what it writes of an
+// address it read reads back as that address.
+void check_address(const std::vector<char>& bytes) {
+    const char* s = bytes.empty() ? nullptr : bytes.data();
+    ebisu_dns_addr_t addr;
+    bool parsed = ebisu_dns_parse_address(nullptr, s, bytes.size(), 53, false, &addr);
+    if (s != nullptr && memchr(s, '\0', bytes.size()) == nullptr &&
+            memchr(s, '%', bytes.size()) == nullptr && memchr(s, ':', bytes.size()) != nullptr) {
+        const std::string text(bytes.begin(), bytes.end());
+        unsigned char theirs[16];
+        bool expected = inet_pton(AF_INET6, text.c_str(), theirs) == 1;
+        if (expected != (parsed && addr.family == EBISU_DNS_IPV6)) abort();
+        if (expected && memcmp(theirs, addr.bytes, 16) != 0) abort();
+    }
+    if (!parsed) {
         return;
     }
-    char quad[INET_ADDRSTRLEN];
-    if (inet_ntop(AF_INET, out, quad, sizeof(quad)) == nullptr) abort();
-    unsigned char back[4];
-    if (!_ebisu_dns_probe_parse_ipv4(quad, strlen(quad), back) ||
-            memcmp(back, out, 4) != 0) abort();
+    char text[EBISU_DNS_ADDRESS_TEXT_SIZE];
+    ebisu_dns_format_address(nullptr, &addr, text, sizeof(text));
+    const std::string written(text);
+    const std::string address = addr.family == EBISU_DNS_IPV4
+        ? written.substr(0, written.rfind(':')) : written.substr(1, written.find(']') - 1);
+    ebisu_dns_addr_t back;
+    if (!ebisu_dns_parse_address(nullptr, address.data(), address.size(), 53, false, &back) ||
+            back.family != addr.family || back.scope_id != addr.scope_id ||
+            memcmp(back.bytes, addr.bytes, sizeof(addr.bytes)) != 0) abort();
 }
 
 } // namespace
@@ -106,6 +123,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     check_resolv_conf(bytes, false);
     check_resolv_conf(bytes, true);
     check_query(bytes);
-    check_ipv4(bytes);
+    check_address(bytes);
     return 0;
 }

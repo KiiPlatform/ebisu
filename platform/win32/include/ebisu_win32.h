@@ -1,10 +1,12 @@
 /**
  * @file ebisu_win32.h
- * @brief The system, a lock and a socket of plain TCP on Windows.
+ * @brief The system, a lock, a socket of plain TCP and the name servers on
+ * Windows.
  */
 #ifndef _EBISU_WIN32
 #define _EBISU_WIN32
 
+#include <ebisu_dns.h>
 #include <ebisu_log.h>
 #include <ebisu_socket.h>
 #include <ebisu_system.h>
@@ -141,6 +143,26 @@ void ebisu_win32_tcp_socket_set_connect_timeout(ebisu_win32_tcp_socket_t* sock,
  */
 void ebisu_win32_tcp_socket_set_logger(ebisu_win32_tcp_socket_t* sock,
         ebisu_logger_t* logger);
+
+/**
+ * \brief The name servers on Windows, for platform's DNS probe.
+ *
+ * The servers are those of the network adapters that are up, as
+ * GetAdaptersAddresses() gives them, in its order: IPv4 and IPv6, with an IPv6
+ * one's scope, but one an earlier adapter has too, and the placeholders
+ * fec0:0:0:ffff::1 to ::3, which Windows lists for an adapter without an IPv6
+ * server and which nothing answers on. Without any, there are none.
+ *
+ * A server is asked over a UDP socket of Winsock 2 connected to it, so that
+ * its port unreachable is told, as Winsock reports it, with WSAECONNRESET. A
+ * scope's name is read by if_nametoindex() and said by if_indextoname(), and
+ * no server answering is WSATRY_AGAIN, getaddrinfo()'s EAI_AGAIN. Winsock has
+ * to have been started, with WSAStartup(), and the library links ws2_32 and
+ * iphlpapi. They have no state, so this serves everything.
+ *
+ * \return The name servers.
+ */
+ebisu_dns_t* ebisu_win32_dns(void);
 
 #ifdef __cplusplus
 }

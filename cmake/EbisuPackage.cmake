@@ -70,7 +70,7 @@ _ebisu_pkg_config(kii ebisu_kii "Kii Cloud client of ebisu"
 _ebisu_pkg_config(tio ebisu_tio "Thing-IF client of ebisu" REQUIRES ebisu-kii ebisu-jkii)
 if(TARGET ebisu_posix)
     _ebisu_pkg_config(posix ebisu_posix
-        "POSIX port of ebisu: the system and locks on POSIX threads, and sockets of plain TCP"
+        "POSIX port of ebisu: the system and locks on POSIX threads, sockets of plain TCP, and name servers"
         REQUIRES ebisu-core LIBS -pthread)
 endif()
 if(TARGET ebisu_openssl)
@@ -80,8 +80,8 @@ if(TARGET ebisu_openssl)
 endif()
 if(TARGET ebisu_win32)
     _ebisu_pkg_config(win32 ebisu_win32
-        "Win32 port of ebisu: the system and locks on the Win32 API, and sockets of plain TCP"
-        REQUIRES ebisu-core LIBS -lws2_32)
+        "Win32 port of ebisu: the system and locks on the Win32 API, sockets of plain TCP, and name servers"
+        REQUIRES ebisu-core LIBS "-lws2_32 -liphlpapi")
 endif()
 if(TARGET ebisu_loggers)
     set(loggers_description
@@ -95,15 +95,9 @@ if(TARGET ebisu_loggers)
     endif()
 endif()
 if(TARGET ebisu_dns_probe)
-    set(dns_probe_description
-        "DNS probe of ebisu: whether the system's name servers answer, before a lookup")
-    if(WIN32)
-        _ebisu_pkg_config(dns-probe ebisu_dns_probe "${dns_probe_description}"
-            REQUIRES ebisu-core LIBS "-lws2_32 -liphlpapi")
-    else()
-        _ebisu_pkg_config(dns-probe ebisu_dns_probe "${dns_probe_description}"
-            REQUIRES ebisu-core)
-    endif()
+    _ebisu_pkg_config(dns-probe ebisu_dns_probe
+        "DNS probe of ebisu: whether the system's name servers answer, before a lookup"
+        REQUIRES ebisu-core)
 endif()
 if(TARGET ebisu_schannel)
     _ebisu_pkg_config(schannel ebisu_schannel

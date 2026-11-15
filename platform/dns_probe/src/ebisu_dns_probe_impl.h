@@ -2,12 +2,8 @@
 #ifndef _EBISU_DNS_PROBE_IMPL
 #define _EBISU_DNS_PROBE_IMPL
 
+#include <ebisu_dns.h>
 #include <ebisu_dns_probe.h>
-
-#ifdef _WIN32
-#include <winsock2.h>
-#include <iphlpapi.h>
-#endif
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -27,25 +23,9 @@ extern "C" {
 /* The longest query built: the header, the name and its type and class. */
 #define _EBISU_DNS_QUERY_MAX (12 + _EBISU_DNS_NAME_MAX + 2 + 4)
 
-/* As many servers as the C libraries take from /etc/resolv.conf, MAXNS, and
-   as many as are asked on Windows. */
+/* As many of the system's servers as are asked: as many as the C libraries
+   take from /etc/resolv.conf, MAXNS. */
 #define _EBISU_DNS_SERVERS_MAX 3
-
-/* Whether the C library reads /etc/resolv.conf as glibc does, or as musl does,
-   which the others are taken to. */
-#ifdef __GLIBC__
-#define _EBISU_DNS_READ_AS_GLIBC true
-#else
-#define _EBISU_DNS_READ_AS_GLIBC false
-#endif
-
-/* An address of a name server. */
-typedef struct _ebisu_dns_addr_t {
-    int family; /* AF_INET or AF_INET6. */
-    unsigned char bytes[16]; /* 4 of them for IPv4. */
-    uint16_t port;
-    uint32_t scope_id; /* The interface of an IPv6 address, or 0. */
-} _ebisu_dns_addr_t;
 
 /* A recursive query for host's IPv4 addresses, with id, in out. Its length, or
    0 if out is too small or no query can carry host: an empty name or label, a
@@ -60,57 +40,11 @@ bool _ebisu_dns_probe_is_answer(const unsigned char* datagram, size_t length, ui
 /* Whether host needs a name server to be looked up. */
 bool _ebisu_dns_probe_needs_lookup(const char* host);
 
-/* s, of length bytes, as an IPv4 address in a form inet_aton() takes, without
-   anything after it, in out, in network order. Whether it is one. */
-bool _ebisu_dns_probe_parse_ipv4(const char* s, size_t length, unsigned char out[4]);
-
-/* s, of length bytes, as an IPv4 address, as _ebisu_dns_probe_parse_ipv4()
-   takes, or IPv6, with a scope after a '%' or without, in out with port.
-   Whether it is one. The scope is an interface's number, in decimal, or, for a
-   link-local address, its name. One that is neither is refused, as musl does,
-   or, with keep_bad_scope, left out, as glibc does. */
-bool _ebisu_dns_probe_parse_address(const char* s, size_t length, uint16_t port,
-        bool keep_bad_scope, _ebisu_dns_addr_t* out);
-
-/* Adds the server of a line of /etc/resolv.conf, of length bytes without its
-   newline, to the count in servers, unless it isn't a nameserver line, its
-   address isn't one, or there are max. The new count. The line is read as
-   glibc reads it, with as_glibc, or as musl does: split at a space or a tab,
-   or at what isspace() takes, its address up to the first, and taken as
-   _ebisu_dns_probe_parse_address() takes it, with keep_bad_scope as_glibc. A
-   server repeated takes a place again, as in the C libraries. */
-size_t _ebisu_dns_probe_parse_resolv_line(const char* line, size_t length,
-        _ebisu_dns_addr_t* servers, size_t count, size_t max, bool as_glibc);
-
-/* The servers of a whole /etc/resolv.conf, of length bytes, as many as max.
-   How many: it may be none. */
-size_t _ebisu_dns_probe_parse_resolv_conf(const char* text, size_t length,
-        _ebisu_dns_addr_t* servers, size_t max, bool as_glibc);
-
-#ifndef _WIN32
-/* The servers of the file at path, as the system's lookups ask them, as many as
-   max, which is at least 1: 127.0.0.1 if it has none or can't be read. How
-   many. Its lines are read as _ebisu_dns_probe_parse_resolv_line() has it,
-   each whole, with as_glibc, or, as musl does, one longer than 254 bytes, its
-   newline aside, skipped. */
-size_t _ebisu_dns_probe_read_servers(const char* path, _ebisu_dns_addr_t* servers,
-        size_t max, bool as_glibc);
-#endif
-
-/* Asks each of count servers in turn, but one that an earlier one repeats,
-   until one answers, as ebisu_dns_probe() asks the system's. */
-ebisu_dns_probe_result_t _ebisu_dns_probe_ask_servers(const char* host,
-        const _ebisu_dns_addr_t* servers, size_t count, uint32_t timeout_ms, char* detail,
+/* Asks each of count servers in turn, with dns's ask, but one that an earlier
+   one repeats, until one answers, as ebisu_dns_probe() asks the system's. */
+ebisu_dns_probe_result_t _ebisu_dns_probe_ask_servers(ebisu_dns_t* dns, const char* host,
+        const ebisu_dns_addr_t* servers, size_t count, uint32_t timeout_ms, char* detail,
         size_t detail_size);
-
-#ifdef _WIN32
-/* The servers of the adapters that are up, in the order they come, as many as
-   max: IPv4 and IPv6, with an IPv6 one's scope, but a server an earlier one
-   has and the placeholders fec0:0:0:ffff::1 to ::3, which Windows lists for an
-   adapter without an IPv6 server. How many: it may be none. */
-size_t _ebisu_dns_probe_adapter_servers(const IP_ADAPTER_ADDRESSES* adapters,
-        _ebisu_dns_addr_t* servers, size_t max);
-#endif
 
 #ifdef __cplusplus
 }

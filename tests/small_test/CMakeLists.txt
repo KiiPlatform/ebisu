@@ -119,14 +119,25 @@ if(TARGET ebisu_loggers)
         LINK ebisu_loggers ebisu_core_objs Threads::Threads)
 endif()
 
-# platform's DNS probe, which asks servers of the test's own on the loopback.
-if(TARGET ebisu_dns_probe)
+# platform's DNS probe, over the name servers of the POSIX port, or on Windows
+# the Win32 port's, which ask servers of the test's own on the loopback, and
+# over the test's own.
+if(TARGET ebisu_posix)
+    set(small_test_dns_probe_port ebisu_posix)
+    set(small_test_dns_probe_port_src ${PROJECT_SOURCE_DIR}/platform/posix/src)
+elseif(TARGET ebisu_win32)
+    set(small_test_dns_probe_port ebisu_win32)
+    set(small_test_dns_probe_port_src ${PROJECT_SOURCE_DIR}/platform/win32/src)
+endif()
+if(small_test_dns_probe_port)
     ebisu_add_test_suite(small_test_dns_probe
         LABEL small
         WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR}
-        SOURCES dns_probe/dns_probe_test.cpp
-        LINK ebisu_dns_probe ebisu_core_objs Threads::Threads
-        INCLUDES ${PROJECT_SOURCE_DIR}/platform/dns_probe/src)
+        SOURCES dns_probe/dns_probe_test.cpp dns_probe/dns_test.cpp
+        LINK ebisu_dns_probe ${small_test_dns_probe_port} ebisu_core_objs Threads::Threads
+        INCLUDES
+            ${PROJECT_SOURCE_DIR}/platform/dns_probe/src
+            ${small_test_dns_probe_port_src})
 endif()
 
 # platform's sockets of plain TCP, the POSIX port's, or on Windows the Win32

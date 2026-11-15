@@ -33,7 +33,7 @@ int main(void)
     kii_init(&kii);
     kii_set_site(&kii, "api-jp.kii.com");
     ebisu_openssl_socket_init(&tls, 5, 5);
-    ebisu_dns_probe_socket_init(&sock, &tls.base, 3000);
+    ebisu_dns_probe_socket_init(&sock, &tls.base, ebisu_posix_dns(), 3000);
     kii_set_http_socket(&kii, &sock.base);
     kii_set_system(&kii, ebisu_posix_system());
     printf("ebisu %s\n", EBISU_VERSION);

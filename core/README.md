@@ -44,6 +44,12 @@ set on.
   seconds since the epoch and back, from year 1 to 9999, as `timegm()` and
   `gmtime()` would but without the C library, for a certificate's dates or an
   ISO 8601 timestamp.
+- **Name servers** (`ebisu_dns.h`): `ebisu_dns_t` lists the system's name
+  servers and asks one of them a query over UDP, for platform's DNS probe, which
+  asks them whether they answer before a lookup that can't be bounded.
+  `ebisu_dns_parse_address()` reads a server's address, IPv4 in any form
+  `inet_aton()` takes or IPv6 with a scope, and `ebisu_dns_format_address()`
+  writes one, as RFC 5952 says, without the C library.
 - **Loggers** (`ebisu_log.h`): `ebisu_logger_t` is where a port's diagnostics
   go, each with a level, such as the application's own log or syslog.
   `ebisu_log()` logs a message of the application's through one, and
@@ -56,7 +62,7 @@ set on.
   clears with it what held a password, a token or MQTT credentials once done
   with them, and an application can with its own.
 
-The sockets, the system and locks are implemented for POSIX with OpenSSL, and
-for Windows with Schannel, by
+The sockets, the system, locks and name servers are implemented for POSIX with
+OpenSSL, and for Windows with Schannel, by
 [platform](https://github.com/KiiPlatform/ebisu/blob/master/platform/README.md)'s
 ports.
