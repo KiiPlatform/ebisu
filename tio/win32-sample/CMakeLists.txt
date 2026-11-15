@@ -15,8 +15,13 @@ ebisu_configure_target(win32app C_STANDARD 11)
 
 # The sample reads state.json from the directory it runs in, so put one next
 # to it, and the DLLs too, where Windows looks for them first: tio's and those
-# of the libraries below it.
-configure_file(state.json ${CMAKE_CURRENT_BINARY_DIR}/state.json COPYONLY)
+# of the libraries below it. After each build, to the directory the program
+# is in, which for Visual Studio's generators is the configuration's, such as
+# Debug, below this one.
+add_custom_command(TARGET win32app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_CURRENT_SOURCE_DIR}/state.json $<TARGET_FILE_DIR:win32app>
+    VERBATIM)
 get_target_property(tio_type tio TYPE)
 if(tio_type STREQUAL "SHARED_LIBRARY")
     add_custom_command(TARGET win32app POST_BUILD

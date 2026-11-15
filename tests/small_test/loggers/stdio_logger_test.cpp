@@ -105,7 +105,11 @@ TEST_CASE("The stdio logger's lines from several threads at once stay whole") {
     ebisu_stdio_logger_t logger;
     ebisu_stdio_logger_init(&logger, log.file, EBISU_LOG_DEBUG);
 
-    const int threads = 8, each = 200;
+    // each static, as MSVC wants a lambda to capture a local even where it is a
+    // constant the lambda only reads, and clang warns of a capture that isn't
+    // needed.
+    const int threads = 8;
+    static const int each = 200;
     // Long enough that the C library would write one in several pieces.
     const std::string padding(300, '.');
     std::vector<std::thread> running;

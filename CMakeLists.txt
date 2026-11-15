@@ -130,6 +130,13 @@ function(ebisu_configure_target tgt)
     POSITION_INDEPENDENT_CODE ${pic}
     C_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN ON)
+  # Visibility means nothing to a DLL. mingw-w64's linker exports each global
+  # function of one in which nothing is marked __declspec(dllexport), as
+  # nothing here is, where MSVC's exports none, and makes no import library to
+  # link against. So MSVC exports them all too.
+  if(MSVC)
+    set_target_properties(${tgt} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+  endif()
   # ebisu_version.h is installed with the other headers, so the target is
   # needed in the build tree only.
   target_link_libraries(${tgt} PUBLIC $<BUILD_INTERFACE:ebisu_version>)

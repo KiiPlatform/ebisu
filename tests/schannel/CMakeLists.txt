@@ -1,8 +1,9 @@
 # platform's Schannel port against TLS servers on 127.0.0.1 that tls_test.py
-# controls. Only when the tests run under wine: the script adds a CA of its own
-# to the root store of a wine prefix it makes for the purpose, which on a
-# Windows machine would be its real root store. CI's windows job runs the
-# script on a Windows runner, one of the run's own, with --windows.
+# controls. A test only when the tests run under wine: the script adds a CA of
+# its own to the root store of a wine prefix it makes for the purpose, which on
+# a Windows machine would be its real root store. Built on Windows too, where
+# CI's windows and msvc jobs run the script on a runner of the run's own, with
+# --windows.
 find_package(Python3 3.9 COMPONENTS Interpreter)
 find_program(EBISU_OPENSSL_COMMAND openssl)
 if(Python3_FOUND AND EBISU_OPENSSL_COMMAND)
@@ -14,15 +15,19 @@ if(Python3_FOUND AND EBISU_OPENSSL_COMMAND)
     target_link_libraries(schannel_socket_test PRIVATE ebisu_core_objs)
     ebisu_configure_target(schannel_socket_test C_STANDARD 11)
 
-    add_test(NAME schannel_socket
-        COMMAND ${Python3_EXECUTABLE}
-            ${CMAKE_CURRENT_SOURCE_DIR}/tls_test.py
-            $<TARGET_FILE:schannel_socket_test>
-            --wine ${CMAKE_CROSSCOMPILING_EMULATOR}
-            --workdir ${CMAKE_CURRENT_BINARY_DIR})
-    set_tests_properties(schannel_socket PROPERTIES
-        LABELS small
-        TIMEOUT 900)
+    # On Windows itself, not a test: --windows changes the machine's root
+    # store and its name resolution.
+    if(CMAKE_CROSSCOMPILING_EMULATOR)
+        add_test(NAME schannel_socket
+            COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tls_test.py
+                $<TARGET_FILE:schannel_socket_test>
+                --wine ${CMAKE_CROSSCOMPILING_EMULATOR}
+                --workdir ${CMAKE_CURRENT_BINARY_DIR})
+        set_tests_properties(schannel_socket PROPERTIES
+            LABELS small
+            TIMEOUT 900)
+    endif()
 else()
     message(STATUS
         "Schannel port test disabled: it needs python3 and openssl")

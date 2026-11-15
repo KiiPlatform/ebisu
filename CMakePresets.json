@@ -88,6 +88,17 @@
       }
     },
     {
+      "name": "msvc",
+      "inherits": "base",
+      "displayName": "Debug, 64-bit Windows, MSVC",
+      "description": "Built on Windows with Visual Studio's compiler, by the newest Visual Studio generator CMake finds, and the tests run on Windows itself. Builds platform's Win32 and Schannel ports, whose sockets the large tests use, and the win32 sample. Needs Visual Studio's C and C++ tools",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "EBISU_BUILD_SAMPLES": "ON"
+      }
+    },
+    {
       "name": "tidy",
       "inherits": "base",
       "displayName": "clang-tidy",
@@ -135,6 +146,7 @@
     { "name": "debug-m32", "configurePreset": "debug-m32", "jobs": 0 },
     { "name": "asan-m32", "configurePreset": "asan-m32", "jobs": 0 },
     { "name": "mingw", "configurePreset": "mingw", "jobs": 0 },
+    { "name": "msvc", "configurePreset": "msvc", "configuration": "Debug", "jobs": 0 },
     { "name": "tidy", "configurePreset": "tidy", "jobs": 0 },
     { "name": "analyzer", "configurePreset": "analyzer", "jobs": 0 },
     { "name": "coverage", "configurePreset": "coverage", "jobs": 0 }
@@ -231,6 +243,25 @@
       "description": "Against a live Kii application; one retry, since they are not deterministic",
       "filter": { "include": { "label": "large" } },
       "environment": { "WINEDEBUG": "-all" },
+      "execution": { "repeat": { "mode": "until-pass", "count": 2 } }
+    },
+    {
+      "name": "small-msvc",
+      "inherits": "base",
+      "configurePreset": "msvc",
+      "configuration": "Debug",
+      "displayName": "Small tests, 64-bit Windows, MSVC",
+      "filter": { "include": { "label": "small" } },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "large-msvc",
+      "inherits": "base",
+      "configurePreset": "msvc",
+      "configuration": "Debug",
+      "displayName": "Large tests, 64-bit Windows, MSVC",
+      "description": "Against a live Kii application; one retry, since they are not deterministic",
+      "filter": { "include": { "label": "large" } },
       "execution": { "repeat": { "mode": "until-pass", "count": 2 } }
     },
     {

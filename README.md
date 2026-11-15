@@ -109,6 +109,19 @@ Cross-compiled for 64-bit Windows with `cmake --preset mingw`, they run under
 wine with `ctest --preset large-mingw`, over the win32 sample's Winsock and
 Schannel callbacks in place of OpenSSL.
 
+On Windows itself, with Visual Studio's C and C++ tools, the msvc presets
+build with the newest Visual Studio CMake finds, and run the tests there:
+
+```
+cmake --preset msvc
+cmake --build --preset msvc
+ctest --preset small-msvc     # or large-msvc
+```
+
+The Schannel port's test is built there but is not one of them, as on Windows
+it changes the machine's root store; see the [win32 sample's
+README](tio/win32-sample/README.md#test).
+
 The broker tests run the MQTT task, with an endpoint of their own, against a
 Mosquitto broker that `tests/broker_test/with_broker.py` starts in a container
 for the run, with docker, or with podman given `DOCKER=podman`. They need no

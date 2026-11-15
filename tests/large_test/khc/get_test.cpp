@@ -5,6 +5,7 @@
 #include "secure_socket_impl.h"
 #include "khc_state_impl.h"
 #include "test_callbacks.h"
+#include <string>
 
 TEST_CASE( "HTTP Get" ) {
     khc http;
@@ -38,10 +39,8 @@ TEST_CASE( "HTTP Get" ) {
     io_ctx.on_header = [=, &on_header_called](char *buffer, size_t size, void *userdata) {
         ++on_header_called;
         // Ignore resp headers.
-        char str[size + 1];
-        strncpy(str, buffer, size);
-        str[size] = '\0';
-        printf("%s\n", str);
+        std::string str(buffer, size);
+        printf("%s\n", str.c_str());
         return size;
     };
 

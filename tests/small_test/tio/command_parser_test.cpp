@@ -83,17 +83,13 @@ TEST_CASE( "_parse_first_kv" ) {
 
         // Check key.
         REQUIRE( out_key_len == 1 );
-        char out_key_copy[out_key_len+1];
-        strncpy(out_key_copy, out_key, out_key_len);
-        out_key_copy[out_key_len] = '\0';
-        REQUIRE( strcmp(out_key_copy, "a") == 0 );
+        std::string out_key_copy(out_key, out_key_len);
+        REQUIRE( strcmp(out_key_copy.c_str(), "a") == 0 );
 
         // Check value.
         REQUIRE( out_value_len == 1 );
-        char out_value_copy[out_value_len+1];
-        strncpy(out_value_copy, out_value, out_value_len);
-        out_value_copy[out_value_len] = '\0';
-        REQUIRE( strcmp(out_value_copy, "1") == 0 );
+        std::string out_value_copy(out_value, out_value_len);
+        REQUIRE( strcmp(out_value_copy.c_str(), "1") == 0 );
 
         // Check value type.
         REQUIRE( out_value_type == JKII_FIELD_TYPE_INTEGER );
@@ -163,27 +159,21 @@ TEST_CASE( "_parse_action_object" ) {
         REQUIRE( p_res == _CMD_PARSE_OK );
 
         // Check action name.
-        char action_name[action.action_name_length + 1];
-        strncpy(action_name, action.action_name, action.action_name_length);
-        action_name[action.action_name_length] = '\0';
+        std::string action_name(action.action_name, action.action_name_length);
 
-        REQUIRE ( strcmp(action_name, "setPower") == 0 );
+        REQUIRE ( strcmp(action_name.c_str(), "setPower") == 0 );
 
         // Check action value.
-        char action_value[action.action_value.opaque_value_length + 1];
-        strncpy(action_value, action.action_value.param.opaque_value, action.action_value.opaque_value_length);
-        action_value[action.action_value.opaque_value_length] = '\0';
+        std::string action_value(action.action_value.param.opaque_value, action.action_value.opaque_value_length);
 
-        REQUIRE ( strcmp(action_value, "{\"power\":true}") == 0 );
+        REQUIRE ( strcmp(action_value.c_str(), "{\"power\":true}") == 0 );
 
         // Check action value type
         REQUIRE ( action.action_value.type == TIO_TYPE_OBJECT );
 
         // Check alias
-        char alias_copy[action.alias_length+1];
-        strncpy(alias_copy, action.alias, action.alias_length);
-        alias_copy[action.alias_length] = '\0';
-        REQUIRE ( strcmp(alias_copy, alias) == 0 );
+        std::string alias_copy(action.alias, action.alias_length);
+        REQUIRE ( strcmp(alias_copy.c_str(), alias) == 0 );
     }
 
 }
@@ -242,17 +232,13 @@ void cb_parsed_action(char* command_id, tio_action_t* action, void* expected_act
     expected_parsed_actions* expected = (expected_parsed_actions *) expected_actions;
     REQUIRE( strcmp(command_id, expected->command_id) == 0 );
 
-    char alias_cp[action->alias_length + 1];
-    char action_name_cp[action->action_name_length + 1];
-    strncpy(alias_cp, action->alias, action->alias_length);
-    alias_cp[action->alias_length] = '\0';
-    strncpy(action_name_cp, action->action_name, action->action_name_length);
-    action_name_cp[action->action_name_length] = '\0';
+    std::string alias_cp(action->alias, action->alias_length);
+    std::string action_name_cp(action->action_name, action->action_name_length);
 
     for(int i=0; i < expected -> expected_actions_length; i++) {
         tio_action_t expected_action = expected->expected_actions[i];
-        if (strcmp(alias_cp, expected_action.alias) == 0 &&
-            strcmp(action_name_cp, expected_action.action_name) == 0) {
+        if (strcmp(alias_cp.c_str(), expected_action.alias) == 0 &&
+            strcmp(action_name_cp.c_str(), expected_action.action_name) == 0) {
                 REQUIRE(action->action_name_length == expected_action.action_name_length);
                 REQUIRE(action->alias_length == expected_action.alias_length);
                 REQUIRE(action->action_value.type == expected_action.action_value.type);
