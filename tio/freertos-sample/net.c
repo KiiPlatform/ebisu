@@ -61,8 +61,7 @@ void vApplicationIPNetworkEventHook_Multi(eIPCallbackEvent_t eNetworkEvent,
 /* For DHCP's and DNS's transaction IDs, among others. */
 BaseType_t xApplicationGetRandomNumber(uint32_t* pulNumber)
 {
-    return random_bytes(NULL, (unsigned char*)pulNumber, sizeof(*pulNumber)) == 0 ?
-        pdTRUE : pdFALSE;
+    return random_bytes((unsigned char*)pulNumber, sizeof(*pulNumber)) == 0 ? pdTRUE : pdFALSE;
 }
 
 /* A TCP connection's initial sequence number, unpredictable so that no one
@@ -76,7 +75,7 @@ uint32_t ulApplicationGetNextSequenceNumber(uint32_t ulSourceAddress,
     (void)ulDestinationAddress;
     (void)usDestinationPort;
     uint32_t number = 0;
-    if (random_bytes(NULL, (unsigned char*)&number, sizeof(number)) != 0) {
+    if (random_bytes((unsigned char*)&number, sizeof(number)) != 0) {
         return 0;
     }
     return number;

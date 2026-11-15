@@ -522,10 +522,10 @@ decides the validity period.
 
 The sockets of platform's [OpenSSL](https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c) and
 [Schannel](https://github.com/KiiPlatform/ebisu/blob/master/platform/schannel/src/ebisu_schannel.c) ports give their TLS stack the
-time, and those of the [ESP32](https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/main/sock_cb_esp32.c) and
-[FreeRTOS](https://github.com/KiiPlatform/ebisu/blob/master/tio/freertos-sample/sock_cb_freertos.c) samples check the
-validity periods themselves, mbedTLS not checking them: the ESP32 one after the
-handshake, the FreeRTOS one during it, in mbedTLS's verify callback.
+time, and those of platform's [mbedTLS](https://github.com/KiiPlatform/ebisu/blob/master/platform/mbedtls/src/ebisu_mbedtls.c) port and
+of the [ESP32](https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/main/sock_cb_esp32.c) sample check the
+validity periods themselves, in place of mbedTLS: the mbedTLS port's during the
+handshake, in mbedTLS's verify callback, and the ESP32 one after it.
 
 A device that runs for a long time has the time again with every HTTP response.
 One that makes none for a while, only MQTT ones, has its time turn into a lower

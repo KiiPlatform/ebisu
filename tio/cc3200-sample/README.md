@@ -12,9 +12,9 @@ The [kii README](../../kii/README.md#the-time) describes how to check the
 certificate at the right time on a device without a real-time clock, and the
 [OpenSSL](../../platform/openssl/src/ebisu_openssl.c) and
 [Schannel](../../platform/schannel/src/ebisu_schannel.c) ports', the
-[ESP32](../esp32-sample/main/sock_cb_esp32.c) and
-[FreeRTOS](../freertos-sample/sock_cb_freertos.c) samples' socket callbacks
-do so, the last two with mbedTLS.
+[ESP32](../esp32-sample/main/sock_cb_esp32.c) sample's socket callbacks and
+[mbedTLS](../../platform/mbedtls/src/ebisu_mbedtls.c) port's socket do so, the last
+two with mbedTLS.
 
 ## Required tools
 

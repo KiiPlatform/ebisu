@@ -7,6 +7,8 @@
 #include <semphr.h>
 #include <task.h>
 
+#include <ebisu_log.h>
+
 #include "board.h"
 
 static SemaphoreHandle_t log_lock;
@@ -40,4 +42,22 @@ void sample_log(const char* format, ...)
     xSemaphoreTake(log_lock, portMAX_DELAY);
     board_write(line, length);
     xSemaphoreGive(log_lock);
+}
+
+static void logger_log(ebisu_logger_t* self, ebisu_log_level_t level, const char* fmt,
+        va_list args)
+{
+    char message[200];
+    (void)self;
+    (void)level;
+    vsnprintf(message, sizeof(message), fmt, args);
+    sample_log("%s", message);
+}
+
+static const ebisu_logger_ops_t logger_ops = { logger_log };
+static ebisu_logger_t logger = { &logger_ops };
+
+ebisu_logger_t* sample_logger(void)
+{
+    return &logger;
 }
