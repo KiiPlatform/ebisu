@@ -127,7 +127,8 @@ jobs:
   # Windows runner, so that it builds with the same CMake presets and GCC
   # warnings as the rest. Its preset builds the win32 sample too, and its small
   # tests include the sample's TLS test, which runs against servers on
-  # 127.0.0.1 and so stays within the runner like the others.
+  # 127.0.0.1 and so stays within the runner like the others. The windows job
+  # runs that one on Windows as well.
   #
   # ASan and UBSan catch a class of bug valgrind structurally cannot: overruns
   # of globals and string literals live in .rodata, not on the heap or stack.
@@ -240,6 +241,55 @@ jobs:
         # UBSan finding aborts instead of printing a "runtime error" line and
         # passing.
         run: ctest --preset ${{ matrix.test-preset }}
+
+  # platform's Schannel port's test, tests/schannel/tls_test.py, on Windows
+  # itself, where the small job runs it under wine: with Windows' Schannel,
+  # Winsock, DNS client and root store. Wine's Schannel is GnuTLS's underneath,
+  # and its GetAddrInfoExCancel() does nothing, so only here does a lookup the
+  # port gives up on get cancelled. The test program is cross-compiled with the
+  # mingw preset, as in the small job, and the script runs it with --windows.
+  windows-build:
+    name: Schannel port's test, built for Windows
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Fetch tags
+        run: git fetch --unshallow --tags --force
+      # python3 and openssl, without which the test program is left out of
+      # the build, as in the small job.
+      - name: Setup build env
+        uses: ./.github/actions/apt-install
+        with:
+          packages: cmake g++-mingw-w64-x86-64-posix python3 openssl
+          options: --no-install-recommends
+      - name: configure
+        run: cmake --preset mingw
+      - name: build
+        run: cmake --build --preset mingw --target schannel_socket_test
+      - name: Upload the test program
+        uses: actions/upload-artifact@v7
+        with:
+          name: schannel-socket-test
+          path: build/mingw/tests/schannel/schannel_socket_test.exe
+          retention-days: 1 # only the windows job needs it
+
+  windows:
+    name: Schannel port (Windows)
+    needs: windows-build
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Download the test program
+        uses: actions/download-artifact@v8
+        with:
+          name: schannel-socket-test
+      # The runner image has Python and the openssl command.
+      - name: test
+        run: python tests/schannel/tls_test.py schannel_socket_test.exe --windows
 
   # A short fuzz of everything that reads what the network brings, from the
   # corpus in the repository, so that a change that breaks one of them on input

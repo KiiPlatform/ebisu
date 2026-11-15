@@ -2,8 +2,10 @@
  * would: preloaded into wine, whose Winsock looks hosts up with the C
  * library's getaddrinfo(), it takes the place of that.
  *
- * A host <ms>.lookup-gate.invalid is looked up as localhost, ms milliseconds
- * later. Any other is the C library's to look up.
+ * A host under lookup-gate.invalid whose name starts with a number of
+ * milliseconds, as 3000.1.lookup-gate.invalid, is looked up as localhost that
+ * many milliseconds later. Any other is the C library's to look up. On
+ * Windows, tls_test.py's DnsGate holds them back instead.
  *
  *     cc -shared -fPIC -o lookup_gate.so lookup_gate.c -ldl
  *     LD_PRELOAD=./lookup_gate.so wine ...
