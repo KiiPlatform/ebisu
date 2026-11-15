@@ -84,9 +84,10 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>The system, a lock and a socket of plain TCP on Windows.  
+<p>The system, a lock, a socket of plain TCP and the name servers on Windows.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;<a class="elRef" href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a>&gt;</code><br />
+<div class="textblock"><code>#include &lt;<a class="elRef" href="../../core/html/ebisu__dns_8h.html">ebisu_dns.h</a>&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="../../core/html/ebisu__socket_8h.html">ebisu_socket.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="../../core/html/ebisu__system_8h.html">ebisu_system.h</a>&gt;</code><br />
 <code>#include &lt;windows.h&gt;</code><br />
@@ -122,9 +123,11 @@ Functions</h2></td></tr>
 <tr class="memdesc:abc3d7ff8a5ae6faf8976216267263cfa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets how long connecting may take.  <br /></td></tr>
 <tr class="memitem:a1193a9630da3ac3d570f71e547a5e673" id="r_a1193a9630da3ac3d570f71e547a5e673"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1193a9630da3ac3d570f71e547a5e673">ebisu_win32_tcp_socket_set_logger</a> (<a class="el" href="structebisu__win32__tcp__socket__t.html">ebisu_win32_tcp_socket_t</a> *sock, <a class="elRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a> *logger)</td></tr>
 <tr class="memdesc:a1193a9630da3ac3d570f71e547a5e673"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets where the socket's diagnostics go.  <br /></td></tr>
+<tr class="memitem:afcf3ca4aa921959ba600bb9d9337d6b7" id="r_afcf3ca4aa921959ba600bb9d9337d6b7"><td class="memItemLeft" align="right" valign="top"><a class="elRef" href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afcf3ca4aa921959ba600bb9d9337d6b7">ebisu_win32_dns</a> (void)</td></tr>
+<tr class="memdesc:afcf3ca4aa921959ba600bb9d9337d6b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">The name servers on Windows, for platform's DNS probe.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>The system, a lock and a socket of plain TCP on Windows. </p>
+<div class="textblock"><p>The system, a lock, a socket of plain TCP and the name servers on Windows. </p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Typedef Documentation</h2>
 <a id="a45476d26cf5d65bd97298f9b64d660c6" name="a45476d26cf5d65bd97298f9b64d660c6"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a45476d26cf5d65bd97298f9b64d660c6">&#9670;&#160;</a></span>ebisu_win32_tcp_socket_t</h2>
@@ -147,6 +150,28 @@ Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
+<a id="afcf3ca4aa921959ba600bb9d9337d6b7" name="afcf3ca4aa921959ba600bb9d9337d6b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afcf3ca4aa921959ba600bb9d9337d6b7">&#9670;&#160;</a></span>ebisu_win32_dns()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="elRef" href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a> * ebisu_win32_dns </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The name servers on Windows, for platform's DNS probe. </p>
+<p>The servers are those of the network adapters that are up, as GetAdaptersAddresses() gives them, in its order: IPv4 and IPv6, with an IPv6 one's scope, but one an earlier adapter has too, and the placeholders fec0:0:0:ffff::1 to ::3, which Windows lists for an adapter without an IPv6 server and which nothing answers on. Without any, there are none.</p>
+<p>A server is asked over a UDP socket of Winsock 2 connected to it, so that its port unreachable is told, as Winsock reports it, with WSAECONNRESET. A scope's name is read by if_nametoindex() and said by if_indextoname(), and no server answering is WSATRY_AGAIN, getaddrinfo()'s EAI_AGAIN. Winsock has to have been started, with WSAStartup(), and the library links ws2_32 and iphlpapi. They have no state, so this serves everything.</p>
+<dl class="section return"><dt>Returns</dt><dd>The name servers. </dd></dl>
+
+</div>
+</div>
 <a id="aa77cb4447ff9ac43260fc0622ba4b6fd" name="aa77cb4447ff9ac43260fc0622ba4b6fd"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa77cb4447ff9ac43260fc0622ba4b6fd">&#9670;&#160;</a></span>ebisu_win32_lock_init()</h2>
 

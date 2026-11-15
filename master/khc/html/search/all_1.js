@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['close_0',['close',['../../../core/html/structebisu__socket__ops__t.html#afab911ce1025829b38f7df1096e67e7b',1,'ebisu_socket_ops_t']]],
-  ['connect_1',['connect',['../../../core/html/structebisu__socket__ops__t.html#ad7c954a124d7f7029c24052e1fbdc2c2',1,'ebisu_socket_ops_t']]]
+  ['base_0',['base',['../../../core/html/structebisu__log__fanout__t.html#ac8ac9936c9fe790257ec129b4cb5d635',1,'ebisu_log_fanout_t']]],
+  ['buff_1',['buff',['../../../core/html/structebisu__strbuf__t.html#a0387a9ac7fc90b16ebd2ce20af50eccd',1,'ebisu_strbuf_t']]],
+  ['bytes_2',['bytes',['../../../core/html/structebisu__dns__addr__t.html#a263bdc2a0684b5208499fe9cdc47f803',1,'ebisu_dns_addr_t']]]
 ];

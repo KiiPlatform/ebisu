@@ -7,5 +7,6 @@ var searchData=
   ['buff_4',['buff',['../../../core/html/structebisu__strbuf__t.html#a0387a9ac7fc90b16ebd2ce20af50eccd',1,'ebisu_strbuf_t']]],
   ['buffers_5',['Set-up buffers',['../index.html#autotoc_md12',1,'']]],
   ['by_20tio_5fhandler_5ft_6',['Tasks executed by &lt;span class=&quot;tt&quot;&gt;tio_handler_t&lt;/span&gt;.',['../index.html#autotoc_md32',1,'']]],
-  ['by_20tio_5fupdater_5ft_7',['Tasks executed by &lt;span class=&quot;tt&quot;&gt;tio_updater_t&lt;/span&gt;.',['../index.html#autotoc_md33',1,'']]]
+  ['by_20tio_5fupdater_5ft_7',['Tasks executed by &lt;span class=&quot;tt&quot;&gt;tio_updater_t&lt;/span&gt;.',['../index.html#autotoc_md33',1,'']]],
+  ['bytes_8',['bytes',['../../../core/html/structebisu__dns__addr__t.html#a263bdc2a0684b5208499fe9cdc47f803',1,'ebisu_dns_addr_t']]]
 ];

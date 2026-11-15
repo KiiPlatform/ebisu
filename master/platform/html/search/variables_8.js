@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['port_0',['port',['../structebisu__dns__server__t.html#a1933ddc8051925af2248dc370517f88a',1,'ebisu_dns_server_t']]],
-  ['ptr_1',['ptr',['../../../core/html/structebisu__span__t.html#a6207e249a9dd0f045c9e77fd06a3876f',1,'ebisu_span_t']]]
+  ['no_5fanswer_5ferror_0',['no_answer_error',['../../../core/html/structebisu__dns__ops__t.html#a54238f535bbec00b4f6a3aff028dcc43',1,'ebisu_dns_ops_t']]]
 ];

@@ -6,5 +6,6 @@ var searchData=
   ['action_5fvalue_3',['action_value',['../structtio__action__t.html#a069ab662c25522130cfae04320c69cff',1,'tio_action_t']]],
   ['alias_4',['alias',['../structtio__action__t.html#a412290b7cbd2cd3838f66420ab1ba187',1,'tio_action_t']]],
   ['alias_5flength_5',['alias_length',['../structtio__action__t.html#ad376bb546c8147e2b0371c119932da2f',1,'tio_action_t']]],
-  ['author_5fid_6',['author_id',['../../../kii/html/structkii__author__t.html#a7ef55277d3fc92e56bf79e3f1838891e',1,'kii_author_t']]]
+  ['ask_6',['ask',['../../../core/html/structebisu__dns__ops__t.html#aa1dea27021c1e7218f5dfa2af5b503ae',1,'ebisu_dns_ops_t']]],
+  ['author_5fid_7',['author_id',['../../../kii/html/structkii__author__t.html#a7ef55277d3fc92e56bf79e3f1838891e',1,'kii_author_t']]]
 ];

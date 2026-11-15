@@ -84,9 +84,10 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>The system, a lock and a socket of plain TCP on POSIX.  
+<p>The system, a lock, a socket of plain TCP and the name servers on POSIX.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;<a class="elRef" href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a>&gt;</code><br />
+<div class="textblock"><code>#include &lt;<a class="elRef" href="../../core/html/ebisu__dns_8h.html">ebisu_dns.h</a>&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="../../core/html/ebisu__socket_8h.html">ebisu_socket.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="../../core/html/ebisu__system_8h.html">ebisu_system.h</a>&gt;</code><br />
 <code>#include &lt;pthread.h&gt;</code><br />
@@ -122,9 +123,11 @@ Functions</h2></td></tr>
 <tr class="memdesc:a74385ad20a29d1423a6dfbb4791721e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets how long connecting may take.  <br /></td></tr>
 <tr class="memitem:ab539ab2b2a720c63f4e834fb767638d0" id="r_ab539ab2b2a720c63f4e834fb767638d0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab539ab2b2a720c63f4e834fb767638d0">ebisu_posix_tcp_socket_set_logger</a> (<a class="el" href="structebisu__posix__tcp__socket__t.html">ebisu_posix_tcp_socket_t</a> *sock, <a class="elRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a> *logger)</td></tr>
 <tr class="memdesc:ab539ab2b2a720c63f4e834fb767638d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets where the socket's diagnostics go.  <br /></td></tr>
+<tr class="memitem:a936dbbfb8728fa54cca04689019fd52e" id="r_a936dbbfb8728fa54cca04689019fd52e"><td class="memItemLeft" align="right" valign="top"><a class="elRef" href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a936dbbfb8728fa54cca04689019fd52e">ebisu_posix_dns</a> (void)</td></tr>
+<tr class="memdesc:a936dbbfb8728fa54cca04689019fd52e"><td class="mdescLeft">&#160;</td><td class="mdescRight">The name servers on POSIX, for platform's DNS probe.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>The system, a lock and a socket of plain TCP on POSIX. </p>
+<div class="textblock"><p>The system, a lock, a socket of plain TCP and the name servers on POSIX. </p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Typedef Documentation</h2>
 <a id="a1941abd23c970fe42f21d3f35f74c27c" name="a1941abd23c970fe42f21d3f35f74c27c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1941abd23c970fe42f21d3f35f74c27c">&#9670;&#160;</a></span>ebisu_posix_tcp_socket_t</h2>
@@ -146,6 +149,28 @@ Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
+<a id="a936dbbfb8728fa54cca04689019fd52e" name="a936dbbfb8728fa54cca04689019fd52e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a936dbbfb8728fa54cca04689019fd52e">&#9670;&#160;</a></span>ebisu_posix_dns()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="elRef" href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a> * ebisu_posix_dns </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The name servers on POSIX, for platform's DNS probe. </p>
+<p>The servers are those of the nameserver lines of /etc/resolv.conf whose address is one, in order, on port 53, as the C libraries take them: an IPv6 address's scope is read as <a class="elRef" href="../../core/html/ebisu__dns_8h.html#ace1921f430918238e6b26415230c8949">ebisu_dns_parse_address()</a> reads it, an interface's name by if_nametoindex(), and a line with another scope is taken without it where the port is built with glibc, and skipped where it isn't, as glibc and musl do. So are the lines read: with glibc, split at spaces and tabs, and whole, however long, and otherwise split at what isspace() takes, a line longer than 254 bytes skipped. An address ends at a blank: a '#' or a ';' right after it makes it one no longer. Without a server, or without the file, it is 127.0.0.1, as for the C libraries.</p>
+<p>A server is asked over a UDP socket connected to it, so that its port unreachable is told. A scope is said as its interface's name, by if_indextoname(), and no server answering is EAI_AGAIN, as for getaddrinfo(). They have no state, so this serves everything.</p>
+<dl class="section return"><dt>Returns</dt><dd>The name servers. </dd></dl>
+
+</div>
+</div>
 <a id="a48ff6977e6c447af50911fefb115690d" name="a48ff6977e6c447af50911fefb115690d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a48ff6977e6c447af50911fefb115690d">&#9670;&#160;</a></span>ebisu_posix_lock_destroy()</h2>
 

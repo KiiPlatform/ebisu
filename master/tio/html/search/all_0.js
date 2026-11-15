@@ -11,8 +11,9 @@ var searchData=
   ['alias_5flength_8',['alias_length',['../structtio__action__t.html#ad376bb546c8147e2b0371c119932da2f',1,'tio_action_t']]],
   ['alive_20interval_9',['Set-up MQTT Keep Alive interval.',['../index.html#autotoc_md14',1,'']]],
   ['and_20sockets_10',['Set-up the system and sockets',['../index.html#autotoc_md11',1,'']]],
-  ['asynchronous_20task_20management_11',['Asynchronous task management',['../index.html#autotoc_md31',1,'']]],
-  ['author_20updated_20callback_12',['Author updated callback',['../index.html#autotoc_md18',1,'']]],
-  ['author_5fid_13',['author_id',['../../../kii/html/structkii__author__t.html#a7ef55277d3fc92e56bf79e3f1838891e',1,'kii_author_t']]],
-  ['avoiding_20race_20condition_14',['Avoiding race condition',['../index.html#autotoc_md34',1,'']]]
+  ['ask_11',['ask',['../../../core/html/structebisu__dns__ops__t.html#aa1dea27021c1e7218f5dfa2af5b503ae',1,'ebisu_dns_ops_t']]],
+  ['asynchronous_20task_20management_12',['Asynchronous task management',['../index.html#autotoc_md31',1,'']]],
+  ['author_20updated_20callback_13',['Author updated callback',['../index.html#autotoc_md18',1,'']]],
+  ['author_5fid_14',['author_id',['../../../kii/html/structkii__author__t.html#a7ef55277d3fc92e56bf79e3f1838891e',1,'kii_author_t']]],
+  ['avoiding_20race_20condition_15',['Avoiding race condition',['../index.html#autotoc_md34',1,'']]]
 ];

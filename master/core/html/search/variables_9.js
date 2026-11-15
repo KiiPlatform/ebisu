@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['second_0',['second',['../structebisu__civil__time__t.html#a93d3b2af6194e4a47b6ff8800d0e1f89',1,'ebisu_civil_time_t']]],
-  ['send_1',['send',['../structebisu__socket__ops__t.html#adb543d912cc7f9758ed4713cfeed4666',1,'ebisu_socket_ops_t']]],
-  ['size_2',['size',['../structebisu__strbuf__t.html#a0f33a1d98be1357c1aa03020b0d2fdad',1,'ebisu_strbuf_t']]]
+  ['ops_0',['ops',['../structebisu__dns__t.html#a32d67866df906e80d765f117dd1fde58',1,'ebisu_dns_t::ops'],['../structebisu__logger__t.html#a664af796bdac52391732995055c0d340',1,'ebisu_logger_t::ops'],['../structebisu__socket__t.html#aff2c41c492bffd29686c2970f4a4a375',1,'ebisu_socket_t::ops'],['../structebisu__system__t.html#a9710fe0c41ebd32f126d0d00b73fbb81',1,'ebisu_system_t::ops'],['../structebisu__lock__t.html#a71d30ddec61e4e6d4790bab56b4c0fa5',1,'ebisu_lock_t::ops']]],
+  ['overflow_1',['overflow',['../structebisu__strbuf__t.html#a47b6dc470f254a39b91a70175c9b3c91',1,'ebisu_strbuf_t']]]
 ];

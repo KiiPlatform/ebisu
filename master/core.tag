@@ -103,6 +103,116 @@
     </member>
   </compound>
   <compound kind="file">
+    <name>ebisu_dns.h</name>
+    <path>include/</path>
+    <filename>ebisu__dns_8h.html</filename>
+    <includes id="ebisu__object_8h" name="ebisu_object.h" local="yes" import="no" module="no" objc="no">ebisu_object.h</includes>
+    <class kind="struct">ebisu_dns_addr_t</class>
+    <class kind="struct">ebisu_dns_ops_t</class>
+    <class kind="struct">ebisu_dns_t</class>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_DNS_IPV4</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>ad9fa105d83d8653c58b2ca76e0a20d4b</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_DNS_IPV6</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>ab1dc26625841e20ac096f844bbb104fe</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_DNS_ADDRESS_TEXT_SIZE</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>ad6df07d4f841b3d6006ceea467916a81</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_dns_addr_t</type>
+      <name>ebisu_dns_addr_t</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>a414bb349131bfb675aa75675a81f30c1</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>enum ebisu_dns_asked_t</type>
+      <name>ebisu_dns_asked_t</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>a8aafac37613869c62b8c33b51ff3a546</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>bool(*</type>
+      <name>ebisu_dns_is_answer_t</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>a8ce76d38dcf2433d22f2e5d9970aac8d</anchor>
+      <arglist>)(const unsigned char *datagram, size_t length, void *userdata)</arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_dns_t</type>
+      <name>ebisu_dns_t</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>a088aac53486051a7aea74c072aa49313</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_dns_ops_t</type>
+      <name>ebisu_dns_ops_t</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>a323a4c44ddb29d2979a24b32e12c38bd</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumeration">
+      <type></type>
+      <name>ebisu_dns_asked_t</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>ab43ed998fc218495871e0f3198e4447c</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_DNS_ASKED_ANSWERED</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>ab43ed998fc218495871e0f3198e4447ca8e4fee5bd0a22b532d44bef710c4fa21</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_DNS_ASKED_TIMEOUT</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>ab43ed998fc218495871e0f3198e4447cab240b104d1c799679c7f70718e224f6d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_DNS_ASKED_REFUSED</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>ab43ed998fc218495871e0f3198e4447ca0ede97be831d0870df1646f9429fe736</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_DNS_ASKED_FAILED</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>ab43ed998fc218495871e0f3198e4447cad172f9d529a0e4819cd8fed361c2b286</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_dns_parse_address</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>ace1921f430918238e6b26415230c8949</anchor>
+      <arglist>(ebisu_dns_t *dns, const char *s, size_t length, uint16_t port, bool keep_bad_scope, ebisu_dns_addr_t *out)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_dns_format_address</name>
+      <anchorfile>ebisu__dns_8h.html</anchorfile>
+      <anchor>a9f397eef10cb82cabb9b01a5e0e84914</anchor>
+      <arglist>(ebisu_dns_t *dns, const ebisu_dns_addr_t *addr, char *out, size_t size)</arglist>
+    </member>
+  </compound>
+  <compound kind="file">
     <name>ebisu_log.h</name>
     <path>include/</path>
     <filename>ebisu__log_8h.html</filename>
@@ -718,6 +828,88 @@
   <compound kind="struct">
     <name>ebisu_clock_t</name>
     <filename>structebisu__clock__t.html</filename>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_dns_addr_t</name>
+    <filename>structebisu__dns__addr__t.html</filename>
+    <member kind="variable">
+      <type>int</type>
+      <name>family</name>
+      <anchorfile>structebisu__dns__addr__t.html</anchorfile>
+      <anchor>a5d154cc2308828638a47a43b503e1b69</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>unsigned char</type>
+      <name>bytes</name>
+      <anchorfile>structebisu__dns__addr__t.html</anchorfile>
+      <anchor>a263bdc2a0684b5208499fe9cdc47f803</anchor>
+      <arglist>[16]</arglist>
+    </member>
+    <member kind="variable">
+      <type>uint16_t</type>
+      <name>port</name>
+      <anchorfile>structebisu__dns__addr__t.html</anchorfile>
+      <anchor>af9654eee7d078510bf8a7dfb5dc3cd77</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>uint32_t</type>
+      <name>scope_id</name>
+      <anchorfile>structebisu__dns__addr__t.html</anchorfile>
+      <anchor>af7ea51fd4b560dd2bb8b1434b4264f37</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_dns_ops_t</name>
+    <filename>structebisu__dns__ops__t.html</filename>
+    <member kind="variable">
+      <type>size_t(*</type>
+      <name>servers</name>
+      <anchorfile>structebisu__dns__ops__t.html</anchorfile>
+      <anchor>a434b4ee4ff7734efe57464b7dd42a6cc</anchor>
+      <arglist>)(ebisu_dns_t *self, ebisu_dns_addr_t *out, size_t max)</arglist>
+    </member>
+    <member kind="variable">
+      <type>ebisu_dns_asked_t(*</type>
+      <name>ask</name>
+      <anchorfile>structebisu__dns__ops__t.html</anchorfile>
+      <anchor>aa1dea27021c1e7218f5dfa2af5b503ae</anchor>
+      <arglist>)(ebisu_dns_t *self, const ebisu_dns_addr_t *server, const unsigned char *query, size_t length, uint32_t timeout_ms, ebisu_dns_is_answer_t is_answer, void *userdata, char *why, size_t why_size)</arglist>
+    </member>
+    <member kind="variable">
+      <type>uint32_t(*</type>
+      <name>scope_of</name>
+      <anchorfile>structebisu__dns__ops__t.html</anchorfile>
+      <anchor>a40764e90b6b7813939cc6a8c076ead11</anchor>
+      <arglist>)(ebisu_dns_t *self, const char *name)</arglist>
+    </member>
+    <member kind="variable">
+      <type>bool(*</type>
+      <name>scope_name</name>
+      <anchorfile>structebisu__dns__ops__t.html</anchorfile>
+      <anchor>ab79a096b4d87ef71e886a186835ead45</anchor>
+      <arglist>)(ebisu_dns_t *self, uint32_t scope_id, char *out, size_t size)</arglist>
+    </member>
+    <member kind="variable">
+      <type>long(*</type>
+      <name>no_answer_error</name>
+      <anchorfile>structebisu__dns__ops__t.html</anchorfile>
+      <anchor>a54238f535bbec00b4f6a3aff028dcc43</anchor>
+      <arglist>)(ebisu_dns_t *self)</arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_dns_t</name>
+    <filename>structebisu__dns__t.html</filename>
+    <member kind="variable">
+      <type>const ebisu_dns_ops_t *</type>
+      <name>ops</name>
+      <anchorfile>structebisu__dns__t.html</anchorfile>
+      <anchor>a32d67866df906e80d765f117dd1fde58</anchor>
+      <arglist></arglist>
+    </member>
   </compound>
   <compound kind="struct">
     <name>ebisu_lock_ops_t</name>

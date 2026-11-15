@@ -1,8 +1,9 @@
 var searchData=
 [
-  ['field_5fcopy_0',['field_copy',['../../../jkii/html/structjkii__field__t.html#adc42070fce6fafbca7825a219e8a9928',1,'jkii_field_t']]],
-  ['field_5fcopy_5fbuff_5fsize_1',['field_copy_buff_size',['../../../jkii/html/structjkii__field__t.html#a92339c0771f78c56cf96edfa806ae59b',1,'jkii_field_t']]],
-  ['firmware_5fversion_2',['firmware_version',['../../../kii/html/structkii__ti__firmware__version__t.html#a12e3389e2ec3c812ebd79e37e222bad4',1,'kii_ti_firmware_version_t']]],
-  ['for_20mqtt_3',['Notes about socket implementation used for MQTT.',['../index.html#autotoc_md6',1,'']]],
-  ['functions_4',['functions',['../index.html#autotoc_md1',1,'Callback functions'],['../index.html#autotoc_md23',1,'Callback functions']]]
+  ['family_0',['family',['../../../core/html/structebisu__dns__addr__t.html#a5d154cc2308828638a47a43b503e1b69',1,'ebisu_dns_addr_t']]],
+  ['field_5fcopy_1',['field_copy',['../../../jkii/html/structjkii__field__t.html#adc42070fce6fafbca7825a219e8a9928',1,'jkii_field_t']]],
+  ['field_5fcopy_5fbuff_5fsize_2',['field_copy_buff_size',['../../../jkii/html/structjkii__field__t.html#a92339c0771f78c56cf96edfa806ae59b',1,'jkii_field_t']]],
+  ['firmware_5fversion_3',['firmware_version',['../../../kii/html/structkii__ti__firmware__version__t.html#a12e3389e2ec3c812ebd79e37e222bad4',1,'kii_ti_firmware_version_t']]],
+  ['for_20mqtt_4',['Notes about socket implementation used for MQTT.',['../index.html#autotoc_md6',1,'']]],
+  ['functions_5',['functions',['../index.html#autotoc_md1',1,'Callback functions'],['../index.html#autotoc_md23',1,'Callback functions']]]
 ];

@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['unlock_0',['unlock',['../structebisu__lock__ops__t.html#a25112960416a6dabd5b93862db66528a',1,'ebisu_lock_ops_t']]]
+  ['recv_0',['recv',['../structebisu__socket__ops__t.html#a28417969117e077e747944faac38efa8',1,'ebisu_socket_ops_t']]],
+  ['recv_5ftimed_5fout_1',['recv_timed_out',['../structebisu__socket__ops__t.html#af8c5f0ab8132bb300aa61db25a4a8073',1,'ebisu_socket_ops_t']]],
+  ['recv_5fwait_2',['recv_wait',['../structebisu__socket__ops__t.html#a4b245d596fc7e2c6937a70794b6cd031',1,'ebisu_socket_ops_t']]]
 ];

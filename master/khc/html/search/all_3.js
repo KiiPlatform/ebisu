@@ -1,24 +1,6 @@
 var searchData=
 [
-  ['ebisu_5fcivil_5ftime_5ft_0',['ebisu_civil_time_t',['../../../core/html/structebisu__civil__time__t.html',1,'']]],
-  ['ebisu_5fclock_2eh_1',['ebisu_clock.h',['../../../core/html/ebisu__clock_8h.html',1,'']]],
-  ['ebisu_5fclock_5ft_2',['ebisu_clock_t',['../../../core/html/structebisu__clock__t.html',1,'']]],
-  ['ebisu_5flock_5fops_5ft_3',['ebisu_lock_ops_t',['../../../core/html/structebisu__lock__ops__t.html',1,'']]],
-  ['ebisu_5flock_5ft_4',['ebisu_lock_t',['../../../core/html/structebisu__lock__t.html',1,'']]],
-  ['ebisu_5flog_2eh_5',['ebisu_log.h',['../../../core/html/ebisu__log_8h.html',1,'']]],
-  ['ebisu_5flog_5ffanout_5ft_6',['ebisu_log_fanout_t',['../../../core/html/structebisu__log__fanout__t.html',1,'']]],
-  ['ebisu_5flogger_5fops_5ft_7',['ebisu_logger_ops_t',['../../../core/html/structebisu__logger__ops__t.html',1,'']]],
-  ['ebisu_5flogger_5ft_8',['ebisu_logger_t',['../../../core/html/structebisu__logger__t.html',1,'']]],
-  ['ebisu_5fmem_2eh_9',['ebisu_mem.h',['../../../core/html/ebisu__mem_8h.html',1,'']]],
-  ['ebisu_5fobject_2eh_10',['ebisu_object.h',['../../../core/html/ebisu__object_8h.html',1,'']]],
-  ['ebisu_5fsocket_2eh_11',['ebisu_socket.h',['../../../core/html/ebisu__socket_8h.html',1,'']]],
-  ['ebisu_5fsocket_5fops_5ft_12',['ebisu_socket_ops_t',['../../../core/html/structebisu__socket__ops__t.html',1,'']]],
-  ['ebisu_5fsocket_5ft_13',['ebisu_socket_t',['../../../core/html/structebisu__socket__t.html',1,'']]],
-  ['ebisu_5fspan_5ft_14',['ebisu_span_t',['../../../core/html/structebisu__span__t.html',1,'']]],
-  ['ebisu_5fstr_2eh_15',['ebisu_str.h',['../../../core/html/ebisu__str_8h.html',1,'']]],
-  ['ebisu_5fstrbuf_5ft_16',['ebisu_strbuf_t',['../../../core/html/structebisu__strbuf__t.html',1,'']]],
-  ['ebisu_5fsystem_2eh_17',['ebisu_system.h',['../../../core/html/ebisu__system_8h.html',1,'']]],
-  ['ebisu_5fsystem_5fops_5ft_18',['ebisu_system_ops_t',['../../../core/html/structebisu__system__ops__t.html',1,'']]],
-  ['ebisu_5fsystem_5ft_19',['ebisu_system_t',['../../../core/html/structebisu__system__t.html',1,'']]],
-  ['ebisu_5ftime_2eh_20',['ebisu_time.h',['../../../core/html/ebisu__time_8h.html',1,'']]]
+  ['data_0',['data',['../structkhc__slist.html#afdc9bd8e86890913ee8949a9275bf0b6',1,'khc_slist']]],
+  ['day_1',['day',['../../../core/html/structebisu__civil__time__t.html#aeadd124b187fff8daa2c04b0831af49f',1,'ebisu_civil_time_t']]],
+  ['delay_5fms_2',['delay_ms',['../../../core/html/structebisu__system__ops__t.html#a28038f19ac8ae6170f028a366571e505',1,'ebisu_system_ops_t']]]
 ];
