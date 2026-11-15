@@ -66,8 +66,9 @@ For more details, please refer to [./core/README.md](./core/README.md)
 ## platform
 
 `platform` holds the ports, which implement `core`'s interfaces for a kind of
-system each: POSIX threads and OpenSSL on Linux and macOS, and the Win32 API
-and Schannel on Windows, as static libraries to link.
+system each: POSIX threads and OpenSSL on Linux and macOS, the Win32 API and
+Schannel on Windows, and FreeRTOS's tasks and mutexes, as static libraries to
+link.
 
 For more details, please refer to [./platform/README.md](./platform/README.md)
 

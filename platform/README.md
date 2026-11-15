@@ -69,11 +69,65 @@ where what it needs is found, which links `libebisu_core`. Link one with
   `-DEBISU_LOG=OFF`. Needs Windows 8 or later, and only what it provides,
   `ws2_32`, `secur32` and `crypt32`, which it links.
 
-The Linux sample uses the POSIX and OpenSSL ports, and the Windows sample the
-Win32 and Schannel ones.
+- **FreeRTOS** (`ebisu_freertos.h`, library `ebisu_freertos`):
+  `ebisu_freertos_system_t`, whose tasks are FreeRTOS tasks of the stack depth
+  and priority it is initialized with, made with `xTaskCreate()`, whose delays
+  are `vTaskDelay()`, for at least the time asked for, and whose monotonic
+  clock is the tick count with the times it has overflowed, which doesn't
+  wrap, and `ebisu_freertos_lock_t`, a FreeRTOS mutex, in the lock itself with
+  `configSUPPORT_STATIC_ALLOCATION`, and waiting past `portMAX_DELAY` without
+  `INCLUDE_vTaskSuspend`. Built where the application's CMake build has
+  FreeRTOS-Kernel's own target, `freertos_kernel`, which adding the kernel's
+  directory before ebisu's makes, with the application's `FreeRTOSConfig.h`,
+  and not installed, as the kernel isn't. Needs FreeRTOS-Kernel V11.1 or
+  later, that of FreeRTOS LTS 202406, `configUSE_MUTEXES` and
+  `INCLUDE_vTaskDelay`, and for tasks `configSUPPORT_DYNAMIC_ALLOCATION` and
+  `INCLUDE_vTaskDelete`, without which the system has none to make. jkii reads
+  `errno` after `strtoll()`, and the handler's and the updater's tasks parse
+  JSON at once, so each task needs its own: with newlib,
+  `configUSE_NEWLIB_REENTRANT`.
 
-The samples for FreeRTOS and ESP32 have implementations of their own, under
-`tio`.
+The Linux sample uses the POSIX and OpenSSL ports, the Windows sample the Win32
+and Schannel ones, and the FreeRTOS sample the FreeRTOS one, with a socket of
+its own, mbedTLS over FreeRTOS-Plus-TCP. The ESP32 sample has implementations of
+its own, under `tio`.
+
+On FreeRTOS, in the application's `CMakeLists.txt`, as the FreeRTOS sample's:
+
+```cmake
+# FreeRTOS-Kernel's CMake asks for these: FreeRTOSConfig.h's directory, the
+# port, and a heap.
+add_library(freertos_config INTERFACE)
+target_include_directories(freertos_config SYSTEM INTERFACE config)
+set(FREERTOS_PORT GCC_ARM_CM4F)
+set(FREERTOS_HEAP 4)
+add_subdirectory(FreeRTOS-Kernel)
+
+set(BUILD_SHARED_LIBS OFF)
+add_subdirectory(ebisu EXCLUDE_FROM_ALL)
+target_link_libraries(firmware PRIVATE tio ebisu_freertos)
+```
+
+```c
+#include <ebisu_freertos.h>
+#include <tio.h>
+
+static ebisu_freertos_system_t sys;
+static ebisu_freertos_lock_t session_lock;
+
+    /* In words of StackType_t: a task that makes TLS connections needs the
+       most, for the handshake. */
+    ebisu_freertos_system_init(&sys, 3072, tskIDLE_PRIORITY + 2);
+    if (!ebisu_freertos_lock_init(&session_lock)) {
+        /* Out of heap, without configSUPPORT_STATIC_ALLOCATION. */
+    }
+    tio_handler_set_system(&handler, &sys.base);
+    kii_session_set_lock(&session, &session_lock.base);
+```
+
+CI runs the port's tests,
+[tests/freertos](https://github.com/KiiPlatform/ebisu/blob/master/tests/freertos/README.md),
+in QEMU, against the oldest kernel it supports and the latest.
 
 ## Loggers
 

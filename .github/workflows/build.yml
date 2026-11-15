@@ -880,3 +880,44 @@ jobs:
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
         run: python3 ../../tests/samples/qemu_sample.py freertos live build-live/ebisu_freertos_sample.elf "$RUNNER_TEMP/live.json"
+
+  # The FreeRTOS port's tests: a firmware for the same board, run in QEMU by
+  # CTest, with FreeRTOS configured three ways, against the oldest kernel the
+  # port supports, FreeRTOS LTS 202406's, and the latest. See
+  # tests/freertos/README.md.
+  freertos-port:
+    name: freertos port (${{ matrix.kernel }}, Cortex-M3, QEMU)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      checks: write # for the JUnit report
+    strategy:
+      fail-fast: false
+      matrix:
+        kernel: [V11.1.0, V11.3.3]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # For git describe, which ebisu_version.h takes the version from.
+          fetch-depth: 0
+      - name: Setup build env
+        uses: ./.github/actions/apt-install
+        with:
+          packages: cmake gcc-arm-none-eabi libnewlib-arm-none-eabi qemu-system-arm
+          options: --no-install-recommends
+      - name: ticks of 32 bits, static and dynamic allocation (a)
+        run: tests/freertos/run.sh ${{ matrix.kernel }} a
+      - name: ticks of 16 bits, dynamic allocation, no INCLUDE_vTaskSuspend (b)
+        if: success() || failure()
+        run: tests/freertos/run.sh ${{ matrix.kernel }} b
+      - name: ticks of 32 bits, static allocation only (c)
+        if: success() || failure()
+        run: tests/freertos/run.sh ${{ matrix.kernel }} c
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@a16be3a69023e9bd7e748ede768b3282ea7b30ce # v6.7.1
+        if: success() || failure() # always run even if the previous step fails
+        with:
+          report_paths: "**/test-results/junit/*.xml"
+          check_name: JUnit Test Report (freertos port, ${{ matrix.kernel }})

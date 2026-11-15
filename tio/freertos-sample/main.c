@@ -4,8 +4,9 @@
 #include <jkii.h>
 #include <tio.h>
 
+#include <ebisu_freertos.h>
+
 #include <FreeRTOS.h>
-#include <semphr.h>
 #include <task.h>
 
 #include "board.h"
@@ -15,7 +16,6 @@
 #include "random.h"
 #include "sample_config.h"
 #include "sock_cb_freertos.h"
-#include "sys_cb_freertos.h"
 
 #define HANDLER_HTTP_BUFF_SIZE 4096
 #define HANDLER_MQTT_BUFF_SIZE 2048
@@ -27,8 +27,12 @@
 #define TO_RECV_SEC 15
 #define TO_SEND_SEC 15
 
-/* In words. The task onboards, over TLS. */
-#define APP_TASK_STACK_WORDS 3072
+/* In words. Each task makes TLS connections, whose handshake takes the most
+   of it: the application's, which onboards, and the handler's and the
+   updater's, which ebisu makes. */
+#define TASK_STACK_WORDS 3072
+/* Below FreeRTOS-Plus-TCP's tasks. */
+#define TASK_PRIORITY (tskIDLE_PRIORITY + 2)
 
 /* From EBISU_SAMPLE_CA_FILE, in ca_pem.c, which CMake generates. */
 extern const char ca_pem[];
@@ -49,9 +53,10 @@ static header_pool_t updater_headers;
 static tio_handler_t handler;
 static tio_updater_t updater;
 static kii_session_t session;
+static ebisu_freertos_system_t sample_system;
 static ebisu_clock_t device_clock;
-static freertos_lock_t clock_lock;
-static freertos_lock_t session_lock;
+static ebisu_freertos_lock_t clock_lock;
+static ebisu_freertos_lock_t session_lock;
 static socket_context_t handler_http_ctx;
 static socket_context_t handler_mqtt_ctx;
 static socket_context_t updater_http_ctx;
@@ -157,7 +162,7 @@ static void init_handler(void)
 {
     tio_handler_init(&handler);
     tio_handler_set_app(&handler, EBISU_SAMPLE_APP_ID, EBISU_SAMPLE_APP_HOST);
-    tio_handler_set_system(&handler, freertos_system());
+    tio_handler_set_system(&handler, &sample_system.base);
     tio_handler_set_cb_task_continue(&handler, handler_continue, NULL);
     tio_handler_set_cb_task_exit(&handler, task_exit, "handler");
     tio_handler_set_cb_err(&handler, task_error, "handler");
@@ -183,7 +188,7 @@ static void init_updater(void)
 {
     tio_updater_init(&updater);
     tio_updater_set_app(&updater, EBISU_SAMPLE_APP_ID, EBISU_SAMPLE_APP_HOST);
-    tio_updater_set_system(&updater, freertos_system());
+    tio_updater_set_system(&updater, &sample_system.base);
     tio_updater_set_cb_task_continue(&updater, updater_continue, NULL);
     tio_updater_set_cb_task_exit(&updater, task_exit, "updater");
     tio_updater_set_cb_error(&updater, task_error, "updater");
@@ -214,8 +219,10 @@ static void app_task(void* arg)
        response, the clock has only a floor, a time it is known not to be
        earlier than. The clock has a lock of its own: the socket callbacks use
        it while kii may hold the session's. */
-    freertos_lock_init(&clock_lock);
-    ebisu_clock_init(&device_clock, freertos_system());
+    if (!ebisu_freertos_lock_init(&clock_lock)) {
+        board_fatal("failed to create the clock's lock");
+    }
+    ebisu_clock_init(&device_clock, &sample_system.base);
     ebisu_clock_set_lock(&device_clock, &clock_lock.base);
     if (EBISU_SAMPLE_CLOCK_FLOOR > 0) {
         ebisu_clock_set_floor(&device_clock, EBISU_SAMPLE_CLOCK_FLOOR);
@@ -233,9 +240,11 @@ static void app_task(void* arg)
        which renews them as they expire, and each response's date sets the
        clock. */
     kii_session_init(&session);
-    freertos_lock_init(&session_lock);
+    if (!ebisu_freertos_lock_init(&session_lock)) {
+        board_fatal("failed to create the session's lock");
+    }
     kii_session_set_lock(&session, &session_lock.base);
-    kii_session_set_system(&session, freertos_system());
+    kii_session_set_system(&session, &sample_system.base);
     kii_session_set_cb_author_updated(&session, author_updated, NULL);
     if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK ||
             tio_updater_set_session(&updater, &session) != TIO_ERR_OK ||
@@ -289,8 +298,10 @@ int main(void)
     if (net_init() != pdPASS) {
         board_fatal("failed to start the network");
     }
-    if (xTaskCreate(app_task, "app", APP_TASK_STACK_WORDS, NULL,
-                tskIDLE_PRIORITY + 2, NULL) != pdPASS) {
+    /* The tasks ebisu makes, the handler's and the updater's, as the
+       application's. */
+    ebisu_freertos_system_init(&sample_system, TASK_STACK_WORDS, TASK_PRIORITY);
+    if (xTaskCreate(app_task, "app", TASK_STACK_WORDS, NULL, TASK_PRIORITY, NULL) != pdPASS) {
         board_fatal("failed to create the application's task");
     }
     vTaskStartScheduler();
