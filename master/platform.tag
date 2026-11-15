@@ -170,11 +170,19 @@
     <path>posix/include/</path>
     <filename>ebisu__posix_8h.html</filename>
     <class kind="struct">ebisu_posix_lock_t</class>
+    <class kind="struct">ebisu_posix_tcp_socket_t</class>
     <member kind="typedef">
       <type>struct ebisu_posix_lock_t</type>
       <name>ebisu_posix_lock_t</name>
       <anchorfile>ebisu__posix_8h.html</anchorfile>
       <anchor>a22d27d681115334fe2e1410cbb2b9226</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_posix_tcp_socket_t</type>
+      <name>ebisu_posix_tcp_socket_t</name>
+      <anchorfile>ebisu__posix_8h.html</anchorfile>
+      <anchor>a1941abd23c970fe42f21d3f35f74c27c</anchor>
       <arglist></arglist>
     </member>
     <member kind="function">
@@ -197,6 +205,27 @@
       <anchorfile>ebisu__posix_8h.html</anchorfile>
       <anchor>a48ff6977e6c447af50911fefb115690d</anchor>
       <arglist>(ebisu_posix_lock_t *lock)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_posix_tcp_socket_init</name>
+      <anchorfile>ebisu__posix_8h.html</anchorfile>
+      <anchor>ada1a619f5d6a52ef81a99146c3e5a744</anchor>
+      <arglist>(ebisu_posix_tcp_socket_t *sock, unsigned int to_recv, unsigned int to_send)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_posix_tcp_socket_set_connect_timeout</name>
+      <anchorfile>ebisu__posix_8h.html</anchorfile>
+      <anchor>a74385ad20a29d1423a6dfbb4791721e6</anchor>
+      <arglist>(ebisu_posix_tcp_socket_t *sock, unsigned int seconds)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_posix_tcp_socket_set_logger</name>
+      <anchorfile>ebisu__posix_8h.html</anchorfile>
+      <anchor>ab539ab2b2a720c63f4e834fb767638d0</anchor>
+      <arglist>(ebisu_posix_tcp_socket_t *sock, ebisu_logger_t *logger)</arglist>
     </member>
   </compound>
   <compound kind="file">
@@ -245,11 +274,19 @@
     <path>win32/include/</path>
     <filename>ebisu__win32_8h.html</filename>
     <class kind="struct">ebisu_win32_lock_t</class>
+    <class kind="struct">ebisu_win32_tcp_socket_t</class>
     <member kind="typedef">
       <type>struct ebisu_win32_lock_t</type>
       <name>ebisu_win32_lock_t</name>
       <anchorfile>ebisu__win32_8h.html</anchorfile>
       <anchor>a7c637645697f264f1b8c632579c1267b</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_win32_tcp_socket_t</type>
+      <name>ebisu_win32_tcp_socket_t</name>
+      <anchorfile>ebisu__win32_8h.html</anchorfile>
+      <anchor>a45476d26cf5d65bd97298f9b64d660c6</anchor>
       <arglist></arglist>
     </member>
     <member kind="function">
@@ -265,6 +302,27 @@
       <anchorfile>ebisu__win32_8h.html</anchorfile>
       <anchor>aa77cb4447ff9ac43260fc0622ba4b6fd</anchor>
       <arglist>(ebisu_win32_lock_t *lock)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_win32_tcp_socket_init</name>
+      <anchorfile>ebisu__win32_8h.html</anchorfile>
+      <anchor>a556db7aedf778cd993354de03810f871</anchor>
+      <arglist>(ebisu_win32_tcp_socket_t *sock, unsigned int to_recv, unsigned int to_send)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_win32_tcp_socket_set_connect_timeout</name>
+      <anchorfile>ebisu__win32_8h.html</anchorfile>
+      <anchor>abc3d7ff8a5ae6faf8976216267263cfa</anchor>
+      <arglist>(ebisu_win32_tcp_socket_t *sock, unsigned int seconds)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_win32_tcp_socket_set_logger</name>
+      <anchorfile>ebisu__win32_8h.html</anchorfile>
+      <anchor>a1193a9630da3ac3d570f71e547a5e673</anchor>
+      <arglist>(ebisu_win32_tcp_socket_t *sock, ebisu_logger_t *logger)</arglist>
     </member>
   </compound>
   <compound kind="struct">
@@ -323,6 +381,17 @@
     </member>
   </compound>
   <compound kind="struct">
+    <name>ebisu_posix_tcp_socket_t</name>
+    <filename>structebisu__posix__tcp__socket__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_socket_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__posix__tcp__socket__t.html</anchorfile>
+      <anchor>a1040d747192513d3b9bf1aca9a5ca0e8</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
     <name>ebisu_schannel_socket_t</name>
     <filename>structebisu__schannel__socket__t.html</filename>
     <member kind="variable">
@@ -341,6 +410,17 @@
       <name>base</name>
       <anchorfile>structebisu__win32__lock__t.html</anchorfile>
       <anchor>aa14f0b279bf832d647bc9a080cb2d897</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_win32_tcp_socket_t</name>
+    <filename>structebisu__win32__tcp__socket__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_socket_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__win32__tcp__socket__t.html</anchorfile>
+      <anchor>a7cca05bd1fe58ab71349699992f1bcda</anchor>
       <arglist></arglist>
     </member>
   </compound>

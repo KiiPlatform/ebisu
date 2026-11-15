@@ -12,12 +12,14 @@ var searchData=
   ['ebisu_5fopenssl_5fsocket_5ft_9',['ebisu_openssl_socket_t',['../structebisu__openssl__socket__t.html',1,'']]],
   ['ebisu_5fopenssl_5ftls_5ft_10',['ebisu_openssl_tls_t',['../structebisu__openssl__tls__t.html',1,'']]],
   ['ebisu_5fposix_5flock_5ft_11',['ebisu_posix_lock_t',['../structebisu__posix__lock__t.html',1,'']]],
-  ['ebisu_5fschannel_5fsocket_5ft_12',['ebisu_schannel_socket_t',['../structebisu__schannel__socket__t.html',1,'']]],
-  ['ebisu_5fsocket_5fops_5ft_13',['ebisu_socket_ops_t',['../../../core/html/structebisu__socket__ops__t.html',1,'']]],
-  ['ebisu_5fsocket_5ft_14',['ebisu_socket_t',['../../../core/html/structebisu__socket__t.html',1,'']]],
-  ['ebisu_5fspan_5ft_15',['ebisu_span_t',['../../../core/html/structebisu__span__t.html',1,'']]],
-  ['ebisu_5fstrbuf_5ft_16',['ebisu_strbuf_t',['../../../core/html/structebisu__strbuf__t.html',1,'']]],
-  ['ebisu_5fsystem_5fops_5ft_17',['ebisu_system_ops_t',['../../../core/html/structebisu__system__ops__t.html',1,'']]],
-  ['ebisu_5fsystem_5ft_18',['ebisu_system_t',['../../../core/html/structebisu__system__t.html',1,'']]],
-  ['ebisu_5fwin32_5flock_5ft_19',['ebisu_win32_lock_t',['../structebisu__win32__lock__t.html',1,'']]]
+  ['ebisu_5fposix_5ftcp_5fsocket_5ft_12',['ebisu_posix_tcp_socket_t',['../structebisu__posix__tcp__socket__t.html',1,'']]],
+  ['ebisu_5fschannel_5fsocket_5ft_13',['ebisu_schannel_socket_t',['../structebisu__schannel__socket__t.html',1,'']]],
+  ['ebisu_5fsocket_5fops_5ft_14',['ebisu_socket_ops_t',['../../../core/html/structebisu__socket__ops__t.html',1,'']]],
+  ['ebisu_5fsocket_5ft_15',['ebisu_socket_t',['../../../core/html/structebisu__socket__t.html',1,'']]],
+  ['ebisu_5fspan_5ft_16',['ebisu_span_t',['../../../core/html/structebisu__span__t.html',1,'']]],
+  ['ebisu_5fstrbuf_5ft_17',['ebisu_strbuf_t',['../../../core/html/structebisu__strbuf__t.html',1,'']]],
+  ['ebisu_5fsystem_5fops_5ft_18',['ebisu_system_ops_t',['../../../core/html/structebisu__system__ops__t.html',1,'']]],
+  ['ebisu_5fsystem_5ft_19',['ebisu_system_t',['../../../core/html/structebisu__system__t.html',1,'']]],
+  ['ebisu_5fwin32_5flock_5ft_20',['ebisu_win32_lock_t',['../structebisu__win32__lock__t.html',1,'']]],
+  ['ebisu_5fwin32_5ftcp_5fsocket_5ft_21',['ebisu_win32_tcp_socket_t',['../structebisu__win32__tcp__socket__t.html',1,'']]]
 ];

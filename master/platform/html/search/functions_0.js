@@ -15,10 +15,16 @@ var searchData=
   ['ebisu_5fposix_5flock_5fdestroy_12',['ebisu_posix_lock_destroy',['../ebisu__posix_8h.html#a48ff6977e6c447af50911fefb115690d',1,'ebisu_posix.h']]],
   ['ebisu_5fposix_5flock_5finit_13',['ebisu_posix_lock_init',['../ebisu__posix_8h.html#a1c771ebce9cfb180f497092f6b8b5059',1,'ebisu_posix.h']]],
   ['ebisu_5fposix_5fsystem_14',['ebisu_posix_system',['../ebisu__posix_8h.html#a1d2bbb9e6c2952242e1c6738ad24f8d4',1,'ebisu_posix.h']]],
-  ['ebisu_5fschannel_5fsocket_5finit_15',['ebisu_schannel_socket_init',['../ebisu__schannel_8h.html#af2bab7e538e399c8ac8c049326302e4c',1,'ebisu_schannel.h']]],
-  ['ebisu_5fschannel_5fsocket_5fset_5fclock_16',['ebisu_schannel_socket_set_clock',['../ebisu__schannel_8h.html#abc316edc7cfd99ae6f132654e184b24e',1,'ebisu_schannel.h']]],
-  ['ebisu_5fschannel_5fsocket_5fset_5fconnect_5ftimeout_17',['ebisu_schannel_socket_set_connect_timeout',['../ebisu__schannel_8h.html#a8046578a6e5f4aece44baa818cfa4ba4',1,'ebisu_schannel.h']]],
-  ['ebisu_5fschannel_5fsocket_5fset_5flogger_18',['ebisu_schannel_socket_set_logger',['../ebisu__schannel_8h.html#aa3b8c7de20857678edb3db44fdee1c3c',1,'ebisu_schannel.h']]],
-  ['ebisu_5fwin32_5flock_5finit_19',['ebisu_win32_lock_init',['../ebisu__win32_8h.html#aa77cb4447ff9ac43260fc0622ba4b6fd',1,'ebisu_win32.h']]],
-  ['ebisu_5fwin32_5fsystem_20',['ebisu_win32_system',['../ebisu__win32_8h.html#a8d84f62ef6dfdfc190453a04cb3b2045',1,'ebisu_win32.h']]]
+  ['ebisu_5fposix_5ftcp_5fsocket_5finit_15',['ebisu_posix_tcp_socket_init',['../ebisu__posix_8h.html#ada1a619f5d6a52ef81a99146c3e5a744',1,'ebisu_posix.h']]],
+  ['ebisu_5fposix_5ftcp_5fsocket_5fset_5fconnect_5ftimeout_16',['ebisu_posix_tcp_socket_set_connect_timeout',['../ebisu__posix_8h.html#a74385ad20a29d1423a6dfbb4791721e6',1,'ebisu_posix.h']]],
+  ['ebisu_5fposix_5ftcp_5fsocket_5fset_5flogger_17',['ebisu_posix_tcp_socket_set_logger',['../ebisu__posix_8h.html#ab539ab2b2a720c63f4e834fb767638d0',1,'ebisu_posix.h']]],
+  ['ebisu_5fschannel_5fsocket_5finit_18',['ebisu_schannel_socket_init',['../ebisu__schannel_8h.html#af2bab7e538e399c8ac8c049326302e4c',1,'ebisu_schannel.h']]],
+  ['ebisu_5fschannel_5fsocket_5fset_5fclock_19',['ebisu_schannel_socket_set_clock',['../ebisu__schannel_8h.html#abc316edc7cfd99ae6f132654e184b24e',1,'ebisu_schannel.h']]],
+  ['ebisu_5fschannel_5fsocket_5fset_5fconnect_5ftimeout_20',['ebisu_schannel_socket_set_connect_timeout',['../ebisu__schannel_8h.html#a8046578a6e5f4aece44baa818cfa4ba4',1,'ebisu_schannel.h']]],
+  ['ebisu_5fschannel_5fsocket_5fset_5flogger_21',['ebisu_schannel_socket_set_logger',['../ebisu__schannel_8h.html#aa3b8c7de20857678edb3db44fdee1c3c',1,'ebisu_schannel.h']]],
+  ['ebisu_5fwin32_5flock_5finit_22',['ebisu_win32_lock_init',['../ebisu__win32_8h.html#aa77cb4447ff9ac43260fc0622ba4b6fd',1,'ebisu_win32.h']]],
+  ['ebisu_5fwin32_5fsystem_23',['ebisu_win32_system',['../ebisu__win32_8h.html#a8d84f62ef6dfdfc190453a04cb3b2045',1,'ebisu_win32.h']]],
+  ['ebisu_5fwin32_5ftcp_5fsocket_5finit_24',['ebisu_win32_tcp_socket_init',['../ebisu__win32_8h.html#a556db7aedf778cd993354de03810f871',1,'ebisu_win32.h']]],
+  ['ebisu_5fwin32_5ftcp_5fsocket_5fset_5fconnect_5ftimeout_25',['ebisu_win32_tcp_socket_set_connect_timeout',['../ebisu__win32_8h.html#abc3d7ff8a5ae6faf8976216267263cfa',1,'ebisu_win32.h']]],
+  ['ebisu_5fwin32_5ftcp_5fsocket_5fset_5flogger_26',['ebisu_win32_tcp_socket_set_logger',['../ebisu__win32_8h.html#a1193a9630da3ac3d570f71e547a5e673',1,'ebisu_win32.h']]]
 ];
