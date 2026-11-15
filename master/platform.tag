@@ -138,6 +138,40 @@
     </member>
   </compound>
   <compound kind="file">
+    <name>ebisu_freertos_tcp.h</name>
+    <path>freertos/include/</path>
+    <filename>ebisu__freertos__tcp_8h.html</filename>
+    <class kind="struct">ebisu_freertos_tcp_socket_t</class>
+    <member kind="typedef">
+      <type>struct ebisu_freertos_tcp_socket_t</type>
+      <name>ebisu_freertos_tcp_socket_t</name>
+      <anchorfile>ebisu__freertos__tcp_8h.html</anchorfile>
+      <anchor>ac76e3f5add9f8ab619cd5e9130a8e420</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_freertos_tcp_socket_init</name>
+      <anchorfile>ebisu__freertos__tcp_8h.html</anchorfile>
+      <anchor>a1b74656a70bd4b1cc01b3f576dac6b5d</anchor>
+      <arglist>(ebisu_freertos_tcp_socket_t *sock, unsigned int to_recv, unsigned int to_send)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_freertos_tcp_socket_set_connect_timeout</name>
+      <anchorfile>ebisu__freertos__tcp_8h.html</anchorfile>
+      <anchor>a329363d9752af31ddf33ae2b96a4c70b</anchor>
+      <arglist>(ebisu_freertos_tcp_socket_t *sock, unsigned int seconds)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_freertos_tcp_socket_set_logger</name>
+      <anchorfile>ebisu__freertos__tcp_8h.html</anchorfile>
+      <anchor>a48d08f53a9326318cbd859cd2c73bac7</anchor>
+      <arglist>(ebisu_freertos_tcp_socket_t *sock, ebisu_logger_t *logger)</arglist>
+    </member>
+  </compound>
+  <compound kind="file">
     <name>ebisu_mbedtls.h</name>
     <path>mbedtls/include/</path>
     <filename>ebisu__mbedtls_8h.html</filename>
@@ -492,6 +526,17 @@
       <name>base</name>
       <anchorfile>structebisu__freertos__system__t.html</anchorfile>
       <anchor>a549e7f1155eb676165b93500e2c66397</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_freertos_tcp_socket_t</name>
+    <filename>structebisu__freertos__tcp__socket__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_socket_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__freertos__tcp__socket__t.html</anchorfile>
+      <anchor>a3c948e20eaab88948cdf3ac22741fe33</anchor>
       <arglist></arglist>
     </member>
   </compound>
