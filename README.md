@@ -137,7 +137,11 @@ They connect over the platform's socket, as the large tests do: platform's
 OpenSSL port, or its Schannel port on Windows, where they run under wine with
 `ctest --preset broker-mingw`. Schannel trusts the Windows root store, so the
 tests add the run's CA to the root store of the wine prefix they run in, and
-remove it when they end. They refuse to run on a real Windows machine.
+remove it when they end. On Windows itself they won't, and run with
+`with_broker.py --windows ctest --preset broker-msvc` instead: the script runs
+Mosquitto from its Windows installation, and adds the CA to the machine's root
+store until it ends. That is for a machine of the run's own, and an
+administrator, as CI's msvc job has.
 
 For 32-bit ARM Linux, armv7-a with hardware floating point, the toolchain file
 is `cmake/arm-linux-gnueabihf.cmake`, and the small tests run under qemu-arm.

@@ -84,8 +84,10 @@ typedef ebisu_schannel_socket_t platform_socket_t;
 
 // The Schannel port trusts the roots the Windows root store holds, so the
 // run's CA is added to it for the run, and removed afterwards. Only under wine,
-// whose prefix the tests run in, never to a real machine's root store. Winsock
-// is started too, which has to be before the first connection.
+// whose prefix the tests run in, never to a real machine's root store: there
+// with_broker.py --windows adds it itself, for a machine of the run's own, and
+// says so with EBISU_BROKER_CA_TRUSTED. Winsock is started too, which has to be
+// before the first connection.
 //
 // The root store's registry, rather than the system store: under wine 10, a
 // certificate deleted through the system store stays in the registry. It is
@@ -108,9 +110,13 @@ struct Trust {
             error = "WSAStartup failed";
             return;
         }
+        if (!env("EBISU_BROKER_CA_TRUSTED").empty()) {
+            return;
+        }
         HMODULE ntdll = GetModuleHandleA("ntdll.dll");
         if (ntdll == nullptr || GetProcAddress(ntdll, "wine_get_version") == nullptr) {
-            error = "on Windows, the broker tests run only under wine: they add the run's CA to the root store";
+            error = "on Windows itself, the broker tests run only under with_broker.py --windows, which "
+                "adds the run's CA to the root store";
             return;
         }
         std::ifstream file(broker().ca, std::ios::binary);
@@ -1145,7 +1151,10 @@ TEST_CASE("Messages published from several threads at once are each sent once")
     REQUIRE( t.wait_ready() );
 
     const int threads = 3;
-    const int each = 3;
+    // static, as MSVC wants a lambda to capture a local even where it is a
+    // constant the lambda only reads, and clang warns of a capture that isn't
+    // needed.
+    static const int each = 3;
     std::vector<std::string> expected;
     std::vector<kii_code_t> results(threads * each, KII_ERR_FAIL);
     std::vector<std::thread> publishers;

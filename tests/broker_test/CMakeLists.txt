@@ -1,6 +1,7 @@
 # The MQTT task against a Mosquitto broker of the run's own. They need the
-# broker, which tests/broker_test/with_broker.py starts in a container, so they
-# have a label of their own, and run with `ctest --preset broker` under it.
+# broker, which tests/broker_test/with_broker.py starts in a container, or on
+# Windows itself with --windows, so they have a label of their own, and run
+# with `ctest --preset broker` under it.
 #
 # Over the platform's socket, as the large tests: platform's Schannel port on
 # Windows, with crypt32 for the root store the run's CA is added to, and its

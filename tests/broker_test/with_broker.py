@@ -19,11 +19,23 @@ command finds the broker in its environment:
 If the command fails, the broker's log is printed. Then the container is
 removed, and the temporary directory the files were made in.
 
-    with_broker.py <command> [<argument>...]
+    with_broker.py [--windows] <command> [<argument>...]
 
 DOCKER names the container tool, docker by default; DOCKER_OPTS adds options to
 its run, such as --security-opt label=disable for podman with SELinux.
+
+With --windows, on Windows, the broker runs on the machine itself, from
+Mosquitto's own installation, which MOSQUITTO_DIR names, C:\\Program
+Files\\mosquitto by default. It listens on a port that was free, and the CA is
+added to the machine's root store until the script ends, for the Schannel port
+to trust. The command finds that in its environment too, so that the broker
+tests leave the root store alone:
+
+    EBISU_BROKER_CA_TRUSTED  1
+
+That is for a machine of the run's own, and an administrator.
 """
+import hashlib
 import json
 import os
 import secrets
@@ -127,7 +139,7 @@ def start_broker(d, name, password):
     return int(out.split()[0].rsplit(':', 1)[1])
 
 
-def wait_for_broker(name, port, ca):
+def wait_for_broker(port, ca, running, print_log):
     """Waits until the broker completes a TLS handshake."""
     ctx = ssl.create_default_context(cafile=ca)
     deadline = time.monotonic() + START_TIMEOUT
@@ -137,40 +149,122 @@ def wait_for_broker(name, port, ca):
                 with ctx.wrap_socket(s, server_hostname='localhost'):
                     return
         except OSError as e:
-            running = docker('inspect', '-f', '{{.State.Running}}', name,
-                             capture_output=True, text=True).stdout.strip()
-            if running != 'true' or time.monotonic() > deadline:
-                docker('logs', name)
+            if not running() or time.monotonic() > deadline:
+                print_log()
                 sys.exit('the broker did not start: %s' % e)
             time.sleep(0.5)
 
 
-def main():
-    if len(sys.argv) < 2:
-        sys.exit('usage: with_broker.py <command> [<argument>...]')
+def run(command, env, print_log):
+    """Runs the command, and prints the broker's log if it fails."""
+    result = subprocess.run(command, env=env)
+    if result.returncode != 0:
+        print('== the broker\'s log', flush=True)
+        print_log()
+    return result.returncode
+
+
+def in_container(d, password, command, env):
+    """Runs the command with the broker in a container."""
     name = 'ebisu-broker-%d-%s' % (os.getpid(), secrets.token_hex(4))
+    shutil.copy(os.path.join(HERE, 'mosquitto.conf'), d)
+
+    def running():
+        return docker('inspect', '-f', '{{.State.Running}}', name,
+                      capture_output=True, text=True).stdout.strip() == 'true'
+
+    def print_log():
+        docker('logs', name)
+
+    try:
+        port = start_broker(d, name, password)
+        wait_for_broker(port, env['EBISU_BROKER_CA'], running, print_log)
+        return run(command, dict(env, EBISU_BROKER_PORT=str(port)), print_log)
+    finally:
+        docker('rm', '-f', name, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def free_port():
+    """A port nothing listens on, on 127.0.0.1, for the broker to take."""
+    with socket.socket() as s:
+        s.bind(('127.0.0.1', 0))
+        return s.getsockname()[1]
+
+
+def windows_config(d, home, port):
+    """mosquitto.conf for the broker on this machine: the plugin is the
+    installation's, the files are in d, and the listener is on port, of every
+    address, as Windows looks localhost up as ::1 first."""
+    with open(os.path.join(HERE, 'mosquitto.conf')) as f:
+        conf = f.read()
+    for old, new in [
+            ('plugin /usr/lib/mosquitto_dynamic_security.so\n',
+             'plugin %s\n' % os.path.join(home, 'mosquitto_dynamic_security.dll')),
+            ('listener 8883\n', 'listener %d\n' % port)]:
+        if conf.count(old) != 1:
+            sys.exit('mosquitto.conf has no line %r' % old.strip())
+        conf = conf.replace(old, new)
+    conf = conf.replace('/tmp/broker/', d.replace('\\', '/') + '/')
+    with open(os.path.join(d, 'mosquitto.conf'), 'w') as f:
+        f.write(conf)
+
+
+def on_windows(d, password, command, env):
+    """Runs the command with the broker on this machine, as --windows says."""
+    home = os.environ.get('MOSQUITTO_DIR', r'C:\Program Files\mosquitto')
+    ca = env['EBISU_BROKER_CA']
+    with open(ca) as f:
+        thumbprint = hashlib.sha1(ssl.PEM_cert_to_DER_cert(f.read())).hexdigest()
+    log_path = os.path.join(d, 'broker.log')
+    broker = None
+
+    def print_log():
+        with open(log_path, errors='replace') as f:
+            print(f.read(), end='', flush=True)
+
+    with open(log_path, 'wb') as log:
+        try:
+            subprocess.run(['certutil', '-addstore', '-f', 'Root', ca], check=True, stdout=subprocess.DEVNULL)
+            # On mosquitto_ctrl's command line, as in the container: the machine
+            # is the run's own.
+            subprocess.run([os.path.join(home, 'mosquitto_ctrl.exe'), '-f', os.path.join(d, 'dynsec.json'),
+                            'dynsec', 'setClientPassword', USERNAME, password],
+                           check=True, stdout=subprocess.DEVNULL)
+            port = free_port()
+            windows_config(d, home, port)
+            broker = subprocess.Popen([os.path.join(home, 'mosquitto.exe'), '-c', os.path.join(d, 'mosquitto.conf')],
+                                      stdout=log, stderr=subprocess.STDOUT)
+            wait_for_broker(port, ca, lambda: broker.poll() is None, print_log)
+            return run(command, dict(env, EBISU_BROKER_PORT=str(port), EBISU_BROKER_CA_TRUSTED='1'), print_log)
+        finally:
+            # Before the directory is removed, which Windows refuses while the
+            # broker has its files open.
+            if broker is not None:
+                broker.kill()
+                broker.wait()
+            subprocess.run(['certutil', '-delstore', 'Root', thumbprint], stdout=subprocess.DEVNULL)
+
+
+def main():
+    command = sys.argv[1:]
+    windows = command[:1] == ['--windows']
+    if windows:
+        command = command[1:]
+    if not command:
+        sys.exit('usage: with_broker.py [--windows] <command> [<argument>...]')
     password = secrets.token_hex(16)
     with tempfile.TemporaryDirectory(prefix='ebisu-broker-') as d:
         make_certificates(d)
-        shutil.copy(os.path.join(HERE, 'mosquitto.conf'), d)
         with open(os.path.join(d, 'dynsec.json'), 'w') as f:
             json.dump(DYNSEC, f)
-        try:
-            port = start_broker(d, name, password)
-            wait_for_broker(name, port, os.path.join(d, 'ca.pem'))
-            env = dict(os.environ,
-                       EBISU_BROKER_HOST='localhost',
-                       EBISU_BROKER_PORT=str(port),
-                       EBISU_BROKER_CA=os.path.join(d, 'ca.pem'),
-                       EBISU_BROKER_USERNAME=USERNAME,
-                       EBISU_BROKER_PASSWORD=password)
-            result = subprocess.run(sys.argv[1:], env=env)
-            if result.returncode != 0:
-                print('== the broker\'s log', flush=True)
-                docker('logs', name)
-            return result.returncode
-        finally:
-            docker('rm', '-f', name, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        env = dict(os.environ,
+                   EBISU_BROKER_HOST='localhost',
+                   EBISU_BROKER_CA=os.path.join(d, 'ca.pem'),
+                   EBISU_BROKER_USERNAME=USERNAME,
+                   EBISU_BROKER_PASSWORD=password)
+        if windows:
+            return on_windows(d, password, command, env)
+        return in_container(d, password, command, env)
 
 
 if __name__ == '__main__':
