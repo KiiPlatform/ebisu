@@ -78,6 +78,11 @@ typedef enum {
    more. */
 #include "../../win32/src/ebisu_win32_connect.h"
 
+#ifndef SECURITY_FLAG_IGNORE_CERT_CN_INVALID
+/* wininet.h's, which SSL_EXTRA_CERT_CHAIN_POLICY_PARA's fdwChecks takes. */
+#define SECURITY_FLAG_IGNORE_CERT_CN_INVALID 0x00001000
+#endif
+
 /* Says why the operation failing now failed, for last_error. */
 static void set_error(ebisu_schannel_socket_t* ctx, ebisu_sock_error_t error, long detail)
 {
@@ -160,6 +165,28 @@ void ebisu_schannel_socket_set_connect_timeout(ebisu_schannel_socket_t* sock,
 void ebisu_schannel_socket_set_clock(ebisu_schannel_socket_t* sock, ebisu_clock_t* clock)
 {
     sock->clock = clock;
+}
+
+bool ebisu_schannel_socket_set_verify(ebisu_schannel_socket_t* sock,
+        ebisu_tls_verify_t verify, const unsigned char* pin)
+{
+    switch (verify) {
+        case EBISU_TLS_VERIFY_FULL:
+        case EBISU_TLS_VERIFY_CHAIN:
+        case EBISU_TLS_VERIFY_NONE:
+            memset(sock->pin, 0, sizeof(sock->pin));
+            break;
+        case EBISU_TLS_VERIFY_PIN:
+            if (pin == NULL) {
+                return false;
+            }
+            memcpy(sock->pin, pin, sizeof(sock->pin));
+            break;
+        default:
+            return false;
+    }
+    sock->verify = verify;
+    return true;
 }
 
 void ebisu_schannel_socket_set_logger(ebisu_schannel_socket_t* sock, ebisu_logger_t* logger)
@@ -436,6 +463,41 @@ static int64_t seconds_of(FILETIME ft)
     return (int64_t)(t.QuadPart / 10000000ULL) - (int64_t)FILETIME_EPOCH_SECONDS;
 }
 
+/* Whether the SHA-256 of length bytes at data is pin. */
+static bool hashes_to(const BYTE* data, DWORD length, const unsigned char* pin)
+{
+    BYTE hash[EBISU_TLS_PIN_SIZE];
+    DWORD hash_length = sizeof(hash);
+    unsigned char differ = 0;
+    if (!CryptHashCertificate2(L"SHA256", 0, NULL, data, length, hash, &hash_length) ||
+            hash_length != EBISU_TLS_PIN_SIZE) {
+        return false;
+    }
+    for (size_t i = 0; i < EBISU_TLS_PIN_SIZE; ++i) {
+        differ |= (unsigned char)(hash[i] ^ pin[i]);
+    }
+    return differ == 0;
+}
+
+/* Whether the certificate, or its public key's SubjectPublicKeyInfo, encoded
+   again in DER, has the pin. */
+static bool matches_pin(PCCERT_CONTEXT cert, const unsigned char* pin)
+{
+    if (hashes_to(cert->pbCertEncoded, cert->cbCertEncoded, pin)) {
+        return true;
+    }
+    BYTE* spki = NULL;
+    DWORD spki_length = 0;
+    if (!CryptEncodeObjectEx(X509_ASN_ENCODING, X509_PUBLIC_KEY_INFO,
+                &cert->pCertInfo->SubjectPublicKeyInfo, CRYPT_ENCODE_ALLOC_FLAG, NULL,
+                &spki, &spki_length)) {
+        return false;
+    }
+    bool matches = hashes_to(spki, spki_length, pin);
+    LocalFree(spki);
+    return matches;
+}
+
 static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
 {
     PCCERT_CONTEXT cert = NULL;
@@ -449,6 +511,18 @@ static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
 
     int result = -1;
     PCCERT_CHAIN_CONTEXT chain = NULL;
+    if (ctx->verify == EBISU_TLS_VERIFY_PIN) {
+        /* The certificate alone: its chain, dates and names aside. */
+        if (matches_pin(cert, ctx->pin)) {
+            result = 0;
+        } else {
+            log_to(ctx->logger, EBISU_LOG_ERROR,
+                    "server certificate for %s rejected: neither it nor its public key has the pin",
+                    ctx->host);
+            set_error(ctx, EBISU_SOCK_ERROR_VERIFY, (long)TRUST_E_EXPLICIT_DISTRUST);
+        }
+        goto done;
+    }
     WCHAR server_name[256];
     if (MultiByteToWideChar(CP_UTF8, 0, ctx->host, -1, server_name,
                 sizeof(server_name) / sizeof(server_name[0])) == 0) {
@@ -490,6 +564,9 @@ static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
     ssl_para.cbSize = sizeof(ssl_para);
     ssl_para.dwAuthType = AUTHTYPE_SERVER;
     ssl_para.pwszServerName = server_name;
+    if (ctx->verify == EBISU_TLS_VERIFY_CHAIN) {
+        ssl_para.fdwChecks = SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+    }
 
     CERT_CHAIN_POLICY_PARA policy_para;
     memset(&policy_para, 0, sizeof(policy_para));
@@ -600,7 +677,7 @@ static int tls_connect(ebisu_schannel_socket_t* ctx)
     if (handshake(ctx) != 0) {
         return -1;
     }
-    if (verify_server_certificate(ctx) != 0) {
+    if (ctx->verify != EBISU_TLS_VERIFY_NONE && verify_server_certificate(ctx) != 0) {
         return -1;
     }
 
@@ -617,6 +694,10 @@ static int tls_connect(ebisu_schannel_socket_t* ctx)
         log_to(ctx->logger, EBISU_LOG_ERROR, "failed to allocate the send buffer.");
         set_error(ctx, EBISU_SOCK_ERROR_OTHER, 0);
         return -1;
+    }
+    if (ctx->verify == EBISU_TLS_VERIFY_NONE) {
+        log_to(ctx->logger, EBISU_LOG_WARNING,
+                "connected to %s without verifying its certificate.", ctx->host);
     }
     return 0;
 }

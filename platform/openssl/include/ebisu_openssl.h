@@ -124,6 +124,35 @@ bool ebisu_openssl_tls_init(ebisu_openssl_tls_t* tls, const char* ca_file, const
 void ebisu_openssl_tls_free(ebisu_openssl_tls_t* tls);
 
 /**
+ * \brief Sets how the configuration's connections check the server's
+ * certificate.
+ *
+ * Every connection is checked in full unless this says otherwise: see
+ * ebisu_tls_verify_t for what each mode checks, and what it doesn't. With
+ * EBISU_TLS_VERIFY_CHAIN, the chain and the dates are checked as in full, at
+ * the clock's time; with EBISU_TLS_VERIFY_PIN or EBISU_TLS_VERIFY_NONE, they
+ * aren't, and the configuration's CA certificates aren't used. A pin is the
+ * SHA-256 of the server's certificate in DER,
+ * `openssl x509 -in cert.pem -outform der | openssl dgst -sha256`, or of its
+ * public key's SubjectPublicKeyInfo in DER,
+ * `openssl x509 -in cert.pem -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256`.
+ *
+ * Set it before any socket connects with the configuration. The TLS sessions
+ * it keeps, which connections resume without a certificate, are dropped. The
+ * configuration sockets without one share is always checked in full.
+ *
+ * \param [in,out] tls The configuration.
+ * \param [in] verify How servers' certificates are checked.
+ * \param [in] pin With EBISU_TLS_VERIFY_PIN, the EBISU_TLS_PIN_SIZE bytes of
+ * the pin; otherwise ignored, and may be NULL.
+ * \return true, or false, leaving the configuration as it was, for
+ * EBISU_TLS_VERIFY_PIN without a pin, a mode that isn't one, a configuration
+ * that wasn't set up, or memory that ran out.
+ */
+bool ebisu_openssl_tls_set_verify(ebisu_openssl_tls_t* tls, ebisu_tls_verify_t verify,
+        const unsigned char* pin);
+
+/**
  * \brief Clears the socket, with its timeouts, and makes base a socket of it.
  *
  * \param [out] sock The socket.

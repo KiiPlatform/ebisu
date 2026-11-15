@@ -623,6 +623,55 @@ def run_tests(t, d):
         t.check('certificate %s refused: last_error VERIFY, %s' % (name, error),
                 last_error(steps, 0) == ('VERIFY', error[2:]), out)
 
+    # ebisu_schannel_socket_set_verify(): a chain without its name, a pin, or
+    # no check.
+    def cert_der(name):
+        with open(os.path.join(d, name + '.pem')) as f:
+            return ssl.PEM_cert_to_DER_cert(f.read())
+
+    def public_key_der(name):
+        pem = subprocess.run(['openssl', 'x509', '-in', name + '.pem', '-pubkey', '-noout'],
+                             cwd=d, check=True, capture_output=True).stdout
+        return subprocess.run(['openssl', 'pkey', '-pubin', '-outform', 'der'], input=pem,
+                              cwd=d, check=True, capture_output=True).stdout
+
+    def pin(data):
+        return 'verify:pin:' + hashlib.sha256(data).hexdigest()
+
+    servers = {name: Server(os.path.join(d, name + '.pem'), os.path.join(d, name + '.key'))
+               for name in ('wrongname', 'self', 'expired')}
+    out, steps = t.run(servers['wrongname'].port, 10, 'verify:chain', 'connect', 'close')
+    t.check('chain without the name: a certificate for another name taken',
+            step(steps, 0) == ('verify', 'OK') and result_code(steps, 1) == ('connect', 'OK'), out)
+    for name, error in (('self', '0x800b0109'), ('expired', '0x800b0101')):
+        out, steps = t.run(servers[name].port, 10, 'verify:chain', 'connect', 'close')
+        t.check('chain without the name: certificate %s still refused with %s' % (name, error),
+                result_code(steps, 1) == ('connect', 'FAIL') and last_error(steps, 1) == ('VERIFY', error[2:]),
+                out)
+    for name in ('self', 'expired'):
+        for what, data in (('itself', cert_der(name)), ('its public key', public_key_der(name))):
+            out, steps = t.run(servers[name].port, 10, pin(data), 'connect', 'close')
+            t.check('certificate %s taken by a pin of %s' % (name, what),
+                    step(steps, 0) == ('verify', 'OK') and result_code(steps, 1) == ('connect', 'OK'), out)
+    out, steps = t.run(servers['self'].port, 10, pin(cert_der('good')), 'connect', 'close')
+    t.check('another pin: certificate refused, logged, last_error VERIFY, TRUST_E_EXPLICIT_DISTRUST',
+            result_code(steps, 1) == ('connect', 'FAIL') and
+            'LOG error server certificate for localhost rejected: neither it nor its public key has the pin' in out
+            and last_error(steps, 1) == ('VERIFY', '800b0111'), out)
+    out, steps = t.run(servers['self'].port, 10, 'verify:pin', 'verify:chain', 'connect', 'close')
+    t.check('a pin refused without one, the mode as it was',
+            step(steps, 0) == ('verify', 'FAIL') and step(steps, 1) == ('verify', 'OK') and
+            last_error(steps, 2) == ('VERIFY', '800b0109'), out)
+    out, steps = t.run(servers['expired'].port, 10, 'verify:none', 'connect', 'send:echo hello\\n',
+                       'recv:100', 'close', 'connect', 'close')
+    t.check('no check: any certificate taken, with a warning on each connection',
+            result_code(steps, 1) == ('connect', 'OK') and recv_result(steps, 3)[::4] == ('OK', 'hello\\n') and
+            result_code(steps, 5) == ('connect', 'OK') and
+            out.count('LOG warning connected to localhost without verifying its certificate.') == 2, out)
+    out, steps = t.run(servers['self'].port, 10, 'verify:none', 'verify:full', 'connect', 'close')
+    t.check('in full again once set to',
+            result_code(steps, 2) == ('connect', 'FAIL') and last_error(steps, 2) == ('VERIFY', '800b0109'), out)
+
     # Without a logger, the port writes nothing, to stdout or stderr, and
     # last_error still says why.
     srv = Server(os.path.join(d, 'self.pem'), os.path.join(d, 'self.key'))

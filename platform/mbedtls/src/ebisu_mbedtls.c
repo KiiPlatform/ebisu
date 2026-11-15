@@ -60,12 +60,16 @@ int ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, si
     int ret;
     mbedtls_ssl_config_init(&tls->_config);
     mbedtls_x509_crt_init(&tls->_ca);
+    tls->_verify = EBISU_TLS_VERIFY_FULL;
+    memset(tls->_pin, 0, sizeof(tls->_pin));
     /* Before parsing a certificate, which needs PSA in mbedTLS 4. */
     ret = (int)psa_crypto_init();
     if (ret != 0) {
         goto fail;
     }
-    ret = mbedtls_x509_crt_parse(&tls->_ca, ca, ca_size);
+    /* None, for a pin or no check: an empty list, which mbedTLS takes for
+       one, and in which no certificate chains. */
+    ret = ca == NULL && ca_size == 0 ? 0 : mbedtls_x509_crt_parse(&tls->_ca, ca, ca_size);
     if (ret > 0) {
         /* How many of the certificates it couldn't parse. */
         ret = MBEDTLS_ERR_X509_CERT_UNKNOWN_FORMAT;
@@ -95,6 +99,28 @@ fail:
 mbedtls_ssl_config* ebisu_mbedtls_tls_config(ebisu_mbedtls_tls_t* tls)
 {
     return &tls->_config;
+}
+
+bool ebisu_mbedtls_tls_set_verify(ebisu_mbedtls_tls_t* tls, ebisu_tls_verify_t verify,
+        const unsigned char* pin)
+{
+    switch (verify) {
+        case EBISU_TLS_VERIFY_FULL:
+        case EBISU_TLS_VERIFY_CHAIN:
+        case EBISU_TLS_VERIFY_NONE:
+            memset(tls->_pin, 0, sizeof(tls->_pin));
+            break;
+        case EBISU_TLS_VERIFY_PIN:
+            if (pin == NULL) {
+                return false;
+            }
+            memcpy(tls->_pin, pin, sizeof(tls->_pin));
+            break;
+        default:
+            return false;
+    }
+    tls->_verify = verify;
+    return true;
 }
 
 void ebisu_mbedtls_tls_free(ebisu_mbedtls_tls_t* tls)
@@ -196,14 +222,50 @@ static ebisu_validity_t check_dates(ebisu_clock_t* clock, const mbedtls_x509_crt
     return ebisu_clock_check_validity(clock, not_before, not_after);
 }
 
+/* Whether the SHA-256 of what der holds is pin. */
+static bool hashes_to(const mbedtls_x509_buf* der, const unsigned char* pin)
+{
+    unsigned char hash[PSA_HASH_LENGTH(PSA_ALG_SHA_256)];
+    size_t hash_length = 0;
+    unsigned char differ = 0;
+    if (der->p == NULL || psa_hash_compute(PSA_ALG_SHA_256, der->p, der->len, hash,
+                sizeof(hash), &hash_length) != PSA_SUCCESS ||
+            hash_length != EBISU_TLS_PIN_SIZE) {
+        return false;
+    }
+    for (size_t i = 0; i < EBISU_TLS_PIN_SIZE; ++i) {
+        differ |= (unsigned char)(hash[i] ^ pin[i]);
+    }
+    return differ == 0;
+}
+
 /* mbedTLS calls this for each certificate of the chain it built, from the CA's
-   to the server's, with what it found wrong with it in flags. With a clock,
-   the validity periods are the clock's to check, in place of mbedTLS's check
-   at the system's time, if it made one. */
+   to the server's, with what it found wrong with it in flags.
+   A pin is checked against the server's, depth 0's, the others taken; and no
+   check takes them all. Without its name checked, the server's is taken for
+   another name. With a clock, the validity periods are the clock's to check,
+   in place of mbedTLS's check at the system's time, if it made one. */
 static int verify(void* arg, mbedtls_x509_crt* crt, int depth, uint32_t* flags)
 {
     ebisu_mbedtls_socket_t* sock = (ebisu_mbedtls_socket_t*)arg;
-    (void)depth;
+    const ebisu_mbedtls_tls_t* tls = sock->_tls;
+    switch (tls->_verify) {
+        case EBISU_TLS_VERIFY_NONE:
+            *flags = 0;
+            return 0;
+        case EBISU_TLS_VERIFY_PIN:
+            /* The certificate, or its SubjectPublicKeyInfo. */
+            *flags = depth != 0 || hashes_to(&crt->raw, tls->_pin) ||
+                hashes_to(&crt->pk_raw, tls->_pin) ? 0 : MBEDTLS_X509_BADCERT_OTHER;
+            return 0;
+        case EBISU_TLS_VERIFY_CHAIN:
+            if (depth == 0) {
+                *flags &= ~(uint32_t)MBEDTLS_X509_BADCERT_CN_MISMATCH;
+            }
+            break;
+        default:
+            break;
+    }
     if (sock->_clock == NULL) {
         return 0;
     }
@@ -275,7 +337,8 @@ static ebisu_sock_code_t mbedtls_connect(ebisu_socket_t* self, const char* host,
     sock->_failed = false;
     sock->_recv_timed_out = false;
 #if !defined(MBEDTLS_HAVE_TIME_DATE)
-    if (sock->_clock == NULL) {
+    if (sock->_clock == NULL && (sock->_tls->_verify == EBISU_TLS_VERIFY_FULL ||
+                sock->_tls->_verify == EBISU_TLS_VERIFY_CHAIN)) {
         /* Nothing to check the certificates' dates at. */
         log_to(sock->_logger, EBISU_LOG_ERROR,
                 "no clock to check the certificate of %s at, and no time of the system's",
@@ -331,13 +394,23 @@ static ebisu_sock_code_t mbedtls_connect(ebisu_socket_t* self, const char* host,
                 sock->_time_exact) {
             ebisu_clock_forget_time(sock->_clock);
         }
-        log_refused(sock->_logger, host, flags);
+        if (sock->_tls->_verify == EBISU_TLS_VERIFY_PIN) {
+            log_to(sock->_logger, EBISU_LOG_ERROR,
+                    "server certificate for %s refused: neither it nor its public key has the pin",
+                    host);
+        } else {
+            log_refused(sock->_logger, host, flags);
+        }
         set_error(sock, EBISU_SOCK_ERROR_VERIFY, (long)flags);
         goto fail;
     } else if (ret != 0) {
         log_tls_error(sock->_logger, "TLS handshake failed with", host, ret);
         set_tls_error(sock, ret);
         goto fail;
+    }
+    if (sock->_tls->_verify == EBISU_TLS_VERIFY_NONE) {
+        log_to(sock->_logger, EBISU_LOG_WARNING,
+                "connected to %s without verifying its certificate.", host);
     }
     return EBISU_SOCK_OK;
 
