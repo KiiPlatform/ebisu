@@ -208,15 +208,21 @@ TEST_CASE("A level filter gives its logger the messages of its level, which can 
 
 TEST_CASE("A level filter's level is set while other tasks log through it") {
     TestLock lock;
-    SlowLogger target;
+    // Slow, as under valgrind: a message that read the level before it
+    // changed goes on, and gets there a while after.
+    SlowLogger target(200);
     ebisu_log_level_filter_t filter;
     ebisu_log_level_filter_init(&filter, &target.base, EBISU_LOG_INFO, &lock.base);
     std::atomic<bool> stop(false);
+    const int count = 4;
+    std::atomic<long> logged[count];
     std::vector<std::thread> tasks;
-    for (int t = 0; t < 4; ++t) {
-        tasks.emplace_back([&filter, &stop] {
+    for (int t = 0; t < count; ++t) {
+        logged[t] = 0;
+        tasks.emplace_back([&filter, &stop, &logged, t] {
             while (!stop) {
                 ebisu_log(&filter.base, EBISU_LOG_INFO, "%s", "info");
+                ++logged[t];
             }
         });
     }
@@ -224,17 +230,20 @@ TEST_CASE("A level filter's level is set while other tasks log through it") {
         ebisu_log_level_filter_set_level(&filter, i % 2 == 0 ? EBISU_LOG_ERROR : EBISU_LOG_DEBUG);
     }
     ebisu_log_level_filter_set_level(&filter, EBISU_LOG_ERROR);
-    // Once it is error, nothing at info goes on, but for messages that read the
-    // level before, which may take their time, under valgrind above all.
-    int before = target.count;
-    for (int i = 0; i < 100; ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        int now = target.count;
-        if (now == before) {
-            break;
-        }
-        before = now;
+    // Once it is error, nothing at info goes on, but for a message of each task
+    // that read the level before, which its next one comes after: once each
+    // task has logged two more, none is under way.
+    long since[count];
+    for (int t = 0; t < count; ++t) {
+        since[t] = logged[t];
     }
+    for (int t = 0; t < count; ++t) {
+        for (int i = 0; i < 3000 && logged[t] < since[t] + 2; ++i) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        CHECK(logged[t] >= since[t] + 2);
+    }
+    int before = target.count;
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     stop = true;
     for (auto& task : tasks) {
