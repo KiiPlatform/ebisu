@@ -4,6 +4,7 @@
 #include <chrono>
 #include <thread>
 #include <sstream>
+#include <string>
 #include <functional>
 
 #include <kii.h>
@@ -17,7 +18,7 @@ TEST_CASE("Object Tests")
 {
     // To Avoid 429 Too Many Requests
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    size_t buff_size = 4096;
+    const size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;
     ebisu::ltest::ssl::SSLData http_ssl_ctx;
@@ -56,14 +57,12 @@ TEST_CASE("Object Tests")
             REQUIRE( etag_len == 3 );
 
             SECTION("PUT with Etag") {
-                char etag_copy[etag_len+1];
-                memcpy(etag_copy, etag, etag_len);
-                etag_copy[etag_len] = '\0';
-                kii_code_t put_res = kii_put_object(&kii, &bucket, obj_id.id, object, NULL, etag_copy);
+                std::string etag_copy(etag, etag_len);
+                kii_code_t put_res = kii_put_object(&kii, &bucket, obj_id.id, object, NULL, etag_copy.c_str());
                 REQUIRE( put_res == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
                 // Now etag_copy should be obsoleted.
-                put_res = kii_put_object(&kii, &bucket, obj_id.id, object, NULL, etag_copy);
+                put_res = kii_put_object(&kii, &bucket, obj_id.id, object, NULL, etag_copy.c_str());
                 REQUIRE( put_res == KII_ERR_RESP_STATUS );
                 REQUIRE( khc_get_status_code(&kii._khc) == 409 );
             }
@@ -75,15 +74,13 @@ TEST_CASE("Object Tests")
 
                 const char* p_etag = kii_get_etag(&kii);
                 size_t p_etag_len = strlen(etag);
-                char p_etag_copy[p_etag_len+1];
-                memcpy(p_etag_copy, p_etag, p_etag_len);
-                p_etag_copy[p_etag_len] = '\0';
+                std::string p_etag_copy(p_etag, p_etag_len);
 
-                patch_res = kii_patch_object(&kii, &bucket, obj_id.id, patch_data, p_etag_copy);
+                patch_res = kii_patch_object(&kii, &bucket, obj_id.id, patch_data, p_etag_copy.c_str());
                 REQUIRE( patch_res == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
                 // Now p_etag_copy is not valid.
-                patch_res = kii_patch_object(&kii, &bucket, obj_id.id, patch_data, p_etag_copy);
+                patch_res = kii_patch_object(&kii, &bucket, obj_id.id, patch_data, p_etag_copy.c_str());
                 REQUIRE( patch_res == KII_ERR_RESP_STATUS );
                 REQUIRE( khc_get_status_code(&kii._khc) == 409 );
             }

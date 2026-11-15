@@ -128,7 +128,8 @@ jobs:
   # warnings as the rest. Its preset builds the win32 sample too, and its small
   # tests include the sample's TLS test, which runs against servers on
   # 127.0.0.1 and so stays within the runner like the others. The windows job
-  # runs that one on Windows as well.
+  # runs that one on Windows as well, and the msvc job builds all of ebisu on
+  # Windows, with Visual Studio's compiler.
   #
   # ASan and UBSan catch a class of bug valgrind structurally cannot: overruns
   # of globals and string literals live in .rodata, not on the heap or stack.
@@ -290,6 +291,57 @@ jobs:
       # The runner image has Python and the openssl command.
       - name: test
         run: python tests/schannel/tls_test.py schannel_socket_test.exe --windows
+
+  # All of ebisu built on Windows itself, with Visual Studio's compiler, which
+  # is not GCC: it has no variable length arrays, in C or in C++, nor a C99
+  # mode, and a DLL exports nothing it isn't told to. The msvc preset names no
+  # generator, so CMake takes the newest Visual Studio the runner has. Then the
+  # small tests, the Schannel port's test with --windows, as in the windows
+  # job, and the large tests, as in the large job, over the Schannel port.
+  msvc:
+    name: small and large (64-bit Windows, MSVC)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      checks: write # for the JUnit report
+    env:
+      LIVE: ${{ secrets.CLIENT_ID != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Fetch tags
+        run: git fetch --unshallow --tags --force
+      # As in the large job, which configures the large tests when these two
+      # are set.
+      - name: configure
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
+        run: cmake --preset msvc -DEBISU_TEST_JUNIT=ON
+      - name: build
+        id: build
+        run: cmake --build --preset msvc
+      - name: test (small)
+        run: ctest --preset small-msvc
+      # Whatever the small tests did, as each of the three says something of
+      # its own.
+      - name: test (Schannel port)
+        if: (success() || failure()) && steps.build.outcome == 'success'
+        run: python tests/schannel/tls_test.py build/msvc/tests/schannel/Debug/schannel_socket_test.exe --windows
+      # As in the large job.
+      - name: test (large)
+        if: (success() || failure()) && steps.build.outcome == 'success' && (env.LIVE == 'true' || github.ref == 'refs/heads/master')
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: ctest --preset large-msvc
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@4a26df3e2ae132254ba12a53f65a388d0961e786 # v6.7.0
+        if: success() || failure() # always run even if the previous step fails
+        with:
+          report_paths: "**/test-results/junit/*.xml"
+          check_name: JUnit Test Report (small and large, 64-bit Windows, MSVC)
 
   # A short fuzz of everything that reads what the network brings, from the
   # corpus in the repository, so that a change that breaks one of them on input

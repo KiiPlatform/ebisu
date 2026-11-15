@@ -40,20 +40,15 @@ function(ebisu_add_test_suite name)
     # warning from a third-party header nobody here is going to fix would only
     # teach people to turn the whole thing off.
     target_compile_options(${name} PRIVATE
-        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall>
-        # The suites size buffers from test data throughout, which C++ has no
-        # standard form of. Only clang reports it, so leaving it on would mean
-        # the same tree is quiet on CI and noisy on a developer's machine, and
-        # thirty-four warnings nobody intends to act on would bury the ones that
-        # matter. Variable length arrays in the libraries, where the length can
-        # come from elsewhere, are a separate question tracked by -Wvla there.
-        $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-vla-cxx-extension>)
+        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall>)
     # A suite can have more sections than the 32767 COFF allows an object, as
     # mingw-w64's GCC 13 gives each of the inline functions Catch and the tests
     # make one of its own: kii's MQTT suite does. The big object format has
     # room for them.
     if(MINGW)
         target_compile_options(${name} PRIVATE -Wa,-mbig-obj)
+    elseif(MSVC)
+        target_compile_options(${name} PRIVATE /bigobj)
     endif()
     target_link_libraries(${name} PRIVATE ebisu_catch ${T_LINK})
     if(T_INCLUDES)
@@ -109,9 +104,8 @@ if(EBISU_LOG)
     add_subdirectory(no_log)
 endif()
 
-# platform's Schannel port, run under wine, whose test looks for what the port
-# logs.
-if(WIN32 AND CMAKE_CROSSCOMPILING_EMULATOR AND EBISU_LOG)
+# platform's Schannel port, whose test looks for what the port logs.
+if(WIN32 AND EBISU_LOG)
     add_subdirectory(schannel)
 endif()
 

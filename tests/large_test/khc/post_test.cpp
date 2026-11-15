@@ -5,6 +5,7 @@
 #include "test_callbacks.h"
 #include "picojson.h"
 #include <sstream>
+#include <string>
 #include "../test_env.h"
 
 TEST_CASE( "HTTP Post" ) {
@@ -64,10 +65,8 @@ TEST_CASE( "HTTP Post" ) {
     io_ctx.on_header = [=, &on_header_called](char *buffer, size_t size, void *userdata) {
         ++on_header_called;
         // Ignore resp headers.
-        char str[size + 1];
-        strncpy(str, buffer, size);
-        str[size] = '\0';
-        printf("%s\n", str);
+        std::string str(buffer, size);
+        printf("%s\n", str.c_str());
         return size;
     };
 

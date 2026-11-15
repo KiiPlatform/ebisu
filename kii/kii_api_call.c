@@ -7,6 +7,9 @@
 #include <ebisu_mem.h>
 #include <ebisu_str.h>
 #include <string.h>
+#ifdef _MSC_VER
+#include <malloc.h>
+#endif
 
 /* The SDK and its version, as git describe gives it for the tree built. */
 #define _SDK_INFO "sn=te;sv=" EBISU_VERSION_FULL
@@ -177,7 +180,13 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
+#ifdef _MSC_VER
+    // MSVC has no variable length arrays. _alloca's is freed as the function
+    // returns, as the array would be as its block ends, which is the same here.
+    char* buff = _alloca(buff_size);
+#else
     char buff[buff_size];
+#endif
 
     ebisu_strbuf_t header;
     ebisu_strbuf_init(&header, buff, buff_size);

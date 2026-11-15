@@ -15,8 +15,8 @@ provides:
 
 ## Build
 
-It is built with mingw-w64, cross-compiling from Linux, and run under wine.
-From the root of the repository:
+It is built with mingw-w64, cross-compiling from Linux, and run under wine,
+or on Windows with MSVC. From the root of the repository:
 
 ```sh
 cmake --preset mingw
@@ -28,12 +28,24 @@ the DLLs of the libraries it links, and `state.json` beside it. The preset needs
 `mingw64-gcc-c++` on Fedora, `g++-mingw-w64-x86-64-posix` on Debian and
 Ubuntu) and wine.
 
+On Windows, with Visual Studio's C and C++ tools:
+
+```sh
+cmake --preset msvc
+cmake --build --preset msvc
+```
+
+This makes `build/msvc/tio/win32-sample/Debug/win32app.exe`, with
+`ebisu_tio.dll`, the DLLs of the libraries it links, and `state.json` beside
+it. The preset names no generator, so CMake takes the newest Visual Studio it
+finds.
+
 The sample is built whenever `EBISU_BUILD_SAMPLES` is on and the target is
 Windows, where the linux sample is not. It avoids GNU extensions in its own
-code and links the Windows libraries by name, so a native MinGW or MSVC build
-on Windows should work too, but only mingw-w64's, cross-compiled, is tested:
-under wine, and the Schannel port's test on Windows as well (see
-[Test](#test)).
+code and links the Windows libraries by name, so a native MinGW build on
+Windows should work too, but only mingw-w64's, cross-compiled, and MSVC's are
+tested: the first under wine, with the Schannel port's test on Windows as
+well, and MSVC's on Windows (see [Test](#test)).
 
 ## Use
 
@@ -117,11 +129,11 @@ the system's C compiler and preloads into wine, whose Winsock looks hosts up
 with the C library's `getaddrinfo()`; without a compiler, those tests are
 skipped.
 
-CI runs the script on a Windows runner too, with `--windows`, so that the
-test program, cross-compiled as above, runs against Windows' own Schannel,
-Winsock and DNS client: there, unlike under wine, a lookup the port gives up
-on is cancelled. That is for a machine of the run's own, and an
-administrator: until the test ends, its CA is in the machine's root store,
-and a rule of the name resolution policy table sends the names whose lookups
-it holds back to a DNS server of the script's own, on 127.0.0.1, which
-answers them as late as `lookup_gate.c` would.
+CI runs the script on a Windows runner too, with `--windows`, so that the test
+program, as cross-compiled above and as MSVC builds it, runs against Windows'
+own Schannel, Winsock and DNS client: there, unlike under wine, a lookup the
+port gives up on is cancelled. That is for a machine of the run's own, and an
+administrator: until the test ends, its CA is in the machine's root store, and
+a rule of the name resolution policy table sends the names whose lookups it
+holds back to a DNS server of the script's own, on 127.0.0.1, which answers
+them as late as `lookup_gate.c` would.

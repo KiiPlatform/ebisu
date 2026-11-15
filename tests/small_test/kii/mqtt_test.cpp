@@ -65,10 +65,10 @@ static void serve_stream(khct::cb::SockCtx& ctx, const std::string& data, size_t
 }
 
 TEST_CASE( "MQTT state test" ) {
-    size_t kii_buff_size = 1024;
+    const size_t kii_buff_size = 1024;
     char kii_buff[kii_buff_size];
-    size_t mqtt_buff_size = 1024;
-    char mqtt_buff[kii_buff_size];
+    const size_t mqtt_buff_size = 1024;
+    char mqtt_buff[mqtt_buff_size];
 
     kii_t kii;
     kii_init(&kii);
@@ -547,10 +547,10 @@ static bool mock_recv_timed_out(void* sock_ctx)
 }
 
 TEST_CASE( "MQTT state abnormal tests" ) {
-    size_t kii_buff_size = 1024;
+    const size_t kii_buff_size = 1024;
     char kii_buff[kii_buff_size];
-    size_t mqtt_buff_size = 1024;
-    char mqtt_buff[kii_buff_size];
+    const size_t mqtt_buff_size = 1024;
+    char mqtt_buff[mqtt_buff_size];
 
     kii_t kii;
     kii_init(&kii);
@@ -2621,10 +2621,10 @@ TEST_CASE( "CONNECT carries the last will" ) {
 }
 
 TEST_CASE( "kii_enable_insecure_mqtt test" ) {
-    size_t kii_buff_size = 1024;
+    const size_t kii_buff_size = 1024;
     char kii_buff[kii_buff_size];
-    size_t mqtt_buff_size = 1024;
-    char mqtt_buff[kii_buff_size];
+    const size_t mqtt_buff_size = 1024;
+    char mqtt_buff[mqtt_buff_size];
 
     kii_t kii;
     kii_init(&kii);
@@ -2644,10 +2644,10 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     khct::cb::PushCtx push_ctx;
     kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, &push_ctx);
 
-    REQUIRE(kii._khc._enable_insecure == 0);
+    REQUIRE(kii._khc._enable_insecure == false);
     REQUIRE(kii._insecure_mqtt == false);
     kii_enable_insecure_mqtt(&kii, true);
-    REQUIRE(kii._khc._enable_insecure == 0);
+    REQUIRE(kii._khc._enable_insecure == false);
     REQUIRE(kii._insecure_mqtt == true);
 
     mqtt_state_t state;
@@ -3278,10 +3278,10 @@ static std::string mqtt_endpoint_response(
 // use, as one jkii cannot read already was, rather than one to wrap around: a
 // port of -1 became 4294967295.
 TEST_CASE( "MQTT endpoint values out of range" ) {
-    size_t kii_buff_size = 1024;
+    const size_t kii_buff_size = 1024;
     char kii_buff[kii_buff_size];
-    size_t mqtt_buff_size = 1024;
-    char mqtt_buff[kii_buff_size];
+    const size_t mqtt_buff_size = 1024;
+    char mqtt_buff[mqtt_buff_size];
 
     kii_t kii;
     kii_init(&kii);

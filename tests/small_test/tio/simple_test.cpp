@@ -29,36 +29,36 @@ TEST_CASE( "enable insecure test" ) {
     tio_handler_t handler;
 
     tio_handler_init(&handler);
-    REQUIRE( handler._kii._khc._enable_insecure == 0 );
+    REQUIRE( handler._kii._khc._enable_insecure == false );
     REQUIRE( handler._kii._insecure_mqtt == false );
 
     tio_handler_enable_insecure_http(&handler, true);
-    REQUIRE( handler._kii._khc._enable_insecure == 1 );
+    REQUIRE( handler._kii._khc._enable_insecure == true );
     REQUIRE( handler._kii._insecure_mqtt == false );
 
     tio_handler_enable_insecure_mqtt(&handler, true);
-    REQUIRE( handler._kii._khc._enable_insecure == 1 );
+    REQUIRE( handler._kii._khc._enable_insecure == true );
     REQUIRE( handler._kii._insecure_mqtt == true );
 
     tio_handler_enable_insecure_http(&handler, false);
-    REQUIRE( handler._kii._khc._enable_insecure == 0 );
+    REQUIRE( handler._kii._khc._enable_insecure == false );
     REQUIRE( handler._kii._insecure_mqtt == true );
 
     tio_handler_enable_insecure_mqtt(&handler, false);
-    REQUIRE( handler._kii._khc._enable_insecure == 0 );
+    REQUIRE( handler._kii._khc._enable_insecure == false );
     REQUIRE( handler._kii._insecure_mqtt == false );
 
     tio_updater_t updater;
     tio_updater_init(&updater);
-    REQUIRE( updater._kii._khc._enable_insecure == 0 );
+    REQUIRE( updater._kii._khc._enable_insecure == false );
     REQUIRE( updater._kii._insecure_mqtt == false );
 
     tio_updater_enable_insecure_http(&updater, true);
-    REQUIRE( updater._kii._khc._enable_insecure == 1 );
+    REQUIRE( updater._kii._khc._enable_insecure == true );
     REQUIRE( updater._kii._insecure_mqtt == false );
 
     tio_updater_enable_insecure_http(&updater, false);
-    REQUIRE( updater._kii._khc._enable_insecure == 0 );
+    REQUIRE( updater._kii._khc._enable_insecure == false );
     REQUIRE( updater._kii._insecure_mqtt == false );
 }
 

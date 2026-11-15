@@ -51,7 +51,7 @@ TEST_CASE("TI Tests")
 {
     // To Avoid 429 Too Many Requests
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    size_t buff_size = 4096;
+    const size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;
     ebisu::ltest::ssl::SSLData http_ssl_ctx;
@@ -299,7 +299,7 @@ TEST_CASE("TI Tests")
 
 TEST_CASE("Empty request payloads", "[empty-request]") {
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    size_t buff_size = 4096;
+    const size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;
     ebisu::ltest::ssl::SSLData http_ssl_ctx;

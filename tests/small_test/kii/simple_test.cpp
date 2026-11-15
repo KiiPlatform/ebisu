@@ -9,10 +9,10 @@
 #include <string.h>
 
 TEST_CASE( "Simple test" ) {
-    size_t kii_buff_size = 1024;
+    const size_t kii_buff_size = 1024;
     char kii_buff[kii_buff_size];
-    size_t mqtt_buff_size = 1024;
-    char mqtt_buff[kii_buff_size];
+    const size_t mqtt_buff_size = 1024;
+    char mqtt_buff[mqtt_buff_size];
 
     kii_t kii;
     kii_init(&kii);
@@ -33,11 +33,11 @@ TEST_CASE( "Simple test" ) {
     kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, &push_ctx);
 
     SECTION("kii_enable_insecure_http test") {
-        REQUIRE(kii._khc._enable_insecure == 0);
+        REQUIRE(kii._khc._enable_insecure == false);
         kii_enable_insecure_http(&kii, true);
-        REQUIRE(kii._khc._enable_insecure == 1);
+        REQUIRE(kii._khc._enable_insecure == true);
         kii_enable_insecure_http(&kii, false);
-        REQUIRE(kii._khc._enable_insecure == 0);
+        REQUIRE(kii._khc._enable_insecure == false);
     }
 
     SECTION("kii_set_use_m_0 test") {

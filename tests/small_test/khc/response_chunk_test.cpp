@@ -7,6 +7,7 @@
 #include <iostream>
 #include <random>
 #include <string.h>
+#include <vector>
 
 TEST_CASE( "HTTP chunked response test" ) {
     khc http;
@@ -230,7 +231,7 @@ TEST_CASE( "random buffer size test" ) {
     mt19937 mt(rd());
     uniform_int_distribution<> randSize(10, 100);
     const size_t buff_size = randSize(mt);
-    char buff[buff_size];
+    std::vector<char> buff(buff_size);
     cout << "Random Buffer Size: " << buff_size << endl;
 
     ifstream ifs;
@@ -244,7 +245,7 @@ TEST_CASE( "random buffer size test" ) {
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
-    khc_set_stream_buff(&http, buff, buff_size);
+    khc_set_stream_buff(&http, buff.data(), buff_size);
 
     khct::cb::SockCtx s_ctx;
     khc_set_socket(&http, s_ctx.socket());

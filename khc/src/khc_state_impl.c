@@ -152,19 +152,17 @@ static const char* request_path(khc* khc) {
     return khc->_path[0] != '\0' ? khc->_path : "/";
 }
 
-static size_t request_line_len(khc* khc) {
-    const char* schema = khc->_enable_insecure ? schema_http : schema_https;
-    size_t url_prefix_len = khc->_absolute_target ? strlen(schema) + strlen(khc->_host) : 0;
-    return ( // example)GET /v1/users HTTP1.1\r\n
-        strlen(khc->_method) + 1
-        + url_prefix_len + strlen(request_path(khc)) + 1
-        + strlen(http_version)
-        );
-}
+// The longest request line, as "GET /v1/users HTTP/1.1\r\n" or, for an absolute
+// target, "GET https://host/v1/users HTTP/1.1\r\n": the setters keep the
+// method, the host and the path shorter than their buffers. The line's buffer
+// is of this size, not of the line's, as MSVC has no variable length arrays.
+#define REQUEST_LINE_MAX_LEN \
+    (KHC_METHOD_MAX_SIZE - 1 + 1 \
+     + sizeof(schema_https) - 1 + KHC_HOST_MAX_SIZE - 1 + KHC_PATH_MAX_SIZE - 1 + 1 \
+     + sizeof(http_version) - 1)
 
 void khc_state_req_line(khc* khc) {
-    size_t len = request_line_len(khc);
-    char request_line[len+1];
+    char request_line[REQUEST_LINE_MAX_LEN + 1];
 
     request_line[0] = '\0';
     strcat(request_line, khc->_method);
@@ -190,7 +188,7 @@ void khc_state_req_line(khc* khc) {
             khc->_sent_length = 0;
         }
         // Without its CRLF.
-        _khc_log(khc, EBISU_LOG_DEBUG, "> %.*s", (int)(len - 2), request_line);
+        _khc_log(khc, EBISU_LOG_DEBUG, "> %.*s", (int)(strlen(request_line) - 2), request_line);
         khc->_state = KHC_STATE_REQ_HOST_HEADER;
         return;
     }
@@ -208,8 +206,8 @@ void khc_state_req_line(khc* khc) {
 
 void khc_state_req_host_header(khc* khc) {
     const char hdr_key[] = "HOST: ";
-    size_t hdr_len = strlen(hdr_key) + strlen(khc->_host) + 2;
-    char buff[hdr_len + 1];
+    // The key, the longest host khc_set_host() takes, the CRLF and the NUL.
+    char buff[sizeof(hdr_key) - 1 + KHC_HOST_MAX_SIZE - 1 + 2 + 1];
     ebisu_strbuf_t line;
     ebisu_strbuf_init(&line, buff, sizeof(buff));
     ebisu_strbuf_appendf(&line, "%s%s\r\n", hdr_key, khc->_host);
@@ -1082,7 +1080,7 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
             return;
         }
         size_t tmp_size = 2 - khc->_body_read_size;
-        char tmp[tmp_size];
+        char tmp[2];
         size_t read_size = 0;
         ebisu_sock_code_t read_res = khc->_socket->ops->recv(
                 khc->_socket,

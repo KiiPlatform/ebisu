@@ -90,10 +90,9 @@ TEST_CASE( "HTTP response test" ) {
     int on_write_called = 0;
     io_ctx.on_write = [=, &iss, &on_write_called](char *buffer, size_t size, void *userdata) {
         ++on_write_called;
-        char body_buffer[size];
-        memset(body_buffer, '\0', size);
-        iss.read((char*)body_buffer, size);
-        REQUIRE ( strncmp(buffer, body_buffer, size) == 0 );
+        std::vector<char> body_buffer(size);
+        iss.read(body_buffer.data(), size);
+        REQUIRE ( strncmp(buffer, body_buffer.data(), size) == 0 );
         return size;
     };
 
@@ -185,10 +184,9 @@ TEST_CASE( "Ignore HTTP status 100" ) {
     int on_write_called = 0;
     io_ctx.on_write = [=, &iss, &on_write_called](char *buffer, size_t size, void *userdata) {
         ++on_write_called;
-        char body_buffer[size];
-        memset(body_buffer, '\0', size);
-        iss.read((char*)body_buffer, size);
-        REQUIRE ( strncmp(buffer, body_buffer, size) == 0 );
+        std::vector<char> body_buffer(size);
+        iss.read(body_buffer.data(), size);
+        REQUIRE ( strncmp(buffer, body_buffer.data(), size) == 0 );
         return size;
     };
 
@@ -288,10 +286,9 @@ TEST_CASE( "Small resp header skip test" ) {
     int on_write_called = 0;
     io_ctx.on_write = [=, &iss, &on_write_called](char *buffer, size_t size, void *userdata) {
         ++on_write_called;
-        char body_buffer[size];
-        memset(body_buffer, '\0', size);
-        iss.read((char*)body_buffer, size);
-        REQUIRE ( strncmp(buffer, body_buffer, size) == 0 );
+        std::vector<char> body_buffer(size);
+        iss.read(body_buffer.data(), size);
+        REQUIRE ( strncmp(buffer, body_buffer.data(), size) == 0 );
         return size;
     };
 
@@ -381,10 +378,9 @@ TEST_CASE( "HTTP response 400 test" ) {
     int on_write_called = 0;
     io_ctx.on_write = [=, &iss, &on_write_called](char *buffer, size_t size, void *userdata) {
         ++on_write_called;
-        char body_buffer[size];
-        memset(body_buffer, '\0', size);
-        iss.read((char*)body_buffer, size);
-        REQUIRE ( strncmp(buffer, body_buffer, size) == 0 );
+        std::vector<char> body_buffer(size);
+        iss.read(body_buffer.data(), size);
+        REQUIRE ( strncmp(buffer, body_buffer.data(), size) == 0 );
         return size;
     };
 
