@@ -97,7 +97,11 @@ give it an `ebisu_stdio_logger_t` on `stderr` at `EBISU_LOG_WARNING`.
   to its path with `.1` after it, which replaces the one there, and a new one
   started, so that a device's flash holds at most twice the size, and the last
   of the log. The line is formatted before the lock it is given is taken, and
-  written, counted and the file renamed under it.
+  written, counted and the file renamed under it. With
+  `ebisu_file_logger_set_timestamps()`, each line starts with the system's time
+  of day, in UTC to the millisecond, as RFC 3339 has it, as in
+  `2026-11-15T07:46:05.123Z error: failed to connect to example.com.`, taken
+  under the lock, so that a file's times are in the order of its lines.
 - **To syslog** (`ebisu_syslog_logger_t`, on POSIX): `syslog()`, with a
   facility and the severity of the level. `openlog()` is the application's to
   call, if it wants to.

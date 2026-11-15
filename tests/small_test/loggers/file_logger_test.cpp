@@ -13,6 +13,7 @@
 #endif
 
 #include <stdio.h>
+#include <time.h>
 #include <mutex>
 #include <set>
 #include <string>
@@ -227,4 +228,145 @@ TEST_CASE("The file logger's lines from several tasks at once stay whole, and no
     }
     CHECK(start == all.size());
     CHECK(seen.size() == (size_t)(threads * each));
+}
+
+namespace {
+
+// Days from 1970-01-01 to a date, as Howard Hinnant's days_from_civil has it.
+long long days_from_civil(long long y, unsigned m, unsigned d) {
+    y -= m <= 2;
+    const long long era = (y >= 0 ? y : y - 399) / 400;
+    const unsigned yoe = (unsigned)(y - era * 400);
+    const unsigned doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + d - 1;
+    const unsigned doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    return era * 146097 + (long long)doe - 719468;
+}
+
+// The lines of a file, without their newlines.
+std::vector<std::string> lines_of(const std::string& all) {
+    std::vector<std::string> out;
+    size_t start = 0;
+    for (size_t end; (end = all.find('\n', start)) != std::string::npos; start = end + 1) {
+        out.push_back(all.substr(start, end - start));
+    }
+    return out;
+}
+
+// A line's timestamp, in milliseconds since the epoch, and what is after it,
+// or -1 if it doesn't start with one of RFC 3339's, in UTC to the millisecond.
+long long timestamp_of(const std::string& line, std::string* rest) {
+    int y, mo, d, h, mi, s, ms;
+    char z;
+    int consumed = 0;
+    if (line.size() < 25 || line[24] != ' ' ||
+            sscanf(line.c_str(), "%4d-%2d-%2dT%2d:%2d:%2d.%3d%c%n", &y, &mo, &d, &h, &mi, &s,
+                &ms, &z, &consumed) != 8 || z != 'Z' || consumed != 24) {
+        return -1;
+    }
+    *rest = line.substr(25);
+    return ((days_from_civil(y, (unsigned)mo, (unsigned)d) * 24 + h) * 60 + mi) * 60000LL +
+        s * 1000LL + ms;
+}
+
+long long now_ms() {
+    return (long long)time(nullptr) * 1000;
+}
+
+} // namespace
+
+TEST_CASE("The file logger starts each line with the time it is written, if asked") {
+    Files files;
+    ebisu_file_logger_t logger;
+    REQUIRE(ebisu_file_logger_init(&logger, PATH, 0, EBISU_LOG_DEBUG, nullptr));
+    ebisu_file_logger_set_timestamps(&logger, true);
+    const long long before = now_ms();
+    ebisu_log(&logger.base, EBISU_LOG_ERROR, "failed to connect to %s.", "example.com");
+    ebisu_log(&logger.base, EBISU_LOG_INFO, "%d tries", 3);
+    const long long after = now_ms();
+    ebisu_file_logger_close(&logger);
+    const std::vector<std::string> lines = lines_of(contents(PATH));
+    REQUIRE(lines.size() == 2);
+    std::string rest;
+    long long first = timestamp_of(lines[0], &rest);
+    CHECK(rest == "error: failed to connect to example.com.");
+    long long second = timestamp_of(lines[1], &rest);
+    CHECK(rest == "info: 3 tries");
+    // To the second the test reads its clock at.
+    CHECK(first >= before);
+    CHECK(second >= first);
+    CHECK(second < after + 1000);
+
+    SECTION("and not unless asked") {
+        Files::clear();
+        REQUIRE(ebisu_file_logger_init(&logger, PATH, 0, EBISU_LOG_DEBUG, nullptr));
+        ebisu_log(&logger.base, EBISU_LOG_ERROR, "plain");
+        ebisu_file_logger_close(&logger);
+        CHECK(contents(PATH) == "error: plain\n");
+    }
+}
+
+// Each line is 25 bytes more, 39, and 2 of them fit in 100.
+TEST_CASE("The file logger counts a line's timestamp in the file's size") {
+    Files files;
+    ebisu_file_logger_t logger;
+    REQUIRE(ebisu_file_logger_init(&logger, PATH, 100, EBISU_LOG_DEBUG, nullptr));
+    ebisu_file_logger_set_timestamps(&logger, true);
+    for (int i = 1; i <= 5; ++i) {
+        ebisu_log(&logger.base, EBISU_LOG_INFO, "line %02d", i);
+    }
+    ebisu_file_logger_close(&logger);
+    const std::string backup = contents(BACKUP);
+    const std::string current = contents(PATH);
+    CHECK(backup.size() == 2 * 39);
+    CHECK(current.size() == 39);
+    std::string rest;
+    REQUIRE(timestamp_of(lines_of(current)[0], &rest) >= 0);
+    CHECK(rest + "\n" == numbered(5));
+}
+
+TEST_CASE("The file logger's line with its timestamp is at most the longest a logger writes") {
+    Files files;
+    ebisu_file_logger_t logger;
+    REQUIRE(ebisu_file_logger_init(&logger, PATH, 0, EBISU_LOG_DEBUG, nullptr));
+    ebisu_file_logger_set_timestamps(&logger, true);
+    const std::string message(2 * EBISU_LOGGER_LINE_MAX, 'x');
+    ebisu_log(&logger.base, EBISU_LOG_ERROR, "%s", message.c_str());
+    ebisu_file_logger_close(&logger);
+    const std::string all = contents(PATH);
+    CHECK(all.size() == EBISU_LOGGER_LINE_MAX);
+    std::string rest;
+    REQUIRE(timestamp_of(lines_of(all)[0], &rest) >= 0);
+    CHECK(rest == "error: " + std::string(EBISU_LOGGER_LINE_MAX - 25 - 7 - 1 - 3, 'x') + "...");
+}
+
+// The time is taken under the lock, so the lines of several tasks have their
+// times in the order the file has them.
+TEST_CASE("The file logger's timestamps are in the order of its lines") {
+    Files files;
+    TestLock lock;
+    ebisu_file_logger_t logger;
+    REQUIRE(ebisu_file_logger_init(&logger, PATH, 0, EBISU_LOG_DEBUG, &lock.base));
+    ebisu_file_logger_set_timestamps(&logger, true);
+    std::vector<std::thread> running;
+    for (int t = 0; t < 4; ++t) {
+        running.emplace_back([&logger, t]() {
+            for (int i = 0; i < 100; ++i) {
+                ebisu_log(&logger.base, EBISU_LOG_INFO, "thread %d line %d", t, i);
+            }
+        });
+    }
+    for (std::thread& thread : running) {
+        thread.join();
+    }
+    ebisu_file_logger_close(&logger);
+    const std::vector<std::string> lines = lines_of(contents(PATH));
+    REQUIRE(lines.size() == 400);
+    long long last = 0;
+    for (const std::string& line : lines) {
+        std::string rest;
+        long long at = timestamp_of(line, &rest);
+        REQUIRE(at >= 0);
+        CHECK(at >= last);
+        last = at;
+    }
 }

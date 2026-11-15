@@ -106,6 +106,7 @@ endif()
 if(UNIX OR WIN32)
     set(loggers_srcs
         loggers/src/ebisu_loggers_format.c
+        loggers/src/ebisu_loggers_time.c
         loggers/src/ebisu_file_logger.c
         loggers/src/ebisu_stdio_logger.c
         loggers/src/ebisu_syslog_udp_logger.c)
