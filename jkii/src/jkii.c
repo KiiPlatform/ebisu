@@ -45,8 +45,9 @@ int errno;
     ((buf_len) == sizeof(literal) - 1 && \
      memcmp((buf), (literal), sizeof(literal) - 1) == 0)
 
-/* "+ 3" denotes '-', '.', '\0' */
-#define DOUBLEBUFSIZE DBL_MAX_10_EXP + 3
+/* "+ 3" denotes '-', '.', '\0': the longest number read as a double has
+ * DBL_MAX_10_EXP + 2 characters, 310. */
+#define DOUBLEBUFSIZE (DBL_MAX_10_EXP + 3)
 
 /* A decimal digit, as JSON's are: not isdigit(), which a C library may look up
  * in the locale's tables. */
@@ -191,7 +192,9 @@ typedef enum  {
 static int _jkii_is_double(const char* buf, size_t buf_len)
 {
     M_JKII_ASSERT(buf != NULL);
-    if (buf_len > DOUBLEBUFSIZE) {
+    /* With its terminator, it has to fit the buffer _jkii_to_double() copies
+     * it into for strtod(). */
+    if (buf_len >= DOUBLEBUFSIZE) {
         return 0;
     }
 
@@ -1092,7 +1095,13 @@ jkii_parse_err_t jkii_parse(
     if (root.type != JSONArray && root.type != JSONObject) {
         return _jkii_none_found(fields, JKII_ERR_INVALID_INPUT);
     }
-    return _jkii_parse_fields(json_string, &root, fields);
+    res = _jkii_parse_fields(json_string, &root, fields);
+    if (res == JKII_ERR_INVALID_INPUT) {
+        /* A field's value is JSON that jkii doesn't read, a number too long:
+         * the fields before it found, and those after it as they were. */
+        return _jkii_none_found(fields, res);
+    }
+    return res;
 }
 
 jkii_parse_err_t jkii_next_member(

@@ -53,7 +53,8 @@ typedef struct jkii_primitive_t {
  * builds jkii, it is read without: exactly as strtod() reads it if it has up to
  * 15 digits and a power of ten within 10^22, and otherwise to within a few
  * units in the last place, so that one that close to the largest double can be
- * JKII_PRIMITIVE_ERR_OVERFLOW.
+ * JKII_PRIMITIVE_ERR_OVERFLOW. Either way, one of more than 310 characters,
+ * DBL_MAX_10_EXP + 2, is JKII_PRIMITIVE_ERR_INVALID.
  *
  * \param [in] primitive The primitive. It need not be null-terminated.
  * \param [in] primitive_length Its length.
