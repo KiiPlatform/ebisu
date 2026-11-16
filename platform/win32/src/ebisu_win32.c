@@ -60,10 +60,15 @@ static uint64_t monotonic_ms(ebisu_system_t* self)
     return GetTickCount64();
 }
 
+static ebisu_lock_t* lock_create(ebisu_system_t* self);
+static void lock_destroy(ebisu_system_t* self, ebisu_lock_t* lock);
+
 static const ebisu_system_ops_t win32_system_ops = {
     task_create,
     delay_ms,
-    monotonic_ms
+    monotonic_ms,
+    lock_create,
+    lock_destroy
 };
 
 static ebisu_system_t system_ = { &win32_system_ops };
@@ -92,4 +97,21 @@ void ebisu_win32_lock_init(ebisu_win32_lock_t* lock)
 {
     lock->base.ops = &win32_lock_ops;
     InitializeSRWLock(&lock->srwlock);
+}
+
+/* An ebisu_win32_lock_t of its own, from the heap. An SRWLOCK needs nothing
+   to be destroyed. */
+static ebisu_lock_t* lock_create(ebisu_system_t* self)
+{
+    ebisu_win32_lock_t* lock = (ebisu_win32_lock_t*)malloc(sizeof(*lock));
+    if (lock == NULL) {
+        return NULL;
+    }
+    ebisu_win32_lock_init(lock);
+    return &lock->base;
+}
+
+static void lock_destroy(ebisu_system_t* self, ebisu_lock_t* lock)
+{
+    free(EBISU_CONTAINER_OF(lock, ebisu_win32_lock_t, base));
 }

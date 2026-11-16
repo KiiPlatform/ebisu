@@ -1,12 +1,17 @@
 /**
  * @file ebisu_system.h
  * @brief Task, delay, monotonic time and lock abstraction.
+ *
+ * The inline functions at the end call the operations, so that code given a
+ * system or a lock reads as calls: ebisu_system_delay_ms(system, 100) rather
+ * than system->ops->delay_ms(system, 100).
  */
 #ifndef _EBISU_SYSTEM
 #define _EBISU_SYSTEM
 
 #include "ebisu_object.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 /* The library is compiled with hidden visibility, so what this header declares
@@ -35,6 +40,9 @@ typedef void* (*EBISU_TASK_ENTRY)(void* value);
 
 /** \brief The system. See struct ebisu_system_t. */
 typedef struct ebisu_system_t ebisu_system_t;
+
+/** \brief A lock. See struct ebisu_lock_t. */
+typedef struct ebisu_lock_t ebisu_lock_t;
 
 /** \brief What the system does.
  *
@@ -82,9 +90,33 @@ typedef struct ebisu_system_ops_t {
      * \return Milliseconds elapsed since an arbitrary, fixed origin.
      */
     uint64_t (*monotonic_ms)(ebisu_system_t* self);
+
+    /**
+     * \brief Creates a lock, for code that is given the system and needs a
+     * lock of its own.
+     *
+     * Optional: NULL in a system that can't make one, for which
+     * ebisu_system_lock_create() gives NULL. ebisu itself never calls it.
+     * Where the lock comes from, the heap or a pool, is the system's.
+     *
+     * \param [in] self The system.
+     * \return The lock, or NULL if none could be made.
+     */
+    ebisu_lock_t* (*lock_create)(ebisu_system_t* self);
+
+    /**
+     * \brief Destroys a lock that lock_create made, which nothing may hold or
+     * use any more.
+     *
+     * Needed with lock_create.
+     *
+     * \param [in] self The system.
+     * \param [in] lock The lock.
+     */
+    void (*lock_destroy)(ebisu_system_t* self, ebisu_lock_t* lock);
 } ebisu_system_ops_t;
 
-/** \brief The system: tasks, delays and a monotonic clock.
+/** \brief The system: tasks, delays, a monotonic clock, and maybe locks.
  *
  * One is normally enough for a device, shared by everything it is set on.
  * Embed it in a struct of the application's if it needs state, as
@@ -93,9 +125,6 @@ typedef struct ebisu_system_ops_t {
 struct ebisu_system_t {
     const ebisu_system_ops_t* ops; /**< \brief What the system does. */
 };
-
-/** \brief A lock. See struct ebisu_lock_t. */
-typedef struct ebisu_lock_t ebisu_lock_t;
 
 /** \brief What a lock does.
  *
@@ -127,6 +156,80 @@ typedef struct ebisu_lock_ops_t {
 struct ebisu_lock_t {
     const ebisu_lock_ops_t* ops; /**< \brief What the lock does. */
 };
+
+/**
+ * \brief Delays the calling task, with the system's delay_ms.
+ *
+ * \param [in] system The system.
+ * \param [in] msec How long, in milliseconds.
+ */
+static inline void ebisu_system_delay_ms(ebisu_system_t* system, uint32_t msec)
+{
+    system->ops->delay_ms(system, msec);
+}
+
+/**
+ * \brief The system's monotonic time, with its monotonic_ms.
+ *
+ * \param [in] system The system.
+ * \return Milliseconds since an arbitrary, fixed origin.
+ */
+static inline uint64_t ebisu_system_monotonic_ms(ebisu_system_t* system)
+{
+    return system->ops->monotonic_ms(system);
+}
+
+/**
+ * \brief Creates a lock, with the system's lock_create.
+ *
+ * \param [in] system The system.
+ * \return The lock, to destroy with ebisu_system_lock_destroy(); or NULL if
+ * none could be made, or the system has no lock_create.
+ */
+static inline ebisu_lock_t* ebisu_system_lock_create(ebisu_system_t* system)
+{
+    return system->ops->lock_create != NULL ? system->ops->lock_create(system) : NULL;
+}
+
+/**
+ * \brief Destroys a lock that ebisu_system_lock_create() made, with the
+ * system's lock_destroy.
+ *
+ * \param [in] system The system that made it.
+ * \param [in] lock The lock, which nothing may hold or use any more. NULL does
+ * nothing.
+ */
+static inline void ebisu_system_lock_destroy(ebisu_system_t* system, ebisu_lock_t* lock)
+{
+    if (lock != NULL) {
+        system->ops->lock_destroy(system, lock);
+    }
+}
+
+/**
+ * \brief Acquires a lock.
+ *
+ * \param [in] lock The lock. NULL does nothing, as for code that runs in one
+ * task and is given no lock.
+ */
+static inline void ebisu_lock_acquire(ebisu_lock_t* lock)
+{
+    if (lock != NULL) {
+        lock->ops->lock(lock);
+    }
+}
+
+/**
+ * \brief Releases a lock that ebisu_lock_acquire() acquired.
+ *
+ * \param [in] lock The lock. NULL does nothing.
+ */
+static inline void ebisu_lock_release(ebisu_lock_t* lock)
+{
+    if (lock != NULL) {
+        lock->ops->unlock(lock);
+    }
+}
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC visibility pop

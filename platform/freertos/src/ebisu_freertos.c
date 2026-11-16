@@ -98,6 +98,11 @@ static uint64_t monotonic_ms(ebisu_system_t* self)
     return ticks * 1000u / configTICK_RATE_HZ;
 }
 
+#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+static ebisu_lock_t* lock_create(ebisu_system_t* self);
+static void lock_destroy(ebisu_system_t* self, ebisu_lock_t* lock);
+#endif
+
 static const ebisu_system_ops_t system_ops = {
 #if configSUPPORT_DYNAMIC_ALLOCATION == 1
     task_create,
@@ -105,7 +110,14 @@ static const ebisu_system_ops_t system_ops = {
     NULL,
 #endif
     delay_ms,
-    monotonic_ms
+    monotonic_ms,
+#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+    lock_create,
+    lock_destroy
+#else
+    NULL,
+    NULL
+#endif
 };
 
 void ebisu_freertos_system_init(
@@ -154,5 +166,33 @@ void ebisu_freertos_lock_destroy(ebisu_freertos_lock_t* lock)
     vSemaphoreDelete(lock->_mutex);
     lock->_mutex = NULL;
 }
+
+#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+
+/* An ebisu_freertos_lock_t of its own, from FreeRTOS's heap, with its mutex in
+   it too with configSUPPORT_STATIC_ALLOCATION. */
+static ebisu_lock_t* lock_create(ebisu_system_t* self)
+{
+    ebisu_freertos_lock_t* lock = (ebisu_freertos_lock_t*)pvPortMalloc(sizeof(*lock));
+    (void)self;
+    if (lock == NULL) {
+        return NULL;
+    }
+    if (!ebisu_freertos_lock_init(lock)) {
+        vPortFree(lock);
+        return NULL;
+    }
+    return &lock->base;
+}
+
+static void lock_destroy(ebisu_system_t* self, ebisu_lock_t* lock)
+{
+    ebisu_freertos_lock_t* freertos_lock = EBISU_CONTAINER_OF(lock, ebisu_freertos_lock_t, base);
+    (void)self;
+    ebisu_freertos_lock_destroy(freertos_lock);
+    vPortFree(freertos_lock);
+}
+
+#endif /* configSUPPORT_DYNAMIC_ALLOCATION == 1 */
 
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

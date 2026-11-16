@@ -29,7 +29,11 @@ set on.
   [Writing callbacks](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks)
   says what they have to do.
 - **The system and locks** (`ebisu_system.h`): `ebisu_system_t` creates
-  tasks, delays them and reads a monotonic clock, and `ebisu_lock_t` is a lock.
+  tasks, delays them, reads a monotonic clock, and may make locks, and
+  `ebisu_lock_t` is a lock. Inline calls such as `ebisu_system_delay_ms()`,
+  `ebisu_system_lock_create()` and `ebisu_lock_acquire()` call their
+  operations, and the lock calls do nothing with no lock, for code that runs in
+  one task.
 - **The clock** (`ebisu_clock.h`): `ebisu_clock_t` keeps the time of day on a
   device without a real-time clock, for a TLS stack to check a certificate's
   validity period against. Socket callbacks use it directly, and `kii` and `tio`

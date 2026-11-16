@@ -37,6 +37,11 @@ extern "C" {
  * which the port doesn't make up for. Called from tasks, or before the
  * scheduler starts, not from interrupts.
  *
+ * Its locks, from ebisu_system_lock_create(), are ebisu_freertos_lock_t's from
+ * FreeRTOS's heap, with their mutexes in them with
+ * configSUPPORT_STATIC_ALLOCATION. Without configSUPPORT_DYNAMIC_ALLOCATION it
+ * makes none, and ebisu_system_lock_create() gives NULL.
+ *
  * Initialize with ebisu_freertos_system_init().
  */
 typedef struct ebisu_freertos_system_t {

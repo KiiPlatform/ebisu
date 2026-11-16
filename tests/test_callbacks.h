@@ -136,6 +136,8 @@ struct SystemCtx {
         ops.task_create = mock_task_create;
         ops.delay_ms = mock_delay_ms;
         ops.monotonic_ms = mock_monotonic_ms;
+        ops.lock_create = nullptr;
+        ops.lock_destroy = nullptr;
         sys.base.ops = &ops;
         sys.owner = this;
     }
