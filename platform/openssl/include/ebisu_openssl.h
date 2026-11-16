@@ -35,9 +35,12 @@ extern "C" {
  * from those its configuration keeps, which saves most of the handshake if the
  * server takes it. Why an operation failed, its last_error says: a host that
  * didn't resolve, with getaddrinfo()'s error, an address that refused, with
- * errno, a certificate rejected, with X509_V_ERR_*, another TLS failure, with
- * OpenSSL's error code, a timeout, or a peer that closed. It also goes to the
- * logger set by ebisu_openssl_socket_set_logger(), if any. OpenSSL 1.0.2 and
+ * errno, a certificate rejected, with X509_V_ERR_*, a server with no TLS
+ * version or cipher suite in common with the port, EBISU_SOCK_ERROR_TLS_MISMATCH,
+ * another TLS failure, with OpenSSL's error code, a timeout, or a peer that
+ * closed. It also goes to the logger set by ebisu_openssl_socket_set_logger(),
+ * if any, with a line for the mismatch that says what the port needs: TLS 1.2
+ * or later, and in TLS 1.2 ECDHE or DHE with AES-GCM or ChaCha20-Poly1305. OpenSSL 1.0.2 and
  * later, initialized and made thread-safe on first use.
  */
 typedef struct ebisu_openssl_socket_t {

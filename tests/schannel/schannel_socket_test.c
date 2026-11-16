@@ -63,6 +63,7 @@ static const char* error_name(ebisu_sock_error_t error)
         case EBISU_SOCK_ERROR_TIMEOUT: return "TIMEOUT";
         case EBISU_SOCK_ERROR_CLOSED: return "CLOSED";
         case EBISU_SOCK_ERROR_OTHER: return "OTHER";
+        case EBISU_SOCK_ERROR_TLS_MISMATCH: return "TLS_MISMATCH";
     }
     return "?";
 }

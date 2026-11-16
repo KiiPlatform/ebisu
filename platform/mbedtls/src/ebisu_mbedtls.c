@@ -283,6 +283,31 @@ static int verify(void* arg, mbedtls_x509_crt* crt, int depth, uint32_t* flags)
     return 0;
 }
 
+/* Whether a handshake failed as the server and the port have no TLS version or
+   cipher suite in common: a version of the server's mbedTLS refused, or an
+   alert of the server's that says so. mbedTLS gives any fatal alert as
+   MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE, and leaves the alert where it read it,
+   in the context's in_msg, which 3.6 and 4.x keep as a private member. */
+static bool is_mismatch(const mbedtls_ssl_context* ssl, int ret)
+{
+    if (ret == MBEDTLS_ERR_SSL_BAD_PROTOCOL_VERSION) {
+        return true;
+    }
+    if (ret != MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE ||
+            ssl->MBEDTLS_PRIVATE(in_msgtype) != MBEDTLS_SSL_MSG_ALERT ||
+            ssl->MBEDTLS_PRIVATE(in_msg) == NULL) {
+        return false;
+    }
+    switch (ssl->MBEDTLS_PRIVATE(in_msg)[1]) {
+        case MBEDTLS_SSL_ALERT_MSG_HANDSHAKE_FAILURE:
+        case MBEDTLS_SSL_ALERT_MSG_PROTOCOL_VERSION:
+        case MBEDTLS_SSL_ALERT_MSG_INSUFFICIENT_SECURITY:
+            return true;
+        default:
+            return false;
+    }
+}
+
 /* Why an operation failed, from mbedTLS's error, and what the socket under it
    said, for what failed there. */
 static void set_tls_error(ebisu_mbedtls_socket_t* sock, int ret)
@@ -405,7 +430,14 @@ static ebisu_sock_code_t mbedtls_connect(ebisu_socket_t* self, const char* host,
         goto fail;
     } else if (ret != 0) {
         log_tls_error(sock->_logger, "TLS handshake failed with", host, ret);
-        set_tls_error(sock, ret);
+        if (is_mismatch(&sock->_ssl, ret)) {
+            log_to(sock->_logger, EBISU_LOG_ERROR,
+                    "%s may take only TLS older than 1.2, or none of the cipher suites "
+                    "the configuration offers.", host);
+            set_error(sock, EBISU_SOCK_ERROR_TLS_MISMATCH, ret);
+        } else {
+            set_tls_error(sock, ret);
+        }
         goto fail;
     }
     if (sock->_tls->_verify == EBISU_TLS_VERIFY_NONE) {

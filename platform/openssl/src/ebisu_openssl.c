@@ -548,6 +548,53 @@ static ebisu_sock_code_t fail_with(ebisu_openssl_socket_t* ctx,
     return EBISU_SOCK_FAIL;
 }
 
+/* The header of the first record the server sent in a handshake, as OpenSSL
+   reads it, before it checks its version. */
+typedef struct first_record_t {
+    bool seen;
+    unsigned char header[5];
+} first_record_t;
+
+/* OpenSSL's message callback, for the first record's header. */
+static void note_first_record(int write_p, int version, int content_type, const void* buf,
+        size_t len, SSL* ssl, void* arg)
+{
+    first_record_t* first = (first_record_t*)arg;
+    (void)version;
+    (void)ssl;
+    if (write_p == 0 && content_type == SSL3_RT_HEADER && len >= sizeof(first->header) &&
+            !first->seen) {
+        memcpy(first->header, buf, sizeof(first->header));
+        first->seen = true;
+    }
+}
+
+/* Whether a handshake failed as the server and the port have no TLS version or
+   cipher suite in common, from the first of OpenSSL's errors: an alert of the
+   server's that says so, or a version of its OpenSSL refused.
+   SSL_R_WRONG_VERSION_NUMBER is also what OpenSSL says of a server that isn't
+   TLS at all, so it counts only when the server's first record is one of an
+   older TLS, as 1.0.2 says of a server that takes TLS 1.0 alone. */
+static bool is_mismatch(unsigned long e, const first_record_t* first)
+{
+    if (ERR_GET_LIB(e) != ERR_LIB_SSL) {
+        return false;
+    }
+    switch (ERR_GET_REASON(e)) {
+    case SSL_R_SSLV3_ALERT_HANDSHAKE_FAILURE:
+    case SSL_R_TLSV1_ALERT_PROTOCOL_VERSION:
+    case SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY:
+    case SSL_R_UNSUPPORTED_PROTOCOL:
+        return true;
+    case SSL_R_WRONG_VERSION_NUMBER:
+        /* A content type of TLS's, 20 to 23, and SSL 3.0 to TLS 1.1. */
+        return first->seen && first->header[0] >= 20 && first->header[0] <= 23 &&
+            first->header[1] == 3 && first->header[2] < 3;
+    default:
+        return false;
+    }
+}
+
 /* Why SSL_read() or SSL_write() failed, from SSL_get_error() and errno. */
 static ebisu_sock_error_t io_error(int ssl_error, int saved_errno, long* out_detail)
 {
@@ -769,7 +816,13 @@ static ebisu_sock_code_t
     offer_session(ssl, host, port);
 
     clear_errors();
+    first_record_t first;
+    memset(&first, 0, sizeof(first));
+    SSL_set_msg_callback(ssl, note_first_record);
+    SSL_set_msg_callback_arg(ssl, &first);
     ret = SSL_connect(ssl);
+    SSL_set_msg_callback(ssl, NULL);
+    SSL_set_msg_callback_arg(ssl, NULL);
     if (ret != 1) {
         /* errno first, before anything else can change it. */
         int saved_errno = errno;
@@ -789,8 +842,16 @@ static ebisu_sock_code_t
             if (error == EBISU_SOCK_ERROR_OTHER || error == EBISU_SOCK_ERROR_TLS) {
                 error = EBISU_SOCK_ERROR_TLS;
                 detail = (long)ERR_peek_error();
+                if (is_mismatch((unsigned long)detail, &first)) {
+                    error = EBISU_SOCK_ERROR_TLS_MISMATCH;
+                }
             }
             log_ssl_error(ctx->logger, "connect");
+            if (error == EBISU_SOCK_ERROR_TLS_MISMATCH) {
+                log_to(ctx->logger, EBISU_LOG_ERROR,
+                        "%s may take only TLS older than 1.2, or TLS 1.2 without ECDHE or DHE "
+                        "with AES-GCM or ChaCha20-Poly1305, which this port needs.", host);
+            }
         }
         goto fail;
     }
