@@ -5,6 +5,7 @@
 #ifndef JKII_H
 #define JKII_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -18,12 +19,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/** Boolean type */
-typedef enum jkii_boolean_t {
-    JKII_FALSE,
-    JKII_TRUE
-} jkii_boolean_t;
 
 /** Return value of jkii_parse() */
 typedef enum jkii_parse_err_t {
@@ -123,7 +118,7 @@ typedef enum jkii_field_type_t {
     /** This value denotes an double value. */
     JKII_FIELD_TYPE_DOUBLE,
 
-    /** This value denotes jkii_boolean_t value. */
+    /** This value denotes a true or false value, as a bool. */
     JKII_FIELD_TYPE_BOOLEAN,
 
     /** This value denotes denotes NULL value. */
@@ -300,7 +295,7 @@ typedef struct jkii_field_t {
         /** This value is used if jkii_field_t#type is
          * jkii_field_type_t#JKII_FIELD_TYPE_BOOLEAN.
          */
-        jkii_boolean_t boolean_value;
+        bool boolean_value;
     } field_copy; /**< \brief Copy of the parsed field value. Which member is
                        valid is given by jkii_field_t#type. */
 
@@ -487,7 +482,7 @@ jkii_field_err_t jkii_member_double(
 /** Reads a member's true or false.
  * \param [in] member The member, as jkii_next_member(), jkii_root_value() or
  * jkii_find_member() gives it.
- * \param [out] out_value JKII_TRUE or JKII_FALSE, set only when
+ * \param [out] out_value true or false, set only when
  * JKII_FIELD_ERR_OK is returned.
  * \return JKII_FIELD_ERR_OK, JKII_FIELD_ERR_NULL for null, or
  * JKII_FIELD_ERR_TYPE_MISMATCH for anything else, "true" as a string
@@ -495,7 +490,7 @@ jkii_field_err_t jkii_member_double(
  */
 jkii_field_err_t jkii_member_boolean(
         const jkii_member_t* member,
-        jkii_boolean_t* out_value);
+        bool* out_value);
 
 /** A string holding a number, true or false, as that value, for the readers.
  * For JSON that sends a number or a boolean in a string: "30", "-2.5", "3e1",
@@ -549,7 +544,7 @@ jkii_field_err_t jkii_member_text(
  * \param [out] buff The string, null-terminated. On failure, an empty string,
  * if buff_size isn't 0.
  * \param [in] buff_size Its size, the terminator included, at least 1.
- * \param [out] out_truncated JKII_TRUE if the string was cut, JKII_FALSE if it
+ * \param [out] out_truncated true if the string was cut, false if it
  * was copied whole. May be NULL.
  * \return JKII_FIELD_ERR_OK, cut or not; JKII_FIELD_ERR_NULL for null;
  * JKII_FIELD_ERR_TYPE_MISMATCH if the member isn't a string; or
@@ -559,7 +554,7 @@ jkii_field_err_t jkii_member_string_trunc(
         const jkii_member_t* member,
         char* buff,
         size_t buff_size,
-        jkii_boolean_t* out_truncated);
+        bool* out_truncated);
 
 /** Gives the member of the root object of a JSON string that has a name, as
  * jkii_next_member() gives a member, key and all. The name is plain, with no
@@ -677,7 +672,7 @@ jkii_field_err_t jkii_find_double(
  * \param [in] json_string_len Its length.
  * \param [in] path The path, as jkii_find_member() takes it.
  * \param [in] flags 0, #JKII_READ_UNQUOTE, #JKII_READ_NULL_AS_ABSENT, or both.
- * \param [out] out_value JKII_TRUE or JKII_FALSE, set only when
+ * \param [out] out_value true or false, set only when
  * JKII_FIELD_ERR_OK is returned.
  * \param [out] out_member As for jkii_find_integer(). May be NULL.
  * \return As jkii_find_integer() returns, with jkii_member_boolean()'s results.
@@ -687,7 +682,7 @@ jkii_field_err_t jkii_find_boolean(
         size_t json_string_len,
         const char* path,
         unsigned int flags,
-        jkii_boolean_t* out_value,
+        bool* out_value,
         jkii_member_t* out_member);
 
 /** Finds the value a path leads to, and copies it as a string, unescaped, as

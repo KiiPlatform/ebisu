@@ -568,7 +568,7 @@ TEST_CASE("KiiJson, GetObjectTrueByName") {
             fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
-    REQUIRE(JKII_TRUE == fields[0].field_copy.boolean_value);
+    REQUIRE(true == fields[0].field_copy.boolean_value);
 }
 
 TEST_CASE("KiiJson, GetObjectFalseByName") {
@@ -588,7 +588,7 @@ TEST_CASE("KiiJson, GetObjectFalseByName") {
             fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
-    REQUIRE(JKII_FALSE == fields[0].field_copy.boolean_value);
+    REQUIRE(false == fields[0].field_copy.boolean_value);
 }
 
 
@@ -811,7 +811,7 @@ TEST_CASE("KiiJson, GetObjectTrueByPath") {
             fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
-    REQUIRE(JKII_TRUE == fields[0].field_copy.boolean_value);
+    REQUIRE(true == fields[0].field_copy.boolean_value);
 }
 
 TEST_CASE("KiiJson, GetObjectFalseByPath") {
@@ -831,7 +831,7 @@ TEST_CASE("KiiJson, GetObjectFalseByPath") {
             fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
-    REQUIRE(JKII_FALSE == fields[0].field_copy.boolean_value);
+    REQUIRE(false == fields[0].field_copy.boolean_value);
 }
 
 TEST_CASE("KiiJson, GetObjectSecondLayerStringByPath") {
@@ -1341,7 +1341,7 @@ TEST_CASE("KiiJson, GetArrayTrue") {
             fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
-    REQUIRE(JKII_TRUE == fields[0].field_copy.boolean_value);
+    REQUIRE(true == fields[0].field_copy.boolean_value);
 }
 
 TEST_CASE("KiiJson, GetArrayFalse") {
@@ -1361,7 +1361,7 @@ TEST_CASE("KiiJson, GetArrayFalse") {
             fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
-    REQUIRE(JKII_FALSE == fields[0].field_copy.boolean_value);
+    REQUIRE(false == fields[0].field_copy.boolean_value);
 }
 
 // An index in a path goes through strtol as well. Without digits it converts
@@ -1559,14 +1559,14 @@ TEST_CASE("KiiJson, GetComplexObject") {
     REQUIRE(100 == fields[1].field_copy.int_value);
     REQUIRE(1099511627776 == fields[2].field_copy.long_value);
     REQUIRE(0.0001 >= fabs(fields[3].field_copy.double_value - 100.0e100));
-    REQUIRE(JKII_TRUE == fields[4].field_copy.boolean_value);
+    REQUIRE(true == fields[4].field_copy.boolean_value);
     // fields[5] does not have value. it is null.
     REQUIRE(-100 == fields[6].field_copy.int_value);
     REQUIRE(-1099511627776 == fields[7].field_copy.long_value);
     REQUIRE(0.0001 >= fabs(fields[8].field_copy.double_value + 100.0e-100));
-    REQUIRE(JKII_FALSE == fields[9].field_copy.boolean_value);
+    REQUIRE(false == fields[9].field_copy.boolean_value);
     REQUIRE(0 == strcmp("child value", fields[11].field_copy.string));
-    REQUIRE(JKII_TRUE == fields[12].field_copy.boolean_value);
+    REQUIRE(true == fields[12].field_copy.boolean_value);
     // fields[12] does not have value. it is null.
     REQUIRE(0 == strcmp("value", fields[13].field_copy.string));
 }

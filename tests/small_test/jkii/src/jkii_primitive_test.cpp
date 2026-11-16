@@ -180,7 +180,7 @@ TEST_CASE("KiiJson, PrimitiveTrue")
     jkii_parse_primitive(bool_str, strlen(bool_str), &res);
 
     REQUIRE(JKII_FIELD_TYPE_BOOLEAN == res.type);
-    REQUIRE(JKII_TRUE == res.value.boolean_value);
+    REQUIRE(true == res.value.boolean_value);
 }
 
 TEST_CASE("KiiJson, PrimitiveFalse")
@@ -190,7 +190,7 @@ TEST_CASE("KiiJson, PrimitiveFalse")
     jkii_parse_primitive(bool_str, strlen(bool_str), &res);
 
     REQUIRE(JKII_FIELD_TYPE_BOOLEAN == res.type);
-    REQUIRE(JKII_FALSE == res.value.boolean_value);
+    REQUIRE(false == res.value.boolean_value);
 }
 
 // A prefix of a literal must not be accepted as that literal. These used to

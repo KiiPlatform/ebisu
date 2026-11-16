@@ -668,16 +668,16 @@ static jkii_primitive_err_t _jkii_to_double(
 static int _jkii_to_boolean(
         const char* buf,
         size_t buf_size,
-        jkii_boolean_t* out_boolean)
+        bool* out_boolean)
 {
     M_JKII_ASSERT(buf != NULL);
     M_JKII_ASSERT(out_boolean != NULL);
 
     if (M_JKII_EQ_LITERAL(buf, buf_size, "true")) {
-        *out_boolean = JKII_TRUE;
+        *out_boolean = true;
         return 0;
     } else if (M_JKII_EQ_LITERAL(buf, buf_size, "false")) {
-        *out_boolean = JKII_FALSE;
+        *out_boolean = false;
         return 0;
     }
     return -1;
@@ -1388,7 +1388,7 @@ jkii_field_err_t jkii_member_double(
 
 jkii_field_err_t jkii_member_boolean(
         const jkii_member_t* member,
-        jkii_boolean_t* out_value)
+        bool* out_value)
 {
     M_JKII_ASSERT(member != NULL);
     M_JKII_ASSERT(out_value != NULL);
@@ -1486,13 +1486,13 @@ jkii_primitive_err_t jkii_parse_primitive(
     if (M_JKII_EQ_LITERAL(primitive, primitive_length, "true"))
     {
         result->type = JKII_FIELD_TYPE_BOOLEAN;
-        result->value.boolean_value = JKII_TRUE;
+        result->value.boolean_value = true;
         return JKII_PRIMITIVE_ERR_OK;
     }
     if (M_JKII_EQ_LITERAL(primitive, primitive_length, "false"))
     {
         result->type = JKII_FIELD_TYPE_BOOLEAN;
-        result->value.boolean_value = JKII_FALSE;
+        result->value.boolean_value = false;
         return JKII_PRIMITIVE_ERR_OK;
     }
     int is_integer = _jkii_is_integer(primitive, primitive_length);
@@ -1799,13 +1799,13 @@ jkii_field_err_t jkii_member_string_trunc(
         const jkii_member_t* member,
         char* buff,
         size_t buff_size,
-        jkii_boolean_t* out_truncated)
+        bool* out_truncated)
 {
     size_t pos = 0;
     size_t i = 0;
     M_JKII_ASSERT(member != NULL);
     if (out_truncated != NULL) {
-        *out_truncated = JKII_FALSE;
+        *out_truncated = false;
     }
     if (buff_size > 0) {
         buff[0] = '\0';
@@ -1831,7 +1831,7 @@ jkii_field_err_t jkii_member_string_trunc(
         /* The rest isn't read: what didn't fit, or a `\u0000`. */
         if (buff_size - pos < out_len + 1 || (out_len == 1 && out[0] == '\0')) {
             if (out_truncated != NULL) {
-                *out_truncated = JKII_TRUE;
+                *out_truncated = true;
             }
             break;
         }
@@ -1985,7 +1985,7 @@ jkii_field_err_t jkii_find_boolean(
         size_t json_string_len,
         const char* path,
         unsigned int flags,
-        jkii_boolean_t* out_value,
+        bool* out_value,
         jkii_member_t* out_member)
 {
     jkii_member_t found;

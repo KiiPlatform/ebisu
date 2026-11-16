@@ -75,7 +75,7 @@ static void read_text(const jkii_member_t& m, jkii_field_err_t s, const std::vec
     }
     for (size_t size : { m.value_length + 1, m.value_length / 2 + 1, (size_t)1, (size_t)4 }) {
         std::vector<char> cut(size, 'x');
-        jkii_boolean_t truncated = JKII_FALSE;
+        bool truncated = false;
         jkii_field_err_t c = jkii_member_string_trunc(&m, cut.data(), cut.size(), &truncated);
         const size_t len = strlen(cut.data());
         if (c == JKII_FIELD_ERR_COPY) {
@@ -87,7 +87,7 @@ static void read_text(const jkii_member_t& m, jkii_field_err_t s, const std::vec
         if (s == JKII_FIELD_ERR_OK) {
             const size_t whole_len = strlen(whole.data());
             if (memcmp(cut.data(), whole.data(), len) != 0) abort();
-            if ((truncated == JKII_TRUE) != (len < whole_len)) abort();
+            if (truncated != (len < whole_len)) abort();
             // Cut before a character, not within one.
             if (len < whole_len && ((unsigned char)whole[len] & 0xc0) == 0x80) abort();
         }
@@ -113,11 +113,11 @@ static void read_member(const jkii_member_t& m) {
     const bool numeric = m.type == JKII_FIELD_TYPE_INTEGER || m.type == JKII_FIELD_TYPE_LONG ||
         m.type == JKII_FIELD_TYPE_DOUBLE;
     // True or false only, as written.
-    jkii_boolean_t b = JKII_FALSE;
+    bool b = false;
     jkii_field_err_t br = jkii_member_boolean(&m, &b);
     if ((br == JKII_FIELD_ERR_OK) != (m.type == JKII_FIELD_TYPE_BOOLEAN)) abort();
     if (br != JKII_FIELD_ERR_OK && br != other) abort();
-    if (br == JKII_FIELD_ERR_OK && (b == JKII_TRUE) != (m.value[0] == 't')) abort();
+    if (br == JKII_FIELD_ERR_OK && b != (m.value[0] == 't')) abort();
     if (!numeric) {
         double d = 0;
         if (i != other || jkii_member_double(&m, &d) != other) abort();
@@ -176,7 +176,7 @@ static void find_and_read(const std::vector<char>& document, const char* path,
         double d = 0;
         jkii_field_err_t fd = jkii_find_double(document.data(), document.size(), path, flags,
                 &d, nullptr);
-        jkii_boolean_t b = JKII_FALSE;
+        bool b = false;
         jkii_field_err_t fb = jkii_find_boolean(document.data(), document.size(), path, flags,
                 &b, nullptr);
         std::vector<char> str(document.size() + 1);
@@ -206,7 +206,7 @@ static void find_and_read(const std::vector<char>& document, const char* path,
         double md = 0;
         jkii_field_err_t rd = jkii_member_double(m, &md);
         if (fd != rd || (fd == JKII_FIELD_ERR_OK && d != md)) abort();
-        jkii_boolean_t mb = JKII_FALSE;
+        bool mb = false;
         jkii_field_err_t rb = jkii_member_boolean(m, &mb);
         if (fb != rb || (fb == JKII_FIELD_ERR_OK && b != mb)) abort();
         std::vector<char> ms(document.size() + 1);

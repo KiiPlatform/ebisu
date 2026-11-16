@@ -31,7 +31,7 @@ typedef struct jkii_primitive_t {
         int32_t int_value; /**< \brief Valid when #type is JKII_FIELD_TYPE_INTEGER. */
         int64_t long_value; /**< \brief Valid when #type is JKII_FIELD_TYPE_LONG. */
         double double_value; /**< \brief Valid when #type is JKII_FIELD_TYPE_DOUBLE. */
-        jkii_boolean_t boolean_value; /**< \brief Valid when #type is JKII_FIELD_TYPE_BOOLEAN. */
+        bool boolean_value; /**< \brief Valid when #type is JKII_FIELD_TYPE_BOOLEAN. */
     } value; /**< \brief The value. Which member is valid is given by #type. */
     /** \brief Type of the primitive that was parsed, selecting a member of #value.
      *
