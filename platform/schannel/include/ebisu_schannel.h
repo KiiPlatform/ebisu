@@ -40,9 +40,12 @@ extern "C" {
  * closed. Why an operation failed, its last_error says: a host that didn't
  * resolve, with GetAddrInfoExW()'s error, an address that refused, with the
  * Winsock error, a certificate refused, with the CERT_E_* or TRUST_E_* code, a
- * TLS failure, with the SSPI status, a timeout, or a peer that closed or reset
- * the connection, with the Winsock error if there is one. It also goes to the
- * logger set by ebisu_schannel_socket_set_logger(), if any.
+ * server with no TLS version or cipher suite in common with Windows,
+ * EBISU_SOCK_ERROR_TLS_MISMATCH, with the SSPI status, another TLS failure,
+ * with the SSPI status, a timeout, or a peer that closed or reset the
+ * connection, with the Winsock error if there is one. It also goes to the
+ * logger set by ebisu_schannel_socket_set_logger(), if any, with a line for
+ * the mismatch that says so.
  * Winsock has to have been started, with WSAStartup(), before the first
  * connection. Needs Windows 8 or later, for a lookup that can be cancelled.
  */
@@ -101,6 +104,16 @@ typedef struct ebisu_schannel_socket_t {
     unsigned int keepalive_count; /**< \private */
     /* What ebisu_schannel_socket_set_nodelay() sets. */
     bool nodelay; /**< \private */
+
+    /* The first bytes the server sent in the handshake, first_len of them:
+       an alert's record whole, or a record's header and more. */
+    unsigned char first_bytes[7]; /**< \private */
+    size_t first_len; /**< \private */
+    /* What the connection open negotiated, for
+       ebisu_schannel_socket_get_protocol() and _get_cipher(): NULL and empty
+       while there is none, or while Windows doesn't say. */
+    const char* protocol; /**< \private */
+    char cipher[64]; /**< \private */
 
     /* A record being encrypted: header, at most cbMaximumMessage bytes of
        data, and trailer. */
@@ -218,6 +231,32 @@ void ebisu_schannel_socket_set_keepalive(ebisu_schannel_socket_t* sock,
  * \param [in] nodelay true to send at once.
  */
 void ebisu_schannel_socket_set_nodelay(ebisu_schannel_socket_t* sock, bool nodelay);
+
+/**
+ * \brief The TLS version the connection open negotiated.
+ *
+ * As SECPKG_ATTR_CONNECTION_INFO has it, named as the other ports name it:
+ * "TLSv1.2" or "TLSv1.3", or "TLSv1" and "TLSv1.1" where Windows enables
+ * them.
+ *
+ * \param [in] sock The socket.
+ * \return The version, or NULL while there is no connection: before a
+ * connect, after one that failed, and once closed.
+ */
+const char* ebisu_schannel_socket_get_protocol(const ebisu_schannel_socket_t* sock);
+
+/**
+ * \brief The cipher suite the connection open negotiated.
+ *
+ * Its standard name, as SECPKG_ATTR_CIPHER_INFO gives it from Windows 10 on,
+ * such as "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384" or
+ * "TLS_AES_256_GCM_SHA384".
+ *
+ * \param [in] sock The socket.
+ * \return The suite, or NULL while there is no connection, or where Windows
+ * doesn't say.
+ */
+const char* ebisu_schannel_socket_get_cipher(const ebisu_schannel_socket_t* sock);
 
 #ifdef __cplusplus
 }
