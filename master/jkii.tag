@@ -56,6 +56,13 @@
       <anchor>a625d184d963edb8ca346afde6a43f658</anchor>
       <arglist></arglist>
     </member>
+    <member kind="typedef">
+      <type>enum jkii_read_flag_t</type>
+      <name>jkii_read_flag_t</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a0ea867bbcd32e0d64c0e2e21e04b0200</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="enumeration">
       <type></type>
       <name>jkii_boolean_t</name>
@@ -143,6 +150,18 @@
       <anchor>a226dc87d1ccd30b36a59a096b4df3a6ba6787f776cf4313c99297cab19e70af96</anchor>
       <arglist></arglist>
     </member>
+    <member kind="enumvalue">
+      <name>JKII_FIELD_ERR_NULL</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a226dc87d1ccd30b36a59a096b4df3a6ba19bcae4a9d36f7d903ae14141bf28203</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_FIELD_ERR_INVALID_INPUT</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a226dc87d1ccd30b36a59a096b4df3a6ba9ffe58683513ee7556ec6d563bf0d27a</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="enumeration">
       <type></type>
       <name>jkii_field_type_t</name>
@@ -202,6 +221,31 @@
       <name>JKII_FIELD_TYPE_ARRAY</name>
       <anchorfile>jkii_8h.html</anchorfile>
       <anchor>a5fe8d88e1452ceb3d2c07f69440c82b5a4db6cb07c35a2800e0ea2476cb792f02</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumeration">
+      <type></type>
+      <name>jkii_read_flag_t</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a9625e2d5244e9ff6a0ac97fe966b7787</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_READ_UNQUOTE</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a9625e2d5244e9ff6a0ac97fe966b7787ae1b8df8df09ccd5e0437a8e1c3245012</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_READ_INTEGER_AS_WRITTEN</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a9625e2d5244e9ff6a0ac97fe966b7787aae47fba50d8dacb5dafa43b70d450103</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_READ_NULL_AS_ABSENT</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a9625e2d5244e9ff6a0ac97fe966b7787ae5893fa0e1d88263f1a6c8479cb70782</anchor>
       <arglist></arglist>
     </member>
     <member kind="function">
@@ -266,6 +310,55 @@
       <anchorfile>jkii_8h.html</anchorfile>
       <anchor>a8db3315efb4948dc54966f19a181fedd</anchor>
       <arglist>(const jkii_member_t *member, jkii_member_t *unquoted)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_field_err_t</type>
+      <name>jkii_member_text</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>aa422e48a2573244c0634cc73bc8a064d</anchor>
+      <arglist>(const jkii_member_t *member, char *buff, size_t buff_size)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_field_err_t</type>
+      <name>jkii_member_string_trunc</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a0b849c5f13603f5304819b3ff69de4e2</anchor>
+      <arglist>(const jkii_member_t *member, char *buff, size_t buff_size, jkii_boolean_t *out_truncated)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_parse_err_t</type>
+      <name>jkii_find_name</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a4bba5871f530679d2fe36b1ad1eb6d7b</anchor>
+      <arglist>(const char *json_string, size_t json_string_len, const char *name, size_t name_len, jkii_member_t *out_member)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_field_err_t</type>
+      <name>jkii_find_integer</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>ab80f24b9f6a44a8cbca95386a24bc6a8</anchor>
+      <arglist>(const char *json_string, size_t json_string_len, const char *path, int64_t min, int64_t max, unsigned int flags, int64_t *out_value, jkii_member_t *out_member)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_field_err_t</type>
+      <name>jkii_find_double</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>ab25f37ba8a5971dc49eaac4f1174397e</anchor>
+      <arglist>(const char *json_string, size_t json_string_len, const char *path, unsigned int flags, double *out_value, jkii_member_t *out_member)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_field_err_t</type>
+      <name>jkii_find_boolean</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>aed7588356cc55810006660fff6cc7c2f</anchor>
+      <arglist>(const char *json_string, size_t json_string_len, const char *path, unsigned int flags, jkii_boolean_t *out_value, jkii_member_t *out_member)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_field_err_t</type>
+      <name>jkii_find_string</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a1cfb56518b89ded24ffe84ca29870a6c</anchor>
+      <arglist>(const char *json_string, size_t json_string_len, const char *path, unsigned int flags, char *buff, size_t buff_size, jkii_member_t *out_member)</arglist>
     </member>
   </compound>
   <compound kind="file">
