@@ -569,6 +569,9 @@ typedef struct kii_t {
     khc_slist* _req_headers; /**< \private */
 
     char _etag[KII_ETAG_MAX_SIZE]; /**< \private */
+    /** \private Whether the last response had an ETag longer than _etag
+     * holds, which isn't kept. */
+    bool _etag_lost;
     /** \private Whether the last response's Content-Type is one Kii gives its
      * own errors, `application/vnd.kii.<name>+json`. */
     bool _resp_kii_error;
@@ -924,7 +927,8 @@ kii_code_t kii_set_clock(kii_t* kii, ebisu_clock_t* clock);
  * when succeeded to create new object.
  * Memory used for the struct and char array insidde
  * must be allocated/ free by the application.
- * \return kii_code_t
+ * \return kii_code_t. KII_ERR_TOO_LARGE_DATA, with out_object_id set, for an
+ * object made whose ETag kii_get_etag() can't give: see there.
  */
 kii_code_t kii_post_object(
 		kii_t* kii,
@@ -943,8 +947,9 @@ kii_code_t kii_post_object(
  * \param [in] object_content_type Content-Type of the object. If null,
  * application/json will be applied.
  * \param [in] opt_etag If specified, If-Match header is sent to the endpoint.
- * If NULL, If-Match header is not sent.
- * \return  kii_code_t
+ * If NULL or empty, If-Match header is not sent.
+ * \return  kii_code_t. KII_ERR_TOO_LARGE_DATA for an object replaced whose ETag
+ * kii_get_etag() can't give: see there.
  */
 kii_code_t kii_put_object(
 		kii_t* kii,
@@ -964,8 +969,9 @@ kii_code_t kii_put_object(
  * \param [in] object_id Specify the id of the object.
  * \param [in] patch_data Key-Value pairs of the object in JSON format.
  * \param [in] opt_etag If specified, If-Match header is sent to the endpoint.
- * If NULL, If-Match header is not sent.
- * \return  kii_code_t
+ * If NULL or empty, If-Match header is not sent.
+ * \return  kii_code_t. KII_ERR_TOO_LARGE_DATA for an object updated whose ETag
+ * kii_get_etag() can't give: see there.
  */
 kii_code_t kii_patch_object(
 		kii_t* kii,
@@ -995,7 +1001,8 @@ kii_code_t kii_delete_object(
  * \param [in,out] kii kii_t instance.
  * \param [in] bucket Specify the bucket to which the object is stored.
  * \param [in] object_id Specify the id of the object.
- * \return  kii_code_t
+ * \return  kii_code_t. KII_ERR_TOO_LARGE_DATA, with the object in the buffer,
+ * for an object whose ETag kii_get_etag() can't give: see there.
  */
 kii_code_t kii_get_object(
 		kii_t* kii,
@@ -2148,10 +2155,19 @@ void kii_set_cb_slist_resource(
         void* cb_free_data);
 
 /**
- * \brief Get Etag value.
+ * \brief Get the ETag of the last response.
+ *
+ * Whole, or not at all: an ETag longer than KII_ETAG_MAX_SIZE - 1 bytes isn't
+ * kept, nor one in a header longer than the buffer set by
+ * kii_set_resp_header_buff(), which is skipped. An empty ETag given to
+ * kii_put_object() or kii_patch_object() sends no If-Match, which would make
+ * an update meant to be conditional unconditional. So kii_get_object(),
+ * kii_post_object(), kii_put_object() and kii_patch_object() return
+ * KII_ERR_TOO_LARGE_DATA for a 2xx response whose ETag isn't kept, or that had
+ * a header skipped and no ETag kept, though they read or wrote the object.
  *
  * \param [in] kii kii_t instance.
- * \return Etag value in Etag response header.
+ * \return The ETag, or "" if the response had none, or none kii kept.
  */
 const char* kii_get_etag(kii_t* kii);
 

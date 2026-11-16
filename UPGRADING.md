@@ -398,6 +398,16 @@ kii:
   `KII_ERR_WRITE_CALLBACK` and `TIO_ERR_WRITE_CALLBACK`. `KII_ERR_WRITE_CALLBACK`
   stays for a write callback given to `kii_download_object_body()`, and
   `TIO_ERR_WRITE_CALLBACK` stays defined but isn't returned.
+- `kii_get_etag()` gives the ETag whole or not at all. When it can't be whole,
+  `kii_get_object()`, `kii_post_object()`, `kii_put_object()` and
+  `kii_patch_object()` return `KII_ERR_TOO_LARGE_DATA`, though the object was
+  read or written, and `kii_post_object()` still gives its ID. That happens for
+  an ETag longer than `KII_ETAG_MAX_SIZE - 1` bytes, and for a 2xx response
+  with no ETag read and a header skipped for being longer than the buffer set
+  by `kii_set_resp_header_buff()`. 1.x gave the first 63 bytes of a longer
+  ETag, and nothing for a header it skipped. An empty ETag passed to
+  `kii_put_object()` or `kii_patch_object()` sends no `If-Match`, so the update
+  wasn't conditional, as its caller meant it to be.
 
 khc, which kii and tio report in their own codes:
 

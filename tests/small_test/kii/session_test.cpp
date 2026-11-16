@@ -1555,3 +1555,36 @@ TEST_CASE( "Server code refused for its token is read from the response sent aga
         CHECK( result.environment_version == -1 );
     }
 }
+
+// What kii_get_etag() gives, and whether it kept it, is the last response's:
+// neither the refusal's nor the renewal's, which had one too long to keep.
+TEST_CASE( "An object read again after its token is renewed has that response's ETag" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_author_t author = make_author("th.1", "at1", "rt1");
+    kii_session_set_author(&session, &author);
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+
+    const std::string type = "Content-Type: application/json\r\n";
+    auto with_etag = [&type](std::string resp, const std::string& etag) {
+        resp.replace(resp.find(type), type.size(), type + "ETag: " + etag + "\r\n");
+        return resp;
+    };
+    const std::string too_long(KII_ETAG_MAX_SIZE, 'x');
+    c.http.responses = {
+        with_etag(REFUSED, too_long),
+        with_etag(refreshed("at2", "rt2", 3600), too_long),
+        with_etag(http_response(200, "{\"a\":1}"), "\"5\""),
+    };
+
+    kii_bucket_t bucket;
+    bucket.scope = KII_SCOPE_THING;
+    bucket.scope_id = "th.1";
+    bucket.bucket_name = "b";
+    REQUIRE( kii_get_object(&c.kii, &bucket, "o.1") == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 3 );
+    CHECK( contains(c.http.requests[2], "Authorization: Bearer at2\r\n") );
+    CHECK( std::string(kii_get_etag(&c.kii)) == "\"5\"" );
+}

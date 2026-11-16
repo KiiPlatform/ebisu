@@ -187,6 +187,9 @@ thing:
 - `kii_put_object()` replaces an object and `kii_patch_object()` updates some
   of its fields. Both take an optional ETag, from `kii_get_etag()` after the
   object was read, so that the update fails if the object has changed since.
+  An ETag kii can't keep whole makes the call that got it return
+  `KII_ERR_TOO_LARGE_DATA`, rather than leave an empty one, which would send no
+  `If-Match`.
 - `kii_delete_object()` deletes one.
 - `kii_upload_object_body()` and `kii_download_object_body()` stream an
   object's body, of any size and content type, through a read or write
