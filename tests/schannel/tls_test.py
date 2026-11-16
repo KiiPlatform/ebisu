@@ -672,6 +672,24 @@ def run_tests(t, d):
     t.check('in full again once set to',
             result_code(steps, 2) == ('connect', 'FAIL') and last_error(steps, 2) == ('VERIFY', '800b0109'), out)
 
+    # ebisu_schannel_socket_set_keepalive() and _set_nodelay(): neither as the
+    # socket starts, both from the next connect once set, and neither again
+    # once off.
+    out, steps = t.run(port, 10, 'connect', 'options', 'keepalive:30,5,4', 'nodelay:1', 'options',
+                       'close', 'connect', 'options', 'send:echo hello\\n', 'recv:100', 'close',
+                       'keepalive:0,5,4', 'nodelay:0', 'connect', 'options', 'close')
+    off = 'keepalive=0 idle='
+    t.check('keepalive and TCP_NODELAY: neither as the socket starts',
+            result_code(steps, 0) == ('connect', 'OK') and step(steps, 1)[1].startswith(off) and
+            step(steps, 1)[1].endswith(' nodelay=0') and step(steps, 4) == step(steps, 1), out)
+    t.check('keepalive and TCP_NODELAY: both from the next connect',
+            result_code(steps, 6) == ('connect', 'OK') and
+            step(steps, 7) == ('options', 'keepalive=1 idle=30 interval=5 count=4 nodelay=1') and
+            recv_result(steps, 9)[::4] == ('OK', 'hello\\n') and 'LOG warning' not in out, out)
+    t.check('keepalive and TCP_NODELAY: neither again once off',
+            result_code(steps, 13) == ('connect', 'OK') and step(steps, 14)[1].startswith(off) and
+            step(steps, 14)[1].endswith(' nodelay=0'), out)
+
     # Without a logger, the port writes nothing, to stdout or stderr, and
     # last_error still says why.
     srv = Server(os.path.join(d, 'self.pem'), os.path.join(d, 'self.key'))

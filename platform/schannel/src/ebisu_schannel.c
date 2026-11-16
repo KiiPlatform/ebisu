@@ -194,6 +194,19 @@ void ebisu_schannel_socket_set_logger(ebisu_schannel_socket_t* sock, ebisu_logge
     sock->logger = logger;
 }
 
+void ebisu_schannel_socket_set_keepalive(ebisu_schannel_socket_t* sock,
+        unsigned int idle_s, unsigned int interval_s, unsigned int count)
+{
+    sock->keepalive_idle = idle_s;
+    sock->keepalive_interval = interval_s;
+    sock->keepalive_count = count;
+}
+
+void ebisu_schannel_socket_set_nodelay(ebisu_schannel_socket_t* sock, bool nodelay)
+{
+    sock->nodelay = nodelay;
+}
+
 /* Releases everything the connection holds, whatever state it is in, and
    leaves the context ready for the next schannel_connect(). */
 static void teardown(ebisu_schannel_socket_t* ctx)
@@ -255,6 +268,10 @@ static SOCKET tcp_connect(ebisu_schannel_socket_t* ctx, uint16_t port)
             return INVALID_SOCKET;
         }
     }
+    const tcp_options_t options = {
+        ctx->keepalive_idle, ctx->keepalive_interval, ctx->keepalive_count, ctx->nodelay
+    };
+    set_tcp_options(sock, &options, ctx->logger);
     return sock;
 }
 

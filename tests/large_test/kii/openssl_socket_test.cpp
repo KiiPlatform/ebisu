@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1393,12 +1394,11 @@ TEST_CASE( "The OpenSSL socket checks the server's certificate as its configurat
     }
 }
 
-// A session resumed has no certificate to check: those kept under a mode that
-// checked less would let the next connection skip the check.
 // close used to shut down, free and close what the socket held, whether or
 // not it had a connection: NULL on a socket never connected, and the last
 // connection's SSL, freed already, and descriptor, maybe another's by then, on
-// one used again. A connect that fails, closed as khc closes it, was one.
+// one used again. A close after a connect that failed was one, or a close
+// twice; khc and the MQTT task close only a connection made.
 TEST_CASE( "The OpenSSL socket's close does nothing without a connection" ) {
     LocalServer server;
     REQUIRE( server.listening );
@@ -1452,6 +1452,68 @@ TEST_CASE( "The OpenSSL socket's close does nothing without a connection" ) {
     ebisu_openssl_tls_free(&tls);
 }
 
+namespace {
+
+// An option of the socket's connection, as getsockopt() reads it, or -1.
+long option_of(const ebisu_openssl_socket_t& sock, int level, int name)
+{
+    int value = 0;
+    socklen_t len = sizeof(value);
+    if (getsockopt(sock.socket, level, name, &value, &len) != 0) {
+        return -1;
+    }
+    return value;
+}
+
+}
+
+TEST_CASE( "The OpenSSL socket checks an idle connection, and sends at once, when asked" ) {
+    LocalServer server;
+    REQUIRE( server.listening );
+    CaFile ca;
+    LogCtx log;
+    ebisu_openssl_tls_t tls;
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
+    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_init(&sock, 5, 5);
+    ebisu_openssl_socket_set_logger(&sock, log.get());
+    ebisu_openssl_socket_set_tls(&sock, &tls);
+#if defined(TCP_KEEPIDLE)
+    const int idle_option = TCP_KEEPIDLE;
+#elif defined(TCP_KEEPALIVE)
+    const int idle_option = TCP_KEEPALIVE;
+#endif
+
+    REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
+    CHECK( option_of(sock, SOL_SOCKET, SO_KEEPALIVE) == 0 );
+    CHECK( option_of(sock, IPPROTO_TCP, TCP_NODELAY) == 0 );
+    // From the next connect.
+    ebisu_openssl_socket_set_keepalive(&sock, 30, 5, 4);
+    ebisu_openssl_socket_set_nodelay(&sock, true);
+    CHECK( option_of(sock, SOL_SOCKET, SO_KEEPALIVE) == 0 );
+    REQUIRE( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+
+    REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
+    CHECK( option_of(sock, SOL_SOCKET, SO_KEEPALIVE) != 0 );
+    CHECK( option_of(sock, IPPROTO_TCP, idle_option) == 30 );
+    CHECK( option_of(sock, IPPROTO_TCP, TCP_KEEPINTVL) == 5 );
+    CHECK( option_of(sock, IPPROTO_TCP, TCP_KEEPCNT) == 4 );
+    CHECK( option_of(sock, IPPROTO_TCP, TCP_NODELAY) != 0 );
+    CHECK_FALSE( logged(log, EBISU_LOG_WARNING, "failed to set") );
+    REQUIRE( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+
+    ebisu_openssl_socket_set_keepalive(&sock, 0, 5, 4);
+    ebisu_openssl_socket_set_nodelay(&sock, false);
+    REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
+    CHECK( option_of(sock, SOL_SOCKET, SO_KEEPALIVE) == 0 );
+    CHECK( option_of(sock, IPPROTO_TCP, TCP_NODELAY) == 0 );
+    REQUIRE( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+    ebisu_openssl_tls_free(&tls);
+}
+
+// A session resumed has no certificate to check: those kept under a mode that
+// checked less would let the next connection skip the check.
 TEST_CASE( "A TLS configuration checks in full again once set to, with no session kept" ) {
     LocalServer server(AF_INET, true);
     REQUIRE( server.listening );

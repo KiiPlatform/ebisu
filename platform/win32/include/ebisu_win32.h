@@ -95,6 +95,13 @@ typedef struct ebisu_win32_tcp_socket_t {
      * for last_error, and more of it. */
     ebisu_sock_error_t error;
     long error_detail; /**< \private */
+    /** \private What ebisu_win32_tcp_socket_set_keepalive() sets: the idle
+     * time, 0 for no keepalive, the interval and the count. */
+    unsigned int keepalive_idle;
+    unsigned int keepalive_interval; /**< \private */
+    unsigned int keepalive_count; /**< \private */
+    /** \private What ebisu_win32_tcp_socket_set_nodelay() sets. */
+    bool nodelay;
 } ebisu_win32_tcp_socket_t;
 
 /**
@@ -143,6 +150,44 @@ void ebisu_win32_tcp_socket_set_connect_timeout(ebisu_win32_tcp_socket_t* sock,
  */
 void ebisu_win32_tcp_socket_set_logger(ebisu_win32_tcp_socket_t* sock,
         ebisu_logger_t* logger);
+
+/**
+ * \brief Sets whether TCP checks an idle connection is still there.
+ *
+ * As the POSIX port's ebisu_posix_tcp_socket_set_keepalive() does: TCP probes
+ * a connection idle for idle_s seconds, and gives it up when count probes,
+ * interval_s seconds apart, go unanswered, so that a peer that has gone is
+ * noticed within about idle_s + interval_s * count seconds of the connection
+ * going idle.
+ *
+ * It applies from the next connect: SO_KEEPALIVE, with TCP_KEEPIDLE,
+ * TCP_KEEPINTVL and TCP_KEEPCNT, which Windows takes from Windows 10, version
+ * 1709. One it refuses, as an earlier Windows does, is said with the Winsock
+ * error at EBISU_LOG_WARNING to the logger, and the connection made without
+ * it.
+ *
+ * \param [out] sock The socket.
+ * \param [in] idle_s Seconds idle before the first probe, or 0 for no
+ * keepalive, as the socket starts.
+ * \param [in] interval_s Seconds between probes, or 0 for the system's.
+ * \param [in] count Probes unanswered before the connection is given up, or
+ * 0 for the system's.
+ */
+void ebisu_win32_tcp_socket_set_keepalive(ebisu_win32_tcp_socket_t* sock,
+        unsigned int idle_s, unsigned int interval_s, unsigned int count);
+
+/**
+ * \brief Sets whether what is sent goes at once, with TCP_NODELAY.
+ *
+ * Without it, as the socket starts, Nagle's algorithm holds a small segment
+ * back while an earlier one is unacknowledged: a request sent in two pieces
+ * can wait for the first's ACK, which a peer may delay. It applies from the
+ * next connect.
+ *
+ * \param [out] sock The socket.
+ * \param [in] nodelay true to send at once.
+ */
+void ebisu_win32_tcp_socket_set_nodelay(ebisu_win32_tcp_socket_t* sock, bool nodelay);
 
 /**
  * \brief The name servers on Windows, for platform's DNS probe.

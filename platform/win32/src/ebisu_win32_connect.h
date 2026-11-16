@@ -27,16 +27,17 @@
 #define CONNECT_HOST_SIZE 256
 
 #ifdef EBISU_NO_LOG
-#define log_code_to(logger, code, ...) ((void)0)
+#define log_code_at(logger, level, code, ...) ((void)0)
 #else
 #if defined(__GNUC__) || defined(__clang__)
-static void log_code_to(ebisu_logger_t* logger, unsigned long code, const char* fmt, ...)
-    __attribute__((format(printf, 3, 4)));
+static void log_code_at(ebisu_logger_t* logger, ebisu_log_level_t level, unsigned long code,
+        const char* fmt, ...) __attribute__((format(printf, 4, 5)));
 #endif
 
-/* Logs what failed with a Winsock, Win32, SSPI or certificate error code, and
-   the system's text for it where there is one. */
-static void log_code_to(ebisu_logger_t* logger, unsigned long code, const char* fmt, ...)
+/* Logs, at level, what failed with a Winsock, Win32, SSPI or certificate error
+   code, and the system's text for it where there is one. */
+static void log_code_at(ebisu_logger_t* logger, ebisu_log_level_t level, unsigned long code,
+        const char* fmt, ...)
 {
     char what[320];
     va_list args;
@@ -58,10 +59,12 @@ static void log_code_to(ebisu_logger_t* logger, unsigned long code, const char* 
         --len;
     }
     text[len] = '\0';
-    log_to(logger, EBISU_LOG_ERROR, "%s: 0x%08lx%s%s", what, code,
-            len > 0 ? " " : "", text);
+    log_to(logger, level, "%s: 0x%08lx%s%s", what, code, len > 0 ? " " : "", text);
 }
 #endif
+
+/* What failed, as log_code_at() logs it, at EBISU_LOG_ERROR. */
+#define log_code_to(logger, code, ...) log_code_at((logger), EBISU_LOG_ERROR, (code), __VA_ARGS__)
 
 /* mingw-w64's headers, 13 at least, leave it out, though its import library
    for ws2_32 has it. */
@@ -297,6 +300,68 @@ static SOCKET connect_to_host(const char* host, uint16_t port, unsigned int time
         *out_detail = last_error;
     }
     return sock;
+}
+
+/* Keepalive and TCP_NODELAY, as a socket of these sets them for each
+   connection: keepalive off with idle_s 0, as TCP starts, and otherwise on,
+   with its interval and count where they aren't 0. */
+typedef struct tcp_options_t {
+    unsigned int idle_s;
+    unsigned int interval_s;
+    unsigned int count;
+    bool nodelay;
+} tcp_options_t;
+
+/* Sets a DWORD option, or says why it couldn't be: the connection goes on
+   without it. */
+static void set_dword_option(SOCKET sock, int level, int name, const char* what,
+        unsigned int value, ebisu_logger_t* logger)
+{
+    DWORD v = (DWORD)value;
+    if (setsockopt(sock, level, name, (const char*)&v, sizeof(v)) != 0) {
+        int code = WSAGetLastError();
+        (void)code;
+        log_code_at(logger, EBISU_LOG_WARNING, (unsigned long)code, "failed to set %s to %u",
+                what, value);
+    }
+}
+
+/* Says an option was asked for that the headers have no way to set. */
+#define unsettable(logger, what) \
+    log_to((logger), EBISU_LOG_WARNING, "%s can't be set on this system.", (what))
+
+/* Sets options on a socket just connected. Windows takes TCP_KEEPIDLE and
+   TCP_KEEPINTVL from Windows 10 1709, and TCP_KEEPCNT from 1703. */
+static void set_tcp_options(SOCKET sock, const tcp_options_t* options, ebisu_logger_t* logger)
+{
+    if (options->idle_s > 0) {
+        set_dword_option(sock, SOL_SOCKET, SO_KEEPALIVE, "SO_KEEPALIVE", 1, logger);
+#ifdef TCP_KEEPIDLE
+        set_dword_option(sock, IPPROTO_TCP, TCP_KEEPIDLE, "TCP_KEEPIDLE", options->idle_s,
+                logger);
+#else
+        unsettable(logger, "TCP_KEEPIDLE");
+#endif
+        if (options->interval_s > 0) {
+#ifdef TCP_KEEPINTVL
+            set_dword_option(sock, IPPROTO_TCP, TCP_KEEPINTVL, "TCP_KEEPINTVL",
+                    options->interval_s, logger);
+#else
+            unsettable(logger, "TCP_KEEPINTVL");
+#endif
+        }
+        if (options->count > 0) {
+#ifdef TCP_KEEPCNT
+            set_dword_option(sock, IPPROTO_TCP, TCP_KEEPCNT, "TCP_KEEPCNT", options->count,
+                    logger);
+#else
+            unsettable(logger, "TCP_KEEPCNT");
+#endif
+        }
+    }
+    if (options->nodelay) {
+        set_dword_option(sock, IPPROTO_TCP, TCP_NODELAY, "TCP_NODELAY", 1, logger);
+    }
 }
 
 #endif /* _EBISU_WIN32_CONNECT */

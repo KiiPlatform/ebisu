@@ -610,6 +610,19 @@ void ebisu_openssl_socket_set_logger(ebisu_openssl_socket_t* sock, ebisu_logger_
     sock->logger = logger;
 }
 
+void ebisu_openssl_socket_set_keepalive(ebisu_openssl_socket_t* sock,
+        unsigned int idle_s, unsigned int interval_s, unsigned int count)
+{
+    sock->keepalive_idle = idle_s;
+    sock->keepalive_interval = interval_s;
+    sock->keepalive_count = count;
+}
+
+void ebisu_openssl_socket_set_nodelay(ebisu_openssl_socket_t* sock, bool nodelay)
+{
+    sock->nodelay = nodelay;
+}
+
 /* OpenSSL has checked the server's certificate chain, its host name and the
    validity period of each certificate, at the clock's time when there is a
    clock. While the clock has only a lower bound of the time, its floor, a
@@ -697,6 +710,11 @@ static ebisu_sock_code_t
         tv.tv_usec = 0;
         setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof tv);
     }
+
+    const tcp_options_t options = {
+        ctx->keepalive_idle, ctx->keepalive_interval, ctx->keepalive_count, ctx->nodelay
+    };
+    set_tcp_options(sock, &options, ctx->logger);
 
     /* Shared with the other connections: the CA certificates are loaded once. */
     SSL_CTX* ssl_ctx = shared_ssl_ctx(ctx);
