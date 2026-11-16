@@ -86,7 +86,8 @@ $(function() {
 
 <p>This is a file defining Kii JSON APIs.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;stddef.h&gt;</code><br />
+<div class="textblock"><code>#include &lt;stdbool.h&gt;</code><br />
+<code>#include &lt;stddef.h&gt;</code><br />
 <code>#include &lt;stdint.h&gt;</code><br />
 </div>
 <p><a href="jkii_8h_source.html">Go to the source code of this file.</a></p>
@@ -99,7 +100,6 @@ Data Structures</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-typedef-members" class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:a79373dc6dd050f3df82ab81e66d6e9a2" id="r_a79373dc6dd050f3df82ab81e66d6e9a2"><td class="memItemLeft" align="right" valign="top">typedef enum <a class="el" href="#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a79373dc6dd050f3df82ab81e66d6e9a2">jkii_boolean_t</a></td></tr>
 <tr class="memitem:a308377fd5d9eb3c6fc9af26e51cb1070" id="r_a308377fd5d9eb3c6fc9af26e51cb1070"><td class="memItemLeft" align="right" valign="top">typedef enum <a class="el" href="#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a308377fd5d9eb3c6fc9af26e51cb1070">jkii_parse_err_t</a></td></tr>
 <tr class="memitem:abc81150c301b49154f90f82aa6f8d01b" id="r_abc81150c301b49154f90f82aa6f8d01b"><td class="memItemLeft" align="right" valign="top">typedef enum <a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abc81150c301b49154f90f82aa6f8d01b">jkii_field_err_t</a></td></tr>
 <tr class="memitem:add9f0f2403e3d6cd1a4d09ec542047c9" id="r_add9f0f2403e3d6cd1a4d09ec542047c9"><td class="memItemLeft" align="right" valign="top">typedef enum <a class="el" href="#a5fe8d88e1452ceb3d2c07f69440c82b5">jkii_field_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#add9f0f2403e3d6cd1a4d09ec542047c9">jkii_field_type_t</a></td></tr>
@@ -110,9 +110,6 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-enum-members" class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:ad4bbea9cae26b6694b8c43e8d764ab29" id="r_ad4bbea9cae26b6694b8c43e8d764ab29"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a> { <b>JKII_FALSE</b>
-, <b>JKII_TRUE</b>
- }</td></tr>
 <tr class="memitem:a7c99e19b01ccd836a788cf794afc8792" id="r_a7c99e19b01ccd836a788cf794afc8792"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a> { <br />
 &#160;&#160;<a class="el" href="#a7c99e19b01ccd836a788cf794afc8792ac12ec4a57f74db1a3bb6a02fdb7ea6fe">JKII_ERR_OK</a>
 , <a class="el" href="#a7c99e19b01ccd836a788cf794afc8792ac7aa54138b3463eb8922d8cf568868ad">JKII_ERR_PARTIAL</a>
@@ -162,34 +159,19 @@ Functions</h2></td></tr>
 <tr class="memitem:ac7f09c33ef5afeb6184403bf144b2291" id="r_ac7f09c33ef5afeb6184403bf144b2291"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac7f09c33ef5afeb6184403bf144b2291">jkii_member_string</a> (const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member, char *buff, size_t buff_size)</td></tr>
 <tr class="memitem:adb15abfa496de1fb41539e759caa9e43" id="r_adb15abfa496de1fb41539e759caa9e43"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adb15abfa496de1fb41539e759caa9e43">jkii_member_integer</a> (const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member, int64_t min, int64_t max, int64_t *out_value)</td></tr>
 <tr class="memitem:a8ddf44407cd96c778135bf49b3d72183" id="r_a8ddf44407cd96c778135bf49b3d72183"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8ddf44407cd96c778135bf49b3d72183">jkii_member_double</a> (const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member, double *out_value)</td></tr>
-<tr class="memitem:a8ba7cc4e7a1c9af68565f64f50373aa9" id="r_a8ba7cc4e7a1c9af68565f64f50373aa9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8ba7cc4e7a1c9af68565f64f50373aa9">jkii_member_boolean</a> (const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member, <a class="el" href="#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a> *out_value)</td></tr>
+<tr class="memitem:a596b6ccef47e2bef58ef5c527a59a29c" id="r_a596b6ccef47e2bef58ef5c527a59a29c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a596b6ccef47e2bef58ef5c527a59a29c">jkii_member_boolean</a> (const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member, bool *out_value)</td></tr>
 <tr class="memitem:a8db3315efb4948dc54966f19a181fedd" id="r_a8db3315efb4948dc54966f19a181fedd"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8db3315efb4948dc54966f19a181fedd">jkii_member_unquote</a> (const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member, <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *unquoted)</td></tr>
 <tr class="memitem:aa422e48a2573244c0634cc73bc8a064d" id="r_aa422e48a2573244c0634cc73bc8a064d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa422e48a2573244c0634cc73bc8a064d">jkii_member_text</a> (const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member, char *buff, size_t buff_size)</td></tr>
-<tr class="memitem:a0b849c5f13603f5304819b3ff69de4e2" id="r_a0b849c5f13603f5304819b3ff69de4e2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0b849c5f13603f5304819b3ff69de4e2">jkii_member_string_trunc</a> (const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member, char *buff, size_t buff_size, <a class="el" href="#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a> *out_truncated)</td></tr>
+<tr class="memitem:a9672417e6510c2bfcd9237cb33002bff" id="r_a9672417e6510c2bfcd9237cb33002bff"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9672417e6510c2bfcd9237cb33002bff">jkii_member_string_trunc</a> (const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member, char *buff, size_t buff_size, bool *out_truncated)</td></tr>
 <tr class="memitem:a4bba5871f530679d2fe36b1ad1eb6d7b" id="r_a4bba5871f530679d2fe36b1ad1eb6d7b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4bba5871f530679d2fe36b1ad1eb6d7b">jkii_find_name</a> (const char *json_string, size_t json_string_len, const char *name, size_t name_len, <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *out_member)</td></tr>
 <tr class="memitem:ab80f24b9f6a44a8cbca95386a24bc6a8" id="r_ab80f24b9f6a44a8cbca95386a24bc6a8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab80f24b9f6a44a8cbca95386a24bc6a8">jkii_find_integer</a> (const char *json_string, size_t json_string_len, const char *path, int64_t min, int64_t max, unsigned int flags, int64_t *out_value, <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *out_member)</td></tr>
 <tr class="memitem:ab25f37ba8a5971dc49eaac4f1174397e" id="r_ab25f37ba8a5971dc49eaac4f1174397e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab25f37ba8a5971dc49eaac4f1174397e">jkii_find_double</a> (const char *json_string, size_t json_string_len, const char *path, unsigned int flags, double *out_value, <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *out_member)</td></tr>
-<tr class="memitem:aed7588356cc55810006660fff6cc7c2f" id="r_aed7588356cc55810006660fff6cc7c2f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aed7588356cc55810006660fff6cc7c2f">jkii_find_boolean</a> (const char *json_string, size_t json_string_len, const char *path, unsigned int flags, <a class="el" href="#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a> *out_value, <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *out_member)</td></tr>
+<tr class="memitem:ad5501702e5ed0b3fa01e8113a6456393" id="r_ad5501702e5ed0b3fa01e8113a6456393"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad5501702e5ed0b3fa01e8113a6456393">jkii_find_boolean</a> (const char *json_string, size_t json_string_len, const char *path, unsigned int flags, bool *out_value, <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *out_member)</td></tr>
 <tr class="memitem:a1cfb56518b89ded24ffe84ca29870a6c" id="r_a1cfb56518b89ded24ffe84ca29870a6c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1cfb56518b89ded24ffe84ca29870a6c">jkii_find_string</a> (const char *json_string, size_t json_string_len, const char *path, unsigned int flags, char *buff, size_t buff_size, <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *out_member)</td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This is a file defining Kii JSON APIs. </p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Typedef Documentation</h2>
-<a id="a79373dc6dd050f3df82ab81e66d6e9a2" name="a79373dc6dd050f3df82ab81e66d6e9a2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a79373dc6dd050f3df82ab81e66d6e9a2">&#9670;&#160;</a></span>jkii_boolean_t</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef enum <a class="el" href="#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a> <a class="el" href="#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Boolean type </p>
-
-</div>
-</div>
 <a id="abc81150c301b49154f90f82aa6f8d01b" name="abc81150c301b49154f90f82aa6f8d01b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abc81150c301b49154f90f82aa6f8d01b">&#9670;&#160;</a></span>jkii_field_err_t</h2>
 
@@ -299,21 +281,6 @@ Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-enum-members" id="doc-enum-members"></a><h2 id="header-doc-enum-members" class="groupheader">Enumeration Type Documentation</h2>
-<a id="ad4bbea9cae26b6694b8c43e8d764ab29" name="ad4bbea9cae26b6694b8c43e8d764ab29"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad4bbea9cae26b6694b8c43e8d764ab29">&#9670;&#160;</a></span>jkii_boolean_t</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">enum <a class="el" href="#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Boolean type </p>
-
-</div>
-</div>
 <a id="a226dc87d1ccd30b36a59a096b4df3a6b" name="a226dc87d1ccd30b36a59a096b4df3a6b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a226dc87d1ccd30b36a59a096b4df3a6b">&#9670;&#160;</a></span>jkii_field_err_t</h2>
 
@@ -368,7 +335,7 @@ Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5ad566be60030c4ecc7d691159031d989b" name="a5fe8d88e1452ceb3d2c07f69440c82b5ad566be60030c4ecc7d691159031d989b"></a>JKII_FIELD_TYPE_DOUBLE&#160;</td><td class="fielddoc"><p>This value denotes an double value. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5abe85380649fee3c383a7124b51acc607" name="a5fe8d88e1452ceb3d2c07f69440c82b5abe85380649fee3c383a7124b51acc607"></a>JKII_FIELD_TYPE_BOOLEAN&#160;</td><td class="fielddoc"><p>This value denotes <a class="el" href="#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a> value. </p>
+<tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5abe85380649fee3c383a7124b51acc607" name="a5fe8d88e1452ceb3d2c07f69440c82b5abe85380649fee3c383a7124b51acc607"></a>JKII_FIELD_TYPE_BOOLEAN&#160;</td><td class="fielddoc"><p>This value denotes a true or false value, as a bool. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5a245e35d75df76163d923b498c7aa41df" name="a5fe8d88e1452ceb3d2c07f69440c82b5a245e35d75df76163d923b498c7aa41df"></a>JKII_FIELD_TYPE_NULL&#160;</td><td class="fielddoc"><p>This value denotes denotes NULL value. </p>
 </td></tr>
@@ -434,8 +401,8 @@ Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
-<a id="aed7588356cc55810006660fff6cc7c2f" name="aed7588356cc55810006660fff6cc7c2f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aed7588356cc55810006660fff6cc7c2f">&#9670;&#160;</a></span>jkii_find_boolean()</h2>
+<a id="ad5501702e5ed0b3fa01e8113a6456393" name="ad5501702e5ed0b3fa01e8113a6456393"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad5501702e5ed0b3fa01e8113a6456393">&#9670;&#160;</a></span>jkii_find_boolean()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -463,7 +430,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a> *</td>          <td class="paramname"><span class="paramname"><em>out_value</em></span>, </td>
+          <td class="paramtype">bool *</td>          <td class="paramname"><span class="paramname"><em>out_value</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -478,12 +445,12 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">json_string_len</td><td>Its length. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">path</td><td>The path, as <a class="el" href="#a0d7f3eab561143c6cf2634d24cf98910">jkii_find_member()</a> takes it. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">flags</td><td>0, <a class="el" href="#a9625e2d5244e9ff6a0ac97fe966b7787ae1b8df8df09ccd5e0437a8e1c3245012">JKII_READ_UNQUOTE</a>, <a class="el" href="#a9625e2d5244e9ff6a0ac97fe966b7787ae5893fa0e1d88263f1a6c8479cb70782">JKII_READ_NULL_AS_ABSENT</a>, or both. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">out_value</td><td>JKII_TRUE or JKII_FALSE, set only when JKII_FIELD_ERR_OK is returned. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_value</td><td>true or false, set only when JKII_FIELD_ERR_OK is returned. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">out_member</td><td>As for <a class="el" href="#ab80f24b9f6a44a8cbca95386a24bc6a8">jkii_find_integer()</a>. May be NULL. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>As <a class="el" href="#ab80f24b9f6a44a8cbca95386a24bc6a8">jkii_find_integer()</a> returns, with <a class="el" href="#a8ba7cc4e7a1c9af68565f64f50373aa9">jkii_member_boolean()</a>'s results. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>As <a class="el" href="#ab80f24b9f6a44a8cbca95386a24bc6a8">jkii_find_integer()</a> returns, with <a class="el" href="#a596b6ccef47e2bef58ef5c527a59a29c">jkii_member_boolean()</a>'s results. </dd></dl>
 
 </div>
 </div>
@@ -601,13 +568,13 @@ Functions</h2></td></tr>
 <div class="line">        <span class="comment">// Refused: found is the value as the document wrote it.</span></div>
 <div class="line">        log_refused(<span class="stringliteral">&quot;interval&quot;</span>, found.<a class="code hl_variable" href="structjkii__member__t.html#a0f288ffdcc9d3b98b69d00f28e84ca92">value</a>, found.<a class="code hl_variable" href="structjkii__member__t.html#a0e77eeb09c0118246785b017014949bf">value_length</a>);</div>
 <div class="line">}</div>
-<div class="ttc" id="ajkii_8h_html_a226dc87d1ccd30b36a59a096b4df3a6ba975d81eb93f19408c0986a98ae65bfed"><div class="ttname"><a href="#a226dc87d1ccd30b36a59a096b4df3a6ba975d81eb93f19408c0986a98ae65bfed">JKII_FIELD_ERR_OK</a></div><div class="ttdeci">@ JKII_FIELD_ERR_OK</div><div class="ttdef"><b>Definition</b> jkii.h:63</div></div>
-<div class="ttc" id="ajkii_8h_html_a226dc87d1ccd30b36a59a096b4df3a6bac70e7a8d611163b676841313d24e847b"><div class="ttname"><a href="#a226dc87d1ccd30b36a59a096b4df3a6bac70e7a8d611163b676841313d24e847b">JKII_FIELD_ERR_NOT_FOUND</a></div><div class="ttdeci">@ JKII_FIELD_ERR_NOT_FOUND</div><div class="ttdef"><b>Definition</b> jkii.h:69</div></div>
-<div class="ttc" id="ajkii_8h_html_a9625e2d5244e9ff6a0ac97fe966b7787ae1b8df8df09ccd5e0437a8e1c3245012"><div class="ttname"><a href="#a9625e2d5244e9ff6a0ac97fe966b7787ae1b8df8df09ccd5e0437a8e1c3245012">JKII_READ_UNQUOTE</a></div><div class="ttdeci">@ JKII_READ_UNQUOTE</div><div class="ttdef"><b>Definition</b> jkii.h:592</div></div>
+<div class="ttc" id="ajkii_8h_html_a226dc87d1ccd30b36a59a096b4df3a6ba975d81eb93f19408c0986a98ae65bfed"><div class="ttname"><a href="#a226dc87d1ccd30b36a59a096b4df3a6ba975d81eb93f19408c0986a98ae65bfed">JKII_FIELD_ERR_OK</a></div><div class="ttdeci">@ JKII_FIELD_ERR_OK</div><div class="ttdef"><b>Definition</b> jkii.h:58</div></div>
+<div class="ttc" id="ajkii_8h_html_a226dc87d1ccd30b36a59a096b4df3a6bac70e7a8d611163b676841313d24e847b"><div class="ttname"><a href="#a226dc87d1ccd30b36a59a096b4df3a6bac70e7a8d611163b676841313d24e847b">JKII_FIELD_ERR_NOT_FOUND</a></div><div class="ttdeci">@ JKII_FIELD_ERR_NOT_FOUND</div><div class="ttdef"><b>Definition</b> jkii.h:64</div></div>
+<div class="ttc" id="ajkii_8h_html_a9625e2d5244e9ff6a0ac97fe966b7787ae1b8df8df09ccd5e0437a8e1c3245012"><div class="ttname"><a href="#a9625e2d5244e9ff6a0ac97fe966b7787ae1b8df8df09ccd5e0437a8e1c3245012">JKII_READ_UNQUOTE</a></div><div class="ttdeci">@ JKII_READ_UNQUOTE</div><div class="ttdef"><b>Definition</b> jkii.h:587</div></div>
 <div class="ttc" id="ajkii_8h_html_ab80f24b9f6a44a8cbca95386a24bc6a8"><div class="ttname"><a href="#ab80f24b9f6a44a8cbca95386a24bc6a8">jkii_find_integer</a></div><div class="ttdeci">jkii_field_err_t jkii_find_integer(const char *json_string, size_t json_string_len, const char *path, int64_t min, int64_t max, unsigned int flags, int64_t *out_value, jkii_member_t *out_member)</div></div>
-<div class="ttc" id="astructjkii__member__t_html"><div class="ttname"><a href="structjkii__member__t.html">jkii_member_t</a></div><div class="ttdef"><b>Definition</b> jkii.h:341</div></div>
-<div class="ttc" id="astructjkii__member__t_html_a0e77eeb09c0118246785b017014949bf"><div class="ttname"><a href="structjkii__member__t.html#a0e77eeb09c0118246785b017014949bf">jkii_member_t::value_length</a></div><div class="ttdeci">size_t value_length</div><div class="ttdef"><b>Definition</b> jkii.h:352</div></div>
-<div class="ttc" id="astructjkii__member__t_html_a0f288ffdcc9d3b98b69d00f28e84ca92"><div class="ttname"><a href="structjkii__member__t.html#a0f288ffdcc9d3b98b69d00f28e84ca92">jkii_member_t::value</a></div><div class="ttdeci">const char * value</div><div class="ttdef"><b>Definition</b> jkii.h:350</div></div>
+<div class="ttc" id="astructjkii__member__t_html"><div class="ttname"><a href="structjkii__member__t.html">jkii_member_t</a></div><div class="ttdef"><b>Definition</b> jkii.h:336</div></div>
+<div class="ttc" id="astructjkii__member__t_html_a0e77eeb09c0118246785b017014949bf"><div class="ttname"><a href="structjkii__member__t.html#a0e77eeb09c0118246785b017014949bf">jkii_member_t::value_length</a></div><div class="ttdeci">size_t value_length</div><div class="ttdef"><b>Definition</b> jkii.h:347</div></div>
+<div class="ttc" id="astructjkii__member__t_html_a0f288ffdcc9d3b98b69d00f28e84ca92"><div class="ttname"><a href="structjkii__member__t.html#a0f288ffdcc9d3b98b69d00f28e84ca92">jkii_member_t::value</a></div><div class="ttdeci">const char * value</div><div class="ttdef"><b>Definition</b> jkii.h:345</div></div>
 </div><!-- fragment --><p>The document is checked whole on each call, as <a class="el" href="#a0d7f3eab561143c6cf2634d24cf98910">jkii_find_member()</a> checks it: to read many values from a large one, <a class="el" href="#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a> reads them in one pass.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -773,8 +740,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a8ba7cc4e7a1c9af68565f64f50373aa9" name="a8ba7cc4e7a1c9af68565f64f50373aa9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8ba7cc4e7a1c9af68565f64f50373aa9">&#9670;&#160;</a></span>jkii_member_boolean()</h2>
+<a id="a596b6ccef47e2bef58ef5c527a59a29c" name="a596b6ccef47e2bef58ef5c527a59a29c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a596b6ccef47e2bef58ef5c527a59a29c">&#9670;&#160;</a></span>jkii_member_boolean()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -787,14 +754,14 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a> *</td>          <td class="paramname"><span class="paramname"><em>out_value</em></span>&#160;)</td>
+          <td class="paramtype">bool *</td>          <td class="paramname"><span class="paramname"><em>out_value</em></span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
 <p>Reads a member's true or false. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">member</td><td>The member, as <a class="el" href="#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a>, <a class="el" href="#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value()</a> or <a class="el" href="#a0d7f3eab561143c6cf2634d24cf98910">jkii_find_member()</a> gives it. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">out_value</td><td>JKII_TRUE or JKII_FALSE, set only when JKII_FIELD_ERR_OK is returned. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_value</td><td>true or false, set only when JKII_FIELD_ERR_OK is returned. </td></tr>
   </table>
   </dd>
 </dl>
@@ -907,8 +874,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a0b849c5f13603f5304819b3ff69de4e2" name="a0b849c5f13603f5304819b3ff69de4e2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0b849c5f13603f5304819b3ff69de4e2">&#9670;&#160;</a></span>jkii_member_string_trunc()</h2>
+<a id="a9672417e6510c2bfcd9237cb33002bff" name="a9672417e6510c2bfcd9237cb33002bff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9672417e6510c2bfcd9237cb33002bff">&#9670;&#160;</a></span>jkii_member_string_trunc()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -931,7 +898,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a> *</td>          <td class="paramname"><span class="paramname"><em>out_truncated</em></span>&#160;)</td>
+          <td class="paramtype">bool *</td>          <td class="paramname"><span class="paramname"><em>out_truncated</em></span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -940,7 +907,7 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">member</td><td>The member, as <a class="el" href="#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a>, <a class="el" href="#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value()</a> or <a class="el" href="#a0d7f3eab561143c6cf2634d24cf98910">jkii_find_member()</a> gives it. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">buff</td><td>The string, null-terminated. On failure, an empty string, if buff_size isn't 0. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">buff_size</td><td>Its size, the terminator included, at least 1. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">out_truncated</td><td>JKII_TRUE if the string was cut, JKII_FALSE if it was copied whole. May be NULL. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_truncated</td><td>true if the string was cut, false if it was copied whole. May be NULL. </td></tr>
   </table>
   </dd>
 </dl>

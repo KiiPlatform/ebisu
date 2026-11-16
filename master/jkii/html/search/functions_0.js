@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['jkii_5ffind_5fboolean_0',['jkii_find_boolean',['../jkii_8h.html#aed7588356cc55810006660fff6cc7c2f',1,'jkii.h']]],
+  ['jkii_5ffind_5fboolean_0',['jkii_find_boolean',['../jkii_8h.html#ad5501702e5ed0b3fa01e8113a6456393',1,'jkii.h']]],
   ['jkii_5ffind_5fdouble_1',['jkii_find_double',['../jkii_8h.html#ab25f37ba8a5971dc49eaac4f1174397e',1,'jkii.h']]],
   ['jkii_5ffind_5finteger_2',['jkii_find_integer',['../jkii_8h.html#ab80f24b9f6a44a8cbca95386a24bc6a8',1,'jkii.h']]],
   ['jkii_5ffind_5fmember_3',['jkii_find_member',['../jkii_8h.html#a0d7f3eab561143c6cf2634d24cf98910',1,'jkii.h']]],
@@ -9,11 +9,11 @@ var searchData=
   ['jkii_5flines_5ffeed_6',['jkii_lines_feed',['../jkii__lines_8h.html#aa8a9ab1677e174b7021340555d239846',1,'jkii_lines.h']]],
   ['jkii_5flines_5ffinish_7',['jkii_lines_finish',['../jkii__lines_8h.html#ae223cc0dcb12a38e55fa27f7ed058c60',1,'jkii_lines.h']]],
   ['jkii_5flines_5finit_8',['jkii_lines_init',['../jkii__lines_8h.html#af40391c0105795f8215646c6b9421bd8',1,'jkii_lines.h']]],
-  ['jkii_5fmember_5fboolean_9',['jkii_member_boolean',['../jkii_8h.html#a8ba7cc4e7a1c9af68565f64f50373aa9',1,'jkii.h']]],
+  ['jkii_5fmember_5fboolean_9',['jkii_member_boolean',['../jkii_8h.html#a596b6ccef47e2bef58ef5c527a59a29c',1,'jkii.h']]],
   ['jkii_5fmember_5fdouble_10',['jkii_member_double',['../jkii_8h.html#a8ddf44407cd96c778135bf49b3d72183',1,'jkii.h']]],
   ['jkii_5fmember_5finteger_11',['jkii_member_integer',['../jkii_8h.html#adb15abfa496de1fb41539e759caa9e43',1,'jkii.h']]],
   ['jkii_5fmember_5fstring_12',['jkii_member_string',['../jkii_8h.html#ac7f09c33ef5afeb6184403bf144b2291',1,'jkii.h']]],
-  ['jkii_5fmember_5fstring_5ftrunc_13',['jkii_member_string_trunc',['../jkii_8h.html#a0b849c5f13603f5304819b3ff69de4e2',1,'jkii.h']]],
+  ['jkii_5fmember_5fstring_5ftrunc_13',['jkii_member_string_trunc',['../jkii_8h.html#a9672417e6510c2bfcd9237cb33002bff',1,'jkii.h']]],
   ['jkii_5fmember_5ftext_14',['jkii_member_text',['../jkii_8h.html#aa422e48a2573244c0634cc73bc8a064d',1,'jkii.h']]],
   ['jkii_5fmember_5funquote_15',['jkii_member_unquote',['../jkii_8h.html#a8db3315efb4948dc54966f19a181fedd',1,'jkii.h']]],
   ['jkii_5fnext_5fmember_16',['jkii_next_member',['../jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401',1,'jkii.h']]],

@@ -8,13 +8,6 @@
     <class kind="struct">jkii_member_t</class>
     <class kind="struct">jkii_member_iter_t</class>
     <member kind="typedef">
-      <type>enum jkii_boolean_t</type>
-      <name>jkii_boolean_t</name>
-      <anchorfile>jkii_8h.html</anchorfile>
-      <anchor>a79373dc6dd050f3df82ab81e66d6e9a2</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="typedef">
       <type>enum jkii_parse_err_t</type>
       <name>jkii_parse_err_t</name>
       <anchorfile>jkii_8h.html</anchorfile>
@@ -61,13 +54,6 @@
       <name>jkii_read_flag_t</name>
       <anchorfile>jkii_8h.html</anchorfile>
       <anchor>a0ea867bbcd32e0d64c0e2e21e04b0200</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumeration">
-      <type></type>
-      <name>jkii_boolean_t</name>
-      <anchorfile>jkii_8h.html</anchorfile>
-      <anchor>ad4bbea9cae26b6694b8c43e8d764ab29</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumeration">
@@ -301,8 +287,8 @@
       <type>jkii_field_err_t</type>
       <name>jkii_member_boolean</name>
       <anchorfile>jkii_8h.html</anchorfile>
-      <anchor>a8ba7cc4e7a1c9af68565f64f50373aa9</anchor>
-      <arglist>(const jkii_member_t *member, jkii_boolean_t *out_value)</arglist>
+      <anchor>a596b6ccef47e2bef58ef5c527a59a29c</anchor>
+      <arglist>(const jkii_member_t *member, bool *out_value)</arglist>
     </member>
     <member kind="function">
       <type>const jkii_member_t *</type>
@@ -322,8 +308,8 @@
       <type>jkii_field_err_t</type>
       <name>jkii_member_string_trunc</name>
       <anchorfile>jkii_8h.html</anchorfile>
-      <anchor>a0b849c5f13603f5304819b3ff69de4e2</anchor>
-      <arglist>(const jkii_member_t *member, char *buff, size_t buff_size, jkii_boolean_t *out_truncated)</arglist>
+      <anchor>a9672417e6510c2bfcd9237cb33002bff</anchor>
+      <arglist>(const jkii_member_t *member, char *buff, size_t buff_size, bool *out_truncated)</arglist>
     </member>
     <member kind="function">
       <type>jkii_parse_err_t</type>
@@ -350,8 +336,8 @@
       <type>jkii_field_err_t</type>
       <name>jkii_find_boolean</name>
       <anchorfile>jkii_8h.html</anchorfile>
-      <anchor>aed7588356cc55810006660fff6cc7c2f</anchor>
-      <arglist>(const char *json_string, size_t json_string_len, const char *path, unsigned int flags, jkii_boolean_t *out_value, jkii_member_t *out_member)</arglist>
+      <anchor>ad5501702e5ed0b3fa01e8113a6456393</anchor>
+      <arglist>(const char *json_string, size_t json_string_len, const char *path, unsigned int flags, bool *out_value, jkii_member_t *out_member)</arglist>
     </member>
     <member kind="function">
       <type>jkii_field_err_t</type>
@@ -731,10 +717,10 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>jkii_boolean_t</type>
+      <type>bool</type>
       <name>boolean_value</name>
       <anchorfile>structjkii__field__t.html</anchorfile>
-      <anchor>af204e584160c0451d1272ba2ef9cbd20</anchor>
+      <anchor>a24078e6c55d91846240e9bec09bad23d</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
@@ -824,10 +810,10 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>jkii_boolean_t</type>
+      <type>bool</type>
       <name>boolean_value</name>
       <anchorfile>structjkii__primitive__t.html</anchorfile>
-      <anchor>a89d1332df075a373e0eabc71c5d77189</anchor>
+      <anchor>a9244dc683df36a621450650aa23506f1</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">

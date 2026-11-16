@@ -92,7 +92,7 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a739d8b4b1a8bd0866d2c84874f2adb02" id="r_a739d8b4b1a8bd0866d2c84874f2adb02"><td class="memItemLeft anon">&#160;&#160;&#160;int32_t&#160;&#160;&#160;<a class="el" href="#a50b7778350c45622b75a5d6849969d1f">int_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 <tr class="memitem:a997190c47c144722b5bce181a75d9bc2" id="r_a997190c47c144722b5bce181a75d9bc2"><td class="memItemLeft anon">&#160;&#160;&#160;int64_t&#160;&#160;&#160;<a class="el" href="#ab61d4194e05eaab56b021905e257d052">long_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 <tr class="memitem:aa1bdc47adc1351255dd84bbe77457bb8" id="r_aa1bdc47adc1351255dd84bbe77457bb8"><td class="memItemLeft anon">&#160;&#160;&#160;double&#160;&#160;&#160;<a class="el" href="#a4473c495ef26173515f141c4ea4eca51">double_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
-<tr class="memitem:ac581dca974b7b554a850784320b3be10" id="r_ac581dca974b7b554a850784320b3be10"><td class="memItemLeft anon">&#160;&#160;&#160;<a class="el" href="jkii_8h.html#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a>&#160;&#160;&#160;<a class="el" href="#af204e584160c0451d1272ba2ef9cbd20">boolean_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
+<tr class="memitem:a57189494a8a02e6ba83e06c368d43a28" id="r_a57189494a8a02e6ba83e06c368d43a28"><td class="memItemLeft anon">&#160;&#160;&#160;bool&#160;&#160;&#160;<a class="el" href="#a24078e6c55d91846240e9bec09bad23d">boolean_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 <tr class="memitem:adc42070fce6fafbca7825a219e8a9928" id="r_adc42070fce6fafbca7825a219e8a9928"><td class="memItemLeft anonEnd" valign="top">}&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adc42070fce6fafbca7825a219e8a9928">field_copy</a></td></tr>
 <tr class="memdesc:adc42070fce6fafbca7825a219e8a9928"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy of the parsed field value. Which member is valid is given by <a class="el" href="#ab2b34feaeed6c4fc6364e3195cf1f841">jkii_field_t::type</a>.  <br /></td></tr>
 <tr class="memitem:a92339c0771f78c56cf96edfa806ae59b" id="r_a92339c0771f78c56cf96edfa806ae59b"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a92339c0771f78c56cf96edfa806ae59b">field_copy_buff_size</a></td></tr>
@@ -103,14 +103,14 @@ Data Fields</h2></td></tr>
 <p>Array of <a class="el" href="structjkii__field__t.html">jkii_field_t</a> is passed to <a class="el" href="jkii_8h.html#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a>.</p>
 <p>End point of the array is specified by <a class="el" href="#ad240e9f8d4144e2f73b023095a27b0f0">jkii_field_t::name</a> and <a class="el" href="#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a>. If both of <a class="el" href="#ad240e9f8d4144e2f73b023095a27b0f0">jkii_field_t::name</a> and <a class="el" href="#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a> are NULL, <a class="el" href="jkii_8h.html#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a> consider that it is the end point of the passed array. </p>
 </div><a name="doc-variable-members" id="doc-variable-members"></a><h2 id="header-doc-variable-members" class="groupheader">Field Documentation</h2>
-<a id="af204e584160c0451d1272ba2ef9cbd20" name="af204e584160c0451d1272ba2ef9cbd20"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af204e584160c0451d1272ba2ef9cbd20">&#9670;&#160;</a></span>boolean_value</h2>
+<a id="a24078e6c55d91846240e9bec09bad23d" name="a24078e6c55d91846240e9bec09bad23d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a24078e6c55d91846240e9bec09bad23d">&#9670;&#160;</a></span>boolean_value</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="jkii_8h.html#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a> jkii_field_t::boolean_value</td>
+          <td class="memname">bool jkii_field_t::boolean_value</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -246,7 +246,7 @@ Data Fields</h2></td></tr>
 <div class="line">field ::= [<span class="keywordtype">char</span> | escaped]+</div>
 <div class="line">char ::= any ascii characters expect <span class="charliteral">&#39;/&#39;</span>, <span class="charliteral">&#39;[&#39;</span>, <span class="charliteral">&#39;]&#39;</span> and <span class="charliteral">&#39;\&#39;</span></div>
 <div class="line">escaped = <span class="stringliteral">&quot;\\/&quot;</span> | <span class="stringliteral">&quot;\\[&quot;</span> | <span class="stringliteral">&quot;\\]&quot;</span> | <span class="stringliteral">&quot;\\&quot;</span></div>
-<div class="ttc" id="astructjkii__field__t_html_ade8bf5f5ddad91aedd67bb0a0ae40533"><div class="ttname"><a href="#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a></div><div class="ttdeci">const char * path</div><div class="ttdef"><b>Definition</b> jkii.h:208</div></div>
+<div class="ttc" id="astructjkii__field__t_html_ade8bf5f5ddad91aedd67bb0a0ae40533"><div class="ttname"><a href="#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a></div><div class="ttdeci">const char * path</div><div class="ttdef"><b>Definition</b> jkii.h:203</div></div>
 </div><!-- fragment --><p>If you want to get first element of color array in following json example:</p>
 <div class="fragment"><div class="line">{</div>
 <div class="line">    <span class="stringliteral">&quot;light&quot;</span> : {</div>
