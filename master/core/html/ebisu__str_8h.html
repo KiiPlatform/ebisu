@@ -111,6 +111,9 @@ Macros</h2></td></tr>
 Typedefs</h2></td></tr>
 <tr class="memitem:afb7637ea30bc00a2c41e9a39883a464b" id="r_afb7637ea30bc00a2c41e9a39883a464b"><td class="memItemLeft" align="right" valign="top">typedef struct ebisu_strbuf_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afb7637ea30bc00a2c41e9a39883a464b">ebisu_strbuf_t</a></td></tr>
 <tr class="memdesc:afb7637ea30bc00a2c41e9a39883a464b"><td class="mdescLeft">&#160;</td><td class="mdescRight">A string built in a fixed buffer.  <br /></td></tr>
+<tr class="memitem:a1012726ba7ce4d6ec49f25059cffbee0" id="r_a1012726ba7ce4d6ec49f25059cffbee0"><td class="memItemLeft" align="right" valign="top"><a id="a1012726ba7ce4d6ec49f25059cffbee0" name="a1012726ba7ce4d6ec49f25059cffbee0"></a>
+typedef enum <a class="el" href="#ad4cc414033ef78d0089f81c6ca99d064">ebisu_escape_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ebisu_escape_t</b></td></tr>
+<tr class="memdesc:a1012726ba7ce4d6ec49f25059cffbee0"><td class="mdescLeft">&#160;</td><td class="mdescRight">How <a class="el" href="#afc9ec97924993c102c65477534e0fcec" title="Appends bytes as text, for a log line: printable ASCII as it is, a backslash doubled,...">ebisu_strbuf_append_escaped()</a> writes the bytes that aren't printable ASCII. <br /></td></tr>
 <tr class="memitem:a0665b9597a1372d128d16e50a96d710a" id="r_a0665b9597a1372d128d16e50a96d710a"><td class="memItemLeft" align="right" valign="top"><a id="a0665b9597a1372d128d16e50a96d710a" name="a0665b9597a1372d128d16e50a96d710a"></a>
 typedef enum <a class="el" href="#a0f1cfa4702e7646801104b7c0668e41f">ebisu_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ebisu_parse_err_t</b></td></tr>
 <tr class="memdesc:a0665b9597a1372d128d16e50a96d710a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Result of the ebisu_parse_ functions. <br /></td></tr>
@@ -119,6 +122,10 @@ typedef enum <a class="el" href="#a0f1cfa4702e7646801104b7c0668e41f">ebisu_parse
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-enum-members" class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
+<tr class="memitem:ad4cc414033ef78d0089f81c6ca99d064" id="r_ad4cc414033ef78d0089f81c6ca99d064"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad4cc414033ef78d0089f81c6ca99d064">ebisu_escape_t</a> { <a class="el" href="#ad4cc414033ef78d0089f81c6ca99d064a0d040bafe2209b6b2650c131e3e5ed80">EBISU_ESCAPE_HEX</a>
+, <a class="el" href="#ad4cc414033ef78d0089f81c6ca99d064ae90fd1cc336f1af3b9ed551ae676a872">EBISU_ESCAPE_CONTROL_NAMES</a>
+ }</td></tr>
+<tr class="memdesc:ad4cc414033ef78d0089f81c6ca99d064"><td class="mdescLeft">&#160;</td><td class="mdescRight">How <a class="el" href="#afc9ec97924993c102c65477534e0fcec" title="Appends bytes as text, for a log line: printable ASCII as it is, a backslash doubled,...">ebisu_strbuf_append_escaped()</a> writes the bytes that aren't printable ASCII.  <a href="#ad4cc414033ef78d0089f81c6ca99d064">More...</a><br /></td></tr>
 <tr class="memitem:a0f1cfa4702e7646801104b7c0668e41f" id="r_a0f1cfa4702e7646801104b7c0668e41f"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0f1cfa4702e7646801104b7c0668e41f">ebisu_parse_err_t</a> { <a class="el" href="#a0f1cfa4702e7646801104b7c0668e41fac15c39f6f9582e6150a32eb123c1feeb">EBISU_PARSE_OK</a>
 , <a class="el" href="#a0f1cfa4702e7646801104b7c0668e41fa7fe348d416449fc51634402b55032711">EBISU_PARSE_EMPTY</a>
 , <a class="el" href="#a0f1cfa4702e7646801104b7c0668e41faab3de77ee928d12b864b955c56ed2fb8">EBISU_PARSE_INVALID</a>
@@ -146,6 +153,8 @@ Functions</h2></td></tr>
 <tr class="memdesc:ad278936c67df60098937976f7128e035"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends an unsigned integer in lowercase hexadecimal, without "0x".  <br /></td></tr>
 <tr class="memitem:a50eb363ffdf48b70bc9c10b28269496b" id="r_a50eb363ffdf48b70bc9c10b28269496b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a50eb363ffdf48b70bc9c10b28269496b">ebisu_strbuf_append_hex_bytes</a> (<a class="el" href="structebisu__strbuf__t.html">ebisu_strbuf_t</a> *sb, const uint8_t *bytes, size_t n)</td></tr>
 <tr class="memdesc:a50eb363ffdf48b70bc9c10b28269496b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends bytes in lowercase hexadecimal, two digits for each: { 0x01, 0xab } is "01ab".  <br /></td></tr>
+<tr class="memitem:afc9ec97924993c102c65477534e0fcec" id="r_afc9ec97924993c102c65477534e0fcec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afc9ec97924993c102c65477534e0fcec">ebisu_strbuf_append_escaped</a> (<a class="el" href="structebisu__strbuf__t.html">ebisu_strbuf_t</a> *sb, const void *data, size_t n, <a class="el" href="#ad4cc414033ef78d0089f81c6ca99d064">ebisu_escape_t</a> style)</td></tr>
+<tr class="memdesc:afc9ec97924993c102c65477534e0fcec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends bytes as text, for a log line: printable ASCII as it is, a backslash doubled, as <span class="tt">\\</span>, and every other byte escaped as style says.  <br /></td></tr>
 <tr class="memitem:a2ea1b86908eeb1b2665b396219ddbbc1" id="r_a2ea1b86908eeb1b2665b396219ddbbc1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2ea1b86908eeb1b2665b396219ddbbc1">ebisu_strbuf_append_fixed</a> (<a class="el" href="structebisu__strbuf__t.html">ebisu_strbuf_t</a> *sb, int64_t v, unsigned int decimals)</td></tr>
 <tr class="memdesc:a2ea1b86908eeb1b2665b396219ddbbc1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends a scaled integer as a decimal number: (12345, 2) is "123.45", (-5, 2) is "-0.05" and (7, 0) is "7".  <br /></td></tr>
 <tr class="memitem:a1e2690d387c0c7b2bbc2d2fa2ea4f2e6" id="r_a1e2690d387c0c7b2bbc2d2fa2ea4f2e6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1e2690d387c0c7b2bbc2d2fa2ea4f2e6">ebisu_strbuf_appendf</a> (<a class="el" href="structebisu__strbuf__t.html">ebisu_strbuf_t</a> *sb, const char *fmt,...)</td></tr>
@@ -218,6 +227,28 @@ Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-enum-members" id="doc-enum-members"></a><h2 id="header-doc-enum-members" class="groupheader">Enumeration Type Documentation</h2>
+<a id="ad4cc414033ef78d0089f81c6ca99d064" name="ad4cc414033ef78d0089f81c6ca99d064"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad4cc414033ef78d0089f81c6ca99d064">&#9670;&#160;</a></span>ebisu_escape_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="#ad4cc414033ef78d0089f81c6ca99d064">ebisu_escape_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>How <a class="el" href="#afc9ec97924993c102c65477534e0fcec" title="Appends bytes as text, for a log line: printable ASCII as it is, a backslash doubled,...">ebisu_strbuf_append_escaped()</a> writes the bytes that aren't printable ASCII. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ad4cc414033ef78d0089f81c6ca99d064a0d040bafe2209b6b2650c131e3e5ed80" name="ad4cc414033ef78d0089f81c6ca99d064a0d040bafe2209b6b2650c131e3e5ed80"></a>EBISU_ESCAPE_HEX&#160;</td><td class="fielddoc"><p>Each as <span class="tt">\xNN</span>, in two lowercase hexadecimal digits: <span class="tt">a\x0d\x0a</span> for an a, a CR and an LF. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad4cc414033ef78d0089f81c6ca99d064ae90fd1cc336f1af3b9ed551ae676a872" name="ad4cc414033ef78d0089f81c6ca99d064ae90fd1cc336f1af3b9ed551ae676a872"></a>EBISU_ESCAPE_CONTROL_NAMES&#160;</td><td class="fielddoc"><p>An ASCII control byte by its name, between angle brackets, as line protocols name them: <span class="tt">&lt;SOH&gt;1&lt;ETX&gt;&lt;CR&gt;&lt;LF&gt;</span>. The names are NUL, SOH, STX, ETX, EOT, ENQ, ACK, BEL, BS, HT, LF, VT, FF, CR, SO, SI, DLE, DC1, DC2, DC3, DC4, NAK, SYN, ETB, CAN, EM, SUB, ESC, FS, GS, RS and US for 0x00 to 0x1f, and DEL for 0x7f. Any other byte is as with <a class="el" href="#ad4cc414033ef78d0089f81c6ca99d064a0d040bafe2209b6b2650c131e3e5ed80" title="Each as \xNN, in two lowercase hexadecimal digits: a\x0d\x0a for an a, a CR and an LF.">EBISU_ESCAPE_HEX</a>, and so is '&lt;' itself, as <span class="tt">\x3c</span>, so that a name in angle brackets always stands for its byte. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
 <a id="a0f1cfa4702e7646801104b7c0668e41f" name="a0f1cfa4702e7646801104b7c0668e41f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0f1cfa4702e7646801104b7c0668e41f">&#9670;&#160;</a></span>ebisu_parse_err_t</h2>
 
@@ -736,6 +767,49 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="afc9ec97924993c102c65477534e0fcec" name="afc9ec97924993c102c65477534e0fcec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc9ec97924993c102c65477534e0fcec">&#9670;&#160;</a></span>ebisu_strbuf_append_escaped()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_strbuf_append_escaped </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__strbuf__t.html">ebisu_strbuf_t</a> *</td>          <td class="paramname"><span class="paramname"><em>sb</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const void *</td>          <td class="paramname"><span class="paramname"><em>data</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>n</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="#ad4cc414033ef78d0089f81c6ca99d064">ebisu_escape_t</a></td>          <td class="paramname"><span class="paramname"><em>style</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Appends bytes as text, for a log line: printable ASCII as it is, a backslash doubled, as <span class="tt">\\</span>, and every other byte escaped as style says. </p>
+<p>Any bytes come out as one line of printable ASCII, from which each byte can be read back. Appended whole, or not at all, as the other appends: for n bytes, 4 times n at most, and 5 times n with ebisu_escape_t#EBISU_ESCAPE_CONTROL_NAMES. To log the start of something longer, escape fewer of its bytes.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">sb</td><td>The builder. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">data</td><td>The bytes. May be NULL when n is 0. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>How many. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">style</td><td>How to escape the bytes that aren't printable ASCII. A value that is none of <a class="el" href="#ad4cc414033ef78d0089f81c6ca99d064" title="How ebisu_strbuf_append_escaped() writes the bytes that aren&#39;t printable ASCII.">ebisu_escape_t</a>'s fails the builder. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a2ea1b86908eeb1b2665b396219ddbbc1" name="a2ea1b86908eeb1b2665b396219ddbbc1"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2ea1b86908eeb1b2665b396219ddbbc1">&#9670;&#160;</a></span>ebisu_strbuf_append_fixed()</h2>
 
@@ -1067,7 +1141,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>false if one didn't, or the decimals given to <a class="el" href="#a2ea1b86908eeb1b2665b396219ddbbc1" title="Appends a scaled integer as a decimal number: (12345, 2) is &quot;123.45&quot;, (-5, 2) is &quot;-0....">ebisu_strbuf_append_fixed()</a> were too many. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>false if one didn't, the decimals given to <a class="el" href="#a2ea1b86908eeb1b2665b396219ddbbc1" title="Appends a scaled integer as a decimal number: (12345, 2) is &quot;123.45&quot;, (-5, 2) is &quot;-0....">ebisu_strbuf_append_fixed()</a> were too many, or the style given to <a class="el" href="#afc9ec97924993c102c65477534e0fcec" title="Appends bytes as text, for a log line: printable ASCII as it is, a backslash doubled,...">ebisu_strbuf_append_escaped()</a> was none. </dd></dl>
 
 </div>
 </div>

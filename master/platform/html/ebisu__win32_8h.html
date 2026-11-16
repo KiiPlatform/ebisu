@@ -217,7 +217,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>The system on Windows. </p>
-<p>Each task runs on a thread of its own, made with _beginthreadex(), which nothing waits for. A delay is Sleep(). The monotonic clock is GetTickCount64(), which doesn't jump when the wall clock is set. The system has no state, so this one serves everything.</p>
+<p>Each task runs on a thread of its own, made with _beginthreadex(), which nothing waits for. A delay is Sleep(). The monotonic clock is GetTickCount64(), which doesn't jump when the wall clock is set. Its locks, from ebisu_system_lock_create(), are <a class="el" href="structebisu__win32__lock__t.html" title="A lock that is an SRWLOCK, which needs no destroying.">ebisu_win32_lock_t</a>'s from the heap. The system has no state, so this one serves everything.</p>
 <dl class="section return"><dt>Returns</dt><dd>The system. </dd></dl>
 
 </div>

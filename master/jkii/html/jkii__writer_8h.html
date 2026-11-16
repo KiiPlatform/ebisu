@@ -89,6 +89,7 @@ $(function() {
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;stddef.h&gt;</code><br />
 <code>#include &lt;stdint.h&gt;</code><br />
+<code>#include &quot;<a class="el" href="jkii_8h_source.html">jkii.h</a>&quot;</code><br />
 </div>
 <p><a href="jkii__writer_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -143,6 +144,8 @@ Functions</h2></td></tr>
 <tr class="memdesc:a43068faf6cea12c6537acb54106708c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Closes the array open innermost.  <br /></td></tr>
 <tr class="memitem:a7a44441a314551dfea240a4c07366f68" id="r_a7a44441a314551dfea240a4c07366f68"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7a44441a314551dfea240a4c07366f68">jkii_write_key</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, const char *key)</td></tr>
 <tr class="memdesc:a7a44441a314551dfea240a4c07366f68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the key of the next member of the object open innermost.  <br /></td></tr>
+<tr class="memitem:a9496db13114bc5d4b11964513b829187" id="r_a9496db13114bc5d4b11964513b829187"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9496db13114bc5d4b11964513b829187">jkii_write_key_n</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, const char *key, size_t n)</td></tr>
+<tr class="memdesc:a9496db13114bc5d4b11964513b829187"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the key of the next member, of a given length, which may hold null bytes, escaped as jkii_escape_str() does.  <br /></td></tr>
 <tr class="memitem:aae07d95f0d66cdaa66bce4f9b253f11e" id="r_aae07d95f0d66cdaa66bce4f9b253f11e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aae07d95f0d66cdaa66bce4f9b253f11e">jkii_write_string</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, const char *s)</td></tr>
 <tr class="memdesc:aae07d95f0d66cdaa66bce4f9b253f11e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a string, escaped as jkii_escape_str() does.  <br /></td></tr>
 <tr class="memitem:aba7d17157e85a38d2b4fda6e62e6f4f1" id="r_aba7d17157e85a38d2b4fda6e62e6f4f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aba7d17157e85a38d2b4fda6e62e6f4f1">jkii_write_string_n</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, const char *s, size_t n)</td></tr>
@@ -159,6 +162,10 @@ Functions</h2></td></tr>
 <tr class="memdesc:a1dd835d066f81d4566b3123b61882a62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes null.  <br /></td></tr>
 <tr class="memitem:af2cd4b8b9115aed7b28538fdd1ff76ec" id="r_af2cd4b8b9115aed7b28538fdd1ff76ec"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af2cd4b8b9115aed7b28538fdd1ff76ec">jkii_write_raw</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, const char *json, size_t n)</td></tr>
 <tr class="memdesc:af2cd4b8b9115aed7b28538fdd1ff76ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes JSON that is already JSON, as a value.  <br /></td></tr>
+<tr class="memitem:a8a4a10008cb43d024a83f18151972c39" id="r_a8a4a10008cb43d024a83f18151972c39"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8a4a10008cb43d024a83f18151972c39">jkii_write_member_key</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member)</td></tr>
+<tr class="memdesc:a8a4a10008cb43d024a83f18151972c39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the key of a member that jkii read, as the document wrote it.  <br /></td></tr>
+<tr class="memitem:a95f087977fb0837c3d0150307b2dd45b" id="r_a95f087977fb0837c3d0150307b2dd45b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a95f087977fb0837c3d0150307b2dd45b">jkii_write_member_value</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member)</td></tr>
+<tr class="memdesc:a95f087977fb0837c3d0150307b2dd45b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the value of a member that jkii read, as the document wrote it.  <br /></td></tr>
 <tr class="memitem:a9a0563fef8815c079f46761c04e238f5" id="r_a9a0563fef8815c079f46761c04e238f5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9a0563fef8815c079f46761c04e238f5">jkii_write_record_end</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w)</td></tr>
 <tr class="memdesc:a9a0563fef8815c079f46761c04e238f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ends a record of JSON Lines: the value at the top, which has to be whole, is followed by '\n', and the next value starts another record.  <br /></td></tr>
 <tr class="memitem:aa29b3b9110dcbd550b625f420dfeafac" id="r_aa29b3b9110dcbd550b625f420dfeafac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa29b3b9110dcbd550b625f420dfeafac">jkii_writer_finish</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, size_t *out_len)</td></tr>
@@ -180,7 +187,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="keywordflow">if</span> (<a class="code hl_function" href="#aa29b3b9110dcbd550b625f420dfeafac">jkii_writer_finish</a>(&amp;w, &amp;len) == <a class="code hl_enumvalue" href="#a034e2b06447b8ec9dffc0489935da5b3a87d364113d66022016cf8e1ff32f7ab1">JKII_WRITE_OK</a>) {</div>
 <div class="line">    <span class="comment">// body is {&quot;power&quot;:true,&quot;temperature&quot;:21.5}, len 33.</span></div>
 <div class="line">}</div>
-<div class="ttc" id="ajkii__writer_8h_html_a034e2b06447b8ec9dffc0489935da5b3a87d364113d66022016cf8e1ff32f7ab1"><div class="ttname"><a href="#a034e2b06447b8ec9dffc0489935da5b3a87d364113d66022016cf8e1ff32f7ab1">JKII_WRITE_OK</a></div><div class="ttdeci">@ JKII_WRITE_OK</div><div class="ttdoc">Written.</div><div class="ttdef"><b>Definition</b> jkii_writer.h:63</div></div>
+<div class="ttc" id="ajkii__writer_8h_html_a034e2b06447b8ec9dffc0489935da5b3a87d364113d66022016cf8e1ff32f7ab1"><div class="ttname"><a href="#a034e2b06447b8ec9dffc0489935da5b3a87d364113d66022016cf8e1ff32f7ab1">JKII_WRITE_OK</a></div><div class="ttdeci">@ JKII_WRITE_OK</div><div class="ttdoc">Written.</div><div class="ttdef"><b>Definition</b> jkii_writer.h:65</div></div>
 <div class="ttc" id="ajkii__writer_8h_html_a1fcc1d2d8aac2c43559a73075a4aa1a0"><div class="ttname"><a href="#a1fcc1d2d8aac2c43559a73075a4aa1a0">jkii_write_bool</a></div><div class="ttdeci">jkii_write_err_t jkii_write_bool(jkii_writer_t *w, int v)</div><div class="ttdoc">Writes true, for v other than 0, or false.</div></div>
 <div class="ttc" id="ajkii__writer_8h_html_a695a1e3ceccf4f4958baa7622a3f5606"><div class="ttname"><a href="#a695a1e3ceccf4f4958baa7622a3f5606">jkii_write_object_end</a></div><div class="ttdeci">jkii_write_err_t jkii_write_object_end(jkii_writer_t *w)</div><div class="ttdoc">Closes the object open innermost.</div></div>
 <div class="ttc" id="ajkii__writer_8h_html_a7987f45e43166e38eaa5f525459fb7d7"><div class="ttname"><a href="#a7987f45e43166e38eaa5f525459fb7d7">jkii_write_double</a></div><div class="ttdeci">jkii_write_err_t jkii_write_double(jkii_writer_t *w, double v, int decimals)</div><div class="ttdoc">Writes a number with a fixed number of decimals.</div></div>
@@ -188,7 +195,7 @@ Functions</h2></td></tr>
 <div class="ttc" id="ajkii__writer_8h_html_aa29b3b9110dcbd550b625f420dfeafac"><div class="ttname"><a href="#aa29b3b9110dcbd550b625f420dfeafac">jkii_writer_finish</a></div><div class="ttdeci">jkii_write_err_t jkii_writer_finish(jkii_writer_t *w, size_t *out_len)</div><div class="ttdoc">Ends the JSON.</div></div>
 <div class="ttc" id="ajkii__writer_8h_html_ab18fc029011f776c7a0c43a705623a43"><div class="ttname"><a href="#ab18fc029011f776c7a0c43a705623a43">jkii_write_object_start</a></div><div class="ttdeci">jkii_write_err_t jkii_write_object_start(jkii_writer_t *w)</div><div class="ttdoc">Opens an object, as a value.</div></div>
 <div class="ttc" id="ajkii__writer_8h_html_ab80274bae6c44bdf937e89136b4a2781"><div class="ttname"><a href="#ab80274bae6c44bdf937e89136b4a2781">jkii_writer_init_buff</a></div><div class="ttdeci">void jkii_writer_init_buff(jkii_writer_t *w, char *buff, size_t buff_size)</div><div class="ttdoc">Sets up a writer into a buffer.</div></div>
-<div class="ttc" id="astructjkii__writer__t_html"><div class="ttname"><a href="structjkii__writer__t.html">jkii_writer_t</a></div><div class="ttdoc">A writer. Set it up with jkii_writer_init_buff() or jkii_writer_init_cb(); its members are private.</div><div class="ttdef"><b>Definition</b> jkii_writer.h:98</div></div>
+<div class="ttc" id="astructjkii__writer__t_html"><div class="ttname"><a href="structjkii__writer__t.html">jkii_writer_t</a></div><div class="ttdoc">A writer. Set it up with jkii_writer_init_buff() or jkii_writer_init_cb(); its members are private.</div><div class="ttdef"><b>Definition</b> jkii_writer.h:100</div></div>
 </div><!-- fragment --><p>Each call returns the first error so far, so checking the result of <a class="el" href="#aa29b3b9110dcbd550b625f420dfeafac" title="Ends the JSON.">jkii_writer_finish()</a> alone is enough.</p>
 <p>It writes JSON Lines too, one value a line: <a class="el" href="#a9a0563fef8815c079f46761c04e238f5" title="Ends a record of JSON Lines: the value at the top, which has to be whole, is followed by &#39;\n&#39;,...">jkii_write_record_end()</a> after each value ends its line, and the next value starts the next one. Through a callback, a batch of records can go out as a request body, or be appended to a file, without the batch being held whole. </p>
 </div><a name="doc-define-members" id="doc-define-members"></a><h2 id="header-doc-define-members" class="groupheader">Macro Definition Documentation</h2>
@@ -447,6 +454,131 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>JKII_WRITE_OK or the first error so far. </dd></dl>
+
+</div>
+</div>
+<a id="a9496db13114bc5d4b11964513b829187" name="a9496db13114bc5d4b11964513b829187"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9496db13114bc5d4b11964513b829187">&#9670;&#160;</a></span>jkii_write_key_n()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a> jkii_write_key_n </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *</td>          <td class="paramname"><span class="paramname"><em>w</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>key</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>n</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Writes the key of the next member, of a given length, which may hold null bytes, escaped as jkii_escape_str() does. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">w</td><td>The writer. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">key</td><td>The key. May be NULL when n is 0. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>Its length. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JKII_WRITE_OK or the first error so far. </dd></dl>
+
+</div>
+</div>
+<a id="a8a4a10008cb43d024a83f18151972c39" name="a8a4a10008cb43d024a83f18151972c39"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8a4a10008cb43d024a83f18151972c39">&#9670;&#160;</a></span>jkii_write_member_key()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a> jkii_write_member_key </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *</td>          <td class="paramname"><span class="paramname"><em>w</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *</td>          <td class="paramname"><span class="paramname"><em>member</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Writes the key of a member that jkii read, as the document wrote it. </p>
+<p>The key goes out between its quotes as it was written, escapes and all, without being unescaped and escaped again: so a key of any length, <span class="tt">\u0000</span> included, needs no buffer. Like <a class="el" href="#af2cd4b8b9115aed7b28538fdd1ff76ec" title="Writes JSON that is already JSON, as a value.">jkii_write_raw()</a>, it is unchecked: a member from <a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a> is JSON already, as jkii checked its document.</p>
+<p>Copying an object but one member:</p>
+<div class="fragment"><div class="line"><a class="code hl_struct" href="structjkii__member__iter__t.html">jkii_member_iter_t</a> it = { 0, 0 };</div>
+<div class="line"><a class="code hl_struct" href="structjkii__member__t.html">jkii_member_t</a> m;</div>
+<div class="line"><a class="code hl_enumeration" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a> res;</div>
+<div class="line"><a class="code hl_function" href="#ab18fc029011f776c7a0c43a705623a43">jkii_write_object_start</a>(&amp;w);</div>
+<div class="line"><span class="keywordflow">while</span> ((res = <a class="code hl_function" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member</a>(json, json_len, &amp;it, &amp;m)) == <a class="code hl_enumvalue" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792ac12ec4a57f74db1a3bb6a02fdb7ea6fe">JKII_ERR_OK</a>) {</div>
+<div class="line">    <span class="keywordflow">if</span> (m.<a class="code hl_variable" href="structjkii__member__t.html#a9231355bb207946584972854c011c8eb">key_length</a> == 3 &amp;&amp; memcmp(m.<a class="code hl_variable" href="structjkii__member__t.html#a59c73f95abf1537745b9b0c744695517">key</a>, <span class="stringliteral">&quot;pin&quot;</span>, 3) == 0) {</div>
+<div class="line">        <span class="keywordflow">continue</span>;</div>
+<div class="line">    }</div>
+<div class="line">    <a class="code hl_function" href="#a8a4a10008cb43d024a83f18151972c39">jkii_write_member_key</a>(&amp;w, &amp;m);</div>
+<div class="line">    <a class="code hl_function" href="#a95f087977fb0837c3d0150307b2dd45b">jkii_write_member_value</a>(&amp;w, &amp;m);</div>
+<div class="line">}</div>
+<div class="line"><a class="code hl_function" href="#a695a1e3ceccf4f4958baa7622a3f5606">jkii_write_object_end</a>(&amp;w);</div>
+<div class="line"><span class="comment">// res is JKII_ERR_NOT_FOUND once every member was given.</span></div>
+<div class="ttc" id="ajkii_8h_html_a1abb4f25c1fab77f02ceeed2e988f401"><div class="ttname"><a href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member</a></div><div class="ttdeci">jkii_parse_err_t jkii_next_member(const char *json_string, size_t json_string_len, jkii_member_iter_t *iter, jkii_member_t *out_member)</div></div>
+<div class="ttc" id="ajkii_8h_html_a7c99e19b01ccd836a788cf794afc8792"><div class="ttname"><a href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a></div><div class="ttdeci">jkii_parse_err_t</div><div class="ttdef"><b>Definition</b> jkii.h:29</div></div>
+<div class="ttc" id="ajkii_8h_html_a7c99e19b01ccd836a788cf794afc8792ac12ec4a57f74db1a3bb6a02fdb7ea6fe"><div class="ttname"><a href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792ac12ec4a57f74db1a3bb6a02fdb7ea6fe">JKII_ERR_OK</a></div><div class="ttdeci">@ JKII_ERR_OK</div><div class="ttdef"><b>Definition</b> jkii.h:35</div></div>
+<div class="ttc" id="ajkii__writer_8h_html_a8a4a10008cb43d024a83f18151972c39"><div class="ttname"><a href="#a8a4a10008cb43d024a83f18151972c39">jkii_write_member_key</a></div><div class="ttdeci">jkii_write_err_t jkii_write_member_key(jkii_writer_t *w, const jkii_member_t *member)</div><div class="ttdoc">Writes the key of a member that jkii read, as the document wrote it.</div></div>
+<div class="ttc" id="ajkii__writer_8h_html_a95f087977fb0837c3d0150307b2dd45b"><div class="ttname"><a href="#a95f087977fb0837c3d0150307b2dd45b">jkii_write_member_value</a></div><div class="ttdeci">jkii_write_err_t jkii_write_member_value(jkii_writer_t *w, const jkii_member_t *member)</div><div class="ttdoc">Writes the value of a member that jkii read, as the document wrote it.</div></div>
+<div class="ttc" id="astructjkii__member__iter__t_html"><div class="ttname"><a href="structjkii__member__iter__t.html">jkii_member_iter_t</a></div><div class="ttdef"><b>Definition</b> jkii.h:351</div></div>
+<div class="ttc" id="astructjkii__member__t_html"><div class="ttname"><a href="structjkii__member__t.html">jkii_member_t</a></div><div class="ttdef"><b>Definition</b> jkii.h:329</div></div>
+<div class="ttc" id="astructjkii__member__t_html_a59c73f95abf1537745b9b0c744695517"><div class="ttname"><a href="structjkii__member__t.html#a59c73f95abf1537745b9b0c744695517">jkii_member_t::key</a></div><div class="ttdeci">const char * key</div><div class="ttdef"><b>Definition</b> jkii.h:332</div></div>
+<div class="ttc" id="astructjkii__member__t_html_a9231355bb207946584972854c011c8eb"><div class="ttname"><a href="structjkii__member__t.html#a9231355bb207946584972854c011c8eb">jkii_member_t::key_length</a></div><div class="ttdeci">size_t key_length</div><div class="ttdef"><b>Definition</b> jkii.h:334</div></div>
+</div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">w</td><td>The writer. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">member</td><td>The member, as <a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a> gives it. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JKII_WRITE_OK or the first error so far: JKII_WRITE_ERR_VALUE for a member without a key, as an array's element, or a NULL one. </dd></dl>
+
+</div>
+</div>
+<a id="a95f087977fb0837c3d0150307b2dd45b" name="a95f087977fb0837c3d0150307b2dd45b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a95f087977fb0837c3d0150307b2dd45b">&#9670;&#160;</a></span>jkii_write_member_value()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a> jkii_write_member_value </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *</td>          <td class="paramname"><span class="paramname"><em>w</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *</td>          <td class="paramname"><span class="paramname"><em>member</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Writes the value of a member that jkii read, as the document wrote it. </p>
+<p>A string goes out between quotes with its characters as written, escapes and all, without being unescaped and escaped again, so a string of any length needs no buffer. Any other value goes out whole as written, as <a class="el" href="#af2cd4b8b9115aed7b28538fdd1ff76ec" title="Writes JSON that is already JSON, as a value.">jkii_write_raw()</a> writes it: a number with its digits, and an object or an array with what is inside it, whitespace too. It is unchecked: a member from <a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a>, <a class="el" href="jkii_8h.html#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value()</a> or <a class="el" href="jkii_8h.html#a0d7f3eab561143c6cf2634d24cf98910">jkii_find_member()</a> is JSON already, as jkii checked its document.</p>
+<p>A member <a class="el" href="jkii_8h.html#a8db3315efb4948dc54966f19a181fedd">jkii_member_unquote()</a> gave goes out as what its string held, a number or a boolean, without the quotes.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">w</td><td>The writer. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">member</td><td>The member, as <a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a>, <a class="el" href="jkii_8h.html#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value()</a> or <a class="el" href="jkii_8h.html#a0d7f3eab561143c6cf2634d24cf98910">jkii_find_member()</a> gives it. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JKII_WRITE_OK or the first error so far: JKII_WRITE_ERR_VALUE for a NULL member, or a value other than a string of no length. </dd></dl>
 
 </div>
 </div>

@@ -242,7 +242,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>The system on POSIX. </p>
-<p>Each task is a detached thread, which goes by itself when it ends. A delay is nanosleep(), resumed through signals until the whole time has passed. The monotonic clock is CLOCK_MONOTONIC. The system has no state, so this one serves everything.</p>
+<p>Each task is a detached thread, which goes by itself when it ends. A delay is nanosleep(), resumed through signals until the whole time has passed. The monotonic clock is CLOCK_MONOTONIC. Its locks, from ebisu_system_lock_create(), are <a class="el" href="structebisu__posix__lock__t.html" title="A lock that is a pthread mutex.">ebisu_posix_lock_t</a>'s from the heap. The system has no state, so this one serves everything.</p>
 <dl class="section return"><dt>Returns</dt><dd>The system. </dd></dl>
 
 </div>

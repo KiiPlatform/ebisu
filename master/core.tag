@@ -571,6 +571,13 @@
       <arglist></arglist>
     </member>
     <member kind="typedef">
+      <type>enum ebisu_escape_t</type>
+      <name>ebisu_escape_t</name>
+      <anchorfile>ebisu__str_8h.html</anchorfile>
+      <anchor>a1012726ba7ce4d6ec49f25059cffbee0</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
       <type>enum ebisu_parse_err_t</type>
       <name>ebisu_parse_err_t</name>
       <anchorfile>ebisu__str_8h.html</anchorfile>
@@ -582,6 +589,25 @@
       <name>ebisu_span_t</name>
       <anchorfile>ebisu__str_8h.html</anchorfile>
       <anchor>a9a7c15b507dc86c7401f566823b004b4</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumeration">
+      <type></type>
+      <name>ebisu_escape_t</name>
+      <anchorfile>ebisu__str_8h.html</anchorfile>
+      <anchor>ad4cc414033ef78d0089f81c6ca99d064</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_ESCAPE_HEX</name>
+      <anchorfile>ebisu__str_8h.html</anchorfile>
+      <anchor>ad4cc414033ef78d0089f81c6ca99d064a0d040bafe2209b6b2650c131e3e5ed80</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_ESCAPE_CONTROL_NAMES</name>
+      <anchorfile>ebisu__str_8h.html</anchorfile>
+      <anchor>ad4cc414033ef78d0089f81c6ca99d064ae90fd1cc336f1af3b9ed551ae676a872</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumeration">
@@ -677,6 +703,13 @@
       <anchorfile>ebisu__str_8h.html</anchorfile>
       <anchor>a50eb363ffdf48b70bc9c10b28269496b</anchor>
       <arglist>(ebisu_strbuf_t *sb, const uint8_t *bytes, size_t n)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_strbuf_append_escaped</name>
+      <anchorfile>ebisu__str_8h.html</anchorfile>
+      <anchor>afc9ec97924993c102c65477534e0fcec</anchor>
+      <arglist>(ebisu_strbuf_t *sb, const void *data, size_t n, ebisu_escape_t style)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -822,17 +855,17 @@
       <arglist></arglist>
     </member>
     <member kind="typedef">
-      <type>struct ebisu_system_ops_t</type>
-      <name>ebisu_system_ops_t</name>
-      <anchorfile>ebisu__system_8h.html</anchorfile>
-      <anchor>af1cb97f5f05599dd432cd58a05b321c3</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="typedef">
       <type>struct ebisu_lock_t</type>
       <name>ebisu_lock_t</name>
       <anchorfile>ebisu__system_8h.html</anchorfile>
       <anchor>a9c40062bf30682a38e5e15c6a30853e2</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_system_ops_t</type>
+      <name>ebisu_system_ops_t</name>
+      <anchorfile>ebisu__system_8h.html</anchorfile>
+      <anchor>af1cb97f5f05599dd432cd58a05b321c3</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
@@ -867,6 +900,13 @@
     <path>include/</path>
     <filename>ebisu__time_8h.html</filename>
     <class kind="struct">ebisu_civil_time_t</class>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_TIME_ISO8601_SIZE</name>
+      <anchorfile>ebisu__time_8h.html</anchorfile>
+      <anchor>aa6e5da2f2b7e54d7887d30dfd9ae61e8</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="typedef">
       <type>struct ebisu_civil_time_t</type>
       <name>ebisu_civil_time_t</name>
@@ -887,6 +927,27 @@
       <anchorfile>ebisu__time_8h.html</anchorfile>
       <anchor>ac5e28e8f61669eb81df1ed85703267a6</anchor>
       <arglist>(int64_t seconds, ebisu_civil_time_t *out)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_time_is_leap_year</name>
+      <anchorfile>ebisu__time_8h.html</anchorfile>
+      <anchor>abaf4136e38720ea0c42f823ad8a00dbb</anchor>
+      <arglist>(int year)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>ebisu_time_days_in_month</name>
+      <anchorfile>ebisu__time_8h.html</anchorfile>
+      <anchor>a26d55f1eaaabab327ea726b7d305ae00</anchor>
+      <arglist>(int year, int month)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_time_format_iso8601</name>
+      <anchorfile>ebisu__time_8h.html</anchorfile>
+      <anchor>a8d1d9b65692d8ca2d529be2c16f3de7e</anchor>
+      <arglist>(int64_t seconds, char sep, char *buff, size_t size)</arglist>
     </member>
   </compound>
   <compound kind="struct">
@@ -1249,6 +1310,20 @@
       <anchorfile>structebisu__system__ops__t.html</anchorfile>
       <anchor>a2a245518f6edc8e03312e7458e4fd730</anchor>
       <arglist>)(ebisu_system_t *self)</arglist>
+    </member>
+    <member kind="variable">
+      <type>ebisu_lock_t *(*</type>
+      <name>lock_create</name>
+      <anchorfile>structebisu__system__ops__t.html</anchorfile>
+      <anchor>a3cf0f64ecc56d7494a3d33aaf8c37e6e</anchor>
+      <arglist>)(ebisu_system_t *self)</arglist>
+    </member>
+    <member kind="variable">
+      <type>void(*</type>
+      <name>lock_destroy</name>
+      <anchorfile>structebisu__system__ops__t.html</anchorfile>
+      <anchor>a1e28958beee31fa3491dd625d3a2f3cc</anchor>
+      <arglist>)(ebisu_system_t *self, ebisu_lock_t *lock)</arglist>
     </member>
   </compound>
   <compound kind="struct">

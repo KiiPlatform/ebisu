@@ -3,5 +3,7 @@ var searchData=
   ['last_5ferror_0',['last_error',['../structebisu__socket__ops__t.html#a7d723df34a7a3ec7b0813d4949375fda',1,'ebisu_socket_ops_t']]],
   ['len_1',['len',['../structebisu__strbuf__t.html#af8dac0456b018f8ca649265733b8bcdd',1,'ebisu_strbuf_t::len'],['../structebisu__span__t.html#aa597a17c8246dc8eede20ae9ecbbc0e7',1,'ebisu_span_t::len']]],
   ['lock_2',['lock',['../structebisu__lock__ops__t.html#a745899b14950b7ba82f33d2cc6a85174',1,'ebisu_lock_ops_t']]],
-  ['log_3',['log',['../structebisu__logger__ops__t.html#af27fdf43827399fa9407f8cb6000b0e8',1,'ebisu_logger_ops_t']]]
+  ['lock_5fcreate_3',['lock_create',['../structebisu__system__ops__t.html#a3cf0f64ecc56d7494a3d33aaf8c37e6e',1,'ebisu_system_ops_t']]],
+  ['lock_5fdestroy_4',['lock_destroy',['../structebisu__system__ops__t.html#a1e28958beee31fa3491dd625d3a2f3cc',1,'ebisu_system_ops_t']]],
+  ['log_5',['log',['../structebisu__logger__ops__t.html#af27fdf43827399fa9407f8cb6000b0e8',1,'ebisu_logger_ops_t']]]
 ];

@@ -87,6 +87,7 @@ $(function() {
 <p>Task, delay, monotonic time and lock abstraction.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="ebisu__object_8h_source.html">ebisu_object.h</a>&quot;</code><br />
+<code>#include &lt;stddef.h&gt;</code><br />
 <code>#include &lt;stdint.h&gt;</code><br />
 </div>
 <p><a href="ebisu__system_8h_source.html">Go to the source code of this file.</a></p>
@@ -96,7 +97,7 @@ Data Structures</h2></td></tr>
 <tr class="memitem:ebisu_5Fsystem_5Fops_5Ft" id="r_ebisu_5Fsystem_5Fops_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__system__ops__t.html">ebisu_system_ops_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">What the system does.  <a href="structebisu__system__ops__t.html#details">More...</a><br /></td></tr>
 <tr class="memitem:ebisu_5Fsystem_5Ft" id="r_ebisu_5Fsystem_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__system__t.html">ebisu_system_t</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The system: tasks, delays and a monotonic clock.  <a href="structebisu__system__t.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The system: tasks, delays, a monotonic clock, and maybe locks.  <a href="structebisu__system__t.html#details">More...</a><br /></td></tr>
 <tr class="memitem:ebisu_5Flock_5Fops_5Ft" id="r_ebisu_5Flock_5Fops_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__lock__ops__t.html">ebisu_lock_ops_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">What a lock does.  <a href="structebisu__lock__ops__t.html#details">More...</a><br /></td></tr>
 <tr class="memitem:ebisu_5Flock_5Ft" id="r_ebisu_5Flock_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__lock__t.html">ebisu_lock_t</a></td></tr>
@@ -112,12 +113,12 @@ typedef void *(*&#160;</td><td class="memItemRight" valign="bottom"><b>EBISU_TAS
 <tr class="memdesc:aa88036fe3014d1b2c19cd4808b5424d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function executed in the task. <br /></td></tr>
 <tr class="memitem:a46cc0d1b6d1d6eea76e3dad3ec8115a1" id="r_a46cc0d1b6d1d6eea76e3dad3ec8115a1"><td class="memItemLeft" align="right" valign="top"><a id="a46cc0d1b6d1d6eea76e3dad3ec8115a1" name="a46cc0d1b6d1d6eea76e3dad3ec8115a1"></a>
 typedef struct ebisu_system_t&#160;</td><td class="memItemRight" valign="bottom"><b>ebisu_system_t</b></td></tr>
-<tr class="memdesc:a46cc0d1b6d1d6eea76e3dad3ec8115a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">The system. See struct <a class="el" href="structebisu__system__t.html" title="The system: tasks, delays and a monotonic clock.">ebisu_system_t</a>. <br /></td></tr>
-<tr class="memitem:af1cb97f5f05599dd432cd58a05b321c3" id="r_af1cb97f5f05599dd432cd58a05b321c3"><td class="memItemLeft" align="right" valign="top">typedef struct ebisu_system_ops_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af1cb97f5f05599dd432cd58a05b321c3">ebisu_system_ops_t</a></td></tr>
-<tr class="memdesc:af1cb97f5f05599dd432cd58a05b321c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">What the system does.  <br /></td></tr>
+<tr class="memdesc:a46cc0d1b6d1d6eea76e3dad3ec8115a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">The system. See struct <a class="el" href="structebisu__system__t.html" title="The system: tasks, delays, a monotonic clock, and maybe locks.">ebisu_system_t</a>. <br /></td></tr>
 <tr class="memitem:a9c40062bf30682a38e5e15c6a30853e2" id="r_a9c40062bf30682a38e5e15c6a30853e2"><td class="memItemLeft" align="right" valign="top"><a id="a9c40062bf30682a38e5e15c6a30853e2" name="a9c40062bf30682a38e5e15c6a30853e2"></a>
 typedef struct ebisu_lock_t&#160;</td><td class="memItemRight" valign="bottom"><b>ebisu_lock_t</b></td></tr>
 <tr class="memdesc:a9c40062bf30682a38e5e15c6a30853e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">A lock. See struct <a class="el" href="structebisu__lock__t.html" title="A lock.">ebisu_lock_t</a>. <br /></td></tr>
+<tr class="memitem:af1cb97f5f05599dd432cd58a05b321c3" id="r_af1cb97f5f05599dd432cd58a05b321c3"><td class="memItemLeft" align="right" valign="top">typedef struct ebisu_system_ops_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af1cb97f5f05599dd432cd58a05b321c3">ebisu_system_ops_t</a></td></tr>
+<tr class="memdesc:af1cb97f5f05599dd432cd58a05b321c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">What the system does.  <br /></td></tr>
 <tr class="memitem:abfd4a8c349bec0a5c1b5a97e25da50af" id="r_abfd4a8c349bec0a5c1b5a97e25da50af"><td class="memItemLeft" align="right" valign="top">typedef struct ebisu_lock_ops_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abfd4a8c349bec0a5c1b5a97e25da50af">ebisu_lock_ops_t</a></td></tr>
 <tr class="memdesc:abfd4a8c349bec0a5c1b5a97e25da50af"><td class="mdescLeft">&#160;</td><td class="mdescRight">What a lock does.  <br /></td></tr>
 </table><table class="memberdecls">
@@ -130,6 +131,7 @@ Enumerations</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Task, delay, monotonic time and lock abstraction. </p>
+<p>The inline functions at the end call the operations, so that code given a system or a lock reads as calls: ebisu_system_delay_ms(system, 100) rather than system-&gt;ops-&gt;delay_ms(system, 100). </p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Typedef Documentation</h2>
 <a id="abfd4a8c349bec0a5c1b5a97e25da50af" name="abfd4a8c349bec0a5c1b5a97e25da50af"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abfd4a8c349bec0a5c1b5a97e25da50af">&#9670;&#160;</a></span>ebisu_lock_ops_t</h2>

@@ -350,6 +350,7 @@
     <name>jkii_writer.h</name>
     <path>include/</path>
     <filename>jkii__writer_8h.html</filename>
+    <includes id="jkii_8h" name="jkii.h" local="yes" import="no" module="no" objc="no">jkii.h</includes>
     <class kind="struct">jkii_writer_t</class>
     <member kind="define">
       <type>#define</type>
@@ -473,6 +474,13 @@
     </member>
     <member kind="function">
       <type>jkii_write_err_t</type>
+      <name>jkii_write_key_n</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a9496db13114bc5d4b11964513b829187</anchor>
+      <arglist>(jkii_writer_t *w, const char *key, size_t n)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
       <name>jkii_write_string</name>
       <anchorfile>jkii__writer_8h.html</anchorfile>
       <anchor>aae07d95f0d66cdaa66bce4f9b253f11e</anchor>
@@ -526,6 +534,20 @@
       <anchorfile>jkii__writer_8h.html</anchorfile>
       <anchor>af2cd4b8b9115aed7b28538fdd1ff76ec</anchor>
       <arglist>(jkii_writer_t *w, const char *json, size_t n)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_member_key</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a8a4a10008cb43d024a83f18151972c39</anchor>
+      <arglist>(jkii_writer_t *w, const jkii_member_t *member)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_member_value</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a95f087977fb0837c3d0150307b2dd45b</anchor>
+      <arglist>(jkii_writer_t *w, const jkii_member_t *member)</arglist>
     </member>
     <member kind="function">
       <type>jkii_write_err_t</type>

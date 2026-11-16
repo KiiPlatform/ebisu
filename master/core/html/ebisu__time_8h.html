@@ -78,6 +78,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Data Structures</a> &#124;
+<a href="#define-members">Macros</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">ebisu_time.h File Reference</div></div>
@@ -87,6 +88,7 @@ $(function() {
 <p>UTC dates and times to seconds since the epoch, and back.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;stdbool.h&gt;</code><br />
+<code>#include &lt;stddef.h&gt;</code><br />
 <code>#include &lt;stdint.h&gt;</code><br />
 </div>
 <p><a href="ebisu__time_8h_source.html">Go to the source code of this file.</a></p>
@@ -95,6 +97,12 @@ $(function() {
 Data Structures</h2></td></tr>
 <tr class="memitem:ebisu_5Fcivil_5Ftime_5Ft" id="r_ebisu_5Fcivil_5Ftime_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__civil__time__t.html">ebisu_civil_time_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A UTC date and time, as <a class="el" href="#ac5e28e8f61669eb81df1ed85703267a6" title="Converts seconds since the epoch to a UTC date and time, as gmtime() does.">ebisu_time_to_civil()</a> gives it.  <a href="structebisu__civil__time__t.html#details">More...</a><br /></td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-define-members" class="groupheader"><a id="define-members" name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:aa6e5da2f2b7e54d7887d30dfd9ae61e8" id="r_aa6e5da2f2b7e54d7887d30dfd9ae61e8"><td class="memItemLeft" align="right" valign="top"><a id="aa6e5da2f2b7e54d7887d30dfd9ae61e8" name="aa6e5da2f2b7e54d7887d30dfd9ae61e8"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>EBISU_TIME_ISO8601_SIZE</b>&#160;&#160;&#160;21</td></tr>
+<tr class="memdesc:aa6e5da2f2b7e54d7887d30dfd9ae61e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">The size of a buffer that <a class="el" href="#a8d1d9b65692d8ca2d529be2c16f3de7e" title="Writes seconds since the epoch as a UTC date and time of ISO 8601, as RFC 3339 has it: 2026-11-06T13:...">ebisu_time_format_iso8601()</a> can write into: 20 characters, as in 2026-11-06T13:53:21Z, and the terminating NUL. <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-typedef-members" class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -108,10 +116,91 @@ Functions</h2></td></tr>
 <tr class="memdesc:a5a0f3e53e949f6cad1134f58d1df632c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a UTC date and time to seconds since the epoch.  <br /></td></tr>
 <tr class="memitem:ac5e28e8f61669eb81df1ed85703267a6" id="r_ac5e28e8f61669eb81df1ed85703267a6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac5e28e8f61669eb81df1ed85703267a6">ebisu_time_to_civil</a> (int64_t seconds, <a class="el" href="structebisu__civil__time__t.html">ebisu_civil_time_t</a> *out)</td></tr>
 <tr class="memdesc:ac5e28e8f61669eb81df1ed85703267a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts seconds since the epoch to a UTC date and time, as gmtime() does.  <br /></td></tr>
+<tr class="memitem:abaf4136e38720ea0c42f823ad8a00dbb" id="r_abaf4136e38720ea0c42f823ad8a00dbb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abaf4136e38720ea0c42f823ad8a00dbb">ebisu_time_is_leap_year</a> (int year)</td></tr>
+<tr class="memdesc:abaf4136e38720ea0c42f823ad8a00dbb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether a year is a leap year of the Gregorian calendar: one that 4 divides, unless 100 does and 400 doesn't. So 2024 and 2000 are, and 2023 and 1900 aren't.  <br /></td></tr>
+<tr class="memitem:a26d55f1eaaabab327ea726b7d305ae00" id="r_a26d55f1eaaabab327ea726b7d305ae00"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a26d55f1eaaabab327ea726b7d305ae00">ebisu_time_days_in_month</a> (int year, int month)</td></tr>
+<tr class="memdesc:a26d55f1eaaabab327ea726b7d305ae00"><td class="mdescLeft">&#160;</td><td class="mdescRight">The days in a month of a year of the Gregorian calendar.  <br /></td></tr>
+<tr class="memitem:a8d1d9b65692d8ca2d529be2c16f3de7e" id="r_a8d1d9b65692d8ca2d529be2c16f3de7e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8d1d9b65692d8ca2d529be2c16f3de7e">ebisu_time_format_iso8601</a> (int64_t seconds, char sep, char *buff, size_t size)</td></tr>
+<tr class="memdesc:a8d1d9b65692d8ca2d529be2c16f3de7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes seconds since the epoch as a UTC date and time of ISO 8601, as RFC 3339 has it: 2026-11-06T13:53:21Z.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>UTC dates and times to seconds since the epoch, and back. </p>
 </div><a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
+<a id="a26d55f1eaaabab327ea726b7d305ae00" name="a26d55f1eaaabab327ea726b7d305ae00"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a26d55f1eaaabab327ea726b7d305ae00">&#9670;&#160;</a></span>ebisu_time_days_in_month()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ebisu_time_days_in_month </td>
+          <td>(</td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>year</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>month</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The days in a month of a year of the Gregorian calendar. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">year</td><td>Any year. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">month</td><td>1 to 12. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>28 to 31, or 0 for a month outside 1 to 12. </dd></dl>
+
+</div>
+</div>
+<a id="a8d1d9b65692d8ca2d529be2c16f3de7e" name="a8d1d9b65692d8ca2d529be2c16f3de7e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8d1d9b65692d8ca2d529be2c16f3de7e">&#9670;&#160;</a></span>ebisu_time_format_iso8601()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ebisu_time_format_iso8601 </td>
+          <td>(</td>
+          <td class="paramtype">int64_t</td>          <td class="paramname"><span class="paramname"><em>seconds</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char</td>          <td class="paramname"><span class="paramname"><em>sep</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>buff</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>size</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Writes seconds since the epoch as a UTC date and time of ISO 8601, as RFC 3339 has it: 2026-11-06T13:53:21Z. </p>
+<p>Without the C library's printf() or time functions, as the conversions are.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">seconds</td><td>Seconds since 1970-01-01T00:00:00Z, in <a class="el" href="#ac5e28e8f61669eb81df1ed85703267a6" title="Converts seconds since the epoch to a UTC date and time, as gmtime() does.">ebisu_time_to_civil()</a>'s range. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">sep</td><td>What goes between the date and the time: 'T', as ISO 8601 has it, or another character but NUL, such as ' ', which RFC 3339 allows for a person to read, as in a log line. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">buff</td><td>The date and time, terminated. On failure, "" if size isn't 0. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">size</td><td>Its size, at least <a class="el" href="#aa6e5da2f2b7e54d7887d30dfd9ae61e8" title="The size of a buffer that ebisu_time_format_iso8601() can write into: 20 characters,...">EBISU_TIME_ISO8601_SIZE</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if written, false if seconds is out of range, size is less than <a class="el" href="#aa6e5da2f2b7e54d7887d30dfd9ae61e8" title="The size of a buffer that ebisu_time_format_iso8601() can write into: 20 characters,...">EBISU_TIME_ISO8601_SIZE</a>, or sep is NUL. </dd></dl>
+
+</div>
+</div>
 <a id="a5a0f3e53e949f6cad1134f58d1df632c" name="a5a0f3e53e949f6cad1134f58d1df632c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5a0f3e53e949f6cad1134f58d1df632c">&#9670;&#160;</a></span>ebisu_time_from_civil()</h2>
 
@@ -171,6 +260,32 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if converted, false if a field is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="abaf4136e38720ea0c42f823ad8a00dbb" name="abaf4136e38720ea0c42f823ad8a00dbb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abaf4136e38720ea0c42f823ad8a00dbb">&#9670;&#160;</a></span>ebisu_time_is_leap_year()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ebisu_time_is_leap_year </td>
+          <td>(</td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>year</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Whether a year is a leap year of the Gregorian calendar: one that 4 divides, unless 100 does and 400 doesn't. So 2024 and 2000 are, and 2023 and 1900 aren't. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">year</td><td>Any year, as the rule has no range. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true for a leap year. </dd></dl>
 
 </div>
 </div>
