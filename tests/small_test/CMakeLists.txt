@@ -50,6 +50,7 @@ set(jkii_test_sources
     jkii/src/jkii_find_test.cpp
     jkii/src/jkii_lines_test.cpp
     jkii/src/jkii_primitive_test.cpp
+    jkii/src/jkii_read_test.cpp
     jkii/src/jkii_test.cpp
     jkii/src/jkii_unescape_test.cpp
     jkii/src/jkii_writer_test.cpp

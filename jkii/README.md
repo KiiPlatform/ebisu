@@ -120,7 +120,8 @@ on. The integer is read exactly from the number's digits: one
 written with a fraction or an exponent whose value is whole, as `30.0`, `3e1`
 or `300e-1`, is that integer, `1e18` is 10^18, and one that isn't whole, as
 `30.5`, is a type mismatch, as a number in a string, `"30"`, is. Each read
-takes only its own JSON type: `"true"`, a string, is no boolean.
+takes only its own JSON type: `"true"`, a string, is no boolean. Null is
+`JKII_FIELD_ERR_NULL` to each.
 
 For JSON that sends numbers and booleans in strings, `jkii_member_unquote()`
 gives a string that is exactly a JSON number, `true` or `false`, with nothing
@@ -150,6 +151,42 @@ if (jkii_find_member(reply, reply_length, "/config/name", &m) == JKII_ERR_OK &&
     // name holds the string, unescaped and terminated.
 }
 ```
+
+`jkii_find_integer()`, `jkii_find_double()`, `jkii_find_boolean()` and
+`jkii_find_string()` find the value a path leads to and read it in one call.
+Their result says what they found:
+
+- `JKII_FIELD_ERR_NOT_FOUND` if nothing is there;
+- `JKII_FIELD_ERR_NULL` for null;
+- the member read's own results for a value that is there but refused;
+- `JKII_FIELD_ERR_INVALID_INPUT` for a document that isn't JSON, or is neither an object nor an array.
+
+Their flags:
+
+- `JKII_READ_UNQUOTE` takes a number or a boolean in a string, as `jkii_member_unquote()` does.
+- `JKII_READ_INTEGER_AS_WRITTEN` takes an integer only as an integer is written, so it refuses `30.0` and `3e1`.
+- `JKII_READ_NULL_AS_ABSENT` gives null as not found.
+
+Their last argument, if it isn't NULL, gets the value as the document wrote it,
+so a refused value can be logged:
+
+```c
+int64_t interval = 60;
+jkii_member_t found;
+jkii_field_err_t res = jkii_find_integer(reply, reply_length, "/config/interval",
+        1, 3600, JKII_READ_UNQUOTE | JKII_READ_NULL_AS_ABSENT, &interval, &found);
+if (res != JKII_FIELD_ERR_OK && res != JKII_FIELD_ERR_NOT_FOUND) {
+    // Sent, but refused: found.value, found.value_length long, is what came.
+}
+```
+
+`jkii_find_name()` finds a member of the root object by a plain name, with no
+path syntax. So `a/b`, `[0]` and the empty name need no escaping. Each
+member's name is compared unescaped, so the name can be what the application
+has, null bytes included. `jkii_member_text()` gives a string, a number or a
+boolean as text: a string unescaped, the others as written. For a value to show
+or log, `jkii_member_string_trunc()` copies as much of a string as fits, cut
+only where a character ends, and says whether it cut it.
 
 ## Writing JSON
 

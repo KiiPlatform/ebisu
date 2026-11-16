@@ -124,11 +124,16 @@ TEST_CASE("A member's string is copied unescaped") {
     char z[8];
     CHECK( jkii_member_string(&m, z, sizeof(z)) == JKII_FIELD_ERR_COPY );
 
-    for (const char* path : { "/n", "/null" }) {
-        INFO(path);
-        REQUIRE( jkii_find_member(d.data(), d.size(), path, &m) == JKII_ERR_OK );
+    // A number isn't a string, and null is null.
+    struct Case {
+        const char* path;
+        jkii_field_err_t res;
+    };
+    for (const Case& c : { Case{ "/n", JKII_FIELD_ERR_TYPE_MISMATCH }, Case{ "/null", JKII_FIELD_ERR_NULL } }) {
+        INFO(c.path);
+        REQUIRE( jkii_find_member(d.data(), d.size(), c.path, &m) == JKII_ERR_OK );
         char b[8] = "xxxxxxx";
-        CHECK( jkii_member_string(&m, b, sizeof(b)) == JKII_FIELD_ERR_TYPE_MISMATCH );
+        CHECK( jkii_member_string(&m, b, sizeof(b)) == c.res );
         CHECK( b[0] == '\0' );
     }
 }
@@ -190,7 +195,7 @@ TEST_CASE("A member's number is read as an integer within a range, from its digi
     CHECK( v == 30 );
 
     // Not a number: a string of one included, which is the caller's to read.
-    for (const char* json : { "\"30\"", "null", "true", "[30]", "{\"a\":30}" }) {
+    for (const char* json : { "\"30\"", "true", "[30]", "{\"a\":30}" }) {
         INFO(json);
         jkii_member_t not_number = number(json);
         int64_t w = 7;
@@ -198,6 +203,11 @@ TEST_CASE("A member's number is read as an integer within a range, from its digi
                 JKII_FIELD_ERR_TYPE_MISMATCH );
         CHECK( w == 7 );
     }
+    // And null, as itself.
+    jkii_member_t null_member = number("null");
+    int64_t w = 7;
+    CHECK( jkii_member_integer(&null_member, INT64_MIN, INT64_MAX, &w) == JKII_FIELD_ERR_NULL );
+    CHECK( w == 7 );
 }
 
 TEST_CASE("A member found by its path is read as it is written") {
@@ -249,13 +259,17 @@ TEST_CASE("A member's number is read as a double, of any form") {
     CHECK( jkii_member_double(&tiny, &v) == JKII_FIELD_ERR_NUM_UNDERFLOW );
     CHECK( v == 7 );
 
-    for (const char* json : { "\"30\"", "null", "true", "[1]", "{}" }) {
+    for (const char* json : { "\"30\"", "true", "[1]", "{}" }) {
         INFO(json);
         jkii_member_t m = number(json);
         double w = 7;
         CHECK( jkii_member_double(&m, &w) == JKII_FIELD_ERR_TYPE_MISMATCH );
         CHECK( w == 7 );
     }
+    jkii_member_t null_member = number("null");
+    double w = 7;
+    CHECK( jkii_member_double(&null_member, &w) == JKII_FIELD_ERR_NULL );
+    CHECK( w == 7 );
 }
 
 TEST_CASE("A member's true or false is read as a boolean") {
@@ -268,13 +282,17 @@ TEST_CASE("A member's true or false is read as a boolean") {
     CHECK( b == JKII_FALSE );
 
     // Anything else, "true" as a string included: b as it was.
-    for (const char* json : { "\"true\"", "null", "1", "0", "[true]" }) {
+    for (const char* json : { "\"true\"", "1", "0", "[true]" }) {
         INFO(json);
         jkii_member_t other = number(json);
         jkii_boolean_t c = JKII_TRUE;
         CHECK( jkii_member_boolean(&other, &c) == JKII_FIELD_ERR_TYPE_MISMATCH );
         CHECK( c == JKII_TRUE );
     }
+    jkii_member_t null_member = number("null");
+    jkii_boolean_t c = JKII_TRUE;
+    CHECK( jkii_member_boolean(&null_member, &c) == JKII_FIELD_ERR_NULL );
+    CHECK( c == JKII_TRUE );
 
     // Found by its path.
     const std::vector<char> d = doc("{\"on\" : false}");
