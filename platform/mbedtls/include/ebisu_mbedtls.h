@@ -139,10 +139,12 @@ void ebisu_mbedtls_tls_free(ebisu_mbedtls_tls_t* tls);
  * Why an operation failed, its last_error says: what the socket under it said,
  * for what failed there, as a host that didn't resolve or an address that
  * refused, a certificate refused, with mbedTLS's verify flags,
- * MBEDTLS_X509_BADCERT_*, another TLS failure, with mbedTLS's error, a
- * timeout, or a peer that closed. The TLS failures also go to the logger set
- * by ebisu_mbedtls_socket_set_logger(), if any; the socket under it logs its
- * own, to the logger it is given.
+ * MBEDTLS_X509_BADCERT_*, a server with no TLS version or cipher suite in
+ * common with the configuration, EBISU_SOCK_ERROR_TLS_MISMATCH, with
+ * mbedTLS's error, another TLS failure, with mbedTLS's error, a timeout, or a
+ * peer that closed. The TLS failures also go to the logger set by
+ * ebisu_mbedtls_socket_set_logger(), if any, with a line for the mismatch that
+ * says so; the socket under it logs its own, to the logger it is given.
  *
  * One serves one connection at a time, from one task at a time, and is used
  * again for the next once closed. Initialize with ebisu_mbedtls_socket_init().

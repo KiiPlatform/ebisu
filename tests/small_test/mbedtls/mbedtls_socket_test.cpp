@@ -835,3 +835,134 @@ TEST_CASE( "A TLS configuration whose CA certificates can't be parsed fails" ) {
     ebisu_mbedtls_tls_t tls;
     CHECK( ebisu_mbedtls_tls_init(&tls, garbage, sizeof(garbage)) != 0 );
 }
+
+namespace {
+
+// Writes an HTTP response to what it reads: a server that isn't TLS.
+void http(SSL*, int fd)
+{
+    char buffer[512];
+    (void)recv(fd, buffer, sizeof(buffer), 0);
+    const char response[] = "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n";
+    (void)send(fd, response, sizeof(response) - 1, 0);
+}
+
+// A TLS 1.0 ServerHello, for TLS_RSA_WITH_AES_128_CBC_SHA: what a server of
+// TLS 1.0 alone answers a client that doesn't say which versions it takes.
+const unsigned char TLS10_SERVER_HELLO[] = {
+    0x16, 0x03, 0x01, 0x00, 0x2a,  // a handshake record of TLS 1.0, 42 bytes
+    0x02, 0x00, 0x00, 0x26,        // ServerHello, 38 bytes
+    0x03, 0x01,                    // TLS 1.0
+    0x5c, 0x1f, 0x4e, 0x0b, 0x7a, 0x31, 0x22, 0x90, 0x6d, 0x18, 0x45, 0xe2, 0x03, 0xaa, 0x67, 0x0c,
+    0x91, 0x3b, 0x58, 0x2f, 0xd4, 0x10, 0x86, 0x7e, 0x29, 0xc5, 0x33, 0x0a, 0x64, 0xbe, 0x17, 0x4d,
+    0x00,                          // no session ID
+    0x00, 0x2f,                    // TLS_RSA_WITH_AES_128_CBC_SHA
+    0x00,                          // no compression
+};
+
+// Answers a ClientHello with TLS10_SERVER_HELLO.
+void tls10_hello(SSL*, int fd)
+{
+    char buffer[2048];
+    (void)recv(fd, buffer, sizeof(buffer), 0);
+    (void)send(fd, TLS10_SERVER_HELLO, sizeof(TLS10_SERVER_HELLO), 0);
+    // For the client to close first.
+    (void)recv(fd, buffer, sizeof(buffer), 0);
+}
+
+// Answers a ClientHello with a fatal alert of TLS 1.2's, of the description
+// alert_description says.
+unsigned char alert_description = 0;
+void alert(SSL*, int fd)
+{
+    char buffer[2048];
+    (void)recv(fd, buffer, sizeof(buffer), 0);
+    const unsigned char record[] = { 0x15, 0x03, 0x03, 0x00, 0x02, 0x02, alert_description };
+    (void)send(fd, record, sizeof(record), 0);
+    (void)recv(fd, buffer, sizeof(buffer), 0);
+}
+
+const char MISMATCH_HINT[] =
+    "localhost may take only TLS older than 1.2, or none of the cipher suites the "
+    "configuration offers.";
+
+}
+
+// A server older than the configuration, or with none of its suites, answered
+// with mbedTLS's fatal alert alone.
+TEST_CASE( "The mbedTLS socket says when the server has no TLS version or suite in common with it" ) {
+    Config config;
+    SECTION("a server of TLS 1.0 or 1.1 alone") {
+        for (int version : { TLS1_VERSION, TLS1_1_VERSION }) {
+            CAPTURE( version );
+            TlsServer server(pki().server(), nothing);
+            REQUIRE( SSL_CTX_set_min_proto_version(server.ctx, version) == 1 );
+            REQUIRE( SSL_CTX_set_max_proto_version(server.ctx, version) == 1 );
+            // Security level 0, where TLS 1.0 and 1.1 still are.
+            REQUIRE( SSL_CTX_set_cipher_list(server.ctx, "AES128-SHA:@SECLEVEL=0") == 1 );
+            Client client(&config.tls);
+            REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+            long detail = 0;
+            CHECK( client.error(&detail) == EBISU_SOCK_ERROR_TLS_MISMATCH );
+            CHECK( detail < 0 );
+#ifdef EBISU_NO_LOG
+            CHECK( client.logger.lines.empty() );
+#else
+            CHECK( client.logger.has("TLS handshake failed with localhost") );
+            CHECK( client.logger.has(MISMATCH_HINT) );
+#endif
+        }
+    }
+    SECTION("each alert that says so, and no other") {
+        // handshake_failure, protocol_version, insufficient_security; and
+        // internal_error, which doesn't.
+        for (unsigned char description : { 40, 70, 71, 80 }) {
+            CAPTURE( (int)description );
+            alert_description = description;
+            TlsServer server(pki().server(), alert, 1, 0, true);
+            Client client(&config.tls);
+            REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+            long detail = 0;
+            CHECK( client.error(&detail) ==
+                    (description == 80 ? EBISU_SOCK_ERROR_TLS : EBISU_SOCK_ERROR_TLS_MISMATCH) );
+            CHECK( detail == MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE );
+        }
+    }
+    SECTION("a server that answers in TLS 1.0, which mbedTLS refuses itself") {
+        TlsServer server(pki().server(), tls10_hello, 1, 0, true);
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        long detail = 0;
+        CHECK( client.error(&detail) == EBISU_SOCK_ERROR_TLS_MISMATCH );
+        CHECK( detail == MBEDTLS_ERR_SSL_BAD_PROTOCOL_VERSION );
+#ifndef EBISU_NO_LOG
+        CHECK( client.logger.has(MISMATCH_HINT) );
+#endif
+    }
+    SECTION("a server of TLS 1.2 without the configuration's suites") {
+        static const int suites[] = { MBEDTLS_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, 0 };
+        mbedtls_ssl_conf_ciphersuites(ebisu_mbedtls_tls_config(&config.tls), suites);
+        TlsServer server(pki().server(), nothing, 1, TLS1_2_VERSION);
+        REQUIRE( SSL_CTX_set_cipher_list(server.ctx, "ECDHE-RSA-AES256-GCM-SHA384") == 1 );
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        CHECK( client.error() == EBISU_SOCK_ERROR_TLS_MISMATCH );
+#ifndef EBISU_NO_LOG
+        CHECK( client.logger.has(MISMATCH_HINT) );
+#endif
+    }
+    SECTION("but not a server that isn't TLS") {
+        TlsServer server(pki().server(), http, 1, 0, true);
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        CHECK( client.error() == EBISU_SOCK_ERROR_TLS );
+        CHECK_FALSE( client.logger.has("may take only") );
+    }
+    SECTION("nor a certificate refused") {
+        TlsServer server(pki().server("other.example", pki().now - DAY, pki().now + DAY), nothing);
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        CHECK( client.error() == EBISU_SOCK_ERROR_VERIFY );
+        CHECK_FALSE( client.logger.has("may take only") );
+    }
+}

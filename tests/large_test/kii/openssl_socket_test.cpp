@@ -358,7 +358,10 @@ struct LocalServer {
     bool stopping;
     std::thread thread;
 
-    explicit LocalServer(int family = AF_INET, bool greet = false) : family(family),
+    // With version, the only TLS version it takes, and with ciphers, the only
+    // TLS 1.2 and earlier suites, older ones included.
+    explicit LocalServer(int family = AF_INET, bool greet = false, int version = 0,
+            const char* ciphers = nullptr) : family(family),
             greet(greet), listening(false), port(0), ctx(nullptr), stopping(false) {
         signal(SIGPIPE, SIG_IGN);
         listen_fd = socket(family, SOCK_STREAM, 0);
@@ -388,6 +391,26 @@ struct LocalServer {
         // port asks for, as servers have it.
         REQUIRE( SSL_CTX_set_ecdh_auto(ctx, 1) == 1 );
 #endif
+        if (version != 0) {
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+            long off = SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
+            off &= ~(version == TLS1_VERSION ? SSL_OP_NO_TLSv1 :
+                    version == TLS1_1_VERSION ? SSL_OP_NO_TLSv1_1 : SSL_OP_NO_TLSv1_2);
+            SSL_CTX_set_options(ctx, off);
+#else
+            REQUIRE( SSL_CTX_set_min_proto_version(ctx, version) == 1 );
+            REQUIRE( SSL_CTX_set_max_proto_version(ctx, version) == 1 );
+#endif
+        }
+        if (ciphers != nullptr) {
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+            const std::string list = ciphers;
+#else
+            // Security level 0, where TLS 1.0, 1.1 and SHA-1 still are.
+            const std::string list = std::string(ciphers) + ":@SECLEVEL=0";
+#endif
+            REQUIRE( SSL_CTX_set_cipher_list(ctx, list.c_str()) == 1 );
+        }
         thread = std::thread([this] { serve(); });
     }
 
@@ -436,6 +459,65 @@ struct LocalServer {
         }
     }
 };
+
+// A TLS 1.0 ServerHello, for TLS_RSA_WITH_AES_128_CBC_SHA: what a server of
+// TLS 1.0 alone answers a client that doesn't say which versions it takes.
+const unsigned char TLS10_SERVER_HELLO[] = {
+    0x16, 0x03, 0x01, 0x00, 0x2a,  // a handshake record of TLS 1.0, 42 bytes
+    0x02, 0x00, 0x00, 0x26,        // ServerHello, 38 bytes
+    0x03, 0x01,                    // TLS 1.0
+    0x5c, 0x1f, 0x4e, 0x0b, 0x7a, 0x31, 0x22, 0x90, 0x6d, 0x18, 0x45, 0xe2, 0x03, 0xaa, 0x67, 0x0c,
+    0x91, 0x3b, 0x58, 0x2f, 0xd4, 0x10, 0x86, 0x7e, 0x29, 0xc5, 0x33, 0x0a, 0x64, 0xbe, 0x17, 0x4d,
+    0x00,                          // no session ID
+    0x00, 0x2f,                    // TLS_RSA_WITH_AES_128_CBC_SHA
+    0x00,                          // no compression
+};
+
+// A fatal alert of TLS 1.2's, of the given description.
+std::string fatal_alert(unsigned char description)
+{
+    const unsigned char alert[] = { 0x15, 0x03, 0x03, 0x00, 0x02, 0x02, description };
+    return std::string((const char*)alert, sizeof(alert));
+}
+
+// A server on 127.0.0.1 that answers what it reads with response, by default
+// an HTTP response: not TLS.
+struct PlainServer {
+    int listen_fd;
+    uint16_t port;
+    std::thread thread;
+
+    explicit PlainServer(std::string response =
+            "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n") :
+            listen_fd(socket(AF_INET, SOCK_STREAM, 0)), port(0) {
+        REQUIRE( listen_fd >= 0 );
+        struct sockaddr_storage addr = loopback(AF_INET, 0);
+        REQUIRE( bind(listen_fd, (struct sockaddr*)&addr, length_of(AF_INET)) == 0 );
+        REQUIRE( listen(listen_fd, 1) == 0 );
+        socklen_t len = sizeof(addr);
+        REQUIRE( getsockname(listen_fd, (struct sockaddr*)&addr, &len) == 0 );
+        port = ntohs(((struct sockaddr_in*)&addr)->sin_port);
+        thread = std::thread([this, response] {
+            int fd = accept(listen_fd, nullptr, nullptr);
+            if (fd < 0) {
+                return;
+            }
+            char buffer[2048];
+            (void)recv(fd, buffer, sizeof(buffer), 0);
+            (void)send(fd, response.data(), response.size(), 0);
+            // For the client to close first.
+            (void)recv(fd, buffer, sizeof(buffer), 0);
+            close(fd);
+        });
+    }
+
+    ~PlainServer() {
+        shutdown(listen_fd, SHUT_RDWR);
+        thread.join();
+        close(listen_fd);
+    }
+};
+
 
 // A file of CA certificates with the server's, removed at the end.
 struct CaFile {
@@ -829,7 +911,7 @@ TEST_CASE( "The OpenSSL socket says why it failed" ) {
         CHECK( detail == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT );
     }
 
-    SECTION("a handshake that fails, with OpenSSL's error") {
+    SECTION("a handshake that fails for no suite in common, with OpenSSL's error") {
         LocalServer server;
         REQUIRE( server.listening );
 #if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
@@ -842,9 +924,16 @@ TEST_CASE( "The OpenSSL socket says why it failed" ) {
         REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
         ebisu_openssl_socket_set_tls(&sock, &tls);
         REQUIRE( connect_to(&sock, server) == EBISU_SOCK_FAIL );
-        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TLS );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TLS_MISMATCH );
         CHECK( detail != 0 );
         ebisu_openssl_tls_free(&tls);
+    }
+
+    SECTION("a handshake that fails otherwise, with OpenSSL's error") {
+        PlainServer plain;
+        REQUIRE( sock.base.ops->connect(&sock.base, "127.0.0.1", plain.port) == EBISU_SOCK_FAIL );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TLS );
+        CHECK( detail != 0 );
     }
 }
 
@@ -1553,4 +1642,105 @@ TEST_CASE( "A TLS configuration refuses a mode it can't take, as it was" ) {
     ebisu_openssl_tls_t unset;
     CHECK_FALSE( ebisu_openssl_tls_init(&unset, "/nonexistent/ca.pem", nullptr) );
     CHECK_FALSE( ebisu_openssl_tls_set_verify(&unset, EBISU_TLS_VERIFY_NONE, nullptr) );
+}
+
+
+// The port takes TLS 1.2 or later, with ECDHE or DHE and AES-GCM or
+// ChaCha20-Poly1305. A server that takes only older ones answered with
+// OpenSSL's text alone, such as "tlsv1 alert protocol version".
+TEST_CASE( "The OpenSSL socket says when the server has no TLS version or suite in common with it" ) {
+    CaFile ca;
+    struct Case {
+        const char* what;
+        int version;
+        const char* ciphers;
+    };
+    const Case cases[] = {
+        { "TLS 1.0 only", TLS1_VERSION, "AES128-SHA" },
+        { "TLS 1.1 only", TLS1_1_VERSION, "AES128-SHA" },
+        { "TLS 1.2 with neither forward secrecy nor AEAD", TLS1_2_VERSION, "AES128-SHA" },
+        { "TLS 1.2 without forward secrecy", TLS1_2_VERSION, "AES128-GCM-SHA256" },
+        { "TLS 1.2 without AEAD", TLS1_2_VERSION, "ECDHE-RSA-AES128-SHA" },
+    };
+    for (const Case& c : cases) {
+        CAPTURE( c.what );
+        LocalServer server(AF_INET, false, c.version, c.ciphers);
+        REQUIRE( server.listening );
+        LogCtx log;
+        ebisu_openssl_tls_t tls;
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
+        ebisu_openssl_socket_t sock;
+        ebisu_openssl_socket_init(&sock, 5, 5);
+        ebisu_openssl_socket_set_logger(&sock, log.get());
+        ebisu_openssl_socket_set_tls(&sock, &tls);
+        CHECK( connect_by_address(&sock, server) == EBISU_SOCK_FAIL );
+        long detail = 0;
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TLS_MISMATCH );
+        CHECK( detail != 0 );
+        CAPTURE( ERR_GET_REASON((unsigned long)detail) );
+#ifdef EBISU_NO_LOG
+        CHECK( log.messages.empty() );
+#else
+        CHECK( logged(log, EBISU_LOG_ERROR, "failed to connect") );
+        CHECK( logged(log, EBISU_LOG_ERROR,
+                "127.0.0.1 may take only TLS older than 1.2, or TLS 1.2 without ECDHE or DHE "
+                "with AES-GCM or ChaCha20-Poly1305, which this port needs.") );
+#endif
+        CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+        ebisu_openssl_tls_free(&tls);
+    }
+
+    LogCtx log;
+    ebisu_openssl_tls_t tls;
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
+    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_init(&sock, 5, 5);
+    ebisu_openssl_socket_set_logger(&sock, log.get());
+    ebisu_openssl_socket_set_tls(&sock, &tls);
+    long detail = 0;
+
+    SECTION("for each alert that says so, and no other") {
+        // handshake_failure, protocol_version, insufficient_security; and
+        // internal_error, which doesn't.
+        for (int description : { 40, 70, 71, 80 }) {
+            CAPTURE( description );
+            PlainServer alerting(fatal_alert((unsigned char)description));
+            CHECK( sock.base.ops->connect(&sock.base, "127.0.0.1", alerting.port) == EBISU_SOCK_FAIL );
+            CHECK( last_error(&sock, &detail) ==
+                    (description == 80 ? EBISU_SOCK_ERROR_TLS : EBISU_SOCK_ERROR_TLS_MISMATCH) );
+            CHECK( ERR_GET_REASON((unsigned long)detail) == 1000 + description );
+        }
+    }
+    SECTION("for a server that answers in TLS 1.0, which OpenSSL refuses itself") {
+        PlainServer old(std::string((const char*)TLS10_SERVER_HELLO, sizeof(TLS10_SERVER_HELLO)));
+        CHECK( sock.base.ops->connect(&sock.base, "127.0.0.1", old.port) == EBISU_SOCK_FAIL );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TLS_MISMATCH );
+        CAPTURE( ERR_GET_REASON((unsigned long)detail) );
+#ifndef EBISU_NO_LOG
+        CHECK( logged(log, EBISU_LOG_ERROR, "may take only") );
+#endif
+    }
+    SECTION("but not for a server that isn't TLS") {
+        PlainServer plain;
+        CHECK( sock.base.ops->connect(&sock.base, "127.0.0.1", plain.port) == EBISU_SOCK_FAIL );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TLS );
+        CAPTURE( ERR_GET_REASON((unsigned long)detail) );
+        CHECK( ERR_GET_REASON((unsigned long)detail) != 0 );
+        CHECK_FALSE( logged(log, EBISU_LOG_ERROR, "may take only") );
+    }
+    SECTION("nor for one that has both") {
+        LocalServer server(AF_INET, false, TLS1_2_VERSION, nullptr);
+        REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
+        CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+    }
+    SECTION("nor for a certificate refused") {
+        REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_FULL, nullptr) );
+        LocalServer server;
+        CHECK( connect_by_address(&sock, server) == EBISU_SOCK_FAIL );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK_FALSE( logged(log, EBISU_LOG_ERROR, "may take only") );
+    }
+    ebisu_openssl_tls_free(&tls);
 }

@@ -61,7 +61,17 @@ typedef enum ebisu_sock_error_t {
     EBISU_SOCK_ERROR_CLOSED,
     /** \brief Another failure. The detail is the system's error, if there is
      * one. */
-    EBISU_SOCK_ERROR_OTHER
+    EBISU_SOCK_ERROR_OTHER,
+    /** \brief The TLS handshake failed as the server and the socket have no
+     * TLS version or cipher suite in common: the server refused the handshake
+     * with an alert that says so, protocol_version, handshake_failure or
+     * insufficient_security, or answered with a version older than the socket
+     * takes. Most often a server that takes only TLS 1.0 or 1.1, or TLS 1.2
+     * without the suites the socket offers. handshake_failure is also what
+     * some servers answer for other reasons. The detail is the TLS library's
+     * error, as for EBISU_SOCK_ERROR_TLS. Added after the others, so that they
+     * keep their values. */
+    EBISU_SOCK_ERROR_TLS_MISMATCH
 } ebisu_sock_error_t;
 
 /** \brief How a TLS socket checks the server's certificate.
