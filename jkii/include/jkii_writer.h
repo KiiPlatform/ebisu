@@ -37,6 +37,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "jkii.h"
+
 /* The library is compiled with hidden visibility, so what this header declares
    is exactly what the shared object exports. */
 #if defined(__GNUC__) || defined(__clang__)
@@ -171,6 +173,17 @@ jkii_write_err_t jkii_write_array_end(jkii_writer_t* w);
 jkii_write_err_t jkii_write_key(jkii_writer_t* w, const char* key);
 
 /**
+ * \brief Writes the key of the next member, of a given length, which may hold
+ * null bytes, escaped as jkii_escape_str() does.
+ *
+ * \param [in, out] w The writer.
+ * \param [in] key The key. May be NULL when n is 0.
+ * \param [in] n Its length.
+ * \return JKII_WRITE_OK or the first error so far.
+ */
+jkii_write_err_t jkii_write_key_n(jkii_writer_t* w, const char* key, size_t n);
+
+/**
  * \brief Writes a string, escaped as jkii_escape_str() does.
  *
  * \param [in, out] w The writer.
@@ -237,6 +250,61 @@ jkii_write_err_t jkii_write_null(jkii_writer_t* w);
  * \return JKII_WRITE_OK or the first error so far.
  */
 jkii_write_err_t jkii_write_raw(jkii_writer_t* w, const char* json, size_t n);
+
+/**
+ * \brief Writes the key of a member that jkii read, as the document wrote it.
+ *
+ * The key goes out between its quotes as it was written, escapes and all,
+ * without being unescaped and escaped again: so a key of any length, `\u0000`
+ * included, needs no buffer. Like jkii_write_raw(), it is unchecked: a member
+ * from jkii_next_member() is JSON already, as jkii checked its document.
+ *
+ * Copying an object but one member:
+ *
+ * \code
+ * jkii_member_iter_t it = { 0, 0 };
+ * jkii_member_t m;
+ * jkii_parse_err_t res;
+ * jkii_write_object_start(&w);
+ * while ((res = jkii_next_member(json, json_len, &it, &m)) == JKII_ERR_OK) {
+ *     if (m.key_length == 3 && memcmp(m.key, "pin", 3) == 0) {
+ *         continue;
+ *     }
+ *     jkii_write_member_key(&w, &m);
+ *     jkii_write_member_value(&w, &m);
+ * }
+ * jkii_write_object_end(&w);
+ * // res is JKII_ERR_NOT_FOUND once every member was given.
+ * \endcode
+ *
+ * \param [in, out] w The writer.
+ * \param [in] member The member, as jkii_next_member() gives it.
+ * \return JKII_WRITE_OK or the first error so far: JKII_WRITE_ERR_VALUE for a
+ * member without a key, as an array's element, or a NULL one.
+ */
+jkii_write_err_t jkii_write_member_key(jkii_writer_t* w, const jkii_member_t* member);
+
+/**
+ * \brief Writes the value of a member that jkii read, as the document wrote it.
+ *
+ * A string goes out between quotes with its characters as written, escapes
+ * and all, without being unescaped and escaped again, so a string of any
+ * length needs no buffer. Any other value goes out whole as written, as
+ * jkii_write_raw() writes it: a number with its digits, and an object or an
+ * array with what is inside it, whitespace too. It is unchecked: a member
+ * from jkii_next_member(), jkii_root_value() or jkii_find_member() is JSON
+ * already, as jkii checked its document.
+ *
+ * A member jkii_member_unquote() gave goes out as what its string held, a
+ * number or a boolean, without the quotes.
+ *
+ * \param [in, out] w The writer.
+ * \param [in] member The member, as jkii_next_member(), jkii_root_value() or
+ * jkii_find_member() gives it.
+ * \return JKII_WRITE_OK or the first error so far: JKII_WRITE_ERR_VALUE for a
+ * NULL member, or a value other than a string of no length.
+ */
+jkii_write_err_t jkii_write_member_value(jkii_writer_t* w, const jkii_member_t* member);
 
 /**
  * \brief Ends a record of JSON Lines: the value at the top, which has to be

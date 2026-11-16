@@ -232,14 +232,10 @@ static void _put_escaped(jkii_writer_t* w, const char* s, size_t n)
     _put(w, "\"", 1);
 }
 
-jkii_write_err_t jkii_write_key(jkii_writer_t* w, const char* key)
+/* Before a key: in an object, and not right after another key, with a comma
+ * before it in an object that has members already. */
+static jkii_write_err_t _begin_key(jkii_writer_t* w)
 {
-    if (_stopped(w)) {
-        return w->_err;
-    }
-    if (key == NULL) {
-        return _fail(w, JKII_WRITE_ERR_VALUE);
-    }
     if (w->_depth == 0) {
         return _fail(w, JKII_WRITE_ERR_STRUCTURE);
     }
@@ -251,9 +247,31 @@ jkii_write_err_t jkii_write_key(jkii_writer_t* w, const char* key)
         _put(w, ",", 1);
     }
     *level |= LEVEL_HAS_MEMBER | LEVEL_AFTER_KEY;
-    _put_escaped(w, key, strlen(key));
+    return w->_err;
+}
+
+jkii_write_err_t jkii_write_key_n(jkii_writer_t* w, const char* key, size_t n)
+{
+    if (_stopped(w)) {
+        return w->_err;
+    }
+    if (key == NULL && n > 0) {
+        return _fail(w, JKII_WRITE_ERR_VALUE);
+    }
+    if (_begin_key(w) != JKII_WRITE_OK && _stopped(w)) {
+        return w->_err;
+    }
+    _put_escaped(w, key != NULL ? key : "", n);
     _put(w, ":", 1);
     return w->_err;
+}
+
+jkii_write_err_t jkii_write_key(jkii_writer_t* w, const char* key)
+{
+    if (key == NULL) {
+        return _fail(w, JKII_WRITE_ERR_VALUE);
+    }
+    return jkii_write_key_n(w, key, strlen(key));
 }
 
 jkii_write_err_t jkii_write_string_n(jkii_writer_t* w, const char* s, size_t n)
@@ -406,6 +424,40 @@ jkii_write_err_t jkii_write_raw(jkii_writer_t* w, const char* json, size_t n)
         return w->_err;
     }
     _put(w, json, n);
+    return _end_value(w);
+}
+
+jkii_write_err_t jkii_write_member_key(jkii_writer_t* w, const jkii_member_t* member)
+{
+    if (_stopped(w)) {
+        return w->_err;
+    }
+    if (member == NULL || member->key == NULL) {
+        return _fail(w, JKII_WRITE_ERR_VALUE);
+    }
+    if (_begin_key(w) != JKII_WRITE_OK && _stopped(w)) {
+        return w->_err;
+    }
+    _put(w, "\"", 1);
+    _put(w, member->key, member->key_length);
+    _put(w, "\":", 2);
+    return w->_err;
+}
+
+jkii_write_err_t jkii_write_member_value(jkii_writer_t* w, const jkii_member_t* member)
+{
+    if (member == NULL || (member->value == NULL && member->value_length > 0)) {
+        return _fail(w, JKII_WRITE_ERR_VALUE);
+    }
+    if (member->type != JKII_FIELD_TYPE_STRING) {
+        return jkii_write_raw(w, member->value, member->value_length);
+    }
+    if (_begin_value(w) != JKII_WRITE_OK && _stopped(w)) {
+        return w->_err;
+    }
+    _put(w, "\"", 1);
+    _put(w, member->value, member->value_length);
+    _put(w, "\"", 1);
     return _end_value(w);
 }
 

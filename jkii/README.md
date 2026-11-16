@@ -177,6 +177,28 @@ if (jkii_writer_finish(&w, &len) == JKII_WRITE_OK) {
 }
 ```
 
+A value jkii read, with `jkii_next_member()`, `jkii_root_value()` or
+`jkii_find_member()`, goes back out as the document wrote it with
+`jkii_write_member_value()`: a string between its quotes with its escapes as
+they were, without being unescaped into a buffer and escaped again, so a string
+of any length needs none, and anything else whole. `jkii_write_member_key()`
+writes a member's key so, and `jkii_write_key_n()` writes a key of a given
+length that isn't JSON yet. To pass an object on but one member:
+
+```c
+jkii_member_iter_t it = { 0, 0 };
+jkii_member_t m;
+jkii_write_object_start(&w);
+while (jkii_next_member(json, json_len, &it, &m) == JKII_ERR_OK) {
+    if (m.key_length == 3 && memcmp(m.key, "pin", 3) == 0) {
+        continue;
+    }
+    jkii_write_member_key(&w, &m);
+    jkii_write_member_value(&w, &m);
+}
+jkii_write_object_end(&w);
+```
+
 With a NULL buffer of size 0, nothing is written and `jkii_writer_finish()` gives
 the length, to size a buffer. `jkii_writer_init_cb()` gives the output to a
 callback whenever its buffer is full, so the JSON can be larger than any buffer,
