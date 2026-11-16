@@ -65,7 +65,11 @@ typedef struct ebisu_system_ops_t {
             EBISU_TASK_ENTRY entry, void* entry_param);
 
     /**
-     * \brief Delays/ sleeps the calling task.
+     * \brief Delays the calling task for at least msec milliseconds.
+     *
+     * Never less, by a monotonic clock: not when a signal interrupts the wait,
+     * nor when the system counts the wait in ticks. It may be longer, as the
+     * system schedules the task. A delay of 0 may yield to other tasks.
      *
      * \param [in] self The system.
      * \param [in] msec Time requested to delay/ sleep in milliseconds.
