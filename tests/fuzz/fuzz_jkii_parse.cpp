@@ -3,7 +3,10 @@
 // walked too, and their names and strings unescaped. The name, escaped, has
 // to unescape to itself. Its root is read as a value of any type too. The path
 // is looked up with jkii_find_member() as well, which has to find what
-// jkii_parse() does, and what it finds is read as a string and an integer.
+// jkii_parse() does, and what it finds is read as a string and an integer,
+// and by the finding readers, which have to read what the member readers do.
+// Each member of the root object is found again by its name, unescaped, with
+// jkii_find_name(), and each member is read as text and cut to fit.
 #include <jkii.h>
 #include <jkii_utils.h>
 #include <float.h>
@@ -52,16 +55,59 @@ static void unquote_member(const jkii_member_t& m) {
     read_member(u);
 }
 
+// As text, and cut to fit: the text a string's, unescaped, and anything
+// else's as written, but an object's or an array's; and a string cut is what
+// it is whole, or a start of it, cut where a character ends.
+static void read_text(const jkii_member_t& m, jkii_field_err_t s, const std::vector<char>& whole) {
+    std::vector<char> text(m.value_length + 1);
+    jkii_field_err_t t = jkii_member_text(&m, text.data(), text.size());
+    if (m.type == JKII_FIELD_TYPE_STRING) {
+        if (t != s || strcmp(text.data(), whole.data()) != 0) abort();
+    } else if (m.type == JKII_FIELD_TYPE_NULL) {
+        if (t != JKII_FIELD_ERR_NULL) abort();
+    } else if (m.type == JKII_FIELD_TYPE_OBJECT || m.type == JKII_FIELD_TYPE_ARRAY) {
+        if (t != JKII_FIELD_ERR_TYPE_MISMATCH) abort();
+    } else if (t != JKII_FIELD_ERR_OK || std::string(text.data()) != std::string(m.value, m.value_length)) {
+        abort();
+    }
+    if (m.type != JKII_FIELD_TYPE_STRING) {
+        return;
+    }
+    for (size_t size : { m.value_length + 1, m.value_length / 2 + 1, (size_t)1, (size_t)4 }) {
+        std::vector<char> cut(size, 'x');
+        jkii_boolean_t truncated = JKII_FALSE;
+        jkii_field_err_t c = jkii_member_string_trunc(&m, cut.data(), cut.size(), &truncated);
+        const size_t len = strlen(cut.data());
+        if (c == JKII_FIELD_ERR_COPY) {
+            // Only for an escape jkii_unescape_str() refuses too.
+            if (s == JKII_FIELD_ERR_OK || len != 0) abort();
+            continue;
+        }
+        if (c != JKII_FIELD_ERR_OK || len >= size) abort();
+        if (s == JKII_FIELD_ERR_OK) {
+            const size_t whole_len = strlen(whole.data());
+            if (memcmp(cut.data(), whole.data(), len) != 0) abort();
+            if ((truncated == JKII_TRUE) != (len < whole_len)) abort();
+            // Cut before a character, not within one.
+            if (len < whole_len && ((unsigned char)whole[len] & 0xc0) == 0x80) abort();
+        }
+    }
+}
+
 static void read_member(const jkii_member_t& m) {
     unquote_member(m);
     std::vector<char> buff(m.value_length + 1);
     jkii_field_err_t s = jkii_member_string(&m, buff.data(), buff.size());
+    // What each read gives a value that isn't its own: null as itself.
+    const jkii_field_err_t other = m.type == JKII_FIELD_TYPE_NULL ?
+        JKII_FIELD_ERR_NULL : JKII_FIELD_ERR_TYPE_MISMATCH;
     if (m.type == JKII_FIELD_TYPE_STRING) {
         if (s != JKII_FIELD_ERR_OK && s != JKII_FIELD_ERR_COPY) abort();
         if (strlen(buff.data()) > m.value_length) abort();
-    } else if (s != JKII_FIELD_ERR_TYPE_MISMATCH || buff[0] != '\0') {
+    } else if (s != other || buff[0] != '\0') {
         abort();
     }
+    read_text(m, s, buff);
     int64_t value = 0;
     jkii_field_err_t i = jkii_member_integer(&m, INT64_MIN, INT64_MAX, &value);
     const bool numeric = m.type == JKII_FIELD_TYPE_INTEGER || m.type == JKII_FIELD_TYPE_LONG ||
@@ -70,11 +116,11 @@ static void read_member(const jkii_member_t& m) {
     jkii_boolean_t b = JKII_FALSE;
     jkii_field_err_t br = jkii_member_boolean(&m, &b);
     if ((br == JKII_FIELD_ERR_OK) != (m.type == JKII_FIELD_TYPE_BOOLEAN)) abort();
+    if (br != JKII_FIELD_ERR_OK && br != other) abort();
     if (br == JKII_FIELD_ERR_OK && (b == JKII_TRUE) != (m.value[0] == 't')) abort();
     if (!numeric) {
         double d = 0;
-        if (i != JKII_FIELD_ERR_TYPE_MISMATCH ||
-                jkii_member_double(&m, &d) != JKII_FIELD_ERR_TYPE_MISMATCH) abort();
+        if (i != other || jkii_member_double(&m, &d) != other) abort();
         return;
     }
     jkii_primitive_t p;
@@ -112,6 +158,80 @@ static void unescape_fits(const char* s, size_t len) {
     int out_len = jkii_unescape_str(s, len, out.data(), out.size());
     if (out_len < -1 || out_len > (int)len) abort();
     if (out_len == -1 ? out[0] != '\0' : strlen(out.data()) != (size_t)out_len) abort();
+}
+
+// The finding readers, at a path that jkii_find_member() gave res and found
+// for: each the member reader's result on what it found, or that it found
+// nothing, null as absent when asked, and found set whenever there is a value.
+static void find_and_read(const std::vector<char>& document, const char* path,
+        jkii_parse_err_t res, const jkii_member_t& found) {
+    const jkii_field_err_t none = res == JKII_ERR_NOT_FOUND ? JKII_FIELD_ERR_NOT_FOUND :
+        JKII_FIELD_ERR_INVALID_INPUT;
+    for (unsigned int flags = 0; flags < 8; ++flags) {
+        jkii_member_t got;
+        memset(&got, 0, sizeof(got));
+        int64_t i = 0;
+        jkii_field_err_t fi = jkii_find_integer(document.data(), document.size(), path,
+                INT64_MIN, INT64_MAX, flags, &i, &got);
+        double d = 0;
+        jkii_field_err_t fd = jkii_find_double(document.data(), document.size(), path, flags,
+                &d, nullptr);
+        jkii_boolean_t b = JKII_FALSE;
+        jkii_field_err_t fb = jkii_find_boolean(document.data(), document.size(), path, flags,
+                &b, nullptr);
+        std::vector<char> str(document.size() + 1);
+        jkii_field_err_t fs = jkii_find_string(document.data(), document.size(), path, flags,
+                str.data(), str.size(), nullptr);
+        if (res != JKII_ERR_OK) {
+            if (fi != none || fd != none || fb != none || fs != none || got.value != nullptr) abort();
+            continue;
+        }
+        if (got.value != found.value || got.value_length != found.value_length ||
+                got.type != found.type) abort();
+        if (found.type == JKII_FIELD_TYPE_NULL) {
+            const jkii_field_err_t n = (flags & JKII_READ_NULL_AS_ABSENT) != 0 ?
+                JKII_FIELD_ERR_NOT_FOUND : JKII_FIELD_ERR_NULL;
+            if (fi != n || fd != n || fb != n || fs != n) abort();
+            continue;
+        }
+        jkii_member_t u;
+        const jkii_member_t* m = (flags & JKII_READ_UNQUOTE) != 0 ? jkii_member_unquote(&found, &u) : &found;
+        int64_t mi = 0;
+        jkii_field_err_t ri = jkii_member_integer(m, INT64_MIN, INT64_MAX, &mi);
+        if ((flags & JKII_READ_INTEGER_AS_WRITTEN) != 0 && m->type != JKII_FIELD_TYPE_INTEGER &&
+                m->type != JKII_FIELD_TYPE_LONG) {
+            ri = JKII_FIELD_ERR_TYPE_MISMATCH;
+        }
+        if (fi != ri || (fi == JKII_FIELD_ERR_OK && i != mi)) abort();
+        double md = 0;
+        jkii_field_err_t rd = jkii_member_double(m, &md);
+        if (fd != rd || (fd == JKII_FIELD_ERR_OK && d != md)) abort();
+        jkii_boolean_t mb = JKII_FALSE;
+        jkii_field_err_t rb = jkii_member_boolean(m, &mb);
+        if (fb != rb || (fb == JKII_FIELD_ERR_OK && b != mb)) abort();
+        std::vector<char> ms(document.size() + 1);
+        if (fs != jkii_member_string(&found, ms.data(), ms.size()) || strcmp(str.data(), ms.data()) != 0) abort();
+    }
+}
+
+// A member of the root object, found again by its name unescaped: the first
+// whose name unescapes to it, which may be an earlier one of the same name.
+static void find_by_name(const std::vector<char>& document, const jkii_member_t& member) {
+    std::vector<char> name(member.key_length + 1);
+    int len = jkii_unescape_str(member.key, member.key_length, name.data(), name.size());
+    if (len < 0) {
+        return;
+    }
+    jkii_member_t found;
+    if (jkii_find_name(document.data(), document.size(), name.data(), (size_t)len, &found) !=
+            JKII_ERR_OK) abort();
+    if (found.key == nullptr || found.key > member.key) abort();
+    std::vector<char> found_name(found.key_length + 1);
+    int found_len = jkii_unescape_str(found.key, found.key_length, found_name.data(),
+            found_name.size());
+    if (found_len != len || memcmp(found_name.data(), name.data(), (size_t)len) != 0) abort();
+    if (found.key == member.key && (found.value != member.value ||
+                found.value_length != member.value_length || found.type != member.type)) abort();
 }
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
@@ -166,6 +286,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                     }
                     read_member(found);
                 }
+                find_and_read(document, key.c_str(), res, found);
             }
         }
     }
@@ -184,6 +305,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         if (++members > document.size()) abort();
         if (member.key != NULL) {
             unescape_fits(member.key, member.key_length);
+            find_by_name(document, member);
         }
         if (member.type == JKII_FIELD_TYPE_STRING) {
             unescape_fits(member.value, member.value_length);

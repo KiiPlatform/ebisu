@@ -1229,6 +1229,9 @@ jkii_field_err_t jkii_member_string(
     if (buff_size > 0) {
         buff[0] = '\0';
     }
+    if (member->type == JKII_FIELD_TYPE_NULL) {
+        return JKII_FIELD_ERR_NULL;
+    }
     if (member->type != JKII_FIELD_TYPE_STRING) {
         return JKII_FIELD_ERR_TYPE_MISMATCH;
     }
@@ -1333,6 +1336,9 @@ jkii_field_err_t jkii_member_integer(
     jkii_field_err_t res;
     M_JKII_ASSERT(member != NULL);
     M_JKII_ASSERT(out_value != NULL);
+    if (member->type == JKII_FIELD_TYPE_NULL) {
+        return JKII_FIELD_ERR_NULL;
+    }
     if (member->type != JKII_FIELD_TYPE_INTEGER && member->type != JKII_FIELD_TYPE_LONG &&
             member->type != JKII_FIELD_TYPE_DOUBLE) {
         return JKII_FIELD_ERR_TYPE_MISMATCH;
@@ -1358,6 +1364,9 @@ jkii_field_err_t jkii_member_double(
     double value = 0;
     M_JKII_ASSERT(member != NULL);
     M_JKII_ASSERT(out_value != NULL);
+    if (member->type == JKII_FIELD_TYPE_NULL) {
+        return JKII_FIELD_ERR_NULL;
+    }
     if (member->type != JKII_FIELD_TYPE_INTEGER && member->type != JKII_FIELD_TYPE_LONG &&
             member->type != JKII_FIELD_TYPE_DOUBLE) {
         return JKII_FIELD_ERR_TYPE_MISMATCH;
@@ -1383,6 +1392,9 @@ jkii_field_err_t jkii_member_boolean(
 {
     M_JKII_ASSERT(member != NULL);
     M_JKII_ASSERT(out_value != NULL);
+    if (member->type == JKII_FIELD_TYPE_NULL) {
+        return JKII_FIELD_ERR_NULL;
+    }
     if (member->type != JKII_FIELD_TYPE_BOOLEAN ||
             _jkii_to_boolean(member->value, member->value_length, out_value) != 0) {
         return JKII_FIELD_ERR_TYPE_MISMATCH;
@@ -1631,6 +1643,87 @@ static size_t _jkii_utf8(unsigned long cp, char* out)
     return 4;
 }
 
+/* Decodes the character at str[*i], of which str_len - *i bytes are left:
+ * an escape, or a byte as it is, or with whole_utf8 the whole UTF-8 sequence
+ * a byte starts. Writes it into out, moves *i past it, and returns its
+ * length; or 0, with *i as it was, for what a string can't hold: '"', a byte
+ * below 0x20, an escape that isn't one, and `\u0000` unless nul is true. */
+static size_t _jkii_unescape_one(
+        const char* str,
+        size_t str_len,
+        size_t* i,
+        char out[4],
+        bool nul,
+        bool whole_utf8)
+{
+    size_t at = *i;
+    unsigned char c = (unsigned char)str[at];
+    if (c == '"' || c < 0x20) {
+        return 0;
+    }
+    if (c != '\\') {
+        size_t len = 1;
+        if (whole_utf8) {
+            len = c >= 0xf0 ? 4 : c >= 0xe0 ? 3 : c >= 0xc0 ? 2 : 1;
+            /* All there is, in a string not from jkii, which checks UTF-8. */
+            len = len < str_len - at ? len : str_len - at;
+        }
+        memcpy(out, &str[at], len);
+        *i = at + len;
+        return len;
+    }
+    if (str_len - at < 2) {
+        return 0;
+    }
+    if (str[at + 1] != 'u') {
+        switch (str[at + 1]) {
+            case '"':
+            case '\\':
+            case '/':
+                out[0] = str[at + 1];
+                break;
+            case 'b':
+                out[0] = '\b';
+                break;
+            case 'f':
+                out[0] = '\f';
+                break;
+            case 'n':
+                out[0] = '\n';
+                break;
+            case 'r':
+                out[0] = '\r';
+                break;
+            case 't':
+                out[0] = '\t';
+                break;
+            default:
+                return 0;
+        }
+        *i = at + 2;
+        return 1;
+    }
+    long unit = _jkii_unicode_escape(&str[at], str_len - at);
+    unsigned long cp = (unsigned long)unit;
+    // -1 isn't an escape, and 0 would end a C string. A low surrogate can only
+    // come second.
+    if (unit < 0 || (unit == 0 && !nul) || (unit >= 0xdc00 && unit <= 0xdfff)) {
+        return 0;
+    }
+    at += 6;
+    if (unit >= 0xd800 && unit <= 0xdbff) {
+        long low = _jkii_unicode_escape(&str[at], str_len - at);
+        if (low < 0xdc00 || low > 0xdfff) {
+            return 0;
+        }
+        at += 6;
+        cp = 0x10000 + (((unsigned long)unit - 0xd800) << 10) +
+            ((unsigned long)low - 0xdc00);
+    }
+    *i = at;
+    return _jkii_utf8(cp, out);
+}
+
 int jkii_unescape_str(const char* str, size_t str_len, char* buff, size_t buff_size) {
     size_t pos = 0;
     size_t i = 0;
@@ -1639,61 +1732,10 @@ int jkii_unescape_str(const char* str, size_t str_len, char* buff, size_t buff_s
         return -1;
     }
     while (i < str_len) {
-        unsigned char c = (unsigned char)str[i];
         char out[4];
-        size_t out_len = 1;
-        if (c == '"' || c < 0x20) {
+        size_t out_len = _jkii_unescape_one(str, str_len, &i, out, false, false);
+        if (out_len == 0) {
             return _jkii_escape_fail(buff, buff_size);
-        } else if (c != '\\') {
-            out[0] = (char)c;
-            i += 1;
-        } else if (str_len - i < 2) {
-            return _jkii_escape_fail(buff, buff_size);
-        } else if (str[i + 1] != 'u') {
-            switch (str[i + 1]) {
-                case '"':
-                case '\\':
-                case '/':
-                    out[0] = str[i + 1];
-                    break;
-                case 'b':
-                    out[0] = '\b';
-                    break;
-                case 'f':
-                    out[0] = '\f';
-                    break;
-                case 'n':
-                    out[0] = '\n';
-                    break;
-                case 'r':
-                    out[0] = '\r';
-                    break;
-                case 't':
-                    out[0] = '\t';
-                    break;
-                default:
-                    return _jkii_escape_fail(buff, buff_size);
-            }
-            i += 2;
-        } else {
-            long unit = _jkii_unicode_escape(&str[i], str_len - i);
-            unsigned long cp = (unsigned long)unit;
-            // -1 isn't an escape, and 0 would end the string. A low
-            // surrogate can only come second.
-            if (unit <= 0 || (unit >= 0xdc00 && unit <= 0xdfff)) {
-                return _jkii_escape_fail(buff, buff_size);
-            }
-            i += 6;
-            if (unit >= 0xd800 && unit <= 0xdbff) {
-                long low = _jkii_unicode_escape(&str[i], str_len - i);
-                if (low < 0xdc00 || low > 0xdfff) {
-                    return _jkii_escape_fail(buff, buff_size);
-                }
-                i += 6;
-                cp = 0x10000 + (((unsigned long)unit - 0xd800) << 10) +
-                    ((unsigned long)low - 0xdc00);
-            }
-            out_len = _jkii_utf8(cp, out);
         }
         // pos < buff_size throughout, so this cannot wrap. The + 1 keeps
         // room for the terminator.
@@ -1723,3 +1765,257 @@ jkii_parse_err_t jkii_validate_root_object(
     }
     return JKII_ERR_OK;
 }
+
+jkii_field_err_t jkii_member_text(
+        const jkii_member_t* member,
+        char* buff,
+        size_t buff_size)
+{
+    M_JKII_ASSERT(member != NULL);
+    if (buff_size > 0) {
+        buff[0] = '\0';
+    }
+    switch (member->type) {
+        case JKII_FIELD_TYPE_STRING:
+            return jkii_member_string(member, buff, buff_size);
+        case JKII_FIELD_TYPE_NULL:
+            return JKII_FIELD_ERR_NULL;
+        case JKII_FIELD_TYPE_OBJECT:
+        case JKII_FIELD_TYPE_ARRAY:
+            return JKII_FIELD_ERR_TYPE_MISMATCH;
+        default:
+            /* A number, true or false, as written: JKII_FIELD_TYPE_ANY too,
+             * for a number longer than jkii reads. */
+            if (member->value_length >= buff_size) {
+                return JKII_FIELD_ERR_COPY;
+            }
+            memcpy(buff, member->value, member->value_length);
+            buff[member->value_length] = '\0';
+            return JKII_FIELD_ERR_OK;
+    }
+}
+
+jkii_field_err_t jkii_member_string_trunc(
+        const jkii_member_t* member,
+        char* buff,
+        size_t buff_size,
+        jkii_boolean_t* out_truncated)
+{
+    size_t pos = 0;
+    size_t i = 0;
+    M_JKII_ASSERT(member != NULL);
+    if (out_truncated != NULL) {
+        *out_truncated = JKII_FALSE;
+    }
+    if (buff_size > 0) {
+        buff[0] = '\0';
+    }
+    if (member->type == JKII_FIELD_TYPE_NULL) {
+        return JKII_FIELD_ERR_NULL;
+    }
+    if (member->type != JKII_FIELD_TYPE_STRING) {
+        return JKII_FIELD_ERR_TYPE_MISMATCH;
+    }
+    if (buff_size == 0) {
+        return JKII_FIELD_ERR_COPY;
+    }
+    while (i < member->value_length) {
+        char out[4];
+        size_t out_len = _jkii_unescape_one(member->value, member->value_length, &i,
+                out, true, true);
+        if (out_len == 0) {
+            /* Not a string jkii gave. */
+            buff[0] = '\0';
+            return JKII_FIELD_ERR_COPY;
+        }
+        /* The rest isn't read: what didn't fit, or a `\u0000`. */
+        if (buff_size - pos < out_len + 1 || (out_len == 1 && out[0] == '\0')) {
+            if (out_truncated != NULL) {
+                *out_truncated = JKII_TRUE;
+            }
+            break;
+        }
+        memcpy(&buff[pos], out, out_len);
+        pos += out_len;
+    }
+    buff[pos] = '\0';
+    return JKII_FIELD_ERR_OK;
+}
+
+/* Whether key, as written, escapes and all, is name once unescaped. */
+static bool _jkii_key_is(const char* key, size_t key_len, const char* name, size_t name_len)
+{
+    size_t i = 0;
+    size_t pos = 0;
+    while (i < key_len) {
+        char out[4];
+        size_t out_len = _jkii_unescape_one(key, key_len, &i, out, true, false);
+        if (out_len == 0 || name_len - pos < out_len ||
+                memcmp(&name[pos], out, out_len) != 0) {
+            return false;
+        }
+        pos += out_len;
+    }
+    return pos == name_len;
+}
+
+jkii_parse_err_t jkii_find_name(
+        const char* json_string,
+        size_t json_string_len,
+        const char* name,
+        size_t name_len,
+        jkii_member_t* out_member)
+{
+    _jkii_value_t root;
+    size_t start = 0;
+    size_t next = 0;
+    JSONPair_t pair;
+    int64_t integer = 0;
+    jkii_primitive_err_t integer_res = JKII_PRIMITIVE_ERR_INVALID;
+
+    M_JKII_ASSERT(json_string != NULL);
+    M_JKII_ASSERT(name != NULL || name_len == 0);
+    M_JKII_ASSERT(out_member != NULL);
+
+    jkii_parse_err_t res = _jkii_root(json_string, json_string_len, &root);
+    if (res != JKII_ERR_OK) {
+        return res;
+    }
+    if (root.type != JSONObject) {
+        return JKII_ERR_ROOT_TYPE;
+    }
+    while (JSON_Iterate(root.ptr, root.len, &start, &next, &pair) == JSONSuccess) {
+        if (_jkii_key_is(pair.key, pair.keyLength, name != NULL ? name : "", name_len)) {
+            out_member->key = pair.key;
+            out_member->key_length = pair.keyLength;
+            out_member->value = pair.value;
+            out_member->value_length = pair.valueLength;
+            out_member->type = _jkii_to_jkii_field_type(pair.jsonType, pair.value,
+                    pair.valueLength, &integer, &integer_res);
+            return JKII_ERR_OK;
+        }
+    }
+    return JKII_ERR_NOT_FOUND;
+}
+
+/* The value a path leads to, for the finding readers: JKII_FIELD_ERR_OK with
+ * it in found, or why there is none to read. out_member, if not NULL, is set
+ * to it whenever there is one, null included. */
+static jkii_field_err_t _jkii_find_value(
+        const char* json_string,
+        size_t json_string_len,
+        const char* path,
+        unsigned int flags,
+        jkii_member_t* found,
+        jkii_member_t* out_member)
+{
+    switch (jkii_find_member(json_string, json_string_len, path, found)) {
+        case JKII_ERR_OK:
+            break;
+        case JKII_ERR_NOT_FOUND:
+            return JKII_FIELD_ERR_NOT_FOUND;
+        default:
+            return JKII_FIELD_ERR_INVALID_INPUT;
+    }
+    if (out_member != NULL) {
+        *out_member = *found;
+    }
+    if (found->type == JKII_FIELD_TYPE_NULL) {
+        return (flags & JKII_READ_NULL_AS_ABSENT) != 0 ?
+            JKII_FIELD_ERR_NOT_FOUND : JKII_FIELD_ERR_NULL;
+    }
+    return JKII_FIELD_ERR_OK;
+}
+
+/* found, or with JKII_READ_UNQUOTE what its string holds. */
+static const jkii_member_t* _jkii_read_as(
+        const jkii_member_t* found,
+        unsigned int flags,
+        jkii_member_t* unquoted)
+{
+    return (flags & JKII_READ_UNQUOTE) != 0 ? jkii_member_unquote(found, unquoted) : found;
+}
+
+jkii_field_err_t jkii_find_integer(
+        const char* json_string,
+        size_t json_string_len,
+        const char* path,
+        int64_t min,
+        int64_t max,
+        unsigned int flags,
+        int64_t* out_value,
+        jkii_member_t* out_member)
+{
+    jkii_member_t found;
+    jkii_member_t unquoted;
+    const jkii_member_t* value = NULL;
+    jkii_field_err_t res = _jkii_find_value(json_string, json_string_len, path, flags,
+            &found, out_member);
+    if (res != JKII_FIELD_ERR_OK) {
+        return res;
+    }
+    value = _jkii_read_as(&found, flags, &unquoted);
+    if ((flags & JKII_READ_INTEGER_AS_WRITTEN) != 0 &&
+            value->type != JKII_FIELD_TYPE_INTEGER && value->type != JKII_FIELD_TYPE_LONG) {
+        return JKII_FIELD_ERR_TYPE_MISMATCH;
+    }
+    return jkii_member_integer(value, min, max, out_value);
+}
+
+jkii_field_err_t jkii_find_double(
+        const char* json_string,
+        size_t json_string_len,
+        const char* path,
+        unsigned int flags,
+        double* out_value,
+        jkii_member_t* out_member)
+{
+    jkii_member_t found;
+    jkii_member_t unquoted;
+    jkii_field_err_t res = _jkii_find_value(json_string, json_string_len, path, flags,
+            &found, out_member);
+    if (res != JKII_FIELD_ERR_OK) {
+        return res;
+    }
+    return jkii_member_double(_jkii_read_as(&found, flags, &unquoted), out_value);
+}
+
+jkii_field_err_t jkii_find_boolean(
+        const char* json_string,
+        size_t json_string_len,
+        const char* path,
+        unsigned int flags,
+        jkii_boolean_t* out_value,
+        jkii_member_t* out_member)
+{
+    jkii_member_t found;
+    jkii_member_t unquoted;
+    jkii_field_err_t res = _jkii_find_value(json_string, json_string_len, path, flags,
+            &found, out_member);
+    if (res != JKII_FIELD_ERR_OK) {
+        return res;
+    }
+    return jkii_member_boolean(_jkii_read_as(&found, flags, &unquoted), out_value);
+}
+
+jkii_field_err_t jkii_find_string(
+        const char* json_string,
+        size_t json_string_len,
+        const char* path,
+        unsigned int flags,
+        char* buff,
+        size_t buff_size,
+        jkii_member_t* out_member)
+{
+    jkii_member_t found;
+    jkii_field_err_t res;
+    if (buff_size > 0) {
+        buff[0] = '\0';
+    }
+    res = _jkii_find_value(json_string, json_string_len, path, flags, &found, out_member);
+    if (res != JKII_FIELD_ERR_OK) {
+        return res;
+    }
+    return jkii_member_string(&found, buff, buff_size);
+}
+
