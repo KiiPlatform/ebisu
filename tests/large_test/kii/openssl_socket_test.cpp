@@ -5,6 +5,7 @@
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -45,17 +46,35 @@ EVP_PKEY* generate_key()
 }
 
 // Valid from from seconds from now, until to seconds from now.
-X509* issue_certificate(EVP_PKEY* key, long from = 0, long to = 3600)
+// For localhost, in its subjectAltName as well as its commonName, unless
+// alt_name is false: OpenSSL 4.1 and later match a host against the first
+// alone.
+X509* issue_certificate(EVP_PKEY* key, long from = 0, long to = 3600, bool alt_name = true)
 {
     X509* cert = X509_new();
+    REQUIRE( X509_set_version(cert, 2) == 1 );
     ASN1_INTEGER_set(X509_get_serialNumber(cert), 1);
     X509_gmtime_adj(X509_get_notBefore(cert), from);
     X509_gmtime_adj(X509_get_notAfter(cert), to);
     X509_set_pubkey(cert, key);
-    X509_NAME* name = X509_get_subject_name(cert);
-    X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
-            (const unsigned char*)"localhost", -1, -1, 0);
-    X509_set_issuer_name(cert, name);
+    // A name of its own, which X509_set_subject_name() copies: OpenSSL 4
+    // gives the certificate's as const.
+    X509_NAME* name = X509_NAME_new();
+    REQUIRE( X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char*)"localhost", -1, -1, 0) == 1 );
+    REQUIRE( X509_set_subject_name(cert, name) == 1 );
+    REQUIRE( X509_set_issuer_name(cert, name) == 1 );
+    X509_NAME_free(name);
+    if (alt_name) {
+        X509V3_CTX ctx;
+        X509V3_set_ctx_nodb(&ctx);
+        X509V3_set_ctx(&ctx, cert, cert, nullptr, nullptr, 0);
+        X509_EXTENSION* san = X509V3_EXT_conf_nid(nullptr, &ctx, NID_subject_alt_name,
+                const_cast<char*>("DNS:localhost"));
+        REQUIRE( san != nullptr );
+        REQUIRE( X509_add_ext(cert, san, -1) == 1 );
+        X509_EXTENSION_free(san);
+    }
     REQUIRE( X509_sign(cert, key, EVP_sha256()) > 0 );
     return cert;
 }
@@ -523,12 +542,12 @@ struct PlainServer {
 struct CaFile {
     char path[64];
 
-    CaFile() {
+    explicit CaFile(X509* cert = server_certificate()) {
         strcpy(path, "/tmp/ebisu_ca_XXXXXX");
         int fd = mkstemp(path);
         REQUIRE( fd >= 0 );
         FILE* f = fdopen(fd, "w");
-        REQUIRE( PEM_write_X509(f, server_certificate()) == 1 );
+        REQUIRE( PEM_write_X509(f, cert) == 1 );
         fclose(f);
     }
 
@@ -1742,5 +1761,31 @@ TEST_CASE( "The OpenSSL socket says when the server has no TLS version or suite 
         CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_VERIFY );
         CHECK_FALSE( logged(log, EBISU_LOG_ERROR, "may take only") );
     }
+    ebisu_openssl_tls_free(&tls);
+}
+
+// OpenSSL 4.1 matches the host against the certificate's DNS subjectAltNames
+// alone. Earlier versions take its commonName for one that has none.
+TEST_CASE( "The OpenSSL socket takes a host's commonName for its name only before OpenSSL 4.1" ) {
+    static X509* cn_only = issue_certificate(server_key(), 0, 3600, false);
+    LocalServer server;
+    REQUIRE( server.listening );
+    REQUIRE( SSL_CTX_use_certificate(server.ctx, cn_only) == 1 );
+    CaFile ca(cn_only);
+    ebisu_openssl_tls_t tls;
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_init(&sock, 5, 5);
+    ebisu_openssl_socket_set_tls(&sock, &tls);
+    long detail = 0;
+#if (OPENSSL_VERSION_NUMBER >= 0x40100000L)
+    CHECK( connect_to(&sock, server) == EBISU_SOCK_FAIL );
+    CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_VERIFY );
+    CHECK( detail == X509_V_ERR_HOSTNAME_MISMATCH );
+#else
+    CHECK( connect_to(&sock, server) == EBISU_SOCK_OK );
+    (void)detail;
+#endif
+    CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
     ebisu_openssl_tls_free(&tls);
 }

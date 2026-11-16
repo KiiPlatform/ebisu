@@ -66,7 +66,8 @@ void add_extension(X509* cert, X509V3_CTX* ctx, int nid, const std::string& valu
 // A certificate for name, valid from not_before to not_after, issued by the
 // issuer with its key, or self-signed without one: a CA's, or a server's.
 X509* issue(EVP_PKEY* key, const std::string& name, bool ca, time_t not_before,
-        time_t not_after, X509* issuer = nullptr, EVP_PKEY* issuer_key = nullptr)
+        time_t not_after, X509* issuer = nullptr, EVP_PKEY* issuer_key = nullptr,
+        bool alt_name = true)
 {
     static long serial = 1;
     X509* cert = X509_new();
@@ -75,10 +76,15 @@ X509* issue(EVP_PKEY* key, const std::string& name, bool ca, time_t not_before,
     REQUIRE( ASN1_TIME_set(X509_get_notBefore(cert), not_before) != nullptr );
     REQUIRE( ASN1_TIME_set(X509_get_notAfter(cert), not_after) != nullptr );
     REQUIRE( X509_set_pubkey(cert, key) == 1 );
-    X509_NAME* subject = X509_get_subject_name(cert);
-    X509_NAME_add_entry_by_txt(subject, "CN", MBSTRING_ASC,
-            (const unsigned char*)name.c_str(), -1, -1, 0);
-    X509_set_issuer_name(cert, issuer != nullptr ? X509_get_subject_name(issuer) : subject);
+    // A name of its own, which X509_set_subject_name() copies: OpenSSL 4
+    // gives the certificate's as const.
+    X509_NAME* subject = X509_NAME_new();
+    REQUIRE( X509_NAME_add_entry_by_txt(subject, "CN", MBSTRING_ASC,
+            (const unsigned char*)name.c_str(), -1, -1, 0) == 1 );
+    REQUIRE( X509_set_subject_name(cert, subject) == 1 );
+    REQUIRE( X509_set_issuer_name(cert,
+                issuer != nullptr ? X509_get_subject_name(issuer) : subject) == 1 );
+    X509_NAME_free(subject);
     X509V3_CTX ctx;
     X509V3_set_ctx_nodb(&ctx);
     X509V3_set_ctx(&ctx, issuer != nullptr ? issuer : cert, cert, nullptr, nullptr, 0);
@@ -87,7 +93,9 @@ X509* issue(EVP_PKEY* key, const std::string& name, bool ca, time_t not_before,
         add_extension(cert, &ctx, NID_key_usage, "critical,keyCertSign,cRLSign");
     } else {
         add_extension(cert, &ctx, NID_basic_constraints, "CA:FALSE");
-        add_extension(cert, &ctx, NID_subject_alt_name, "DNS:" + name);
+        if (alt_name) {
+            add_extension(cert, &ctx, NID_subject_alt_name, "DNS:" + name);
+        }
         add_extension(cert, &ctx, NID_ext_key_usage, "serverAuth");
     }
     REQUIRE( X509_sign(cert, issuer_key != nullptr ? issuer_key : key, EVP_sha256()) > 0 );
@@ -965,4 +973,24 @@ TEST_CASE( "The mbedTLS socket says when the server has no TLS version or suite 
         CHECK( client.error() == EBISU_SOCK_ERROR_VERIFY );
         CHECK_FALSE( client.logger.has("may take only") );
     }
+}
+
+// mbedTLS matches the host against a certificate's subjectAltNames, and its
+// commonName when it has none, as OpenSSL did before 4.1.
+TEST_CASE( "The mbedTLS socket takes a host's commonName for its name without a subjectAltName" ) {
+    Config config;
+    X509* cn_only = issue(pki().key, "localhost", false, pki().now - DAY, pki().now + DAY,
+            pki().ca, pki().ca_key, false);
+    TlsServer server(cn_only, echo);
+    Client client(&config.tls);
+    REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+    client.send("hello");
+    CHECK( client.recv(64) == "hello" );
+
+    // And still refuses another name.
+    TlsServer other(issue(pki().key, "other.example", false, pki().now - DAY,
+                pki().now + DAY, pki().ca, pki().ca_key, false), nothing);
+    Client refused(&config.tls);
+    CHECK( refused.connect(other.port) == EBISU_SOCK_FAIL );
+    CHECK( refused.error() == EBISU_SOCK_ERROR_VERIFY );
 }
