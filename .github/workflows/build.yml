@@ -120,7 +120,9 @@ jobs:
   # The small tests on 64-bit, and on 32-bit x86, where int and long are both
   # 32 bits as on the ARM Cortex-M targets the samples are for; code that
   # assumes a 64-bit long, or prints a size_t as one, only shows up there.
-  # Each in a plain debug build and under ASan + UBSan.
+  # On 32-bit, in a plain debug build and under ASan + UBSan; on 64-bit, under
+  # ASan + UBSan alone, as the build job above runs them in a plain debug build,
+  # under valgrind.
   #
   # And on 64-bit Windows, which is LLP64: long is 32 bits there while pointers
   # and size_t are 64, a combination neither of the others has, so code that
@@ -129,9 +131,9 @@ jobs:
   # Windows runner, so that it builds with the same CMake presets and GCC
   # warnings as the rest. Its preset builds the win32 sample too, and its small
   # tests include the sample's TLS test, which runs against servers on
-  # 127.0.0.1 and so stays within the runner like the others. The windows job
-  # runs that one on Windows as well, and the msvc job builds all of ebisu on
-  # Windows, with Visual Studio's compiler.
+  # 127.0.0.1 and so stays within the runner like the others. The msvc job
+  # runs that one on Windows as well, and builds all of ebisu there, with
+  # Visual Studio's compiler.
   #
   # ASan and UBSan catch a class of bug valgrind structurally cannot: overruns
   # of globals and string literals live in .rodata, not on the heap or stack.
@@ -143,8 +145,7 @@ jobs:
   # the tests that check that a library built so logs nothing run only here.
   #
   # Small tests only: they are deterministic and need no credentials, so these
-  # jobs stay fast and never touch the live backend. The build job above runs
-  # them under valgrind as well, on 64-bit.
+  # jobs stay fast and never touch the live backend.
   small:
     name: ${{ matrix.name || format('small ({0}-bit, {1})', matrix.bits, matrix.variant) }}
     runs-on: ubuntu-latest
@@ -153,13 +154,7 @@ jobs:
       # One width or platform failing says nothing about another.
       fail-fast: false
       matrix:
-        bits: [64, 32]
-        variant: [debug, asan]
         include:
-          - bits: 64
-            variant: debug
-            preset: debug
-            test-preset: small
           - bits: 64
             variant: asan
             preset: asan
@@ -172,10 +167,8 @@ jobs:
             variant: asan
             preset: asan-m32
             test-preset: asan-small-m32
-          # A cell of its own rather than a third value of bits or variant: it
-          # is one debug build, without ASan, which GCC does not provide for
-          # mingw-w64. The variant still has to be one the matrix does not
-          # list, or this entry would be merged into the four cells above.
+          # One debug build, without ASan, which GCC does not provide for
+          # mingw-w64.
           - name: small (64-bit Windows, mingw-w64 + wine)
             bits: 64
             variant: mingw
@@ -245,62 +238,19 @@ jobs:
         # passing.
         run: ctest --preset ${{ matrix.test-preset }}
 
-  # platform's Schannel port's test, tests/schannel/tls_test.py, on Windows
-  # itself, where the small job runs it under wine: with Windows' Schannel,
-  # Winsock, DNS client and root store. Wine's Schannel is GnuTLS's underneath,
-  # and its GetAddrInfoExCancel() does nothing, so only here does a lookup the
-  # port gives up on get cancelled. The test program is cross-compiled with the
-  # mingw preset, as in the small job, and the script runs it with --windows.
-  windows-build:
-    name: Schannel port's test, built for Windows
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-      - name: Fetch tags
-        run: git fetch --unshallow --tags --force
-      # python3 and openssl, without which the test program is left out of
-      # the build, as in the small job.
-      - name: Setup build env
-        uses: ./.github/actions/apt-install
-        with:
-          packages: cmake g++-mingw-w64-x86-64-posix python3 openssl
-          options: --no-install-recommends
-      - name: configure
-        run: cmake --preset mingw
-      - name: build
-        run: cmake --build --preset mingw --target schannel_socket_test
-      - name: Upload the test program
-        uses: actions/upload-artifact@v7
-        with:
-          name: schannel-socket-test
-          path: build/mingw/tests/schannel/schannel_socket_test.exe
-          retention-days: 1 # only the windows job needs it
-
-  windows:
-    name: Schannel port (Windows)
-    needs: windows-build
-    runs-on: windows-latest
-    timeout-minutes: 20
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-      - name: Download the test program
-        uses: actions/download-artifact@v8
-        with:
-          name: schannel-socket-test
-      # The runner image has Python and the openssl command.
-      - name: test
-        run: python tests/schannel/tls_test.py schannel_socket_test.exe --windows
-
   # All of ebisu built on Windows itself, with Visual Studio's compiler, which
   # is not GCC: it has no variable length arrays, in C or in C++, nor a C99
   # mode, and a DLL exports nothing it isn't told to. The msvc preset names no
   # generator, so CMake takes the newest Visual Studio the runner has. Then the
-  # small tests, the Schannel port's test with --windows, as in the windows
-  # job, the large tests, as in the large job, over the Schannel port, and the
-  # broker tests, as in the broker job, with Mosquitto on the runner itself.
+  # small tests; platform's Schannel port's test, tests/schannel/tls_test.py,
+  # with --windows; the large tests, as in the large job, over the Schannel
+  # port; and the broker tests, as in the broker job, with Mosquitto on the
+  # runner itself.
+  #
+  # Only these run with Windows' own Schannel, Winsock, DNS client and root
+  # store. The small job runs the Schannel port's test under wine, whose
+  # Schannel is GnuTLS's underneath, and whose GetAddrInfoExCancel() does
+  # nothing, so only here does a lookup the port gives up on get cancelled.
   msvc:
     name: small, large and broker (64-bit Windows, MSVC)
     runs-on: windows-latest
@@ -588,17 +538,15 @@ jobs:
       - name: build, install and build against it
         run: tests/samples/package_consumer.sh
 
-  # The large tests, against the live Kii application the secrets name: on
-  # 64-bit Linux under valgrind, and on 64-bit Windows under wine, without
-  # valgrind, which cannot run a Windows program. On Windows the tests' sockets
-  # are the win32 sample's, Winsock and Schannel, so its TLS runs against the
-  # live server too.
+  # The large tests, against the live Kii application the secrets name, on
+  # 64-bit Linux under valgrind. The msvc job runs them on Windows itself, over
+  # the Schannel port, so its TLS runs against the live server too.
   #
   # The two run at once against the same application, as runs for different
   # branches already did. What the tests create they name by the microsecond;
   # otherwise they only log in, as the same identities.
   large:
-    name: ${{ matrix.name }}
+    name: large (64-bit, valgrind)
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -606,20 +554,6 @@ jobs:
       checks: write # for the JUnit report
     env:
       LIVE: ${{ secrets.CLIENT_ID != '' }}
-    strategy:
-      # One platform failing says nothing about the other.
-      fail-fast: false
-      matrix:
-        include:
-          - name: large (64-bit, valgrind)
-            platform: linux
-            preset: debug
-            # -T memcheck needs --test-dir; see the build job.
-            test: ctest --preset large --test-dir build/debug -T memcheck
-          - name: large (64-bit Windows, mingw-w64 + wine)
-            platform: mingw
-            preset: mingw
-            test: ctest --preset large-mingw
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -628,35 +562,15 @@ jobs:
       - name: Setup build env
         uses: ./.github/actions/apt-install
         with:
-          packages: g++ cmake git ${{ matrix.platform == 'linux' && 'libssl-dev valgrind' || '' }}
-      # As in the small job. Here the tests also check the server's certificate,
-      # with wine's crypt32, which needs a prefix wineboot has finished: one
-      # still being written refuses every certificate. wineserver -w waits for
-      # it.
-      - name: Install mingw-w64 and wine
-        if: matrix.platform == 'mingw'
-        uses: ./.github/actions/apt-install
-        with:
-          packages: g++-mingw-w64-x86-64-posix wine wine64
-          options: --no-install-recommends
-          update: false
-      - name: Setup wine
-        if: matrix.platform == 'mingw'
-        env:
-          WINEDEBUG: -all
-        run: |
-          # As in the small job.
-          command -v wineserver > /dev/null || sudo ln -s "$(dpkg -L wine64 | grep -m1 '/wineserver$')" /usr/local/bin/wineserver
-          wineboot --init
-          wineserver -w
+          packages: g++ cmake git libssl-dev valgrind
       # The large tests are configured when these two are set.
       - name: configure
         env:
           APP_ID: ${{ secrets.APP_ID }}
           DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
-        run: cmake --preset ${{ matrix.preset }} -DEBISU_TEST_JUNIT=ON
+        run: cmake --preset debug -DEBISU_TEST_JUNIT=ON
       - name: build
-        run: cmake --build --preset ${{ matrix.preset }}
+        run: cmake --build --preset debug
       # Dependabot's runs and forks' get no secrets, so no large test is
       # configured and ctest fails for want of any. On master it still does:
       # losing the secrets must not look like passing.
@@ -667,13 +581,13 @@ jobs:
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
         # The large presets retry once: these talk to a live backend and are not
         # deterministic, and without a retry a transient error lands on master
-        # as a red build.
-        run: ${{ matrix.test }}
+        # as a red build. -T memcheck needs --test-dir; see the build job.
+        run: ctest --preset large --test-dir build/debug -T memcheck
       - name: valgrind's findings
         # ctest -T memcheck fails on them but prints only their kinds. These
         # logs hold valgrind's own reports and stack traces, none of the tests'
         # output.
-        if: failure() && matrix.platform == 'linux'
+        if: failure()
         run: |
           for f in build/debug/Testing/Temporary/MemoryChecker.*.log; do
             if [ -s "$f" ]; then echo "== $f"; cat "$f"; fi
@@ -683,35 +597,21 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
-          check_name: JUnit Test Report (${{ matrix.name }})
+          check_name: JUnit Test Report (large (64-bit, valgrind))
 
   # The MQTT task against a Mosquitto broker of the run's own, in a container:
   # what Kii Cloud's broker can't be made to do, or does only now and then. On
-  # 64-bit Linux under valgrind, over platform's OpenSSL port, and on 64-bit
-  # Windows under wine, over its Schannel port. The msvc job runs them on
-  # Windows itself. They need no secrets, so forks' and Dependabot's runs have
-  # them too. See tests/broker_test/with_broker.py.
+  # 64-bit Linux under valgrind, over platform's OpenSSL port. The msvc job runs
+  # them on Windows itself, over its Schannel port. They need no secrets, so
+  # forks' and Dependabot's runs have them too. See
+  # tests/broker_test/with_broker.py.
   broker:
-    name: ${{ matrix.name }}
+    name: broker (Mosquitto 2.1, valgrind)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       contents: read
       checks: write # for the JUnit report
-    strategy:
-      # As in the large job.
-      fail-fast: false
-      matrix:
-        include:
-          - name: broker (Mosquitto 2.1, valgrind)
-            platform: linux
-            preset: debug
-            # -T memcheck needs --test-dir; see the build job.
-            test: ctest --preset broker --test-dir build/debug -T memcheck
-          - name: broker (Mosquitto 2.1, mingw-w64 + wine)
-            platform: mingw
-            preset: mingw
-            test: ctest --preset broker-mingw
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -720,34 +620,17 @@ jobs:
       - name: Setup build env
         uses: ./.github/actions/apt-install
         with:
-          packages: g++ cmake git ${{ matrix.platform == 'linux' && 'libssl-dev valgrind' || '' }}
-      # As in the large job. The tests add the run's CA to this prefix's root
-      # store, and remove it when they end.
-      - name: Install mingw-w64 and wine
-        if: matrix.platform == 'mingw'
-        uses: ./.github/actions/apt-install
-        with:
-          packages: g++-mingw-w64-x86-64-posix wine wine64
-          options: --no-install-recommends
-          update: false
-      - name: Setup wine
-        if: matrix.platform == 'mingw'
-        env:
-          WINEDEBUG: -all
-        run: |
-          # Ubuntu 26.04's wine leaves wineserver out of the PATH.
-          command -v wineserver > /dev/null || sudo ln -s "$(dpkg -L wine64 | grep -m1 '/wineserver$')" /usr/local/bin/wineserver
-          wineboot --init
-          wineserver -w
+          packages: g++ cmake git libssl-dev valgrind
       - name: configure
-        run: cmake --preset ${{ matrix.preset }} -DEBISU_TEST_BROKER=ON -DEBISU_TEST_JUNIT=ON
+        run: cmake --preset debug -DEBISU_TEST_BROKER=ON -DEBISU_TEST_JUNIT=ON
       - name: build
-        run: cmake --build --preset ${{ matrix.preset }} --target broker_test_kii
+        run: cmake --build --preset debug --target broker_test_kii
       - name: test (broker)
-        run: tests/broker_test/with_broker.py ${{ matrix.test }}
+        # -T memcheck needs --test-dir; see the build job.
+        run: tests/broker_test/with_broker.py ctest --preset broker --test-dir build/debug -T memcheck
       - name: valgrind's findings
         # As in the large job.
-        if: failure() && matrix.platform == 'linux'
+        if: failure()
         run: |
           for f in build/debug/Testing/Temporary/MemoryChecker.*.log; do
             if [ -s "$f" ]; then echo "== $f"; cat "$f"; fi
@@ -757,7 +640,7 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
-          check_name: JUnit Test Report (${{ matrix.name }})
+          check_name: JUnit Test Report (broker (Mosquitto 2.1, valgrind))
 
   # The embedded samples (GT202, CC3200) are built with their vendors'
   # tools, from the files their Makefiles copy, and not with CMake. Those SDKs
