@@ -2,6 +2,7 @@
 #include "kii_impl.h"
 #include "kii_session_impl.h"
 #include <ebisu_mem.h>
+#include <ebisu_str.h>
 #include <string.h>
 
 const char _APP_KEY_HEADER[] = "X-Kii-Appkey: k";
@@ -49,9 +50,70 @@ size_t _cb_read_buff(char *buffer, size_t size, void *userdata)
 
 size_t _cb_write_header(char *buffer, size_t size, void *userdata)
 {
-    char* etag_buff = ((kii_t*)userdata)->_etag;
-    _parse_etag(buffer, size, etag_buff, KII_ETAG_MAX_SIZE);
+    kii_t* kii = (kii_t*)userdata;
+    _parse_etag(buffer, size, kii->_etag, KII_ETAG_MAX_SIZE);
+    _kii_read_resp_header(kii, buffer, size);
     return size;
+}
+
+void _kii_clear_resp_headers(kii_t* kii)
+{
+    kii->_etag[0] = '\0';
+    kii->_resp_kii_error = false;
+    kii->_resp_step_count = -1;
+    kii->_resp_environment_version = -1;
+}
+
+/* A count, as X-Step-Count and X-Environment-Version give them: digits only,
+ * or -1. */
+static int64_t _header_count(ebisu_span_t value)
+{
+    uint64_t count = 0;
+    if (ebisu_parse_uint(value.ptr, value.len, INT64_MAX, &count) != EBISU_PARSE_OK) {
+        return -1;
+    }
+    return (int64_t)count;
+}
+
+/* Whether a media type is application/vnd.kii.<name>+json, which Kii gives
+ * its errors, as application/vnd.kii.ServerCodeVersionNotFoundException+json:
+ * types and subtypes are compared without case, and parameters ignored. */
+static bool _is_kii_error_type(ebisu_span_t value)
+{
+    static const char prefix[] = "application/vnd.kii.";
+    static const char suffix[] = "+json";
+    const size_t prefix_len = sizeof(prefix) - 1;
+    const size_t suffix_len = sizeof(suffix) - 1;
+    ebisu_span_t type;
+    if (!ebisu_span_next(&value, ';', &type)) {
+        return false;
+    }
+    type = ebisu_span_trim(type);
+    if (type.len <= prefix_len + suffix_len) {
+        return false;
+    }
+    ebisu_span_t start = { type.ptr, prefix_len };
+    ebisu_span_t end = { type.ptr + type.len - suffix_len, suffix_len };
+    return ebisu_span_eq_nocase(start, prefix) && ebisu_span_eq_nocase(end, suffix);
+}
+
+void _kii_read_resp_header(kii_t* kii, const char* header, size_t header_len)
+{
+    ebisu_span_t rest = { header, header_len };
+    ebisu_span_t name;
+    // The status line, which khc gives first, has no colon, or none after a
+    // name these are.
+    if (!ebisu_span_next(&rest, ':', &name) || rest.ptr == NULL) {
+        return;
+    }
+    ebisu_span_t value = ebisu_span_trim(rest);
+    if (ebisu_span_eq_nocase(name, "Content-Type")) {
+        kii->_resp_kii_error = _is_kii_error_type(value);
+    } else if (ebisu_span_eq_nocase(name, "X-Step-Count")) {
+        kii->_resp_step_count = _header_count(value);
+    } else if (ebisu_span_eq_nocase(name, "X-Environment-Version")) {
+        kii->_resp_environment_version = _header_count(value);
+    }
 }
 
 void kii_init(kii_t* kii)
@@ -61,7 +123,7 @@ void kii_init(kii_t* kii)
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
     khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
-    kii->_etag[0] = '\0';
+    _kii_clear_resp_headers(kii);
     kii->_cb_slist_alloc = khc_cb_slist_alloc;
     kii->_cb_slist_free = khc_cb_slist_free;
     kii->_slist_alloc_data = NULL;
@@ -362,7 +424,7 @@ void _reset_buff(kii_t* kii) {
     kii->_resp_offset = 0;
     kii->_rw_buff_req_size = 0;
     kii->_rw_buff[0] = '\0';
-    kii->_etag[0] = '\0';
+    _kii_clear_resp_headers(kii);
 }
 
 /* khc treats its stream and response header buffers as per-request, so

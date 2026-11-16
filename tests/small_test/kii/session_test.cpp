@@ -1504,3 +1504,54 @@ TEST_CASE( "A renewal leaves no token in the buffer" ) {
     CHECK( buff.find("rt2-SECRET") == std::string::npos );
     CHECK( buff.find("at2-SECRET") == std::string::npos );
 }
+
+// What kii_get_server_code_result() reads is the last response's: neither the
+// refusal's nor the renewal's.
+TEST_CASE( "Server code refused for its token is read from the response sent again" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_author_t author = make_author("th.1", "at1", "rt1");
+    kii_session_set_author(&session, &author);
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+
+    auto with = [](std::string resp, const std::string& headers) {
+        const std::string type = "Content-Type: application/json\r\n";
+        resp.replace(resp.find(type), type.size(), headers);
+        return resp;
+    };
+    const std::string refused = with(REFUSED,
+            "Content-Type: application/vnd.kii.WrongTokenException+json\r\n"
+            "X-Step-Count: 1\r\nX-Environment-Version: 1\r\n");
+    kii_server_code_result_t result;
+
+    SECTION( "sent again" ) {
+        c.http.responses = {
+            refused,
+            with(refreshed("at2", "rt2", 3600), "X-Step-Count: 2\r\n"),
+            with(http_response(200, "{\"returnedValue\":\"ok\"}"),
+                    "Content-Type: application/json\r\nX-Environment-Version: 16\r\n"),
+        };
+        REQUIRE( kii_execute_server_code(&c.kii, "ep", "{\"a\":1}") == KII_ERR_OK );
+        REQUIRE( c.http.requests.size() == 3 );
+        CHECK( contains(c.http.requests[2], "Authorization: Bearer at2\r\n") );
+        REQUIRE( kii_get_server_code_result(&c.kii, &result) == KII_ERR_OK );
+        CHECK( result.status == 200 );
+        CHECK( std::string(result.returned_value.value, result.returned_value.value_length) == "ok" );
+        CHECK( result.step_count == -1 );
+        CHECK( result.environment_version == 16 );
+    }
+    SECTION( "not sent again, the renewal refused" ) {
+        c.http.responses = { refused, with(INVALID_GRANT, "X-Step-Count: 2\r\n") };
+        REQUIRE( kii_execute_server_code(&c.kii, "ep", "{\"a\":1}") == KII_ERR_RESP_STATUS );
+        REQUIRE( c.http.requests.size() == 2 );
+        // The refusal, without its body, as the request reports it.
+        REQUIRE( kii_get_server_code_result(&c.kii, &result) == KII_ERR_RESP_STATUS );
+        CHECK( result.status == 403 );
+        CHECK( result.body_length == 0 );
+        CHECK( result.error_code.value == nullptr );
+        CHECK( result.step_count == -1 );
+        CHECK( result.environment_version == -1 );
+    }
+}

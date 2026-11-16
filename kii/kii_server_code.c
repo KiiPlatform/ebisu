@@ -1,4 +1,5 @@
 #include <ebisu_str.h>
+#include <string.h>
 
 #include "kii.h"
 #include "kii_impl.h"
@@ -145,6 +146,59 @@ kii_code_t kii_execute_server_code_with_app_auth(
 {
     return _run_server_code(kii, version != NULL ? version : "current",
             endpoint_name, params, _SERVER_CODE_AS_APP, NULL);
+}
+/* Reads errorCode, message and details from the body of an error of Kii's
+ * own, if errorCode is a string. */
+static void _read_kii_error(
+        const char* body,
+        size_t body_length,
+        kii_server_code_result_t* out_result)
+{
+    jkii_member_t member;
+    if (jkii_find_member(body, body_length, "/errorCode", &member) != JKII_ERR_OK ||
+            member.type != JKII_FIELD_TYPE_STRING) {
+        return;
+    }
+    out_result->error_code = member;
+    if (jkii_find_member(body, body_length, "/message", &member) == JKII_ERR_OK &&
+            member.type == JKII_FIELD_TYPE_STRING) {
+        out_result->message = member;
+    }
+    if (jkii_find_member(body, body_length, "/details", &member) == JKII_ERR_OK) {
+        out_result->details = member;
+    }
+}
+
+kii_code_t kii_get_server_code_result(
+        kii_t* kii,
+        kii_server_code_result_t* out_result)
+{
+    memset(out_result, 0, sizeof(*out_result));
+    out_result->status = khc_get_status_code(&kii->_khc);
+    out_result->step_count = kii->_resp_step_count;
+    out_result->environment_version = kii->_resp_environment_version;
+    if (kii->_rw_buff != NULL) {
+        out_result->body = kii->_rw_buff + kii->_resp_offset;
+        out_result->body_length = kii->_rw_buff_written;
+    }
+    const char* body = out_result->body;
+    size_t body_length = out_result->body_length;
+
+    uint16_t status = out_result->status;
+    if (status == 0) {
+        return KII_ERR_FAIL;
+    }
+    if (200 <= status && status < 300) {
+        if (body == NULL || jkii_find_member(body, body_length,
+                    "/returnedValue", &out_result->returned_value) != JKII_ERR_OK) {
+            return KII_ERR_PARSE_JSON;
+        }
+        return KII_ERR_OK;
+    }
+    if (body != NULL && kii->_resp_kii_error) {
+        _read_kii_error(body, body_length, out_result);
+    }
+    return KII_ERR_RESP_STATUS;
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
 
