@@ -2,6 +2,7 @@
 #include <ebisu_time.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <string>
 
 namespace {
@@ -154,4 +155,105 @@ TEST_CASE( "ebisu_time_to_civil() and ebisu_time_from_civil() agree on every day
     CHECK( wrong == 0 );
     // 9999 years of 365.2425 days.
     CHECK( days == 3652059 );
+}
+
+TEST_CASE( "ebisu_time_is_leap_year() and ebisu_time_days_in_month() as the Gregorian calendar has them" ) {
+    CHECK( ebisu_time_is_leap_year(2024) );
+    CHECK( ebisu_time_is_leap_year(2000) );
+    CHECK( ebisu_time_is_leap_year(1600) );
+    CHECK_FALSE( ebisu_time_is_leap_year(2023) );
+    CHECK_FALSE( ebisu_time_is_leap_year(1900) );
+    CHECK_FALSE( ebisu_time_is_leap_year(2100) );
+    // Outside the conversions' range too.
+    CHECK( ebisu_time_is_leap_year(0) );
+    CHECK( ebisu_time_is_leap_year(-4) );
+    CHECK_FALSE( ebisu_time_is_leap_year(-100) );
+    CHECK( ebisu_time_is_leap_year(10000) );
+
+    const int lengths[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    for (int month = 1; month <= 12; ++month) {
+        INFO( month );
+        CHECK( ebisu_time_days_in_month(2023, month) == lengths[month - 1] );
+        CHECK( ebisu_time_days_in_month(2024, month) == (month == 2 ? 29 : lengths[month - 1]) );
+    }
+    CHECK( ebisu_time_days_in_month(1900, 2) == 28 );
+    CHECK( ebisu_time_days_in_month(2000, 2) == 29 );
+    CHECK( ebisu_time_days_in_month(2024, 0) == 0 );
+    CHECK( ebisu_time_days_in_month(2024, 13) == 0 );
+    CHECK( ebisu_time_days_in_month(2024, -1) == 0 );
+
+    // Every year of the conversions, as they take a date: its last day of
+    // each month, and not the day after.
+    int64_t wrong = 0;
+    for (int year = 1; year <= 9999; ++year) {
+        if (ebisu_time_is_leap_year(year) != is_leap(year)) {
+            ++wrong;
+        }
+        for (int month = 1; month <= 12; ++month) {
+            int64_t s = 0;
+            const int days = ebisu_time_days_in_month(year, month);
+            if (days != month_length(year, month) ||
+                    !ebisu_time_from_civil(year, month, days, 0, 0, 0, &s) ||
+                    ebisu_time_from_civil(year, month, days + 1, 0, 0, 0, &s)) {
+                ++wrong;
+            }
+        }
+    }
+    CHECK( wrong == 0 );
+}
+
+namespace {
+
+std::string iso8601(int64_t seconds, char sep, size_t size = EBISU_TIME_ISO8601_SIZE) {
+    std::string buff(size, '#');
+    bool ok = ebisu_time_format_iso8601(seconds, sep, size > 0 ? &buff[0] : nullptr, size);
+    std::string s = size > 0 ? std::string(buff.c_str()) : std::string();
+    return ok ? s : "false:" + s;
+}
+
+} // namespace
+
+TEST_CASE( "ebisu_time_format_iso8601() writes a UTC date and time as RFC 3339 has it" ) {
+    CHECK( iso8601(1793973201, 'T') == "2026-11-06T13:53:21Z" );
+    CHECK( iso8601(1793973201, ' ') == "2026-11-06 13:53:21Z" );
+    CHECK( iso8601(0, 'T') == "1970-01-01T00:00:00Z" );
+    CHECK( iso8601(-1, 'T') == "1969-12-31T23:59:59Z" );
+    CHECK( iso8601(1709251199, 'T') == "2024-02-29T23:59:59Z" );
+    CHECK( iso8601(-62135596800LL, 'T') == "0001-01-01T00:00:00Z" );
+    CHECK( iso8601(253402300799LL, 'T') == "9999-12-31T23:59:59Z" );
+    CHECK( strlen("9999-12-31T23:59:59Z") + 1 == EBISU_TIME_ISO8601_SIZE );
+    // A larger buffer, terminated after the 20 characters.
+    CHECK( iso8601(0, 'T', 64) == "1970-01-01T00:00:00Z" );
+}
+
+TEST_CASE( "ebisu_time_format_iso8601() writes nothing it can't write whole" ) {
+    CHECK( iso8601(-62135596801LL, 'T') == "false:" );
+    CHECK( iso8601(253402300800LL, 'T') == "false:" );
+    CHECK( iso8601(0, 'T', EBISU_TIME_ISO8601_SIZE - 1) == "false:" );
+    CHECK( iso8601(0, 'T', 1) == "false:" );
+    CHECK( iso8601(0, 'T', 0) == "false:" );
+    CHECK( iso8601(0, '\0') == "false:" );
+}
+
+TEST_CASE( "ebisu_time_format_iso8601() agrees with ebisu_time_to_civil() on every day" ) {
+    int64_t wrong = 0;
+    std::string first_wrong;
+    for (Day d; d.year <= 9999; d.next()) {
+        const int64_t s = d.since_epoch * 86400 +
+            (d.since_epoch * 7 % 24 + 24) % 24 * 3600 +
+            (d.since_epoch * 13 % 60 + 60) % 60 * 60 + (d.since_epoch * 17 % 60 + 60) % 60;
+        ebisu_civil_time_t c;
+        char expected[64];
+        if (!ebisu_time_to_civil(s, &c)) {
+            ++wrong;
+            continue;
+        }
+        snprintf(expected, sizeof(expected), "%04d-%02d-%02dT%02d:%02d:%02dZ", c.year,
+                c.month, c.day, c.hour, c.minute, c.second);
+        if (iso8601(s, 'T') != expected && wrong++ == 0) {
+            first_wrong = expected;
+        }
+    }
+    INFO( first_wrong );
+    CHECK( wrong == 0 );
 }

@@ -43,7 +43,9 @@ set on.
 - **Dates** (`ebisu_time.h`): a UTC date and time of the Gregorian calendar to
   seconds since the epoch and back, from year 1 to 9999, as `timegm()` and
   `gmtime()` would but without the C library, for a certificate's dates or an
-  ISO 8601 timestamp.
+  ISO 8601 timestamp. Seconds since the epoch written as one, as RFC 3339 has
+  it, and whether a year is a leap year and how many days a month has, to check
+  a date before converting it.
 - **Name servers** (`ebisu_dns.h`): `ebisu_dns_t` lists the system's name
   servers and asks one of them a query over UDP, for platform's DNS probe, which
   asks them whether they answer before a lookup that can't be bounded.
