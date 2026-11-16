@@ -274,32 +274,32 @@ TEST_CASE("A member's number is read as a double, of any form") {
 
 TEST_CASE("A member's true or false is read as a boolean") {
     jkii_member_t m = number("true");
-    jkii_boolean_t b = JKII_FALSE;
+    bool b = false;
     CHECK( jkii_member_boolean(&m, &b) == JKII_FIELD_ERR_OK );
-    CHECK( b == JKII_TRUE );
+    CHECK( b == true );
     m = number("false");
     CHECK( jkii_member_boolean(&m, &b) == JKII_FIELD_ERR_OK );
-    CHECK( b == JKII_FALSE );
+    CHECK( b == false );
 
     // Anything else, "true" as a string included: b as it was.
     for (const char* json : { "\"true\"", "1", "0", "[true]" }) {
         INFO(json);
         jkii_member_t other = number(json);
-        jkii_boolean_t c = JKII_TRUE;
+        bool c = true;
         CHECK( jkii_member_boolean(&other, &c) == JKII_FIELD_ERR_TYPE_MISMATCH );
-        CHECK( c == JKII_TRUE );
+        CHECK( c == true );
     }
     jkii_member_t null_member = number("null");
-    jkii_boolean_t c = JKII_TRUE;
+    bool c = true;
     CHECK( jkii_member_boolean(&null_member, &c) == JKII_FIELD_ERR_NULL );
-    CHECK( c == JKII_TRUE );
+    CHECK( c == true );
 
     // Found by its path.
     const std::vector<char> d = doc("{\"on\" : false}");
     REQUIRE( jkii_find_member(d.data(), d.size(), "/on", &m) == JKII_ERR_OK );
-    b = JKII_TRUE;
+    b = true;
     CHECK( jkii_member_boolean(&m, &b) == JKII_FIELD_ERR_OK );
-    CHECK( b == JKII_FALSE );
+    CHECK( b == false );
 }
 
 TEST_CASE("A string holding exactly a number, true or false is read as it, when asked") {
@@ -334,14 +334,14 @@ TEST_CASE("A string holding exactly a number, true or false is read as it, when 
     CHECK( jkii_member_double(jkii_member_unquote(&m, &u), &d) == JKII_FIELD_ERR_OK );
     CHECK( d == -2.5 );
 
-    jkii_boolean_t b = JKII_FALSE;
+    bool b = false;
     m = number(R"("true")");
     CHECK( jkii_member_boolean(&m, &b) == JKII_FIELD_ERR_TYPE_MISMATCH );
     CHECK( jkii_member_boolean(jkii_member_unquote(&m, &u), &b) == JKII_FIELD_ERR_OK );
-    CHECK( b == JKII_TRUE );
+    CHECK( b == true );
     m = number(R"("false")");
     CHECK( jkii_member_boolean(jkii_member_unquote(&m, &u), &b) == JKII_FIELD_ERR_OK );
-    CHECK( b == JKII_FALSE );
+    CHECK( b == false );
 
     // The member's name stays.
     const std::vector<char> obj = doc(R"({"timeout" : "30"})");
@@ -404,13 +404,13 @@ TEST_CASE("A string that is anything but exactly a number, true or false stays a
         CHECK( u.value == nullptr );
         int64_t v = 7;
         double d = 7;
-        jkii_boolean_t b = JKII_TRUE;
+        bool b = true;
         CHECK( jkii_member_integer(read, INT64_MIN, INT64_MAX, &v) == JKII_FIELD_ERR_TYPE_MISMATCH );
         CHECK( jkii_member_double(read, &d) == JKII_FIELD_ERR_TYPE_MISMATCH );
         CHECK( jkii_member_boolean(read, &b) == JKII_FIELD_ERR_TYPE_MISMATCH );
         CHECK( v == 7 );
         CHECK( d == 7 );
-        CHECK( b == JKII_TRUE );
+        CHECK( b == true );
     }
 
     // What isn't a string is itself, read as before.

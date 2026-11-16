@@ -122,7 +122,7 @@ _cmd_parser_code_t _parse_primitive(
             break;
         case JKII_FIELD_TYPE_BOOLEAN:
             out_action->action_value.type = TIO_TYPE_BOOLEAN;
-            out_action->action_value.param.bool_value = jprim.value.boolean_value == JKII_TRUE;
+            out_action->action_value.param.bool_value = jprim.value.boolean_value;
             break;
         case JKII_FIELD_TYPE_INTEGER:
             out_action->action_value.type = TIO_TYPE_INTEGER;

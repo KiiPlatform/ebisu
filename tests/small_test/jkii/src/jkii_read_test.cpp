@@ -120,7 +120,7 @@ TEST_CASE( "The finding readers refuse what isn't a document of members" ) {
         const Doc d(json);
         int64_t i = 7;
         double f = 7;
-        jkii_boolean_t b = JKII_TRUE;
+        bool b = true;
         char s[8] = "xxxxxxx";
         jkii_member_t found = untouched();
         CHECK( jkii_find_integer(d.data(), d.size(), "/a", 0, 9, 0, &i, &found)
@@ -133,7 +133,7 @@ TEST_CASE( "The finding readers refuse what isn't a document of members" ) {
                 == JKII_FIELD_ERR_INVALID_INPUT );
         CHECK( i == 7 );
         CHECK( f == 7 );
-        CHECK( b == JKII_TRUE );
+        CHECK( b == true );
         CHECK( s[0] == '\0' );
         CHECK( (const void*)found.value == nullptr );
     }
@@ -166,16 +166,16 @@ TEST_CASE( "jkii_find_double() and jkii_find_boolean() find and read in one call
     CHECK( f == 7 );
 
     const Doc d(R"({"on": true, "q": "false", "n": null, "one": 1})");
-    jkii_boolean_t b = JKII_FALSE;
+    bool b = false;
     CHECK( jkii_find_boolean(d.data(), d.size(), "/on", 0, &b, &found) == JKII_FIELD_ERR_OK );
-    CHECK( b == JKII_TRUE );
+    CHECK( b == true );
     CHECK( jkii_find_boolean(d.data(), d.size(), "/q", 0, &b, &found)
             == JKII_FIELD_ERR_TYPE_MISMATCH );
     CHECK( written(found) == "false" );
     CHECK( jkii_find_boolean(d.data(), d.size(), "/q", JKII_READ_UNQUOTE, &b, nullptr)
             == JKII_FIELD_ERR_OK );
-    CHECK( b == JKII_FALSE );
-    b = JKII_TRUE;
+    CHECK( b == false );
+    b = true;
     CHECK( jkii_find_boolean(d.data(), d.size(), "/n", 0, &b, nullptr) == JKII_FIELD_ERR_NULL );
     CHECK( jkii_find_boolean(d.data(), d.size(), "/n", JKII_READ_NULL_AS_ABSENT, &b, nullptr)
             == JKII_FIELD_ERR_NOT_FOUND );
@@ -183,7 +183,7 @@ TEST_CASE( "jkii_find_double() and jkii_find_boolean() find and read in one call
             == JKII_FIELD_ERR_TYPE_MISMATCH );
     CHECK( jkii_find_boolean(d.data(), d.size(), "/none", 0, &b, nullptr)
             == JKII_FIELD_ERR_NOT_FOUND );
-    CHECK( b == JKII_TRUE );
+    CHECK( b == true );
 }
 
 TEST_CASE( "jkii_find_string() finds and copies a string in one call" ) {
@@ -319,20 +319,32 @@ namespace {
 struct Cut {
     jkii_field_err_t res;
     std::string text;
-    jkii_boolean_t truncated;
+    bool truncated;
 };
+
+Cut cut_once(const jkii_member_t& m, size_t size, bool truncated_before)
+{
+    std::vector<char> buff(size + 1, 'x');
+    Cut c;
+    c.truncated = truncated_before;
+    c.res = jkii_member_string_trunc(&m, size > 0 ? buff.data() : nullptr, size, &c.truncated);
+    c.text = size > 0 ? std::string(buff.data()) : "";
+    // Nothing past the buffer.
+    CHECK( buff[size] == 'x' );
+    return c;
+}
 
 Cut cut(const char* json, size_t size)
 {
     jkii_member_t m;
     REQUIRE( jkii_root_value(json, strlen(json), &m) == JKII_ERR_OK );
-    std::vector<char> buff(size + 1, 'x');
-    Cut c;
-    c.truncated = (jkii_boolean_t)7;
-    c.res = jkii_member_string_trunc(&m, size > 0 ? buff.data() : nullptr, size, &c.truncated);
-    c.text = size > 0 ? std::string(buff.data()) : "";
-    // Nothing past the buffer.
-    CHECK( buff[size] == 'x' );
+    // With the flag set each way before the call, to see that it's written
+    // either way.
+    Cut c = cut_once(m, size, true);
+    Cut other = cut_once(m, size, false);
+    CHECK( other.res == c.res );
+    CHECK( other.text == c.text );
+    CHECK( other.truncated == c.truncated );
     return c;
 }
 
@@ -360,17 +372,17 @@ TEST_CASE( "jkii_member_string_trunc() copies what fits, cut between characters"
     Cut c = cut(R"("abc")", 4);
     CHECK( c.res == JKII_FIELD_ERR_OK );
     CHECK( c.text == "abc" );
-    CHECK( c.truncated == JKII_FALSE );
+    CHECK( c.truncated == false );
     c = cut(R"("abc")", 3);
     CHECK( c.res == JKII_FIELD_ERR_OK );
     CHECK( c.text == "ab" );
-    CHECK( c.truncated == JKII_TRUE );
+    CHECK( c.truncated == true );
     c = cut(R"("abc")", 1);
     CHECK( c.text == "" );
-    CHECK( c.truncated == JKII_TRUE );
+    CHECK( c.truncated == true );
     c = cut(R"("")", 1);
     CHECK( c.text == "" );
-    CHECK( c.truncated == JKII_FALSE );
+    CHECK( c.truncated == false );
     c = cut(R"("abc")", 0);
     CHECK( c.res == JKII_FIELD_ERR_COPY );
 
@@ -387,7 +399,7 @@ TEST_CASE( "jkii_member_string_trunc() copies what fits, cut between characters"
     c = cut(R"("ab\u0000cd")", 64);
     CHECK( c.res == JKII_FIELD_ERR_OK );
     CHECK( c.text == "ab" );
-    CHECK( c.truncated == JKII_TRUE );
+    CHECK( c.truncated == true );
 
     // NULL for the flag.
     jkii_member_t m;
@@ -401,11 +413,11 @@ TEST_CASE( "jkii_member_string_trunc() copies what fits, cut between characters"
         jkii_member_t other;
         REQUIRE( jkii_root_value(json, strlen(json), &other) == JKII_ERR_OK );
         char b[4] = "xxx";
-        jkii_boolean_t t = JKII_TRUE;
+        bool t = true;
         CHECK( jkii_member_string_trunc(&other, b, sizeof(b), &t) ==
                 (other.type == JKII_FIELD_TYPE_NULL ? JKII_FIELD_ERR_NULL : JKII_FIELD_ERR_TYPE_MISMATCH) );
         CHECK( b[0] == '\0' );
-        CHECK( t == JKII_FALSE );
+        CHECK( t == false );
     }
 }
 
@@ -425,9 +437,9 @@ TEST_CASE( "jkii_member_string_trunc() at every size gives a prefix that is UTF-
         CHECK( is_utf8(c.text) );
         CHECK( c.text.size() < size );
         CHECK( c.text.size() >= last.size() );
-        CHECK( (c.truncated == JKII_TRUE) == (c.text.size() < full.size()) );
+        CHECK( c.truncated == (c.text.size() < full.size()) );
         // As much as fits: the next character wouldn't have.
-        if (c.truncated == JKII_TRUE) {
+        if (c.truncated) {
             unsigned char next = (unsigned char)full[c.text.size()];
             size_t n = next < 0x80 ? 1 : next >= 0xf0 ? 4 : next >= 0xe0 ? 3 : 2;
             CHECK( c.text.size() + n + 1 > size );
