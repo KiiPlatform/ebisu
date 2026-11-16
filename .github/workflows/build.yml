@@ -850,10 +850,11 @@ jobs:
 
   # The FreeRTOS-Plus-TCP socket's tests: a firmware for the same board, run in
   # QEMU against servers on the runner, with FreeRTOS-Plus-TCP and the kernel of
-  # FreeRTOS LTS 202406, the oldest the socket supports, and the latest. See
+  # FreeRTOS LTS 202406, the oldest the socket supports, and the latest, and the
+  # latest again with IPv6 and LLMNR, the network still IPv4 only. See
   # tests/freertos_tcp/README.md.
   freertos-tcp:
-    name: freertos tcp socket (${{ matrix.plus_tcp }}, Cortex-M3, QEMU)
+    name: freertos tcp socket (${{ matrix.plus_tcp }}${{ matrix.ipv6 && ', IPv6' || '' }}, Cortex-M3, QEMU)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -867,6 +868,9 @@ jobs:
             plus_tcp: V4.2.6
           - kernel: V11.3.3
             plus_tcp: V4.4.2
+          - kernel: V11.3.3
+            plus_tcp: V4.4.2
+            ipv6: true
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -879,10 +883,10 @@ jobs:
           packages: cmake gcc-arm-none-eabi libnewlib-arm-none-eabi qemu-system-arm python3
           options: --no-install-recommends
       - name: test (QEMU)
-        run: tests/freertos_tcp/run.sh ${{ matrix.kernel }} ${{ matrix.plus_tcp }}
+        run: tests/freertos_tcp/run.sh ${{ matrix.kernel }} ${{ matrix.plus_tcp }} ${{ matrix.ipv6 && 'ipv6' || '' }}
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@a16be3a69023e9bd7e748ede768b3282ea7b30ce # v6.7.1
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
-          check_name: JUnit Test Report (freertos tcp socket, ${{ matrix.plus_tcp }})
+          check_name: JUnit Test Report (freertos tcp socket, ${{ matrix.plus_tcp }}${{ matrix.ipv6 && ', IPv6' || '' }})

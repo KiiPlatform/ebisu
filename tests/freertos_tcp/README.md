@@ -29,10 +29,16 @@ board's support is the [FreeRTOS sample's](../../tio/freertos-sample/board/board
   - for a host that doesn't resolve, as QEMU's DNS server passes the lookup to
     the host's resolver.
   - Each failure is logged.
+- **An address as written isn't looked up**, as `FreeRTOS_getaddrinfo()`
+  would, asking the name servers, or LLMNR, for its text: with a name server
+  that never answers, connecting to an IPv4 address takes no longer than the
+  connect timeout, and, with IPv6, so does connecting to an IPv6 one.
 
 Built against FreeRTOS-Kernel V11.1.0 and FreeRTOS-Plus-TCP V4.2.6, those of
 FreeRTOS LTS 202406, the oldest the socket supports, and V11.3.3 and V4.4.2,
-the latest, as CI does.
+the latest, as CI does, and the latest again with `ipconfigUSE_IPv6` and
+`ipconfigUSE_LLMNR`, for their code to be built and the tests run with it, on
+a network that is still IPv4 only.
 
 With CMake, the Arm GNU toolchain, newlib, QEMU and Python 3 (on Ubuntu,
 `cmake gcc-arm-none-eabi libnewlib-arm-none-eabi qemu-system-arm python3`),
@@ -43,4 +49,5 @@ tests/freertos_tcp/run.sh V11.1.0 V4.2.6
 ```
 
 which builds in `build/freertos_tcp-V11.1.0-V4.2.6`, and writes CTest's JUnit
-report in `test-results/junit`.
+report in `test-results/junit`. `tests/freertos_tcp/run.sh V11.3.3 V4.4.2 ipv6`
+builds with IPv6, in `build/freertos_tcp-V11.3.3-V4.4.2-ipv6`.

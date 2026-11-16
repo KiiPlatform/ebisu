@@ -2,18 +2,29 @@
 #define FREERTOS_IP_CONFIG_H
 
 /* FreeRTOS-Plus-TCP for the socket's tests, as the sample has it: IPv4, an
-   address from DHCP, DNS, and TCP.
+   address from DHCP, DNS, and TCP, and IPv6 and LLMNR where the tests are
+   built with EBISU_TEST_IPV6, for their code to be built and the tests run
+   with it.
    What is not set here has the default of FreeRTOSIPConfigDefaults.h. See
    https://www.freertos.org/FreeRTOS-Plus/FreeRTOS_Plus_TCP/TCP_IP_Configuration.html */
 
 #define ipconfigBYTE_ORDER pdFREERTOS_LITTLE_ENDIAN
 
 #define ipconfigUSE_IPv4 1
+#ifndef ipconfigUSE_IPv6
 #define ipconfigUSE_IPv6 0
+#endif
 #define ipconfigUSE_DHCP 1
 #define ipconfigUSE_DHCP_HOOK 0
 #define ipconfigUSE_DNS 1
 #define ipconfigUSE_DNS_CACHE 1
+#if ipconfigUSE_IPv6 != 0
+/* A name without a dot is one FreeRTOS-Plus-TCP asks LLMNR of, if it is on,
+   rather than the name servers, and fails to look up at once otherwise: an
+   IPv6 address as written is one. With it, the tests see whether the socket
+   looks one up. */
+#define ipconfigUSE_LLMNR 1
+#endif
 #define ipconfigDNS_CACHE_ENTRIES 4
 /* ipconfigDNS_CACHE_NAME_LENGTH stays at its default, the longest name DNS
    has: it bounds every name in a reply, those a CNAME leads to included, and

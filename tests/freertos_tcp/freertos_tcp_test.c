@@ -19,6 +19,7 @@
 
 #include <FreeRTOS_DNS.h>
 #include <FreeRTOS_IP.h>
+#include <FreeRTOS_Routing.h>
 #include <FreeRTOS_Sockets.h>
 
 #include "board.h"
@@ -329,6 +330,11 @@ static void test_reset(void)
     sock.base.ops->close(&sock.base);
 }
 
+/* The end-point, whose address DHCP gives, as QEMU's user-mode networking
+   has it, with its name server, 10.0.2.3. */
+static NetworkInterface_t interface;
+static NetworkEndPoint_t end_point;
+
 static void test_connect_failures(void)
 {
     ebisu_freertos_tcp_socket_t sock;
@@ -336,6 +342,12 @@ static void test_connect_failures(void)
     captured.lines = 0;
     ebisu_freertos_tcp_socket_init(&sock, 5, 5);
     ebisu_freertos_tcp_socket_set_logger(&sock, &captured.base);
+
+    /* A name server that never answers, for what an address as written
+       mustn't be, a name to look up, to take long: each of the DNS client's
+       attempts waits 5 seconds. */
+    const uint32_t server = end_point.ipv4_settings.ulDNSServerAddresses[0];
+    end_point.ipv4_settings.ulDNSServerAddresses[0] = FreeRTOS_inet_addr("192.0.2.1");
 
     /* A port nothing listens on, which QEMU's user-mode networking leaves
        unanswered rather than refuse: the connect timeout. */
@@ -351,6 +363,17 @@ static void test_connect_failures(void)
     CHECK_EQ(captured.lines, 1);
     CHECK(strstr(captured.last, "failed to connect to 10.0.2.2:") != NULL);
 #endif
+#if ipconfigUSE_IPv6 != 0
+    /* An IPv6 address as written, which the network, IPv4 only, has no route
+       to, isn't looked up for IPv4 first either: with LLMNR, which
+       FreeRTOS-Plus-TCP asks for a name without a dot, as it is. */
+    start = now_ms();
+    CHECK(sock.base.ops->connect(&sock.base, "fec0::2", ports.unanswered) == EBISU_SOCK_FAIL);
+    took = now_ms() - start;
+    CHECK(last_error(&sock, &detail) != EBISU_SOCK_ERROR_DNS);
+    CHECK_LE(took, 4000);
+#endif
+    end_point.ipv4_settings.ulDNSServerAddresses[0] = server;
 
     /* A host that doesn't resolve, as QEMU's DNS server forwards it to the
        host's resolver. */
@@ -387,8 +410,6 @@ static void runner(void* arg)
 NetworkInterface_t* pxMPS2_FillInterfaceDescriptor(BaseType_t xEMACIndex,
         NetworkInterface_t* pxInterface);
 
-static NetworkInterface_t interface;
-static NetworkEndPoint_t end_point;
 static const uint8_t mac_address[ipMAC_ADDRESS_LENGTH_BYTES] = {
     0x52, 0x54, 0x00, 0x12, 0x34, 0x56
 };
@@ -422,6 +443,16 @@ void vApplicationIPNetworkEventHook_Multi(eIPCallbackEvent_t eNetworkEvent,
         xSemaphoreGive(network_up);
     }
 }
+
+#if ipconfigUSE_LLMNR != 0
+/* No name LLMNR asks of is the board's. */
+BaseType_t xApplicationDNSQueryHook_Multi(struct xNetworkEndPoint* pxEndPoint, const char* pcName)
+{
+    (void)pxEndPoint;
+    (void)pcName;
+    return pdFALSE;
+}
+#endif
 
 BaseType_t xApplicationGetRandomNumber(uint32_t* pulNumber)
 {

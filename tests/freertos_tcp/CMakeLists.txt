@@ -19,6 +19,8 @@ set(EBISU_TEST_KERNEL V11.3.3 CACHE STRING
     "The FreeRTOS kernel: V11.1.0, FreeRTOS LTS 202406's, or V11.3.3, the latest")
 set(EBISU_TEST_PLUS_TCP V4.4.2 CACHE STRING
     "FreeRTOS-Plus-TCP: V4.2.6, FreeRTOS LTS 202406's, or V4.4.2, the latest")
+option(EBISU_TEST_IPV6
+    "FreeRTOS-Plus-TCP with IPv6, ipconfigUSE_IPv6, the tests' end-points IPv4 still" OFF)
 
 # The releases, checked against their hashes.
 set(kernel_sha256_V11.1.0 eebd58aa71a623c9381f25f77b708c0ed14ef995a8913e2460fe9f286bb271eb)
@@ -47,6 +49,9 @@ FetchContent_Declare(freertos_plus_tcp
 # and the network interface, the board's LAN9118.
 add_library(freertos_config INTERFACE)
 target_include_directories(freertos_config SYSTEM INTERFACE config ${board})
+if(EBISU_TEST_IPV6)
+    target_compile_definitions(freertos_config INTERFACE ipconfigUSE_IPv6=1)
+endif()
 set(FREERTOS_PORT GCC_ARM_CM3)
 set(FREERTOS_HEAP 3)
 set(FREERTOS_PLUS_TCP_NETWORK_IF MPS2_AN385 CACHE STRING "" FORCE)

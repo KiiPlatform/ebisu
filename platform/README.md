@@ -101,12 +101,13 @@ and makes none without it.
 - **FreeRTOS-Plus-TCP** (`ebisu_freertos_tcp.h`, library `ebisu_freertos_tcp`):
   `ebisu_freertos_tcp_socket_t`, plain TCP over FreeRTOS-Plus-TCP, for TLS over
   it with the mbedTLS port's socket, or for a server without TLS. Nothing it
-  sends itself is encrypted. It connects to an IPv4 address as written, or
-  looks a name up with `FreeRTOS_getaddrinfo()`, IPv6 too with
-  `ipconfigUSE_IPv6`, and tries each address within its connect timeout: the
-  lookup takes as long as FreeRTOS-Plus-TCP's DNS client does. A receive that
-  times out leaves the connection as it was, a peer that closes or resets it
-  is the end of the stream, and `recv_wait` waits with a receive that peeks.
+  sends itself is encrypted. It connects to an address as written, IPv4, or
+  IPv6 with `ipconfigUSE_IPv6`, or looks a name up with
+  `FreeRTOS_getaddrinfo()`, IPv6 too with `ipconfigUSE_IPv6`, and tries each
+  address within its connect timeout: the lookup takes as long as
+  FreeRTOS-Plus-TCP's DNS client does. A receive that times out leaves the
+  connection as it was, a peer that closes or resets it is the end of the
+  stream, and `recv_wait` waits with a receive that peeks.
   Its `last_error` says why an operation failed, with FreeRTOS-Plus-TCP's
   error, which also goes to the logger set with
   `ebisu_freertos_tcp_socket_set_logger()`, if any, unless it is built with
