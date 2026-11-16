@@ -48,9 +48,36 @@ static ebisu_task_code_t task_create(
     return EBISU_TASKC_OK;
 }
 
+/* Sleep() counts in the system clock's ticks, of 1 to 15.6 ms, and can end
+   part of one early, as wine's can under load. So it is called again for what
+   is left until the performance counter, which steady clocks read, has gone
+   past the whole time. QueryPerformanceFrequency() can't fail since Windows
+   XP. */
 static void delay_ms(ebisu_system_t* self, uint32_t msec)
 {
-    Sleep(msec);
+    LARGE_INTEGER freq;
+    LARGE_INTEGER now;
+    LONGLONG deadline;
+    LONGLONG wait = msec;
+    (void)self;
+    QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&now);
+    /* Rounded up, in two parts so that no frequency overflows it. */
+    deadline = now.QuadPart + (LONGLONG)(msec / 1000) * freq.QuadPart +
+        ((LONGLONG)(msec % 1000) * freq.QuadPart + 999) / 1000;
+    for (;;) {
+        LONGLONG left;
+        /* INFINITE, 0xFFFFFFFF, would never end. */
+        Sleep(wait < INFINITE ? (DWORD)wait : INFINITE - 1);
+        QueryPerformanceCounter(&now);
+        left = deadline - now.QuadPart;
+        if (left <= 0) {
+            return;
+        }
+        /* What is left, in milliseconds rounded up: at least 1. */
+        wait = left / freq.QuadPart * 1000 +
+            ((left % freq.QuadPart) * 1000 + freq.QuadPart - 1) / freq.QuadPart;
+    }
 }
 
 /* Milliseconds since the system started, in 64 bits, which do not wrap.

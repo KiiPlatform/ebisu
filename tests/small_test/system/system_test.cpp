@@ -103,3 +103,16 @@ TEST_CASE( "The port's system delays and keeps time through the inline calls" ) 
     // GetTickCount64() counts in steps of 10 to 16 ms.
     CHECK( ebisu_system_monotonic_ms(sys) - before >= 80 );
 }
+
+TEST_CASE( "The port's system delays at least as long as asked, short delays too" ) {
+    ebisu_system_t* sys = port_system();
+    // Below a clock tick of Windows, of 1 to 15.6 ms, about one, and past it.
+    for (uint32_t ms : { 1u, 2u, 3u, 5u, 10u, 15u, 16u, 17u, 31u, 33u }) {
+        INFO( ms );
+        const auto start = std::chrono::steady_clock::now();
+        ebisu_system_delay_ms(sys, ms);
+        CHECK( std::chrono::steady_clock::now() - start >= std::chrono::milliseconds(ms) );
+    }
+    // No wait at all, which ends.
+    ebisu_system_delay_ms(sys, 0);
+}
