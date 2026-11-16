@@ -46,6 +46,7 @@ ebisu_add_test_suite(small_test_kii
 set(jkii_test_sources
     jkii/src/jkii_double_test.cpp
     jkii/src/jkii_escape_test.cpp
+    jkii/src/jkii_find_test.cpp
     jkii/src/jkii_lines_test.cpp
     jkii/src/jkii_primitive_test.cpp
     jkii/src/jkii_test.cpp

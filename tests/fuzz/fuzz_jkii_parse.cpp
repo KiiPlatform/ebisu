@@ -1,14 +1,108 @@
 // A JSON document, asked for a field of each type by a name and a path the
 // input chooses: a line of them, then the document. Its root's members are
 // walked too, and their names and strings unescaped. The name, escaped, has
-// to unescape to itself. Its root is read as a value of any type too.
+// to unescape to itself. Its root is read as a value of any type too. The path
+// is looked up with jkii_find_member() as well, which has to find what
+// jkii_parse() does, and what it finds is read as a string and an integer.
 #include <jkii.h>
 #include <jkii_utils.h>
+#include <float.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
 #include <vector>
 #include "fuzz_input.h"
+
+// A member read as a string and as an integer: the string no longer than the
+// member's characters, and the integer, if it is one, what jkii_parse_primitive()
+// reads too, exactly for an integer as written, and as its double when it is
+// below 2^53, which a double holds exactly.
+static void read_member(const jkii_member_t& m);
+
+static bool is_json_space(char c) {
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+}
+
+// A string is taken as a number, true or false exactly when its characters,
+// as a document of their own, are one, with nothing around them; and then is
+// one of the type the document's root has, over the same characters.
+static void unquote_member(const jkii_member_t& m) {
+    jkii_member_t u;
+    memset(&u, 0, sizeof(u));
+    const jkii_member_t* r = jkii_member_unquote(&m, &u);
+    if (m.type != JKII_FIELD_TYPE_STRING) {
+        if (r != &m) abort();
+        return;
+    }
+    jkii_member_t root;
+    const bool scalar = m.value_length > 0 && !is_json_space(m.value[0]) &&
+        !is_json_space(m.value[m.value_length - 1]) &&
+        jkii_root_value(m.value, m.value_length, &root) == JKII_ERR_OK &&
+        (root.type == JKII_FIELD_TYPE_INTEGER || root.type == JKII_FIELD_TYPE_LONG ||
+         root.type == JKII_FIELD_TYPE_DOUBLE || root.type == JKII_FIELD_TYPE_BOOLEAN ||
+         root.type == JKII_FIELD_TYPE_ANY);
+    if (!scalar) {
+        if (r != &m) abort();
+        return;
+    }
+    if (r != &u || u.type != root.type || u.value != m.value ||
+            u.value_length != m.value_length || u.key != m.key ||
+            u.key_length != m.key_length) abort();
+    read_member(u);
+}
+
+static void read_member(const jkii_member_t& m) {
+    unquote_member(m);
+    std::vector<char> buff(m.value_length + 1);
+    jkii_field_err_t s = jkii_member_string(&m, buff.data(), buff.size());
+    if (m.type == JKII_FIELD_TYPE_STRING) {
+        if (s != JKII_FIELD_ERR_OK && s != JKII_FIELD_ERR_COPY) abort();
+        if (strlen(buff.data()) > m.value_length) abort();
+    } else if (s != JKII_FIELD_ERR_TYPE_MISMATCH || buff[0] != '\0') {
+        abort();
+    }
+    int64_t value = 0;
+    jkii_field_err_t i = jkii_member_integer(&m, INT64_MIN, INT64_MAX, &value);
+    const bool numeric = m.type == JKII_FIELD_TYPE_INTEGER || m.type == JKII_FIELD_TYPE_LONG ||
+        m.type == JKII_FIELD_TYPE_DOUBLE;
+    // True or false only, as written.
+    jkii_boolean_t b = JKII_FALSE;
+    jkii_field_err_t br = jkii_member_boolean(&m, &b);
+    if ((br == JKII_FIELD_ERR_OK) != (m.type == JKII_FIELD_TYPE_BOOLEAN)) abort();
+    if (br == JKII_FIELD_ERR_OK && (b == JKII_TRUE) != (m.value[0] == 't')) abort();
+    if (!numeric) {
+        double d = 0;
+        if (i != JKII_FIELD_ERR_TYPE_MISMATCH ||
+                jkii_member_double(&m, &d) != JKII_FIELD_ERR_TYPE_MISMATCH) abort();
+        return;
+    }
+    jkii_primitive_t p;
+    jkii_primitive_err_t pr = jkii_parse_primitive(m.value, m.value_length, &p);
+    if (i == JKII_FIELD_ERR_OK && pr == JKII_PRIMITIVE_ERR_OK) {
+        if (p.type == JKII_FIELD_TYPE_INTEGER && value != p.value.int_value) abort();
+        if (p.type == JKII_FIELD_TYPE_LONG && value != p.value.long_value) abort();
+        if (p.type == JKII_FIELD_TYPE_DOUBLE && value > -(INT64_C(1) << 53) &&
+                value < (INT64_C(1) << 53) && (double)value != p.value.double_value) abort();
+    }
+    // An integer as written is one, whatever its range.
+    if ((m.type == JKII_FIELD_TYPE_INTEGER || m.type == JKII_FIELD_TYPE_LONG) &&
+            i == JKII_FIELD_ERR_TYPE_MISMATCH) abort();
+    // As a double: never NaN nor an infinity, and for an integer as written
+    // that int64_t holds, the integer's own double.
+    double d = 0;
+    jkii_field_err_t dr = jkii_member_double(&m, &d);
+    if (dr == JKII_FIELD_ERR_OK) {
+        if (!(d == d) || d > DBL_MAX || d < -DBL_MAX) abort();
+        if (pr == JKII_PRIMITIVE_ERR_OK && p.type == JKII_FIELD_TYPE_INTEGER &&
+                d != (double)p.value.int_value) abort();
+        if (pr == JKII_PRIMITIVE_ERR_OK && p.type == JKII_FIELD_TYPE_LONG &&
+                d != (double)p.value.long_value) abort();
+    } else if (dr != JKII_FIELD_ERR_NUM_OVERFLOW && dr != JKII_FIELD_ERR_NUM_UNDERFLOW &&
+            dr != JKII_FIELD_ERR_TYPE_MISMATCH) {
+        abort();
+    }
+}
 
 // Characters of a string in the document, unescaped into a buffer of their
 // length and the terminator, which always suffices: either they are refused,
@@ -55,7 +149,24 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 fields[0].field_copy.string = copy;
                 fields[0].field_copy_buff_size = sizeof(copy);
             }
-            jkii_parse(document.data(), document.size(), fields);
+            jkii_parse_err_t parsed = jkii_parse(document.data(), document.size(), fields);
+            if (!by_name && type == JKII_FIELD_TYPE_ANY) {
+                // Found by jkii_find_member() as by jkii_parse(), of the same type.
+                jkii_member_t found;
+                jkii_parse_err_t res = jkii_find_member(document.data(), document.size(),
+                        key.c_str(), &found);
+                const bool parse_found = (parsed == JKII_ERR_OK || parsed == JKII_ERR_PARTIAL) &&
+                    fields[0].result != JKII_FIELD_ERR_NOT_FOUND;
+                if ((res == JKII_ERR_OK) != parse_found) abort();
+                if (res == JKII_ERR_OK) {
+                    if (found.type != fields[0].type) abort();
+                    if (found.value < document.data() ||
+                            found.value + found.value_length > document.data() + document.size()) {
+                        abort();
+                    }
+                    read_member(found);
+                }
+            }
         }
     }
 
@@ -77,6 +188,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         if (member.type == JKII_FIELD_TYPE_STRING) {
             unescape_fits(member.value, member.value_length);
         }
+        read_member(member);
     }
     jkii_validate_root_object(begin, document.size());
 
@@ -95,6 +207,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         if (root.type == JKII_FIELD_TYPE_STRING) {
             unescape_fits(root.value, root.value_length);
         }
+        read_member(root);
         if (walks) {
             jkii_member_iter_t root_iter;
             memset(&root_iter, 0, sizeof(root_iter));
