@@ -8,7 +8,9 @@
 #
 # Usage: openssl_ports.sh <version>
 #   1.0.2p, the oldest 1.0.2 of the targets, or 1.1.1i, the oldest 1.1.1. A
-#   later release of the same series has the same API.
+#   later release of the same series has the same API. Or 4.1.0, the newest,
+#   which systems such as Homebrew ship, and whose API and host name checks
+#   differ from 3.x's.
 # DOCKER names the container tool, docker by default; DOCKER_OPTS adds options
 # to its run, such as --security-opt label=disable for podman with SELinux.
 set -euo pipefail
@@ -18,6 +20,8 @@ root=$(cd "$(dirname "$0")/../.." && pwd)
 case $version in
     1.0.2p) sha256=50a98e07b1a89eb8f6a99477f262df71c6fa7bef77df4dc83025a2845c827d00 ;;
     1.1.1i) sha256=e8be6a35fe41d10603c3cc635e93289ed00bf34b79671a3a4de64fcee00d5242 ;;
+    # From the release's own .sha256, which openssl-library.org links to.
+    4.1.0) sha256=50c17baf54cb008f6ce42d50deb4b28050a1aad711636cabd4b241c7e90cc2fd ;;
     *) echo "no checksum for OpenSSL $version" >&2; exit 2 ;;
 esac
 
@@ -38,11 +42,18 @@ apt-get install -y -qq --no-install-recommends build-essential perl wget ca-cert
 
 series=${version%[a-z]}
 cd /tmp
-wget -q "https://www.openssl.org/source/old/$series/openssl-$version.tar.gz"
+case $series in
+    # Releases from 3.0 on are published on GitHub.
+    [34].*) url="https://github.com/openssl/openssl/releases/download/openssl-$version/openssl-$version.tar.gz" ;;
+    *) url="https://www.openssl.org/source/old/$series/openssl-$version.tar.gz" ;;
+esac
+wget -q "$url"
 echo "$sha256  openssl-$version.tar.gz" | sha256sum -c -
 tar xzf "openssl-$version.tar.gz"
 cd "openssl-$version"
-./config --prefix=/opt/openssl --openssldir=/opt/openssl/ssl no-shared -fPIC > /tmp/openssl-config.log
+# lib, where 3.0 and later would take lib64 on x86-64.
+./config --prefix=/opt/openssl --openssldir=/opt/openssl/ssl --libdir=lib no-shared -fPIC \
+    > /tmp/openssl-config.log
 if [ "$series" = 1.0.2 ]; then
     make depend > /tmp/openssl-depend.log 2>&1
 fi

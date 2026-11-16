@@ -512,9 +512,9 @@ jobs:
 
   # platform's OpenSSL port supports the OpenSSL of the target devices, which
   # no runner has: 1.0.2p and 1.1.1i are the oldest of each series they ship.
-  # Here each is built from its release tarball, the ports against it, and
-  # their tests run. Every other job builds the ports against the runner's own
-  # OpenSSL.
+  # And 4.1.0, the newest, which systems such as Homebrew ship. Here each is
+  # built from its release tarball, the ports against it, and their tests run.
+  # Every other job builds the ports against the runner's own OpenSSL.
   openssl:
     name: ${{ format('OpenSSL {0} ports', matrix.version) }}
     runs-on: ubuntu-latest
@@ -522,7 +522,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [1.0.2p, 1.1.1i]
+        version: [1.0.2p, 1.1.1i, 4.1.0]
     steps:
       - name: Checkout
         uses: actions/checkout@v7

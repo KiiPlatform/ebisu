@@ -88,7 +88,11 @@ typedef enum ebisu_sock_error_t {
  */
 typedef enum ebisu_tls_verify_t {
     /** \brief The certificate chains to a CA certificate trusted, is in
-     * date, and is issued for the host connected to. The default. */
+     * date, and is issued for the host connected to: one of its DNS
+     * subjectAltNames matches the host. One without any is matched by its
+     * subject's commonName by OpenSSL before 4.1 and by mbedTLS, and not at
+     * all by OpenSSL 4.1 and later, as RFC 9525 has it; Schannel checks it as
+     * Windows does. The default. */
     EBISU_TLS_VERIFY_FULL,
     /** \brief As EBISU_TLS_VERIFY_FULL, but issued for any host: for a
      * private CA whose certificates don't name the address their servers are
