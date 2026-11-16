@@ -512,6 +512,12 @@
       <anchor>a19f16391089f04ceb79936a6ecc26963a25c85a793f6a5231da0c877f65699d19</anchor>
       <arglist></arglist>
     </member>
+    <member kind="enumvalue">
+      <name>EBISU_SOCK_ERROR_TLS_MISMATCH</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a19f16391089f04ceb79936a6ecc26963af8d1c506381cd08ed02d703e77ee9cdc</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="enumeration">
       <type></type>
       <name>ebisu_tls_verify_t</name>

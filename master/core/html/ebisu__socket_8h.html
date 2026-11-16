@@ -137,6 +137,8 @@ Enumerations</h2></td></tr>
 , <a class="el" href="#a19f16391089f04ceb79936a6ecc26963a4b34064a92d2a7a69201e8805b547887">EBISU_SOCK_ERROR_TIMEOUT</a>
 , <a class="el" href="#a19f16391089f04ceb79936a6ecc26963ab7a641310a57f3a2e49eb2bd85746963">EBISU_SOCK_ERROR_CLOSED</a>
 , <a class="el" href="#a19f16391089f04ceb79936a6ecc26963a25c85a793f6a5231da0c877f65699d19">EBISU_SOCK_ERROR_OTHER</a>
+, <br />
+&#160;&#160;<a class="el" href="#a19f16391089f04ceb79936a6ecc26963af8d1c506381cd08ed02d703e77ee9cdc">EBISU_SOCK_ERROR_TLS_MISMATCH</a>
 <br />
  }</td></tr>
 <tr class="memdesc:a19f16391089f04ceb79936a6ecc26963"><td class="mdescLeft">&#160;</td><td class="mdescRight">Why a socket operation failed, as the socket can tell. See <a class="el" href="structebisu__socket__ops__t.html#a7d723df34a7a3ec7b0813d4949375fda" title="Why the last operation that returned EBISU_SOCK_FAIL failed.">ebisu_socket_ops_t::last_error</a>.  <a href="#a19f16391089f04ceb79936a6ecc26963">More...</a><br /></td></tr>
@@ -240,6 +242,8 @@ Enumerations</h2></td></tr>
 <tr><td class="fieldname"><a id="a19f16391089f04ceb79936a6ecc26963ab7a641310a57f3a2e49eb2bd85746963" name="a19f16391089f04ceb79936a6ecc26963ab7a641310a57f3a2e49eb2bd85746963"></a>EBISU_SOCK_ERROR_CLOSED&#160;</td><td class="fielddoc"><p>The peer closed or reset the connection. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a19f16391089f04ceb79936a6ecc26963a25c85a793f6a5231da0c877f65699d19" name="a19f16391089f04ceb79936a6ecc26963a25c85a793f6a5231da0c877f65699d19"></a>EBISU_SOCK_ERROR_OTHER&#160;</td><td class="fielddoc"><p>Another failure. The detail is the system's error, if there is one. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a19f16391089f04ceb79936a6ecc26963af8d1c506381cd08ed02d703e77ee9cdc" name="a19f16391089f04ceb79936a6ecc26963af8d1c506381cd08ed02d703e77ee9cdc"></a>EBISU_SOCK_ERROR_TLS_MISMATCH&#160;</td><td class="fielddoc"><p>The TLS handshake failed as the server and the socket have no TLS version or cipher suite in common: the server refused the handshake with an alert that says so, protocol_version, handshake_failure or insufficient_security, or answered with a version older than the socket takes. Most often a server that takes only TLS 1.0 or 1.1, or TLS 1.2 without the suites the socket offers. handshake_failure is also what some servers answer for other reasons. The detail is the TLS library's error, as for EBISU_SOCK_ERROR_TLS. Added after the others, so that they keep their values. </p>
 </td></tr>
 </table>
 
