@@ -123,6 +123,10 @@ Functions</h2></td></tr>
 <tr class="memdesc:a74385ad20a29d1423a6dfbb4791721e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets how long connecting may take.  <br /></td></tr>
 <tr class="memitem:ab539ab2b2a720c63f4e834fb767638d0" id="r_ab539ab2b2a720c63f4e834fb767638d0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab539ab2b2a720c63f4e834fb767638d0">ebisu_posix_tcp_socket_set_logger</a> (<a class="el" href="structebisu__posix__tcp__socket__t.html">ebisu_posix_tcp_socket_t</a> *sock, <a class="elRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a> *logger)</td></tr>
 <tr class="memdesc:ab539ab2b2a720c63f4e834fb767638d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets where the socket's diagnostics go.  <br /></td></tr>
+<tr class="memitem:a85df467645fd56578a01002c2e806316" id="r_a85df467645fd56578a01002c2e806316"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a85df467645fd56578a01002c2e806316">ebisu_posix_tcp_socket_set_keepalive</a> (<a class="el" href="structebisu__posix__tcp__socket__t.html">ebisu_posix_tcp_socket_t</a> *sock, unsigned int idle_s, unsigned int interval_s, unsigned int count)</td></tr>
+<tr class="memdesc:a85df467645fd56578a01002c2e806316"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets whether TCP checks an idle connection is still there.  <br /></td></tr>
+<tr class="memitem:a410e747506716d681e42d72dac4d38de" id="r_a410e747506716d681e42d72dac4d38de"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a410e747506716d681e42d72dac4d38de">ebisu_posix_tcp_socket_set_nodelay</a> (<a class="el" href="structebisu__posix__tcp__socket__t.html">ebisu_posix_tcp_socket_t</a> *sock, bool nodelay)</td></tr>
+<tr class="memdesc:a410e747506716d681e42d72dac4d38de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets whether what is sent goes at once, with TCP_NODELAY.  <br /></td></tr>
 <tr class="memitem:a936dbbfb8728fa54cca04689019fd52e" id="r_a936dbbfb8728fa54cca04689019fd52e"><td class="memItemLeft" align="right" valign="top"><a class="elRef" href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a936dbbfb8728fa54cca04689019fd52e">ebisu_posix_dns</a> (void)</td></tr>
 <tr class="memdesc:a936dbbfb8728fa54cca04689019fd52e"><td class="mdescLeft">&#160;</td><td class="mdescRight">The name servers on POSIX, for platform's DNS probe.  <br /></td></tr>
 </table>
@@ -311,6 +315,50 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a85df467645fd56578a01002c2e806316" name="a85df467645fd56578a01002c2e806316"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a85df467645fd56578a01002c2e806316">&#9670;&#160;</a></span>ebisu_posix_tcp_socket_set_keepalive()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_posix_tcp_socket_set_keepalive </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__posix__tcp__socket__t.html">ebisu_posix_tcp_socket_t</a> *</td>          <td class="paramname"><span class="paramname"><em>sock</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int</td>          <td class="paramname"><span class="paramname"><em>idle_s</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int</td>          <td class="paramname"><span class="paramname"><em>interval_s</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int</td>          <td class="paramname"><span class="paramname"><em>count</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets whether TCP checks an idle connection is still there. </p>
+<p>With keepalive, TCP probes a connection that has been idle for idle_s seconds, and gives the connection up when count probes, interval_s seconds apart, go unanswered: a send or a receive on it then fails, rather than the next request finding out. So a peer that lost power, or a NAT that dropped the connection's entry, is noticed within about idle_s + interval_s * count seconds of the connection going idle.</p>
+<p>It applies from the next connect: SO_KEEPALIVE, with TCP_KEEPIDLE (TCP_KEEPALIVE on macOS), TCP_KEEPINTVL and TCP_KEEPCNT where the system has them. One the system hasn't, or a value it refuses, as Linux refuses an idle time or an interval over 32767 seconds and a count over 127, is said at EBISU_LOG_WARNING to the logger, and the connection made without it.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">idle_s</td><td>Seconds idle before the first probe, or 0 for no keepalive, as the socket starts. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">interval_s</td><td>Seconds between probes, or 0 for the system's. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>Probes unanswered before the connection is given up, or 0 for the system's. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="ab539ab2b2a720c63f4e834fb767638d0" name="ab539ab2b2a720c63f4e834fb767638d0"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab539ab2b2a720c63f4e834fb767638d0">&#9670;&#160;</a></span>ebisu_posix_tcp_socket_set_logger()</h2>
 
@@ -337,6 +385,37 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">logger</td><td>The logger, which has to outlive the socket, or NULL, as the socket starts, for the diagnostics to go nowhere. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a410e747506716d681e42d72dac4d38de" name="a410e747506716d681e42d72dac4d38de"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a410e747506716d681e42d72dac4d38de">&#9670;&#160;</a></span>ebisu_posix_tcp_socket_set_nodelay()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_posix_tcp_socket_set_nodelay </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__posix__tcp__socket__t.html">ebisu_posix_tcp_socket_t</a> *</td>          <td class="paramname"><span class="paramname"><em>sock</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>nodelay</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets whether what is sent goes at once, with TCP_NODELAY. </p>
+<p>Without it, as the socket starts, Nagle's algorithm holds a small segment back while an earlier one is unacknowledged: a request sent in two pieces can wait for the first's ACK, which a peer may delay. It applies from the next connect. A system that refuses it is said at EBISU_LOG_WARNING.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">nodelay</td><td>true to send at once. </td></tr>
   </table>
   </dd>
 </dl>

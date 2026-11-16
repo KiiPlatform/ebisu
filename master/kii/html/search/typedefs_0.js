@@ -21,8 +21,9 @@ var searchData=
   ['kii_5fobject_5fid_5ft_18',['kii_object_id_t',['../kii_8h.html#a796fdd785ce829d5fc0a87e2b0e1e318',1,'kii.h']]],
   ['kii_5frenew_5fmode_5ft_19',['kii_renew_mode_t',['../kii_8h.html#a2ceb6f84d61d2d8e6612a50015a9b773',1,'kii.h']]],
   ['kii_5fscope_5ftype_5ft_20',['kii_scope_type_t',['../kii_8h.html#a3b61ff426f4e30331ac59b1ade036d5b',1,'kii.h']]],
-  ['kii_5fsession_5ft_21',['kii_session_t',['../kii_8h.html#af6e728326f31d6421beb3169acd62f6e',1,'kii.h']]],
-  ['kii_5ft_22',['kii_t',['../kii_8h.html#ab1332877c811291e2a9693aaa5c15858',1,'kii.h']]],
-  ['kii_5fti_5ffirmware_5fversion_5ft_23',['kii_ti_firmware_version_t',['../kii_8h.html#af136309d5e5e98f8d912e85a8869d107',1,'kii.h']]],
-  ['kii_5ftopic_5ft_24',['kii_topic_t',['../kii_8h.html#aeaa6057c19679d23ddf086d5684bce8c',1,'kii.h']]]
+  ['kii_5fserver_5fcode_5fresult_5ft_21',['kii_server_code_result_t',['../kii_8h.html#abc6ff7f33ebe7fa9528cdf40cbbeac64',1,'kii.h']]],
+  ['kii_5fsession_5ft_22',['kii_session_t',['../kii_8h.html#af6e728326f31d6421beb3169acd62f6e',1,'kii.h']]],
+  ['kii_5ft_23',['kii_t',['../kii_8h.html#ab1332877c811291e2a9693aaa5c15858',1,'kii.h']]],
+  ['kii_5fti_5ffirmware_5fversion_5ft_24',['kii_ti_firmware_version_t',['../kii_8h.html#af136309d5e5e98f8d912e85a8869d107',1,'kii.h']]],
+  ['kii_5ftopic_5ft_25',['kii_topic_t',['../kii_8h.html#aeaa6057c19679d23ddf086d5684bce8c',1,'kii.h']]]
 ];

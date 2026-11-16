@@ -15,6 +15,7 @@
     <class kind="struct">kii_mqtt_message_t</class>
     <class kind="struct">kii_mqtt_will_t</class>
     <class kind="struct">kii_t</class>
+    <class kind="struct">kii_server_code_result_t</class>
     <class kind="struct">kii_ti_firmware_version_t</class>
     <class kind="struct">kii_mqtt_task_info</class>
     <member kind="define">
@@ -274,6 +275,13 @@
       <name>kii_t</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>ab1332877c811291e2a9693aaa5c15858</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct kii_server_code_result_t</type>
+      <name>kii_server_code_result_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>abc6ff7f33ebe7fa9528cdf40cbbeac64</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
@@ -1013,6 +1021,13 @@
     </member>
     <member kind="function">
       <type>kii_code_t</type>
+      <name>kii_get_server_code_result</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a95e473b240605c8a74b48433511fed96</anchor>
+      <arglist>(kii_t *kii, kii_server_code_result_t *out_result)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_code_t</type>
       <name>kii_ti_onboard</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>adaf6e5b9a952127cacd4cbf2e911039c</anchor>
@@ -1530,6 +1545,73 @@
       <anchorfile>structkii__object__id__t.html</anchorfile>
       <anchor>a19d17e0013f10a89fab4efbea6b2153a</anchor>
       <arglist>[KII_OBJECT_ID_MAX_SIZE]</arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>kii_server_code_result_t</name>
+    <filename>structkii__server__code__result__t.html</filename>
+    <member kind="variable">
+      <type>uint16_t</type>
+      <name>status</name>
+      <anchorfile>structkii__server__code__result__t.html</anchorfile>
+      <anchor>afc2a8d6194533fa59e09589cade43d52</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>const char *</type>
+      <name>body</name>
+      <anchorfile>structkii__server__code__result__t.html</anchorfile>
+      <anchor>a4f02fbc79a670afb79d532a7eeafdd0d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>size_t</type>
+      <name>body_length</name>
+      <anchorfile>structkii__server__code__result__t.html</anchorfile>
+      <anchor>a0f8573695c54befbfa76fc86687ac91d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>jkii_member_t</type>
+      <name>returned_value</name>
+      <anchorfile>structkii__server__code__result__t.html</anchorfile>
+      <anchor>a02e4fde12227f7de23a37cd57e8a32f5</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>jkii_member_t</type>
+      <name>error_code</name>
+      <anchorfile>structkii__server__code__result__t.html</anchorfile>
+      <anchor>a9b7ede64c6225bdc3ee727079c01192d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>jkii_member_t</type>
+      <name>message</name>
+      <anchorfile>structkii__server__code__result__t.html</anchorfile>
+      <anchor>ab513766d13331c4f5f3f4511297afe4a</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>jkii_member_t</type>
+      <name>details</name>
+      <anchorfile>structkii__server__code__result__t.html</anchorfile>
+      <anchor>a504d0b7cdbb92d0195b6f3ce56e58466</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>int64_t</type>
+      <name>step_count</name>
+      <anchorfile>structkii__server__code__result__t.html</anchorfile>
+      <anchor>adeb316d8c264394a396d993282d8aef1</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>int64_t</type>
+      <name>environment_version</name>
+      <anchorfile>structkii__server__code__result__t.html</anchorfile>
+      <anchor>a4de6fbcff8dcb1066ec9272d8fd020bb</anchor>
+      <arglist></arglist>
     </member>
   </compound>
   <compound kind="struct">

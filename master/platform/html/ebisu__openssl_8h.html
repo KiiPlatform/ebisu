@@ -126,6 +126,10 @@ Functions</h2></td></tr>
 <tr class="memdesc:ad504ec9246a218a4cd22974b77da48f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the clock the server's certificate is checked at the time of.  <br /></td></tr>
 <tr class="memitem:a85279e489e808b094e800a9f6d544878" id="r_a85279e489e808b094e800a9f6d544878"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a85279e489e808b094e800a9f6d544878">ebisu_openssl_socket_set_logger</a> (<a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *sock, <a class="elRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a> *logger)</td></tr>
 <tr class="memdesc:a85279e489e808b094e800a9f6d544878"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets where the socket's diagnostics go.  <br /></td></tr>
+<tr class="memitem:ae4e42852de91009d47a8b8bc54514920" id="r_ae4e42852de91009d47a8b8bc54514920"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae4e42852de91009d47a8b8bc54514920">ebisu_openssl_socket_set_keepalive</a> (<a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *sock, unsigned int idle_s, unsigned int interval_s, unsigned int count)</td></tr>
+<tr class="memdesc:ae4e42852de91009d47a8b8bc54514920"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets whether TCP checks an idle connection is still there.  <br /></td></tr>
+<tr class="memitem:acdbbc62d3e2c6d09d001c13c1fcffc4a" id="r_acdbbc62d3e2c6d09d001c13c1fcffc4a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acdbbc62d3e2c6d09d001c13c1fcffc4a">ebisu_openssl_socket_set_nodelay</a> (<a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *sock, bool nodelay)</td></tr>
+<tr class="memdesc:acdbbc62d3e2c6d09d001c13c1fcffc4a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets whether what is sent goes at once, with TCP_NODELAY.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A socket of OpenSSL over BSD sockets. </p>
@@ -264,6 +268,49 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="ae4e42852de91009d47a8b8bc54514920" name="ae4e42852de91009d47a8b8bc54514920"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae4e42852de91009d47a8b8bc54514920">&#9670;&#160;</a></span>ebisu_openssl_socket_set_keepalive()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_openssl_socket_set_keepalive </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *</td>          <td class="paramname"><span class="paramname"><em>sock</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int</td>          <td class="paramname"><span class="paramname"><em>idle_s</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int</td>          <td class="paramname"><span class="paramname"><em>interval_s</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int</td>          <td class="paramname"><span class="paramname"><em>count</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets whether TCP checks an idle connection is still there. </p>
+<p>As <a class="el" href="ebisu__posix_8h.html#a85df467645fd56578a01002c2e806316" title="Sets whether TCP checks an idle connection is still there.">ebisu_posix_tcp_socket_set_keepalive()</a> does, for the TCP connection the TLS goes over: from the next connect, SO_KEEPALIVE, with TCP_KEEPIDLE (TCP_KEEPALIVE on macOS), TCP_KEEPINTVL and TCP_KEEPCNT where the system has them, and what it can't set or refuses said at EBISU_LOG_WARNING. A peer that has gone is noticed within about idle_s + interval_s * count seconds of the connection going idle.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">idle_s</td><td>Seconds idle before the first probe, or 0 for no keepalive, as the socket starts. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">interval_s</td><td>Seconds between probes, or 0 for the system's. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>Probes unanswered before the connection is given up, or 0 for the system's. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a85279e489e808b094e800a9f6d544878" name="a85279e489e808b094e800a9f6d544878"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a85279e489e808b094e800a9f6d544878">&#9670;&#160;</a></span>ebisu_openssl_socket_set_logger()</h2>
 
@@ -290,6 +337,37 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">logger</td><td>The logger, which has to outlive the socket, or NULL, as the socket starts, for the diagnostics to go nowhere. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="acdbbc62d3e2c6d09d001c13c1fcffc4a" name="acdbbc62d3e2c6d09d001c13c1fcffc4a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acdbbc62d3e2c6d09d001c13c1fcffc4a">&#9670;&#160;</a></span>ebisu_openssl_socket_set_nodelay()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_openssl_socket_set_nodelay </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *</td>          <td class="paramname"><span class="paramname"><em>sock</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>nodelay</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets whether what is sent goes at once, with TCP_NODELAY. </p>
+<p>As <a class="el" href="ebisu__posix_8h.html#a410e747506716d681e42d72dac4d38de" title="Sets whether what is sent goes at once, with TCP_NODELAY.">ebisu_posix_tcp_socket_set_nodelay()</a> does, for the TCP connection the TLS goes over, from the next connect: the handshake's messages too.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">nodelay</td><td>true to send at once. </td></tr>
   </table>
   </dd>
 </dl>

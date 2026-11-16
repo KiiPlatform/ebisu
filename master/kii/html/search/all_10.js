@@ -7,5 +7,6 @@ var searchData=
   ['rest_20api_20calls_4',['Other REST API calls',['../index.html#autotoc_md9',1,'']]],
   ['result_5',['result',['../../../jkii/html/structjkii__field__t.html#a490735c809794c5f8c4c07c423b9b7e6',1,'jkii_field_t']]],
   ['results_6',['Results',['../index.html#autotoc_md10',1,'']]],
-  ['retain_7',['retain',['../structkii__mqtt__message__t.html#a25d04d93ca29a1cdfc3957b17a684819',1,'kii_mqtt_message_t::retain'],['../structkii__mqtt__will__t.html#ad967f20d37b0a0ca970fed18e969f7f7',1,'kii_mqtt_will_t::retain']]]
+  ['retain_7',['retain',['../structkii__mqtt__message__t.html#a25d04d93ca29a1cdfc3957b17a684819',1,'kii_mqtt_message_t::retain'],['../structkii__mqtt__will__t.html#ad967f20d37b0a0ca970fed18e969f7f7',1,'kii_mqtt_will_t::retain']]],
+  ['returned_5fvalue_8',['returned_value',['../structkii__server__code__result__t.html#a02e4fde12227f7de23a37cd57e8a32f5',1,'kii_server_code_result_t']]]
 ];

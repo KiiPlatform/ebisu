@@ -317,6 +317,20 @@
       <anchor>a85279e489e808b094e800a9f6d544878</anchor>
       <arglist>(ebisu_openssl_socket_t *sock, ebisu_logger_t *logger)</arglist>
     </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_openssl_socket_set_keepalive</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>ae4e42852de91009d47a8b8bc54514920</anchor>
+      <arglist>(ebisu_openssl_socket_t *sock, unsigned int idle_s, unsigned int interval_s, unsigned int count)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_openssl_socket_set_nodelay</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>acdbbc62d3e2c6d09d001c13c1fcffc4a</anchor>
+      <arglist>(ebisu_openssl_socket_t *sock, bool nodelay)</arglist>
+    </member>
   </compound>
   <compound kind="file">
     <name>ebisu_posix.h</name>
@@ -381,6 +395,20 @@
       <arglist>(ebisu_posix_tcp_socket_t *sock, ebisu_logger_t *logger)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>ebisu_posix_tcp_socket_set_keepalive</name>
+      <anchorfile>ebisu__posix_8h.html</anchorfile>
+      <anchor>a85df467645fd56578a01002c2e806316</anchor>
+      <arglist>(ebisu_posix_tcp_socket_t *sock, unsigned int idle_s, unsigned int interval_s, unsigned int count)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_posix_tcp_socket_set_nodelay</name>
+      <anchorfile>ebisu__posix_8h.html</anchorfile>
+      <anchor>a410e747506716d681e42d72dac4d38de</anchor>
+      <arglist>(ebisu_posix_tcp_socket_t *sock, bool nodelay)</arglist>
+    </member>
+    <member kind="function">
       <type>ebisu_dns_t *</type>
       <name>ebisu_posix_dns</name>
       <anchorfile>ebisu__posix_8h.html</anchorfile>
@@ -434,6 +462,20 @@
       <anchorfile>ebisu__schannel_8h.html</anchorfile>
       <anchor>aa3b8c7de20857678edb3db44fdee1c3c</anchor>
       <arglist>(ebisu_schannel_socket_t *sock, ebisu_logger_t *logger)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_schannel_socket_set_keepalive</name>
+      <anchorfile>ebisu__schannel_8h.html</anchorfile>
+      <anchor>a9f148a8416becac0cd9987c5755dbfe6</anchor>
+      <arglist>(ebisu_schannel_socket_t *sock, unsigned int idle_s, unsigned int interval_s, unsigned int count)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_schannel_socket_set_nodelay</name>
+      <anchorfile>ebisu__schannel_8h.html</anchorfile>
+      <anchor>a3d87d45f92a60a96e54695131e24ad66</anchor>
+      <arglist>(ebisu_schannel_socket_t *sock, bool nodelay)</arglist>
     </member>
   </compound>
   <compound kind="file">
@@ -490,6 +532,20 @@
       <anchorfile>ebisu__win32_8h.html</anchorfile>
       <anchor>a1193a9630da3ac3d570f71e547a5e673</anchor>
       <arglist>(ebisu_win32_tcp_socket_t *sock, ebisu_logger_t *logger)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_win32_tcp_socket_set_keepalive</name>
+      <anchorfile>ebisu__win32_8h.html</anchorfile>
+      <anchor>ac34d9f244e26a19dcb067fbf6d88e8e0</anchor>
+      <arglist>(ebisu_win32_tcp_socket_t *sock, unsigned int idle_s, unsigned int interval_s, unsigned int count)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_win32_tcp_socket_set_nodelay</name>
+      <anchorfile>ebisu__win32_8h.html</anchorfile>
+      <anchor>a6fa26c1cc41004598cc3f396efc08674</anchor>
+      <arglist>(ebisu_win32_tcp_socket_t *sock, bool nodelay)</arglist>
     </member>
     <member kind="function">
       <type>ebisu_dns_t *</type>

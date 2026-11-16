@@ -25,9 +25,11 @@ var searchData=
   ['start_22',['start',['../../../jkii/html/structjkii__field__t.html#a01a5294845f38f7c7567059894426ab4',1,'jkii_field_t']]],
   ['start_20module_23',['Start module',['../index.html#autotoc_md21',1,'Start module'],['../index.html#autotoc_md30',1,'Start module']]],
   ['state_20read_20callbacks_24',['State read callbacks',['../index.html#autotoc_md25',1,'']]],
-  ['string_25',['string',['../../../jkii/html/structjkii__field__t.html#a819930194ef418853ab716ad36cc01e6',1,'jkii_field_t']]],
-  ['system_26',['The system',['../index.html#autotoc_md2',1,'']]],
-  ['system_20and_20sockets_27',['Set-up the system and sockets',['../index.html#autotoc_md11',1,'']]],
-  ['system_20s_20monotonic_20clock_28',['The system&apos;s monotonic clock',['../index.html#autotoc_md17',1,'']]],
-  ['system_20task_20callbacks_20sockets_29',['The system, task callbacks, sockets',['../index.html#autotoc_md24',1,'']]]
+  ['status_25',['status',['../../../kii/html/structkii__server__code__result__t.html#afc2a8d6194533fa59e09589cade43d52',1,'kii_server_code_result_t']]],
+  ['step_5fcount_26',['step_count',['../../../kii/html/structkii__server__code__result__t.html#adeb316d8c264394a396d993282d8aef1',1,'kii_server_code_result_t']]],
+  ['string_27',['string',['../../../jkii/html/structjkii__field__t.html#a819930194ef418853ab716ad36cc01e6',1,'jkii_field_t']]],
+  ['system_28',['The system',['../index.html#autotoc_md2',1,'']]],
+  ['system_20and_20sockets_29',['Set-up the system and sockets',['../index.html#autotoc_md11',1,'']]],
+  ['system_20s_20monotonic_20clock_30',['The system&apos;s monotonic clock',['../index.html#autotoc_md17',1,'']]],
+  ['system_20task_20callbacks_20sockets_31',['The system, task callbacks, sockets',['../index.html#autotoc_md24',1,'']]]
 ];

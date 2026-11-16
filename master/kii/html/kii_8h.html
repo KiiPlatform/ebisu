@@ -117,6 +117,8 @@ Data Structures</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A last will: the message the broker is to publish if the connection is lost, rather than ended with DISCONNECT, as the task ends it when it stops. Whether the broker publishes it, and who receives it, is the broker's.  <a href="structkii__mqtt__will__t.html#details">More...</a><br /></td></tr>
 <tr class="memitem:kii_5Ft" id="r_kii_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structkii__t.html">kii_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores data/ callbacks used by kii module.  <a href="structkii__t.html#details">More...</a><br /></td></tr>
+<tr class="memitem:kii_5Fserver_5Fcode_5Fresult_5Ft" id="r_kii_5Fserver_5Fcode_5Fresult_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structkii__server__code__result__t.html">kii_server_code_result_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A server code's response, as <a class="el" href="#a95e473b240605c8a74b48433511fed96" title="Read the response of the server code just executed.">kii_get_server_code_result()</a> reads it.  <a href="structkii__server__code__result__t.html#details">More...</a><br /></td></tr>
 <tr class="memitem:kii_5Fti_5Ffirmware_5Fversion_5Ft" id="r_kii_5Fti_5Ffirmware_5Fversion_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structkii__ti__firmware__version__t.html">kii_ti_firmware_version_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores firmware version.  <a href="structkii__ti__firmware__version__t.html#details">More...</a><br /></td></tr>
 <tr class="memitem:kii_5Fmqtt_5Ftask_5Finfo" id="r_kii_5Fmqtt_5Ftask_5Finfo"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structkii__mqtt__task__info.html">kii_mqtt_task_info</a></td></tr>
@@ -226,6 +228,8 @@ typedef struct kii_mqtt_will_t&#160;</td><td class="memItemRight" valign="bottom
 <tr class="memitem:ab1332877c811291e2a9693aaa5c15858" id="r_ab1332877c811291e2a9693aaa5c15858"><td class="memItemLeft" align="right" valign="top"><a id="ab1332877c811291e2a9693aaa5c15858" name="ab1332877c811291e2a9693aaa5c15858"></a>
 typedef struct kii_t&#160;</td><td class="memItemRight" valign="bottom"><b>kii_t</b></td></tr>
 <tr class="memdesc:ab1332877c811291e2a9693aaa5c15858"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores data/ callbacks used by kii module. <br /></td></tr>
+<tr class="memitem:abc6ff7f33ebe7fa9528cdf40cbbeac64" id="r_abc6ff7f33ebe7fa9528cdf40cbbeac64"><td class="memItemLeft" align="right" valign="top">typedef struct kii_server_code_result_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abc6ff7f33ebe7fa9528cdf40cbbeac64">kii_server_code_result_t</a></td></tr>
+<tr class="memdesc:abc6ff7f33ebe7fa9528cdf40cbbeac64"><td class="mdescLeft">&#160;</td><td class="mdescRight">A server code's response, as <a class="el" href="#a95e473b240605c8a74b48433511fed96" title="Read the response of the server code just executed.">kii_get_server_code_result()</a> reads it.  <br /></td></tr>
 <tr class="memitem:af136309d5e5e98f8d912e85a8869d107" id="r_af136309d5e5e98f8d912e85a8869d107"><td class="memItemLeft" align="right" valign="top"><a id="af136309d5e5e98f8d912e85a8869d107" name="af136309d5e5e98f8d912e85a8869d107"></a>
 typedef struct kii_ti_firmware_version_t&#160;</td><td class="memItemRight" valign="bottom"><b>kii_ti_firmware_version_t</b></td></tr>
 <tr class="memdesc:af136309d5e5e98f8d912e85a8869d107"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores firmware version. <br /></td></tr>
@@ -420,6 +424,8 @@ Functions</h2></td></tr>
 <tr class="memdesc:a980766f47ebc738c8cf1a3702722f56e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute server code with a token other than the thing's, or none.  <br /></td></tr>
 <tr class="memitem:a94b0a1712cda2fb64a78e860044caa78" id="r_a94b0a1712cda2fb64a78e860044caa78"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a94b0a1712cda2fb64a78e860044caa78">kii_execute_server_code_with_app_auth</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *version, const char *endpoint_name, const char *params)</td></tr>
 <tr class="memdesc:a94b0a1712cda2fb64a78e860044caa78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute server code with the application's credentials.  <br /></td></tr>
+<tr class="memitem:a95e473b240605c8a74b48433511fed96" id="r_a95e473b240605c8a74b48433511fed96"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a95e473b240605c8a74b48433511fed96">kii_get_server_code_result</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="structkii__server__code__result__t.html">kii_server_code_result_t</a> *out_result)</td></tr>
+<tr class="memdesc:a95e473b240605c8a74b48433511fed96"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the response of the server code just executed.  <br /></td></tr>
 <tr class="memitem:adaf6e5b9a952127cacd4cbf2e911039c" id="r_adaf6e5b9a952127cacd4cbf2e911039c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adaf6e5b9a952127cacd4cbf2e911039c">kii_ti_onboard</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *vendor_thing_id, const char *password, const char *thing_type, const char *firmware_version, const char *layout_position, const char *thing_properties)</td></tr>
 <tr class="memdesc:adaf6e5b9a952127cacd4cbf2e911039c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute onboarding.  <br /></td></tr>
 <tr class="memitem:aaab1b9126bf3ef38f62f35b064846d1c" id="r_aaab1b9126bf3ef38f62f35b064846d1c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aaab1b9126bf3ef38f62f35b064846d1c">kii_ti_put_firmware_version</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *firmware_version)</td></tr>
@@ -481,7 +487,7 @@ Functions</h2></td></tr>
 <tr class="memitem:af8d81eaeba5dfa0aceff7347e8f7419a" id="r_af8d81eaeba5dfa0aceff7347e8f7419a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af8d81eaeba5dfa0aceff7347e8f7419a">kii_set_cb_slist_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc_8h.html#a14e10ebf817cb0b1dc8dca9ce3794b9c">KHC_CB_SLIST_ALLOC</a> cb_alloc, <a class="elRef" href="../../khc/html/khc_8h.html#a32bafb6cf1da963a57d8a167efe9f833">KHC_CB_SLIST_FREE</a> cb_free, void *cb_alloc_data, void *cb_free_data)</td></tr>
 <tr class="memdesc:af8d81eaeba5dfa0aceff7347e8f7419a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set <a class="elRef" href="../../khc/html/structkhc__slist.html">khc_slist</a> (linked list) resource allocators.  <br /></td></tr>
 <tr class="memitem:a51c376c5e496e52aec2375a3ff70a885" id="r_a51c376c5e496e52aec2375a3ff70a885"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a51c376c5e496e52aec2375a3ff70a885">kii_get_etag</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii)</td></tr>
-<tr class="memdesc:a51c376c5e496e52aec2375a3ff70a885"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get Etag value.  <br /></td></tr>
+<tr class="memdesc:a51c376c5e496e52aec2375a3ff70a885"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the ETag of the last response.  <br /></td></tr>
 <tr class="memitem:ae61dfefd97935dd1d068dd640ec30af1" id="r_ae61dfefd97935dd1d068dd640ec30af1"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae61dfefd97935dd1d068dd640ec30af1">kii_get_resp_status</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii)</td></tr>
 <tr class="memdesc:ae61dfefd97935dd1d068dd640ec30af1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get HTTP status code.  <br /></td></tr>
 <tr class="memitem:ae1cd89c32442e3df563ec4a17fe58208" id="r_ae1cd89c32442e3df563ec4a17fe58208"><td class="memItemLeft" align="right" valign="top"><a class="elRef" href="../../core/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae1cd89c32442e3df563ec4a17fe58208">kii_get_sock_error</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, long *out_detail)</td></tr>
@@ -745,6 +751,23 @@ Functions</h2></td></tr>
 
 <p>A message the MQTT task received: what its PUBLISH packet carried. </p>
 <p>The pointers are into the buffer set by <a class="el" href="#adb5bef6d077b15fca3195ef7d39681cd" title="Set buffer used to parse MQTT message.">kii_set_mqtt_buff()</a>. </p>
+
+</div>
+</div>
+<a id="abc6ff7f33ebe7fa9528cdf40cbbeac64" name="abc6ff7f33ebe7fa9528cdf40cbbeac64"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc6ff7f33ebe7fa9528cdf40cbbeac64">&#9670;&#160;</a></span>kii_server_code_result_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef struct kii_server_code_result_t kii_server_code_result_t</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>A server code's response, as <a class="el" href="#a95e473b240605c8a74b48433511fed96" title="Read the response of the server code just executed.">kii_get_server_code_result()</a> reads it. </p>
+<p>Its pointers are into the buffer set by <a class="el" href="#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a>, so it is good until the next request. A member that isn't there has <a class="elRef" href="../../jkii/html/structjkii__member__t.html#a0f288ffdcc9d3b98b69d00f28e84ca92">jkii_member_t::value</a> NULL and <a class="elRef" href="../../jkii/html/structjkii__member__t.html#a57e03f0a189c7437759a3542520f57a2">jkii_member_t::type</a> JKII_FIELD_TYPE_ANY, which the jkii_member_ readers refuse as a type mismatch. </p>
 
 </div>
 </div>
@@ -1547,7 +1570,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>As <a class="el" href="#a88de31a3b85076df9a58727d2ab63d7f" title="Execute a specific version of server code.">kii_execute_server_code_version()</a>. </dd></dl>
 
 </div>
 </div>
@@ -1590,7 +1613,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>KII_ERR_OK for a 2xx response, KII_ERR_RESP_STATUS for another, or what kept the request from being made. The response's body is left in the buffer set by <a class="el" href="#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a>, <a class="el" href="#acc772d67b6d4f9cf53e0c5ea864ceb5d" title="Get response body length. If the response is chunked, decoded response body length is returned.">kii_get_resp_body_length()</a> bytes long, for <a class="el" href="#a95e473b240605c8a74b48433511fed96" title="Read the response of the server code just executed.">kii_get_server_code_result()</a> to read. </dd></dl>
 
 </div>
 </div>
@@ -1634,7 +1657,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>As <a class="el" href="#a88de31a3b85076df9a58727d2ab63d7f" title="Execute a specific version of server code.">kii_execute_server_code_version()</a>. </dd></dl>
 
 </div>
 </div>
@@ -1684,7 +1707,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>As <a class="el" href="#a88de31a3b85076df9a58727d2ab63d7f" title="Execute a specific version of server code.">kii_execute_server_code_version()</a>. </dd></dl>
 
 </div>
 </div>
@@ -1734,14 +1757,15 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
       </table>
 </div><div class="memdoc">
 
-<p>Get Etag value. </p>
+<p>Get the ETag of the last response. </p>
+<p>Whole, or not at all: an ETag longer than KII_ETAG_MAX_SIZE - 1 bytes isn't kept, nor one in a header longer than the buffer set by <a class="el" href="#afeac6cc4848254cf840956e5cee04bcd" title="Set response header buffer.">kii_set_resp_header_buff()</a>, which is skipped. An empty ETag given to <a class="el" href="#ae6940b66d1a215880f76b03ed0a74ec3" title="Put Kii object.">kii_put_object()</a> or <a class="el" href="#a63e7f18308e41bf8d558530cb52e55ee" title="Patch Kii object. Key-Value pair included in patch_data is updated/ added. Other existing Key-Value p...">kii_patch_object()</a> sends no If-Match, which would make an update meant to be conditional unconditional. So <a class="el" href="#a2554eb45402af772c9d82980dba65167" title="Get Kii object. When succeeded, object data is stored in the buffer given by kii_set_buff() and its l...">kii_get_object()</a>, <a class="el" href="#ac3ecf806fb18b0063b50291b8131dcfc" title="Post Kii object.">kii_post_object()</a>, <a class="el" href="#ae6940b66d1a215880f76b03ed0a74ec3" title="Put Kii object.">kii_put_object()</a> and <a class="el" href="#a63e7f18308e41bf8d558530cb52e55ee" title="Patch Kii object. Key-Value pair included in patch_data is updated/ added. Other existing Key-Value p...">kii_patch_object()</a> return KII_ERR_TOO_LARGE_DATA for a 2xx response whose ETag isn't kept, or that had a header skipped and no ETag kept, though they read or wrote the object.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Etag value in Etag response header. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The ETag, or "" if the response had none, or none kii kept. </dd></dl>
 
 </div>
 </div>
@@ -1815,7 +1839,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a>. KII_ERR_TOO_LARGE_DATA, with the object in the buffer, for an object whose ETag <a class="el" href="#a51c376c5e496e52aec2375a3ff70a885" title="Get the ETag of the last response.">kii_get_etag()</a> can't give: see there. </dd></dl>
 
 </div>
 </div>
@@ -1896,6 +1920,40 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>HTTP status code. </dd></dl>
+
+</div>
+</div>
+<a id="a95e473b240605c8a74b48433511fed96" name="a95e473b240605c8a74b48433511fed96"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a95e473b240605c8a74b48433511fed96">&#9670;&#160;</a></span>kii_get_server_code_result()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a> kii_get_server_code_result </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *</td>          <td class="paramname"><span class="paramname"><em>kii</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structkii__server__code__result__t.html">kii_server_code_result_t</a> *</td>          <td class="paramname"><span class="paramname"><em>out_result</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read the response of the server code just executed. </p>
+<p>Call it after <a class="el" href="#a54c7ef600d31e8e1f6826dbaa2742b04" title="Execute current version of server code.">kii_execute_server_code()</a>, <a class="el" href="#a88de31a3b85076df9a58727d2ab63d7f" title="Execute a specific version of server code.">kii_execute_server_code_version()</a>, <a class="el" href="#a980766f47ebc738c8cf1a3702722f56e" title="Execute server code with a token other than the thing&#39;s, or none.">kii_execute_server_code_with_token()</a> or <a class="el" href="#a94b0a1712cda2fb64a78e860044caa78" title="Execute server code with the application&#39;s credentials.">kii_execute_server_code_with_app_auth()</a>, and before the next request.</p>
+<p>A 2xx response wraps what the endpoint returned as <span class="tt">{"returnedValue": ...}</span>. An error of Kii's own comes with a Content-Type of <span class="tt">application/vnd.kii.&lt;name&gt;+json</span>, as <span class="tt">application/vnd.kii.EndpointInvocationErrorException+json</span>, and a body with errorCode, message and, for some errors, details. An error without that Content-Type, such as one from a proxy on the way, is left to the caller, in <a class="el" href="structkii__server__code__result__t.html#a4f02fbc79a670afb79d532a7eeafdd0d" title="The body, as it came, whatever it is, or NULL if kii has no buffer.">kii_server_code_result_t::body</a>, as is a 2xx body that isn't wrapped.</p>
+<p>Nothing of the body is logged: an error refusing credentials may hold them.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_result</td><td>What the response holds: its status, body and headers always, and the rest as the return value says. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>KII_ERR_OK for a 2xx response that wraps a value, with <a class="el" href="structkii__server__code__result__t.html#a02e4fde12227f7de23a37cd57e8a32f5" title="With KII_ERR_OK, the value of the body&#39;s returnedValue, whatever the endpoint returned: an object,...">kii_server_code_result_t::returned_value</a>; KII_ERR_PARSE_JSON for a 2xx response that doesn't; KII_ERR_RESP_STATUS for any other status, with <a class="el" href="structkii__server__code__result__t.html#a9b7ede64c6225bdc3ee727079c01192d" title="With KII_ERR_RESP_STATUS, for an error of Kii&#39;s own, its errorCode, a string, as ENDPOINT_INVOCATION_...">kii_server_code_result_t::error_code</a>, message and details for an error of Kii's own; or KII_ERR_FAIL if no response was read. </dd></dl>
 
 </div>
 </div>
@@ -2100,11 +2158,11 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
     <tr><td class="paramdir">[in]</td><td class="paramname">bucket</td><td>Specify the bucket to which the object is stored. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">object_id</td><td>Specify the id of the object. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">patch_data</td><td>Key-Value pairs of the object in JSON format. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">opt_etag</td><td>If specified, If-Match header is sent to the endpoint. If NULL, If-Match header is not sent. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">opt_etag</td><td>If specified, If-Match header is sent to the endpoint. If NULL or empty, If-Match header is not sent. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a>. KII_ERR_TOO_LARGE_DATA for an object updated whose ETag <a class="el" href="#a51c376c5e496e52aec2375a3ff70a885" title="Get the ETag of the last response.">kii_get_etag()</a> can't give: see there. </dd></dl>
 
 </div>
 </div>
@@ -2153,7 +2211,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a>. KII_ERR_TOO_LARGE_DATA, with out_object_id set, for an object made whose ETag <a class="el" href="#a51c376c5e496e52aec2375a3ff70a885" title="Get the ETag of the last response.">kii_get_etag()</a> can't give: see there. </dd></dl>
 
 </div>
 </div>
@@ -2204,11 +2262,11 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
     <tr><td class="paramdir">[in]</td><td class="paramname">object_id</td><td>Specify the id of the object. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">object_data</td><td>Key-Value pair of the object in JSON format. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">object_content_type</td><td>Content-Type of the object. If null, application/json will be applied. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">opt_etag</td><td>If specified, If-Match header is sent to the endpoint. If NULL, If-Match header is not sent. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">opt_etag</td><td>If specified, If-Match header is sent to the endpoint. If NULL or empty, If-Match header is not sent. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a>. KII_ERR_TOO_LARGE_DATA for an object replaced whose ETag <a class="el" href="#a51c376c5e496e52aec2375a3ff70a885" title="Get the ETag of the last response.">kii_get_etag()</a> can't give: see there. </dd></dl>
 
 </div>
 </div>

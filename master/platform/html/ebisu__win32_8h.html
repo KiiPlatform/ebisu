@@ -123,6 +123,10 @@ Functions</h2></td></tr>
 <tr class="memdesc:abc3d7ff8a5ae6faf8976216267263cfa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets how long connecting may take.  <br /></td></tr>
 <tr class="memitem:a1193a9630da3ac3d570f71e547a5e673" id="r_a1193a9630da3ac3d570f71e547a5e673"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1193a9630da3ac3d570f71e547a5e673">ebisu_win32_tcp_socket_set_logger</a> (<a class="el" href="structebisu__win32__tcp__socket__t.html">ebisu_win32_tcp_socket_t</a> *sock, <a class="elRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a> *logger)</td></tr>
 <tr class="memdesc:a1193a9630da3ac3d570f71e547a5e673"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets where the socket's diagnostics go.  <br /></td></tr>
+<tr class="memitem:ac34d9f244e26a19dcb067fbf6d88e8e0" id="r_ac34d9f244e26a19dcb067fbf6d88e8e0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac34d9f244e26a19dcb067fbf6d88e8e0">ebisu_win32_tcp_socket_set_keepalive</a> (<a class="el" href="structebisu__win32__tcp__socket__t.html">ebisu_win32_tcp_socket_t</a> *sock, unsigned int idle_s, unsigned int interval_s, unsigned int count)</td></tr>
+<tr class="memdesc:ac34d9f244e26a19dcb067fbf6d88e8e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets whether TCP checks an idle connection is still there.  <br /></td></tr>
+<tr class="memitem:a6fa26c1cc41004598cc3f396efc08674" id="r_a6fa26c1cc41004598cc3f396efc08674"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6fa26c1cc41004598cc3f396efc08674">ebisu_win32_tcp_socket_set_nodelay</a> (<a class="el" href="structebisu__win32__tcp__socket__t.html">ebisu_win32_tcp_socket_t</a> *sock, bool nodelay)</td></tr>
+<tr class="memdesc:a6fa26c1cc41004598cc3f396efc08674"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets whether what is sent goes at once, with TCP_NODELAY.  <br /></td></tr>
 <tr class="memitem:afcf3ca4aa921959ba600bb9d9337d6b7" id="r_afcf3ca4aa921959ba600bb9d9337d6b7"><td class="memItemLeft" align="right" valign="top"><a class="elRef" href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afcf3ca4aa921959ba600bb9d9337d6b7">ebisu_win32_dns</a> (void)</td></tr>
 <tr class="memdesc:afcf3ca4aa921959ba600bb9d9337d6b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">The name servers on Windows, for platform's DNS probe.  <br /></td></tr>
 </table>
@@ -285,6 +289,52 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="ac34d9f244e26a19dcb067fbf6d88e8e0" name="ac34d9f244e26a19dcb067fbf6d88e8e0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac34d9f244e26a19dcb067fbf6d88e8e0">&#9670;&#160;</a></span>ebisu_win32_tcp_socket_set_keepalive()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_win32_tcp_socket_set_keepalive </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__win32__tcp__socket__t.html">ebisu_win32_tcp_socket_t</a> *</td>          <td class="paramname"><span class="paramname"><em>sock</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int</td>          <td class="paramname"><span class="paramname"><em>idle_s</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int</td>          <td class="paramname"><span class="paramname"><em>interval_s</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int</td>          <td class="paramname"><span class="paramname"><em>count</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets whether TCP checks an idle connection is still there. </p>
+<p>As the POSIX port's <a class="el" href="ebisu__posix_8h.html#a85df467645fd56578a01002c2e806316" title="Sets whether TCP checks an idle connection is still there.">ebisu_posix_tcp_socket_set_keepalive()</a> does: TCP probes a connection idle for idle_s seconds, and gives it up when count probes, interval_s seconds apart, go unanswered, so that a peer that has gone is noticed within about idle_s + interval_s * count seconds of the connection going idle.</p>
+<p>It applies from the next connect: SO_KEEPALIVE, with TCP_KEEPIDLE, TCP_KEEPINTVL and TCP_KEEPCNT, which Windows takes from Windows 10, version</p><ol type="1">
+<li>One it refuses, as an earlier Windows does, is said with the Winsock error at EBISU_LOG_WARNING to the logger, and the connection made without it.</li>
+</ol>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">idle_s</td><td>Seconds idle before the first probe, or 0 for no keepalive, as the socket starts. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">interval_s</td><td>Seconds between probes, or 0 for the system's. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>Probes unanswered before the connection is given up, or 0 for the system's. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a1193a9630da3ac3d570f71e547a5e673" name="a1193a9630da3ac3d570f71e547a5e673"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1193a9630da3ac3d570f71e547a5e673">&#9670;&#160;</a></span>ebisu_win32_tcp_socket_set_logger()</h2>
 
@@ -311,6 +361,37 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">logger</td><td>The logger, which has to outlive the socket, or NULL, as the socket starts, for the diagnostics to go nowhere. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a6fa26c1cc41004598cc3f396efc08674" name="a6fa26c1cc41004598cc3f396efc08674"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6fa26c1cc41004598cc3f396efc08674">&#9670;&#160;</a></span>ebisu_win32_tcp_socket_set_nodelay()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_win32_tcp_socket_set_nodelay </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__win32__tcp__socket__t.html">ebisu_win32_tcp_socket_t</a> *</td>          <td class="paramname"><span class="paramname"><em>sock</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>nodelay</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets whether what is sent goes at once, with TCP_NODELAY. </p>
+<p>Without it, as the socket starts, Nagle's algorithm holds a small segment back while an earlier one is unacknowledged: a request sent in two pieces can wait for the first's ACK, which a peer may delay. It applies from the next connect.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">nodelay</td><td>true to send at once. </td></tr>
   </table>
   </dd>
 </dl>

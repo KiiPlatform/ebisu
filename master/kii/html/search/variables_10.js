@@ -9,5 +9,7 @@ var searchData=
   ['servers_6',['servers',['../../../core/html/structebisu__dns__ops__t.html#a434b4ee4ff7734efe57464b7dd42a6cc',1,'ebisu_dns_ops_t']]],
   ['size_7',['size',['../../../core/html/structebisu__strbuf__t.html#a0f33a1d98be1357c1aa03020b0d2fdad',1,'ebisu_strbuf_t']]],
   ['start_8',['start',['../../../jkii/html/structjkii__field__t.html#a01a5294845f38f7c7567059894426ab4',1,'jkii_field_t']]],
-  ['string_9',['string',['../../../jkii/html/structjkii__field__t.html#a819930194ef418853ab716ad36cc01e6',1,'jkii_field_t']]]
+  ['status_9',['status',['../structkii__server__code__result__t.html#afc2a8d6194533fa59e09589cade43d52',1,'kii_server_code_result_t']]],
+  ['step_5fcount_10',['step_count',['../structkii__server__code__result__t.html#adeb316d8c264394a396d993282d8aef1',1,'kii_server_code_result_t']]],
+  ['string_11',['string',['../../../jkii/html/structjkii__field__t.html#a819930194ef418853ab716ad36cc01e6',1,'jkii_field_t']]]
 ];
