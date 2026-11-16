@@ -83,58 +83,64 @@ $(function() {
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#ifndef _EBISU_FREERTOS_TCP</span></div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#define _EBISU_FREERTOS_TCP</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;<a class="codeRef" href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a>&gt;</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;<a class="codeRef" href="../../core/html/ebisu__socket_8h.html">ebisu_socket.h</a>&gt;</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;FreeRTOS.h&gt;</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;FreeRTOS_IP.h&gt;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;FreeRTOS_Sockets.h&gt;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;stdbool.h&gt;</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> {</div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span></div>
-<div class="foldopen" id="foldopen00056" data-start="{" data-end="};">
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno"><a class="line" href="structebisu__freertos__tcp__socket__t.html">   56</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structebisu__freertos__tcp__socket__t.html">ebisu_freertos_tcp_socket_t</a> {</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno"><a class="line" href="structebisu__freertos__tcp__socket__t.html#a3c948e20eaab88948cdf3ac22741fe33">   57</a></span>    <a class="code hl_structRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a> <a class="code hl_variable" href="structebisu__freertos__tcp__socket__t.html#a3c948e20eaab88948cdf3ac22741fe33">base</a>; </div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    Socket_t _socket; </div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> _to_recv; </div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> _to_send; </div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> _to_connect; </div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <span class="keywordtype">bool</span> _recv_timed_out;</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    <a class="code hl_structRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a>* _logger;</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <a class="code hl_enumerationRef" href="../../core/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a> _error;</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    <span class="keywordtype">long</span> _error_detail; </div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno"><a class="line" href="ebisu__freertos__tcp_8h.html#ac76e3f5add9f8ab619cd5e9130a8e420">   70</a></span>} <a class="code hl_struct" href="structebisu__freertos__tcp__socket__t.html">ebisu_freertos_tcp_socket_t</a>;</div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;<a class="codeRef" href="../../core/html/ebisu__dns_8h.html">ebisu_dns.h</a>&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;<a class="codeRef" href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a>&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="codeRef" href="../../core/html/ebisu__socket_8h.html">ebisu_socket.h</a>&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;FreeRTOS.h&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;FreeRTOS_IP.h&gt;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;FreeRTOS_Sockets.h&gt;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;stdbool.h&gt;</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> {</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span></div>
+<div class="foldopen" id="foldopen00057" data-start="{" data-end="};">
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno"><a class="line" href="structebisu__freertos__tcp__socket__t.html">   57</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structebisu__freertos__tcp__socket__t.html">ebisu_freertos_tcp_socket_t</a> {</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno"><a class="line" href="structebisu__freertos__tcp__socket__t.html#a3c948e20eaab88948cdf3ac22741fe33">   58</a></span>    <a class="code hl_structRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a> <a class="code hl_variable" href="structebisu__freertos__tcp__socket__t.html#a3c948e20eaab88948cdf3ac22741fe33">base</a>; </div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    Socket_t _socket; </div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> _to_recv; </div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> _to_send; </div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> _to_connect; </div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    <span class="keywordtype">bool</span> _recv_timed_out;</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    <a class="code hl_structRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a>* _logger;</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    <a class="code hl_enumerationRef" href="../../core/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a> _error;</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    <span class="keywordtype">long</span> _error_detail; </div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno"><a class="line" href="ebisu__freertos__tcp_8h.html#ac76e3f5add9f8ab619cd5e9130a8e420">   71</a></span>} <a class="code hl_struct" href="structebisu__freertos__tcp__socket__t.html">ebisu_freertos_tcp_socket_t</a>;</div>
 </div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span></div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno"><a class="line" href="ebisu__freertos__tcp_8h.html#a1b74656a70bd4b1cc01b3f576dac6b5d">   82</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__freertos__tcp_8h.html#a1b74656a70bd4b1cc01b3f576dac6b5d">ebisu_freertos_tcp_socket_init</a>(</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>        <a class="code hl_struct" href="structebisu__freertos__tcp__socket__t.html">ebisu_freertos_tcp_socket_t</a>* sock,</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>        <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> to_recv,</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> to_send);</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span></div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno"><a class="line" href="ebisu__freertos__tcp_8h.html#a329363d9752af31ddf33ae2b96a4c70b">   97</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__freertos__tcp_8h.html#a329363d9752af31ddf33ae2b96a4c70b">ebisu_freertos_tcp_socket_set_connect_timeout</a>(<a class="code hl_struct" href="structebisu__freertos__tcp__socket__t.html">ebisu_freertos_tcp_socket_t</a>* sock,</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>        <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> seconds);</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span></div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno"><a class="line" href="ebisu__freertos__tcp_8h.html#a48d08f53a9326318cbd859cd2c73bac7">  114</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__freertos__tcp_8h.html#a48d08f53a9326318cbd859cd2c73bac7">ebisu_freertos_tcp_socket_set_logger</a>(<a class="code hl_struct" href="structebisu__freertos__tcp__socket__t.html">ebisu_freertos_tcp_socket_t</a>* sock,</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>        <a class="code hl_structRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a>* logger);</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span> </div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>}</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span> </div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span><span class="preprocessor">#endif </span><span class="comment">/* _EBISU_FREERTOS_TCP */</span><span class="preprocessor"></span></div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="comment">/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */</span></div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span></div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno"><a class="line" href="ebisu__freertos__tcp_8h.html#a1b74656a70bd4b1cc01b3f576dac6b5d">   83</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__freertos__tcp_8h.html#a1b74656a70bd4b1cc01b3f576dac6b5d">ebisu_freertos_tcp_socket_init</a>(</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>        <a class="code hl_struct" href="structebisu__freertos__tcp__socket__t.html">ebisu_freertos_tcp_socket_t</a>* sock,</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> to_recv,</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> to_send);</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span></div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno"><a class="line" href="ebisu__freertos__tcp_8h.html#a329363d9752af31ddf33ae2b96a4c70b">   98</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__freertos__tcp_8h.html#a329363d9752af31ddf33ae2b96a4c70b">ebisu_freertos_tcp_socket_set_connect_timeout</a>(<a class="code hl_struct" href="structebisu__freertos__tcp__socket__t.html">ebisu_freertos_tcp_socket_t</a>* sock,</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>        <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> seconds);</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span></div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno"><a class="line" href="ebisu__freertos__tcp_8h.html#a48d08f53a9326318cbd859cd2c73bac7">  115</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__freertos__tcp_8h.html#a48d08f53a9326318cbd859cd2c73bac7">ebisu_freertos_tcp_socket_set_logger</a>(<a class="code hl_struct" href="structebisu__freertos__tcp__socket__t.html">ebisu_freertos_tcp_socket_t</a>* sock,</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>        <a class="code hl_structRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a>* logger);</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span></div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno"><a class="line" href="ebisu__freertos__tcp_8h.html#ae91093d17312ea40d2d99195fd7ec1ab">  146</a></span><a class="code hl_structRef" href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a>* <a class="code hl_function" href="ebisu__freertos__tcp_8h.html#ae91093d17312ea40d2d99195fd7ec1ab">ebisu_freertos_tcp_dns</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span> </div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>}</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span> </div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span><span class="preprocessor">#endif </span><span class="comment">/* _EBISU_FREERTOS_TCP */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span><span class="comment">/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */</span></div>
+<div class="ttc" id="aebisu__dns_8h_html"><div class="ttname"><a href="../../core/html/ebisu__dns_8h.html">ebisu_dns.h</a></div></div>
 <div class="ttc" id="aebisu__freertos__tcp_8h_html_a1b74656a70bd4b1cc01b3f576dac6b5d"><div class="ttname"><a href="ebisu__freertos__tcp_8h.html#a1b74656a70bd4b1cc01b3f576dac6b5d">ebisu_freertos_tcp_socket_init</a></div><div class="ttdeci">void ebisu_freertos_tcp_socket_init(ebisu_freertos_tcp_socket_t *sock, unsigned int to_recv, unsigned int to_send)</div><div class="ttdoc">Clears the socket, with its timeouts, and makes base a socket of it.</div></div>
 <div class="ttc" id="aebisu__freertos__tcp_8h_html_a329363d9752af31ddf33ae2b96a4c70b"><div class="ttname"><a href="ebisu__freertos__tcp_8h.html#a329363d9752af31ddf33ae2b96a4c70b">ebisu_freertos_tcp_socket_set_connect_timeout</a></div><div class="ttdeci">void ebisu_freertos_tcp_socket_set_connect_timeout(ebisu_freertos_tcp_socket_t *sock, unsigned int seconds)</div><div class="ttdoc">Sets how long each attempt to connect to one of the host&#39;s addresses may take.</div></div>
 <div class="ttc" id="aebisu__freertos__tcp_8h_html_a48d08f53a9326318cbd859cd2c73bac7"><div class="ttname"><a href="ebisu__freertos__tcp_8h.html#a48d08f53a9326318cbd859cd2c73bac7">ebisu_freertos_tcp_socket_set_logger</a></div><div class="ttdeci">void ebisu_freertos_tcp_socket_set_logger(ebisu_freertos_tcp_socket_t *sock, ebisu_logger_t *logger)</div><div class="ttdoc">Sets where the socket&#39;s diagnostics go.</div></div>
+<div class="ttc" id="aebisu__freertos__tcp_8h_html_ae91093d17312ea40d2d99195fd7ec1ab"><div class="ttname"><a href="ebisu__freertos__tcp_8h.html#ae91093d17312ea40d2d99195fd7ec1ab">ebisu_freertos_tcp_dns</a></div><div class="ttdeci">ebisu_dns_t * ebisu_freertos_tcp_dns(void)</div><div class="ttdoc">The name servers on FreeRTOS-Plus-TCP, for platform&#39;s DNS probe.</div></div>
 <div class="ttc" id="aebisu__log_8h_html"><div class="ttname"><a href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a></div></div>
 <div class="ttc" id="aebisu__socket_8h_html"><div class="ttname"><a href="../../core/html/ebisu__socket_8h.html">ebisu_socket.h</a></div></div>
 <div class="ttc" id="aebisu__socket_8h_html_a19f16391089f04ceb79936a6ecc26963"><div class="ttname"><a href="../../core/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a></div><div class="ttdeci">ebisu_sock_error_t</div></div>
-<div class="ttc" id="astructebisu__freertos__tcp__socket__t_html"><div class="ttname"><a href="structebisu__freertos__tcp__socket__t.html">ebisu_freertos_tcp_socket_t</a></div><div class="ttdoc">A TCP connection over FreeRTOS-Plus-TCP, without TLS.</div><div class="ttdef"><b>Definition</b> ebisu_freertos_tcp.h:56</div></div>
-<div class="ttc" id="astructebisu__freertos__tcp__socket__t_html_a3c948e20eaab88948cdf3ac22741fe33"><div class="ttname"><a href="structebisu__freertos__tcp__socket__t.html#a3c948e20eaab88948cdf3ac22741fe33">ebisu_freertos_tcp_socket_t::base</a></div><div class="ttdeci">ebisu_socket_t base</div><div class="ttdoc">What ebisu is given.</div><div class="ttdef"><b>Definition</b> ebisu_freertos_tcp.h:57</div></div>
+<div class="ttc" id="astructebisu__dns__t_html"><div class="ttname"><a href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a></div></div>
+<div class="ttc" id="astructebisu__freertos__tcp__socket__t_html"><div class="ttname"><a href="structebisu__freertos__tcp__socket__t.html">ebisu_freertos_tcp_socket_t</a></div><div class="ttdoc">A TCP connection over FreeRTOS-Plus-TCP, without TLS.</div><div class="ttdef"><b>Definition</b> ebisu_freertos_tcp.h:57</div></div>
+<div class="ttc" id="astructebisu__freertos__tcp__socket__t_html_a3c948e20eaab88948cdf3ac22741fe33"><div class="ttname"><a href="structebisu__freertos__tcp__socket__t.html#a3c948e20eaab88948cdf3ac22741fe33">ebisu_freertos_tcp_socket_t::base</a></div><div class="ttdeci">ebisu_socket_t base</div><div class="ttdoc">What ebisu is given.</div><div class="ttdef"><b>Definition</b> ebisu_freertos_tcp.h:58</div></div>
 <div class="ttc" id="astructebisu__logger__t_html"><div class="ttname"><a href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a></div></div>
 <div class="ttc" id="astructebisu__socket__t_html"><div class="ttname"><a href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a></div></div>
 </div><!-- fragment --></div><!-- contents -->

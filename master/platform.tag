@@ -170,6 +170,13 @@
       <anchor>a48d08f53a9326318cbd859cd2c73bac7</anchor>
       <arglist>(ebisu_freertos_tcp_socket_t *sock, ebisu_logger_t *logger)</arglist>
     </member>
+    <member kind="function">
+      <type>ebisu_dns_t *</type>
+      <name>ebisu_freertos_tcp_dns</name>
+      <anchorfile>ebisu__freertos__tcp_8h.html</anchorfile>
+      <anchor>ae91093d17312ea40d2d99195fd7ec1ab</anchor>
+      <arglist>(void)</arglist>
+    </member>
   </compound>
   <compound kind="file">
     <name>ebisu_mbedtls.h</name>

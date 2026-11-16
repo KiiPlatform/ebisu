@@ -84,9 +84,10 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>A socket of plain TCP over FreeRTOS-Plus-TCP.  
+<p>A socket of plain TCP over FreeRTOS-Plus-TCP, and its name servers.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;<a class="elRef" href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a>&gt;</code><br />
+<div class="textblock"><code>#include &lt;<a class="elRef" href="../../core/html/ebisu__dns_8h.html">ebisu_dns.h</a>&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="../../core/html/ebisu__socket_8h.html">ebisu_socket.h</a>&gt;</code><br />
 <code>#include &lt;FreeRTOS.h&gt;</code><br />
 <code>#include &lt;FreeRTOS_IP.h&gt;</code><br />
@@ -113,9 +114,11 @@ Functions</h2></td></tr>
 <tr class="memdesc:a329363d9752af31ddf33ae2b96a4c70b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets how long each attempt to connect to one of the host's addresses may take.  <br /></td></tr>
 <tr class="memitem:a48d08f53a9326318cbd859cd2c73bac7" id="r_a48d08f53a9326318cbd859cd2c73bac7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a48d08f53a9326318cbd859cd2c73bac7">ebisu_freertos_tcp_socket_set_logger</a> (<a class="el" href="structebisu__freertos__tcp__socket__t.html">ebisu_freertos_tcp_socket_t</a> *sock, <a class="elRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a> *logger)</td></tr>
 <tr class="memdesc:a48d08f53a9326318cbd859cd2c73bac7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets where the socket's diagnostics go.  <br /></td></tr>
+<tr class="memitem:ae91093d17312ea40d2d99195fd7ec1ab" id="r_ae91093d17312ea40d2d99195fd7ec1ab"><td class="memItemLeft" align="right" valign="top"><a class="elRef" href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae91093d17312ea40d2d99195fd7ec1ab">ebisu_freertos_tcp_dns</a> (void)</td></tr>
+<tr class="memdesc:ae91093d17312ea40d2d99195fd7ec1ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">The name servers on FreeRTOS-Plus-TCP, for platform's DNS probe.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A socket of plain TCP over FreeRTOS-Plus-TCP. </p>
+<div class="textblock"><p>A socket of plain TCP over FreeRTOS-Plus-TCP, and its name servers. </p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Typedef Documentation</h2>
 <a id="ac76e3f5add9f8ab619cd5e9130a8e420" name="ac76e3f5add9f8ab619cd5e9130a8e420"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac76e3f5add9f8ab619cd5e9130a8e420">&#9670;&#160;</a></span>ebisu_freertos_tcp_socket_t</h2>
@@ -139,6 +142,30 @@ Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
+<a id="ae91093d17312ea40d2d99195fd7ec1ab" name="ae91093d17312ea40d2d99195fd7ec1ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae91093d17312ea40d2d99195fd7ec1ab">&#9670;&#160;</a></span>ebisu_freertos_tcp_dns()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="elRef" href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a> * ebisu_freertos_tcp_dns </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The name servers on FreeRTOS-Plus-TCP, for platform's DNS probe. </p>
+<p>The servers are those FreeRTOS-Plus-TCP's DNS client asks, in the order it asks them, on port 53: of the family it prefers, IPv4 unless FreeRTOS_SetDNSIPPreference() says IPv6, those of the first end-point of that family with one, as DHCP, RA or the application set them. They start from the one the next lookup asks, and go on to each other in turn, as the client does after each that doesn't answer. One the client doesn't ask, as the broadcast address, ends those of its end-point, and the next end-point's follow. Without any, there are none.</p>
+<p>A server is asked over a UDP socket of FreeRTOS-Plus-TCP's. ICMP's port unreachable doesn't reach it, so a server nothing listens on doesn't answer in time, rather than refuse. An IPv6 server has no scope, which FreeRTOS-Plus-TCP has no use for, and no server answering is pdFREERTOS_ERRNO_ENOENT, as for FreeRTOS_getaddrinfo(), and as <a class="el" href="structebisu__freertos__tcp__socket__t.html" title="A TCP connection over FreeRTOS-Plus-TCP, without TLS.">ebisu_freertos_tcp_socket_t</a>'s last_error has it.</p>
+<p>A name without a dot, or one under .local, FreeRTOS-Plus-TCP looks up with LLMNR or mDNS, if either is set, and not with these servers, as it does a name in its DNS cache: the probe asks them all the same.</p>
+<p>They have no state, so this serves everything, from any task. Needs ipconfigUSE_DNS.</p>
+<dl class="section return"><dt>Returns</dt><dd>The name servers. </dd></dl>
+
+</div>
+</div>
 <a id="a1b74656a70bd4b1cc01b3f576dac6b5d" name="a1b74656a70bd4b1cc01b3f576dac6b5d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1b74656a70bd4b1cc01b3f576dac6b5d">&#9670;&#160;</a></span>ebisu_freertos_tcp_socket_init()</h2>
 
