@@ -569,6 +569,13 @@ typedef struct kii_t {
     khc_slist* _req_headers; /**< \private */
 
     char _etag[KII_ETAG_MAX_SIZE]; /**< \private */
+    /** \private Whether the last response's Content-Type is one Kii gives its
+     * own errors, `application/vnd.kii.<name>+json`. */
+    bool _resp_kii_error;
+    /** \private The last response's X-Step-Count, or -1. */
+    int64_t _resp_step_count;
+    /** \private The last response's X-Environment-Version, or -1. */
+    int64_t _resp_environment_version;
 
     KHC_CB_SLIST_ALLOC _cb_slist_alloc; /**< \private */
     KHC_CB_SLIST_FREE _cb_slist_free; /**< \private */
@@ -1373,7 +1380,10 @@ void kii_set_mqtt_lock(kii_t* kii, ebisu_lock_t* lock);
  * \param [in] version Version identifier to be used during execution.
  * \param [in] endpoint_name Name of the endpoint to be executed.
  * \param [in] params Parameters given to endpoint. Expect JSON object.
- * \return kii_code_t
+ * \return KII_ERR_OK for a 2xx response, KII_ERR_RESP_STATUS for another,
+ * or what kept the request from being made. The response's body is left in
+ * the buffer set by kii_set_buff(), kii_get_resp_body_length() bytes long,
+ * for kii_get_server_code_result() to read.
  */
 kii_code_t kii_execute_server_code_version(
         kii_t* kii,
@@ -1387,7 +1397,7 @@ kii_code_t kii_execute_server_code_version(
  * \param [in,out] kii kii_t instance.
  * \param [in] endpoint_name Name of the endpoint to be executed.
  * \param [in] params Parameters given to endpoint. Expect JSON object.
- * \return kii_code_t
+ * \return As kii_execute_server_code_version().
  */
 kii_code_t kii_execute_server_code(
 		kii_t* kii,
@@ -1408,7 +1418,7 @@ kii_code_t kii_execute_server_code(
  * \param [in] endpoint_name Name of the endpoint to be executed.
  * \param [in] params Parameters given to endpoint. Expect JSON object.
  * \param [in] access_token Token sent as a bearer token, or NULL to send none.
- * \return kii_code_t
+ * \return As kii_execute_server_code_version().
  */
 kii_code_t kii_execute_server_code_with_token(
         kii_t* kii,
@@ -1430,13 +1440,84 @@ kii_code_t kii_execute_server_code_with_token(
  * for the current one.
  * \param [in] endpoint_name Name of the endpoint to be executed.
  * \param [in] params Parameters given to endpoint. Expect JSON object.
- * \return kii_code_t
+ * \return As kii_execute_server_code_version().
  */
 kii_code_t kii_execute_server_code_with_app_auth(
         kii_t* kii,
         const char* version,
         const char* endpoint_name,
         const char* params);
+
+/**
+ * \brief A server code's response, as kii_get_server_code_result() reads it.
+ *
+ * Its pointers are into the buffer set by kii_set_buff(), so it is good until
+ * the next request. A member that isn't there has jkii_member_t#value NULL
+ * and jkii_member_t#type JKII_FIELD_TYPE_ANY, which the jkii_member_ readers
+ * refuse as a type mismatch.
+ */
+typedef struct kii_server_code_result_t {
+    /** \brief The response's status, as kii_get_resp_status() gives it, or 0
+     * if there was none. */
+    uint16_t status;
+    /** \brief The body, as it came, whatever it is, or NULL if kii has no
+     * buffer. */
+    const char* body;
+    /** \brief Its length, as kii_get_resp_body_length() gives it. */
+    size_t body_length;
+    /** \brief With KII_ERR_OK, the value of the body's returnedValue,
+     * whatever the endpoint returned: an object, an array, a string, a
+     * number, true, false or null, as jkii_find_member() gives it. */
+    jkii_member_t returned_value;
+    /** \brief With KII_ERR_RESP_STATUS, for an error of Kii's own, its
+     * errorCode, a string, as ENDPOINT_INVOCATION_ERROR or
+     * SERVER_CODE_VERSION_NOT_FOUND, which jkii_member_string() copies. */
+    jkii_member_t error_code;
+    /** \brief With error_code, the error's message, if it is a string. */
+    jkii_member_t message;
+    /** \brief With error_code, the error's details, of any type, if there are
+     * any: for ENDPOINT_INVOCATION_ERROR, an object with errorCode and message
+     * of its own, as RUNTIME_ERROR or EXECUTION_TIMEOUT and what the code
+     * threw, which jkii_find_member() reads. */
+    jkii_member_t details;
+    /** \brief The steps the code took, from the X-Step-Count header, or -1
+     * without one that is a count. */
+    int64_t step_count;
+    /** \brief The version of the environment the code ran in, from the
+     * X-Environment-Version header, or -1 without one that is a number. */
+    int64_t environment_version;
+} kii_server_code_result_t;
+
+/**
+ * \brief Read the response of the server code just executed.
+ *
+ * Call it after kii_execute_server_code(), kii_execute_server_code_version(),
+ * kii_execute_server_code_with_token() or
+ * kii_execute_server_code_with_app_auth(), and before the next request.
+ *
+ * A 2xx response wraps what the endpoint returned as
+ * `{"returnedValue": ...}`. An error of Kii's own comes with a Content-Type of
+ * `application/vnd.kii.<name>+json`, as
+ * `application/vnd.kii.EndpointInvocationErrorException+json`, and a body
+ * with errorCode, message and, for some errors, details. An error without
+ * that Content-Type, such as one from a proxy on the way, is left to the
+ * caller, in kii_server_code_result_t#body, as is a 2xx body that isn't
+ * wrapped.
+ *
+ * Nothing of the body is logged: an error refusing credentials may hold them.
+ *
+ * \param [in] kii kii_t instance.
+ * \param [out] out_result What the response holds: its status, body and
+ * headers always, and the rest as the return value says.
+ * \return KII_ERR_OK for a 2xx response that wraps a value, with
+ * kii_server_code_result_t#returned_value; KII_ERR_PARSE_JSON for a 2xx
+ * response that doesn't; KII_ERR_RESP_STATUS for any other status, with
+ * kii_server_code_result_t#error_code, message and details for an error of
+ * Kii's own; or KII_ERR_FAIL if no response was read.
+ */
+kii_code_t kii_get_server_code_result(
+        kii_t* kii,
+        kii_server_code_result_t* out_result);
 
 /**
  * \brief Execute onboarding.

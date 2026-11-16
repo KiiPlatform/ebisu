@@ -37,6 +37,15 @@ void _kii_clock_record(kii_t* kii);
 
 int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len);
 
+/* Forgets what the last response's headers said: its ETag, whether its
+ * Content-Type is Kii's for an error, its X-Step-Count and its
+ * X-Environment-Version. */
+void _kii_clear_resp_headers(kii_t* kii);
+
+/* Reads what kii keeps of one response header, given as khc gives it to
+ * kii's header callback, without its CRLF. */
+void _kii_read_resp_header(kii_t* kii, const char* header, size_t header_len);
+
 /* Appends to the request body being built in the buffer, of length len so far:
  * before, value escaped for a JSON string, and after. Returns the new length,
  * or -1 if that doesn't fit, or if len is -1 already, so that calls can be

@@ -405,6 +405,39 @@ an endpoint that runs without one. `kii_execute_server_code_with_app_auth()`
 sends the application's own credentials, Basic authorization of its ID, as
 onboarding does. A session never renews or replaces either.
 
+`kii_get_server_code_result()` reads the response, before the next request.
+A 2xx response wraps what the endpoint returned in `returnedValue`, and an
+error of Kii's own gives its `errorCode`, `message` and, for an endpoint that
+threw or took too long, `details`. Each is a `jkii_member_t`, into the buffer,
+for jkii's readers:
+
+```c
+    kii_server_code_result_t result;
+    res = kii_get_server_code_result(&kii, &result);
+    if (res == KII_ERR_OK) {
+        jkii_member_t interval;
+        int64_t seconds;
+        if (jkii_find_member(result.returned_value.value,
+                    result.returned_value.value_length, "/interval",
+                    &interval) == JKII_ERR_OK &&
+                jkii_member_integer(&interval, 1, 3600, &seconds) ==
+                    JKII_FIELD_ERR_OK) {
+            /* ... */
+        }
+    } else if (res == KII_ERR_RESP_STATUS && result.error_code.value != NULL) {
+        char code[64];
+        jkii_member_string(&result.error_code, code, sizeof(code));
+        /* "ENDPOINT_INVOCATION_ERROR", "SERVER_CODE_VERSION_NOT_FOUND", ... */
+    }
+```
+
+A 2xx body that isn't wrapped is `KII_ERR_PARSE_JSON`, and an error that isn't
+Kii's, from a proxy on the way say, has no `errorCode`: both are left in
+`result.body` as they came, with `result.status`. `result.step_count` and
+`result.environment_version` give the `X-Step-Count` and
+`X-Environment-Version` headers, or -1. Nothing of the body is logged, as an
+error refusing credentials may hold them.
+
 ## Other REST API calls
 
 Any other call can be built with `kii_api_call_*()`. The path is the whole

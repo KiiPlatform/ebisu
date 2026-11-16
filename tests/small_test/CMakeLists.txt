@@ -35,6 +35,7 @@ ebisu_add_test_suite(small_test_kii
         kii/push_test.cpp
         kii/request_test.cpp
         kii/secrets_test.cpp
+        kii/server_code_test.cpp
         kii/session_test.cpp
         kii/simple_test.cpp
         kii/thing_test.cpp

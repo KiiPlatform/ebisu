@@ -573,7 +573,7 @@ static kii_code_t _renew_and_restore(
     kii->_rw_buff_read = 0;
     kii->_rw_buff_written = 0;
     kii->_resp_offset = 0;
-    kii->_etag[0] = '\0';
+    _kii_clear_resp_headers(kii);
     kii_code_t header_res = _replace_auth_header(kii);
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
     if (res == KII_ERR_OK) {
