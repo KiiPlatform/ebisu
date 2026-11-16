@@ -13,8 +13,11 @@
 #include <ebisu_socket.h>
 
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <netdb.h>
 #include <poll.h>
 #include <pthread.h>
@@ -363,6 +366,71 @@ static int connect_to_host(const char* host, uint16_t port, unsigned int timeout
         log_to(logger, EBISU_LOG_ERROR, "failed to connect to %s.", host);
     }
     return sock;
+}
+
+/* Keepalive and TCP_NODELAY, as a socket of these sets them for each
+   connection: keepalive off with idle_s 0, as TCP starts, and otherwise on,
+   with its interval and count where they aren't 0. */
+typedef struct tcp_options_t {
+    unsigned int idle_s;
+    unsigned int interval_s;
+    unsigned int count;
+    bool nodelay;
+} tcp_options_t;
+
+/* Sets an int option, or says why it couldn't be: the connection goes on
+   without it. */
+static void set_int_option(int sock, int level, int name, const char* what,
+        unsigned int value, ebisu_logger_t* logger)
+{
+    int v = value > INT_MAX ? INT_MAX : (int)value;
+    if (setsockopt(sock, level, name, &v, sizeof(v)) != 0) {
+        int saved_errno = errno;
+        (void)saved_errno;
+        log_to(logger, EBISU_LOG_WARNING, "failed to set %s to %u: errno=%d: %s", what,
+                value, saved_errno, strerror(saved_errno));
+    }
+}
+
+/* Says an option was asked for that the system has no way to set. */
+#define unsettable(logger, what) \
+    log_to((logger), EBISU_LOG_WARNING, "%s can't be set on this system.", (what))
+
+/* Sets options on a socket just connected. */
+static void set_tcp_options(int sock, const tcp_options_t* options, ebisu_logger_t* logger)
+{
+    if (options->idle_s > 0) {
+        set_int_option(sock, SOL_SOCKET, SO_KEEPALIVE, "SO_KEEPALIVE", 1, logger);
+#if defined(TCP_KEEPIDLE)
+        set_int_option(sock, IPPROTO_TCP, TCP_KEEPIDLE, "TCP_KEEPIDLE", options->idle_s,
+                logger);
+#elif defined(TCP_KEEPALIVE)
+        /* macOS's name for it. */
+        set_int_option(sock, IPPROTO_TCP, TCP_KEEPALIVE, "TCP_KEEPALIVE", options->idle_s,
+                logger);
+#else
+        unsettable(logger, "The keepalive idle time");
+#endif
+        if (options->interval_s > 0) {
+#ifdef TCP_KEEPINTVL
+            set_int_option(sock, IPPROTO_TCP, TCP_KEEPINTVL, "TCP_KEEPINTVL",
+                    options->interval_s, logger);
+#else
+            unsettable(logger, "TCP_KEEPINTVL");
+#endif
+        }
+        if (options->count > 0) {
+#ifdef TCP_KEEPCNT
+            set_int_option(sock, IPPROTO_TCP, TCP_KEEPCNT, "TCP_KEEPCNT", options->count,
+                    logger);
+#else
+            unsettable(logger, "TCP_KEEPCNT");
+#endif
+        }
+    }
+    if (options->nodelay) {
+        set_int_option(sock, IPPROTO_TCP, TCP_NODELAY, "TCP_NODELAY", 1, logger);
+    }
 }
 
 #endif /* _EBISU_POSIX_CONNECT */

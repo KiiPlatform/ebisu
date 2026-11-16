@@ -62,6 +62,19 @@ void ebisu_win32_tcp_socket_set_logger(ebisu_win32_tcp_socket_t* sock,
     sock->logger = logger;
 }
 
+void ebisu_win32_tcp_socket_set_keepalive(ebisu_win32_tcp_socket_t* sock,
+        unsigned int idle_s, unsigned int interval_s, unsigned int count)
+{
+    sock->keepalive_idle = idle_s;
+    sock->keepalive_interval = interval_s;
+    sock->keepalive_count = count;
+}
+
+void ebisu_win32_tcp_socket_set_nodelay(ebisu_win32_tcp_socket_t* sock, bool nodelay)
+{
+    sock->nodelay = nodelay;
+}
+
 /* Says why an operation failed, for last_error, and returns EBISU_SOCK_FAIL. */
 static ebisu_sock_code_t fail_with(ebisu_win32_tcp_socket_t* ctx, ebisu_sock_error_t error,
         long detail)
@@ -124,6 +137,10 @@ static ebisu_sock_code_t tcp_connect(ebisu_socket_t* self, const char* host, uin
             return fail_with(ctx, EBISU_SOCK_ERROR_OTHER, code);
         }
     }
+    const tcp_options_t options = {
+        ctx->keepalive_idle, ctx->keepalive_interval, ctx->keepalive_count, ctx->nodelay
+    };
+    set_tcp_options(sock, &options, ctx->logger);
     ctx->socket = (uintptr_t)sock;
     return EBISU_SOCK_OK;
 }

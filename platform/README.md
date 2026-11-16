@@ -246,6 +246,54 @@ static ebisu_openssl_socket_t sock;
 With mbedTLS, a configuration that pins or checks nothing needs no CA
 certificates: `ebisu_mbedtls_tls_init(&tls, NULL, 0)`.
 
+## Connections held for long
+
+A connection held open for hours, with a small request now and then, meets
+two things TCP does by default. A peer that went away, by losing power or
+through a NAT on the way dropping the idle connection's entry, is noticed only
+when the next request goes unanswered. And Nagle's algorithm holds a small
+segment back while an earlier one is unacknowledged, so a request written in
+two pieces can wait for the first's ACK.
+
+Each TCP socket of the ports can ask for keepalive and for `TCP_NODELAY`,
+neither of which it has unless asked. Both apply from the next connect:
+
+| Socket | Keepalive | `TCP_NODELAY` |
+|---|---|---|
+| `ebisu_posix_tcp_socket_t` | `ebisu_posix_tcp_socket_set_keepalive()` | `ebisu_posix_tcp_socket_set_nodelay()` |
+| `ebisu_openssl_socket_t` | `ebisu_openssl_socket_set_keepalive()` | `ebisu_openssl_socket_set_nodelay()` |
+| `ebisu_win32_tcp_socket_t` | `ebisu_win32_tcp_socket_set_keepalive()` | `ebisu_win32_tcp_socket_set_nodelay()` |
+| `ebisu_schannel_socket_t` | `ebisu_schannel_socket_set_keepalive()` | `ebisu_schannel_socket_set_nodelay()` |
+
+Keepalive takes the seconds idle before the first probe, the seconds between
+probes and the count of probes unanswered before the connection is given up,
+0 leaving the last two to the system: `SO_KEEPALIVE`, with `TCP_KEEPIDLE`
+(`TCP_KEEPALIVE` on macOS), `TCP_KEEPINTVL` and `TCP_KEEPCNT`. Windows takes
+them from Windows 10, version 1709. A peer that has gone is noticed within
+about idle + interval × count seconds of the connection going idle: a send or
+a receive then fails. An option the system can't set, or a value it refuses, is
+said at `EBISU_LOG_WARNING` to the socket's logger, and the connection made
+without it.
+
+```c
+    ebisu_openssl_socket_init(&sock, 15, 15);
+    /* Probes after a minute idle, 10 s apart: a peer gone is noticed within
+       about 1.5 minutes. */
+    ebisu_openssl_socket_set_keepalive(&sock, 60, 10, 3);
+    ebisu_openssl_socket_set_nodelay(&sock, true);
+```
+
+The mbedTLS port's socket goes over another, whose options these are.
+FreeRTOS-Plus-TCP has neither per socket. It sends keepalive probes on every
+connection when `FreeRTOSIPConfig.h` sets `ipconfigTCP_KEEP_ALIVE` to 1, with
+`ipconfigTCP_KEEP_ALIVE_INTERVAL` seconds between them. With its sliding
+windows, `ipconfigUSE_TCP_WIN` at 1 as by default, it has no Nagle's algorithm:
+a small segment goes as soon as the peer's window has room, unless a socket
+asks for full-size ones with `FREERTOS_SO_SET_FULL_SIZE`, which
+`ebisu_freertos_tcp_socket_t` doesn't. Without them, one segment is
+unacknowledged at a time, so a request in two pieces waits for the first's ACK
+all the same.
+
 ## Loggers
 
 `ebisu_loggers.h`, library `ebisu_loggers`, built on POSIX and on Windows, has

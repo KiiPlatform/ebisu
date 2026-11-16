@@ -74,6 +74,13 @@ typedef struct ebisu_openssl_socket_t {
      * for last_error, and more of it. */
     ebisu_sock_error_t error;
     long error_detail; /**< \private */
+    /** \private What ebisu_openssl_socket_set_keepalive() sets: the idle
+     * time, 0 for no keepalive, the interval and the count. */
+    unsigned int keepalive_idle;
+    unsigned int keepalive_interval; /**< \private */
+    unsigned int keepalive_count; /**< \private */
+    /** \private What ebisu_openssl_socket_set_nodelay() sets. */
+    bool nodelay;
 } ebisu_openssl_socket_t;
 
 /**
@@ -225,6 +232,37 @@ void ebisu_openssl_socket_set_clock(ebisu_openssl_socket_t* sock, ebisu_clock_t*
  * the socket starts, for the diagnostics to go nowhere.
  */
 void ebisu_openssl_socket_set_logger(ebisu_openssl_socket_t* sock, ebisu_logger_t* logger);
+
+/**
+ * \brief Sets whether TCP checks an idle connection is still there.
+ *
+ * As ebisu_posix_tcp_socket_set_keepalive() does, for the TCP connection the
+ * TLS goes over: from the next connect, SO_KEEPALIVE, with TCP_KEEPIDLE
+ * (TCP_KEEPALIVE on macOS), TCP_KEEPINTVL and TCP_KEEPCNT where the system
+ * has them, and what it can't set or refuses said at EBISU_LOG_WARNING. A peer
+ * that has gone is noticed within about idle_s + interval_s * count seconds of
+ * the connection going idle.
+ *
+ * \param [out] sock The socket.
+ * \param [in] idle_s Seconds idle before the first probe, or 0 for no
+ * keepalive, as the socket starts.
+ * \param [in] interval_s Seconds between probes, or 0 for the system's.
+ * \param [in] count Probes unanswered before the connection is given up, or
+ * 0 for the system's.
+ */
+void ebisu_openssl_socket_set_keepalive(ebisu_openssl_socket_t* sock,
+        unsigned int idle_s, unsigned int interval_s, unsigned int count);
+
+/**
+ * \brief Sets whether what is sent goes at once, with TCP_NODELAY.
+ *
+ * As ebisu_posix_tcp_socket_set_nodelay() does, for the TCP connection the TLS
+ * goes over, from the next connect: the handshake's messages too.
+ *
+ * \param [out] sock The socket.
+ * \param [in] nodelay true to send at once.
+ */
+void ebisu_openssl_socket_set_nodelay(ebisu_openssl_socket_t* sock, bool nodelay);
 
 #ifdef __cplusplus
 }

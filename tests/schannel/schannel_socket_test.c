@@ -29,6 +29,7 @@
  */
 #include "ebisu_schannel.h"
 
+#include <ws2tcpip.h>
 #include <windows.h>
 #include <wincrypt.h>
 
@@ -167,6 +168,17 @@ static void print_escaped(const char* data, size_t len)
     }
 }
 
+/* An option of a socket, as getsockopt() reads it, or -1. */
+static long option_of(SOCKET sock, int level, int name)
+{
+    DWORD value = 0;
+    int len = sizeof(value);
+    if (getsockopt(sock, level, name, (char*)&value, &len) != 0) {
+        return -1;
+    }
+    return (long)value;
+}
+
 static int run_step(ebisu_schannel_socket_t* ctx, const char** host, uint16_t port,
         unsigned int to_recv, const char* step)
 {
@@ -296,6 +308,24 @@ static int run_step(ebisu_schannel_socket_t* ctx, const char** host, uint16_t po
         }
         printf("STEP verify %s\n",
                 ebisu_schannel_socket_set_verify(ctx, verify, given) ? "OK" : "FAIL");
+    } else if (strncmp(step, "keepalive:", 10) == 0) {
+        /* keepalive:<idle>,<interval>,<count> */
+        unsigned int idle = 0, interval = 0, count = 0;
+        sscanf(step + 10, "%u,%u,%u", &idle, &interval, &count);
+        ebisu_schannel_socket_set_keepalive(ctx, idle, interval, count);
+        printf("STEP keepalive OK\n");
+    } else if (strncmp(step, "nodelay:", 8) == 0) {
+        ebisu_schannel_socket_set_nodelay(ctx, step[8] == '1');
+        printf("STEP nodelay OK\n");
+    } else if (strcmp(step, "options") == 0) {
+        /* What getsockopt() reads of the connection's socket, -1 for an
+           option it doesn't give. */
+        printf("STEP options keepalive=%ld idle=%ld interval=%ld count=%ld nodelay=%ld\n",
+                option_of(ctx->socket, SOL_SOCKET, SO_KEEPALIVE),
+                option_of(ctx->socket, IPPROTO_TCP, TCP_KEEPIDLE),
+                option_of(ctx->socket, IPPROTO_TCP, TCP_KEEPINTVL),
+                option_of(ctx->socket, IPPROTO_TCP, TCP_KEEPCNT),
+                option_of(ctx->socket, IPPROTO_TCP, TCP_NODELAY));
     } else if (strncmp(step, "pause:", 6) == 0) {
         Sleep((DWORD)strtoul(step + 6, NULL, 10));
         printf("STEP pause OK\n");

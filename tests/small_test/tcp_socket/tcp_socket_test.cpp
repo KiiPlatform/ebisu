@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -51,6 +52,33 @@ void set_connect_timeout(tcp_socket_t* sock, unsigned int seconds)
 void set_logger(tcp_socket_t* sock, ebisu_logger_t* logger)
 {
     ebisu_win32_tcp_socket_set_logger(sock, logger);
+}
+
+void set_keepalive(tcp_socket_t* sock, unsigned int idle_s, unsigned int interval_s,
+        unsigned int count)
+{
+    ebisu_win32_tcp_socket_set_keepalive(sock, idle_s, interval_s, count);
+}
+
+void set_nodelay(tcp_socket_t* sock, bool nodelay)
+{
+    ebisu_win32_tcp_socket_set_nodelay(sock, nodelay);
+}
+
+fd_t fd_of(const tcp_socket_t* sock)
+{
+    return (SOCKET)sock->socket;
+}
+
+// An option's value, as getsockopt() gives it, or -1 if it gives none.
+long option_of(fd_t fd, int level, int name)
+{
+    DWORD value = 0;
+    int len = sizeof(value);
+    if (getsockopt(fd, level, name, (char*)&value, &len) != 0) {
+        return -1;
+    }
+    return (long)value;
 }
 
 void close_fd(fd_t fd)
@@ -96,6 +124,33 @@ void set_connect_timeout(tcp_socket_t* sock, unsigned int seconds)
 void set_logger(tcp_socket_t* sock, ebisu_logger_t* logger)
 {
     ebisu_posix_tcp_socket_set_logger(sock, logger);
+}
+
+void set_keepalive(tcp_socket_t* sock, unsigned int idle_s, unsigned int interval_s,
+        unsigned int count)
+{
+    ebisu_posix_tcp_socket_set_keepalive(sock, idle_s, interval_s, count);
+}
+
+void set_nodelay(tcp_socket_t* sock, bool nodelay)
+{
+    ebisu_posix_tcp_socket_set_nodelay(sock, nodelay);
+}
+
+fd_t fd_of(const tcp_socket_t* sock)
+{
+    return sock->socket;
+}
+
+// An option's value, as getsockopt() gives it, or -1 if it gives none.
+long option_of(fd_t fd, int level, int name)
+{
+    int value = 0;
+    socklen_t len = sizeof(value);
+    if (getsockopt(fd, level, name, &value, &len) != 0) {
+        return -1;
+    }
+    return value;
 }
 
 void close_fd(fd_t fd)
@@ -463,4 +518,95 @@ TEST_CASE( "The plain TCP socket says why it failed to its logger" ) {
         CHECK( logs.lines.empty() );
         ops->close(&sock.base);
     }
+}
+
+// For a connection held for hours, with a request now and then: keepalive
+// notices a peer that has gone while the connection is idle, and TCP_NODELAY
+// sends a request in two pieces without waiting for the first's ACK.
+TEST_CASE( "The plain TCP socket checks an idle connection, and sends at once, when asked" ) {
+    start_network();
+    khct::cb::LoggerCtx logs;
+    Server server(4);
+    tcp_socket_t sock;
+    tcp_socket_init(&sock, 5, 5);
+    set_logger(&sock, logs.get());
+    const ebisu_socket_ops_t* ops = sock.base.ops;
+    auto connect = [&] {
+        REQUIRE( ops->connect(&sock.base, "127.0.0.1", server.port) == EBISU_SOCK_OK );
+        if (server.peer != NO_FD) {
+            server.close_peer();
+        }
+        server.accept_one();
+        return fd_of(&sock);
+    };
+#if defined(TCP_KEEPIDLE)
+    const int idle_option = TCP_KEEPIDLE;
+#elif defined(TCP_KEEPALIVE)
+    const int idle_option = TCP_KEEPALIVE;
+#endif
+    // What a socket has without them.
+    fd_t fresh = socket(AF_INET, SOCK_STREAM, 0);
+    REQUIRE( fresh != NO_FD );
+    const long system_interval = option_of(fresh, IPPROTO_TCP, TCP_KEEPINTVL);
+    const long system_count = option_of(fresh, IPPROTO_TCP, TCP_KEEPCNT);
+    close_fd(fresh);
+
+    SECTION("neither, as it starts") {
+        fd_t fd = connect();
+        CHECK( option_of(fd, SOL_SOCKET, SO_KEEPALIVE) == 0 );
+        CHECK( option_of(fd, IPPROTO_TCP, TCP_NODELAY) == 0 );
+    }
+    SECTION("both, from the next connect") {
+        fd_t fd = connect();
+        set_keepalive(&sock, 30, 5, 4);
+        set_nodelay(&sock, true);
+        CHECK( option_of(fd, SOL_SOCKET, SO_KEEPALIVE) == 0 );
+        REQUIRE( ops->close(&sock.base) == EBISU_SOCK_OK );
+
+        fd = connect();
+        CHECK( option_of(fd, SOL_SOCKET, SO_KEEPALIVE) != 0 );
+        CHECK( option_of(fd, IPPROTO_TCP, idle_option) == 30 );
+        CHECK( option_of(fd, IPPROTO_TCP, TCP_KEEPINTVL) == 5 );
+        CHECK( option_of(fd, IPPROTO_TCP, TCP_KEEPCNT) == 4 );
+        CHECK( option_of(fd, IPPROTO_TCP, TCP_NODELAY) != 0 );
+        size_t sent = 0;
+        REQUIRE( ops->send(&sock.base, "ping", 4, &sent) == EBISU_SOCK_OK );
+        CHECK( server.receive(4) == "ping" );
+        CHECK( logs.lines.empty() );
+
+        SECTION("and neither again, once off") {
+            REQUIRE( ops->close(&sock.base) == EBISU_SOCK_OK );
+            set_keepalive(&sock, 0, 5, 4);
+            set_nodelay(&sock, false);
+            fd = connect();
+            CHECK( option_of(fd, SOL_SOCKET, SO_KEEPALIVE) == 0 );
+            CHECK( option_of(fd, IPPROTO_TCP, TCP_NODELAY) == 0 );
+        }
+    }
+    SECTION("keepalive with the system's interval and count") {
+        set_keepalive(&sock, 60, 0, 0);
+        fd_t fd = connect();
+        CHECK( option_of(fd, SOL_SOCKET, SO_KEEPALIVE) != 0 );
+        CHECK( option_of(fd, IPPROTO_TCP, idle_option) == 60 );
+        CHECK( option_of(fd, IPPROTO_TCP, TCP_KEEPINTVL) == system_interval );
+        CHECK( option_of(fd, IPPROTO_TCP, TCP_KEEPCNT) == system_count );
+        CHECK( option_of(fd, IPPROTO_TCP, TCP_NODELAY) == 0 );
+    }
+#ifdef __linux__
+    SECTION("a value the system refuses is said, and the connection made without it") {
+        // Linux takes a count of 127 at most.
+        set_keepalive(&sock, 30, 5, 200);
+        fd_t fd = connect();
+        CHECK( option_of(fd, SOL_SOCKET, SO_KEEPALIVE) != 0 );
+        CHECK( option_of(fd, IPPROTO_TCP, idle_option) == 30 );
+        CHECK( option_of(fd, IPPROTO_TCP, TCP_KEEPCNT) == system_count );
+#ifdef EBISU_NO_LOG
+        CHECK( logs.lines.empty() );
+#else
+        REQUIRE( logs.lines.size() == 1 );
+        CHECK( logs.lines[0].first == EBISU_LOG_WARNING );
+        CHECK( logs.mentions("failed to set TCP_KEEPCNT to 200") );
+#endif
+    }
+#endif
 }
