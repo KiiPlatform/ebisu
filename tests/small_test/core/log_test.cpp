@@ -300,7 +300,11 @@ TEST_CASE("A slot's change returns once no message goes to the logger it held") 
     SlowLogger last;
     CHECK(ebisu_log_slot_set(&slot, &last.base) == &next.base);
     int after = next.count;
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    // The tasks' messages go to the new logger, once they are run: a busy
+    // machine may leave them waiting longer than any fixed time.
+    for (int i = 0; i < 3000 && last.count == 0; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
     stop = true;
     for (auto& t : tasks) {
         t.join();
