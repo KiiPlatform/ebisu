@@ -502,11 +502,14 @@ static jkii_primitive_err_t _jkii_to_double(
         if (value == 0) {
             *out_double = 0;
             return JKII_PRIMITIVE_ERR_UNDERFLOW;
-        } else {
-            /* In this case, value is plus or minus HUGE_VAL. */
+        } else if (value > 1 || value < -1) {
+            /* Plus or minus HUGE_VAL. */
             *out_double = value;
             return JKII_PRIMITIVE_ERR_OVERFLOW;
         }
+        /* Below the smallest normal double, but not 0: strtod() may say
+         * ERANGE for it, as glibc's and the UCRT's do, though it is a double
+         * all the same. */
     }
 
     *out_double = value;
