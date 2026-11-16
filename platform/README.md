@@ -111,7 +111,8 @@ and makes none without it.
   Its `last_error` says why an operation failed, with FreeRTOS-Plus-TCP's
   error, which also goes to the logger set with
   `ebisu_freertos_tcp_socket_set_logger()`, if any, unless it is built with
-  `-DEBISU_LOG=OFF`. Built where the application's build has
+  `-DEBISU_LOG=OFF`. `ebisu_freertos_tcp_dns()` has FreeRTOS-Plus-TCP's name
+  servers for the DNS probe, below. Built where the application's build has
   FreeRTOS-Plus-TCP's own target, `freertos_plus_tcp`, as well as the
   kernel's, with its `FreeRTOSIPConfig.h`, and not installed. Needs
   FreeRTOS-Plus-TCP V4.2 or later, that of FreeRTOS LTS 202406,
@@ -415,8 +416,8 @@ keeps asking them again, and so does the task that looked up: how long is
 below.
 
 The probe needs nothing of the system's itself: it asks the name servers an
-`ebisu_dns_t` of core's lists, as that has them asked. The POSIX and Win32
-ports have the system's:
+`ebisu_dns_t` of core's lists, as that has them asked. The POSIX, Win32 and
+FreeRTOS-Plus-TCP ports have the system's:
 
 - `ebisu_posix_dns()`: the servers of `/etc/resolv.conf`, as the C libraries
   read it, or 127.0.0.1 without one, asked over BSD sockets;
@@ -424,6 +425,12 @@ ports have the system's:
   `GetAdaptersAddresses()` lists them, but the placeholders `fec0:0:0:ffff::1`
   to `::3`, which Windows lists for an adapter without an IPv6 server, asked
   over Winsock. Without any, none is.
+- `ebisu_freertos_tcp_dns()`: those FreeRTOS-Plus-TCP's DNS client asks, in
+  the order it asks them: of the family it prefers, those of the first
+  end-point that has one, from the one the next lookup asks, as DHCP, RA or the
+  application set them, asked over a UDP socket of FreeRTOS-Plus-TCP's. ICMP's
+  port unreachable doesn't reach that socket, so a server nothing listens on
+  doesn't answer in time, rather than refuse.
 
 An application on another system, such as one with lwIP, implements the two
 operations that matter, `servers` and `ask`, and the probe works there too.
@@ -437,7 +444,8 @@ answers. A host that needs no server, an address or localhost, needs no probe.
 `ebisu_dns_probe_socket_t` probes before another socket connects, and fails the
 connect if no server answers, with `EBISU_SOCK_ERROR_DNS`, rather than have
 the other socket look the host up. The rest is the other socket's, which may be
-any: the OpenSSL or Schannel port's, or the POSIX or Win32 port's of plain TCP.
+any: the OpenSSL, Schannel or mbedTLS port's, or the POSIX, Win32 or
+FreeRTOS-Plus-TCP port's of plain TCP.
 
 ```c
 #include <ebisu_dns_probe.h>
@@ -496,3 +504,12 @@ On Windows Server 2025, a lookup whose one server never answered ended after
 The connect timeout of the Schannel port, or of the Win32 port's plain socket,
 cuts it short: the lookup is cancelled, and the connect fails with
 `EBISU_SOCK_ERROR_TIMEOUT`.
+
+FreeRTOS-Plus-TCP's DNS client asks one server at a time,
+`ipconfigDNS_REQUEST_ATTEMPTS` times, 5 by default, each waiting
+`ipconfigDNS_RECEIVE_BLOCK_TIME_TICKS`, 5 seconds by default, and goes on to
+the end-point's next server after each that doesn't answer. In QEMU, with the
+defaults and a server that never answered, a lookup ended after 25 seconds.
+It fails with `pdFREERTOS_ERRNO_ENOENT`, as for a name that doesn't exist.
+With `ipconfigUSE_IPv6`, the plain socket looks a name up for IPv6 too, after
+IPv4: twice that. Its connect timeout doesn't cut a lookup short.

@@ -26,6 +26,9 @@
 #define ipconfigUSE_LLMNR 1
 #endif
 #define ipconfigDNS_CACHE_ENTRIES 4
+/* Name servers for each end-point: 3, not 2, for the tests to see the DNS
+   client skip one of 0 between two others. */
+#define ipconfigENDPOINT_DNS_ADDRESS_COUNT 3
 /* ipconfigDNS_CACHE_NAME_LENGTH stays at its default, the longest name DNS
    has: it bounds every name in a reply, those a CNAME leads to included, and
    one too long fails the lookup. Kii Cloud's MQTT host is a CNAME of a load

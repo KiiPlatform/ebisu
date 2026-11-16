@@ -1,6 +1,6 @@
-# The tests of the socket over FreeRTOS-Plus-TCP: a firmware for the MPS2 AN385
-# board QEMU emulates, which CTest runs in QEMU with run_tcp_test.py, against
-# its servers on the host. FreeRTOS and FreeRTOS-Plus-TCP are built with their
+# The tests of the socket and the name servers over FreeRTOS-Plus-TCP: a
+# firmware for the MPS2 AN385 board QEMU emulates, which CTest runs in QEMU with
+# run_tcp_test.py, against its servers on the host. FreeRTOS and FreeRTOS-Plus-TCP are built with their
 # own CMake, and ebisu with its own, as an application builds them. See
 # README.md.
 cmake_minimum_required(VERSION 3.24)
@@ -76,7 +76,7 @@ set_target_properties(freertos_tcp_test PROPERTIES
 target_include_directories(freertos_tcp_test PRIVATE ${board})
 target_compile_options(freertos_tcp_test PRIVATE -Wall -Werror)
 target_link_libraries(freertos_tcp_test PRIVATE
-    ebisu_freertos_tcp freertos_plus_tcp_network_if freertos_kernel)
+    ebisu_freertos_tcp ebisu_dns_probe freertos_plus_tcp_network_if freertos_kernel)
 # The board's start-up code starts the program, not the C library's.
 target_link_options(freertos_tcp_test PRIVATE
     -nostartfiles

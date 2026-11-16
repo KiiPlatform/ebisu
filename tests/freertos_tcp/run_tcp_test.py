@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Runs the tests of the socket over FreeRTOS-Plus-TCP in QEMU, against servers
-of this script's on the host's loopback, which QEMU's user-mode networking
-reaches from the firmware at 10.0.2.2. Their ports go to the firmware on its
-command line, through semihosting. Exits with QEMU's status: 0 if every check
-passed.
+"""Runs the tests of the socket and the name servers over FreeRTOS-Plus-TCP in
+QEMU, against servers of this script's on the host's loopback, TCP ones and
+name servers over UDP, which QEMU's user-mode networking reaches from the
+firmware at 10.0.2.2. Their ports go to the firmware on its command line,
+through semihosting. Exits with QEMU's status: 0 if every check passed.
 
     run_tcp_test.py <qemu-system-arm> <freertos_tcp_test.elf>
 """
@@ -78,6 +78,71 @@ def reset(peer):
     peer.close()
 
 
+def reply(query, rcode):
+    """The query as its answer, with rcode and no records: what any name server
+    sends for a query it takes, if only to say that the name doesn't exist."""
+    return query[:2] + bytes([query[2] | 0x80, 0x80 | rcode]) + query[4:]
+
+
+def stray(query):
+    """An answer to another query: of another identifier."""
+    answer = reply(query, 0)
+    return bytes([answer[0] ^ 0xff]) + answer[1:]
+
+
+def answers(server, query, peer):
+    server.sendto(reply(query, 0), peer)
+
+
+def no_such_name(server, query, peer):
+    server.sendto(reply(query, 3), peer)
+
+
+def silent(server, query, peer):
+    pass
+
+
+def stray_first(server, query, peer):
+    """An answer to another query, then, 300 ms later, the answer."""
+    server.sendto(stray(query), peer)
+    time.sleep(0.3)
+    server.sendto(reply(query, 0), peer)
+
+
+def strays(server, query, peer):
+    """Only answers to other queries, one every 200 ms for a second."""
+    for _ in range(5):
+        server.sendto(stray(query), peer)
+        time.sleep(0.2)
+
+
+# Where elsewhere answers from.
+other = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+other.bind(("127.0.0.1", 0))
+
+
+def elsewhere(server, query, peer):
+    """The answer, but from another port."""
+    other.sendto(reply(query, 0), peer)
+
+
+def serve_udp(handle):
+    """A name server on the loopback, each query handled by handle, in turn."""
+    server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    server.bind(("127.0.0.1", 0))
+
+    def receive():
+        while True:
+            try:
+                query, peer = server.recvfrom(512)
+            except OSError:
+                return
+            if len(query) >= 12:
+                handle(server, query, peer)
+    threading.Thread(target=receive, daemon=True).start()
+    return server
+
+
 def listen():
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     listener.bind(("127.0.0.1", 0))
@@ -95,10 +160,21 @@ def main():
         listeners.append(listener)
         ports[name] = listener.getsockname()[1]
         serve(listener, handle)
+    for name, handle in (("dns", answers), ("nxdomain", no_such_name),
+                         ("silent", silent), ("stray", stray_first),
+                         ("strays", strays), ("elsewhere", elsewhere)):
+        server = serve_udp(handle)
+        listeners.append(server)
+        ports[name] = server.getsockname()[1]
     # A port nothing listens on: one that was free a moment ago. QEMU's
     # user-mode networking leaves a connection to it unanswered.
     unused = listen()
     ports["unanswered"] = unused.getsockname()[1]
+    unused.close()
+    # One for UDP, whose datagrams the host refuses.
+    unused = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    unused.bind(("127.0.0.1", 0))
+    ports["refused"] = unused.getsockname()[1]
     unused.close()
 
     args = ",".join("arg=%s=%d" % item for item in ports.items())

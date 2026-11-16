@@ -1,10 +1,11 @@
 /**
  * @file ebisu_freertos_tcp.h
- * @brief A socket of plain TCP over FreeRTOS-Plus-TCP.
+ * @brief A socket of plain TCP over FreeRTOS-Plus-TCP, and its name servers.
  */
 #ifndef _EBISU_FREERTOS_TCP
 #define _EBISU_FREERTOS_TCP
 
+#include <ebisu_dns.h>
 #include <ebisu_log.h>
 #include <ebisu_socket.h>
 
@@ -113,6 +114,36 @@ void ebisu_freertos_tcp_socket_set_connect_timeout(ebisu_freertos_tcp_socket_t* 
  */
 void ebisu_freertos_tcp_socket_set_logger(ebisu_freertos_tcp_socket_t* sock,
         ebisu_logger_t* logger);
+
+/**
+ * \brief The name servers on FreeRTOS-Plus-TCP, for platform's DNS probe.
+ *
+ * The servers are those FreeRTOS-Plus-TCP's DNS client asks, in the order it
+ * asks them, on port 53: of the family it prefers, IPv4 unless
+ * FreeRTOS_SetDNSIPPreference() says IPv6, those of the first end-point of
+ * that family with one, as DHCP, RA or the application set them. They start
+ * from the one the next lookup asks, and go on to each other in turn, as the
+ * client does after each that doesn't answer. One the client doesn't ask, as
+ * the broadcast address, ends those of its end-point, and the next end-point's
+ * follow. Without any, there are none.
+ *
+ * A server is asked over a UDP socket of FreeRTOS-Plus-TCP's. ICMP's port
+ * unreachable doesn't reach it, so a server nothing listens on doesn't answer
+ * in time, rather than refuse. An IPv6 server has no scope, which
+ * FreeRTOS-Plus-TCP has no use for, and no server answering is
+ * pdFREERTOS_ERRNO_ENOENT, as for FreeRTOS_getaddrinfo(), and as
+ * ebisu_freertos_tcp_socket_t's last_error has it.
+ *
+ * A name without a dot, or one under .local, FreeRTOS-Plus-TCP looks up with
+ * LLMNR or mDNS, if either is set, and not with these servers, as it does a
+ * name in its DNS cache: the probe asks them all the same.
+ *
+ * They have no state, so this serves everything, from any task. Needs
+ * ipconfigUSE_DNS.
+ *
+ * \return The name servers.
+ */
+ebisu_dns_t* ebisu_freertos_tcp_dns(void);
 
 #ifdef __cplusplus
 }
