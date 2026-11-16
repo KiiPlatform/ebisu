@@ -69,7 +69,10 @@ where what it needs is found, which links `libebisu_core`. Link one with
   connection usable, as its `recv_wait` waits too. Its `last_error` says why
   an operation failed, which also goes to the logger set with
   `ebisu_schannel_socket_set_logger()`, if any, unless it is built with
-  `-DEBISU_LOG=OFF`. Needs Windows 8 or later, and only what it provides,
+  `-DEBISU_LOG=OFF`. `ebisu_schannel_socket_get_protocol()` and
+  `ebisu_schannel_socket_get_cipher()` give the TLS version and cipher suite a
+  connection negotiated, the suite by its standard name from Windows 10 on.
+  Needs Windows 8 or later, and only what it provides,
   `ws2_32`, `secur32` and `crypt32`, which it links.
 
 - **FreeRTOS** (`ebisu_freertos.h`, library `ebisu_freertos`):

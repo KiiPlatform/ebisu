@@ -207,6 +207,62 @@ void ebisu_schannel_socket_set_nodelay(ebisu_schannel_socket_t* sock, bool nodel
     sock->nodelay = nodelay;
 }
 
+/* Set once connected, and cleared by teardown(). */
+const char* ebisu_schannel_socket_get_protocol(const ebisu_schannel_socket_t* sock)
+{
+    return sock->protocol;
+}
+
+const char* ebisu_schannel_socket_get_cipher(const ebisu_schannel_socket_t* sock)
+{
+    return sock->cipher[0] != '\0' ? sock->cipher : NULL;
+}
+
+/* Keeps what the connection negotiated, as far as Windows says. */
+static void note_negotiated(ebisu_schannel_socket_t* ctx)
+{
+    SecPkgContext_ConnectionInfo info;
+    if (QueryContextAttributesA(&ctx->ctxt, SECPKG_ATTR_CONNECTION_INFO, &info) == SEC_E_OK) {
+#ifdef SP_PROT_TLS1_3_CLIENT
+        if ((info.dwProtocol & SP_PROT_TLS1_3_CLIENT) != 0) {
+            ctx->protocol = "TLSv1.3";
+        } else
+#endif
+        if ((info.dwProtocol & SP_PROT_TLS1_2_CLIENT) != 0) {
+            ctx->protocol = "TLSv1.2";
+        } else if ((info.dwProtocol & SP_PROT_TLS1_1_CLIENT) != 0) {
+            ctx->protocol = "TLSv1.1";
+        } else if ((info.dwProtocol & SP_PROT_TLS1_0_CLIENT) != 0) {
+            ctx->protocol = "TLSv1";
+        }
+    }
+#ifdef SECPKG_ATTR_CIPHER_INFO
+    SecPkgContext_CipherInfo cipher;
+    memset(&cipher, 0, sizeof(cipher));
+    cipher.dwVersion = SECPKGCONTEXT_CIPHERINFO_V1;
+    if (QueryContextAttributesW(&ctx->ctxt, SECPKG_ATTR_CIPHER_INFO, &cipher) == SEC_E_OK &&
+            WideCharToMultiByte(CP_UTF8, 0, cipher.szCipherSuite, -1, ctx->cipher,
+                (int)sizeof(ctx->cipher), NULL, NULL) == 0) {
+        ctx->cipher[0] = '\0';
+    }
+#endif
+}
+
+/* Whether the handshake failed as the server and Windows have no TLS version or
+   cipher suite in common, from the first bytes the server sent: an alert that
+   says so, handshake_failure, protocol_version or insufficient_security, or a
+   record of a TLS older than 1.2. Read from what came off the socket, as
+   Schannel's status doesn't tell which alert it was. */
+static int is_mismatch(const ebisu_schannel_socket_t* ctx)
+{
+    const unsigned char* b = ctx->first_bytes;
+    if (ctx->first_len >= 7 && b[0] == 21 && b[1] == 3 && b[5] == 2) {
+        return b[6] == 40 || b[6] == 70 || b[6] == 71;
+    }
+    /* A content type of TLS's, 20 to 23, and SSL 3.0 to TLS 1.1. */
+    return ctx->first_len >= 3 && b[0] >= 20 && b[0] <= 23 && b[1] == 3 && b[2] < 3;
+}
+
 /* Releases everything the connection holds, whatever state it is in, and
    leaves the context ready for the next schannel_connect(). */
 static void teardown(ebisu_schannel_socket_t* ctx)
@@ -236,6 +292,9 @@ static void teardown(ebisu_schannel_socket_t* ctx)
     }
     free(ctx->send_buf);
     ctx->send_buf = NULL;
+    ctx->first_len = 0;
+    ctx->protocol = NULL;
+    ctx->cipher[0] = '\0';
     ctx->recv_len = 0;
     ctx->record_len = 0;
     ctx->plain = NULL;
@@ -426,12 +485,26 @@ static int handshake(ebisu_schannel_socket_t* ctx)
             }
         } else {
             log_code(ctx, (unsigned long)status, "TLS handshake failed");
-            set_error(ctx, EBISU_SOCK_ERROR_TLS, (long)status);
+            if (is_mismatch(ctx)) {
+                log_to(ctx->logger, EBISU_LOG_ERROR,
+                        "%s may take only TLS older than 1.2, or none of the cipher suites "
+                        "Windows enables.", ctx->host);
+                set_error(ctx, EBISU_SOCK_ERROR_TLS_MISMATCH, (long)status);
+            } else {
+                set_error(ctx, EBISU_SOCK_ERROR_TLS, (long)status);
+            }
             return -1;
         }
 
         switch (read_some(ctx)) {
             case READ_OK:
+                /* Until Schannel has taken a record, what the server sent
+                   first is at the start of recv_buf. */
+                if (ctx->first_len < sizeof(ctx->first_bytes)) {
+                    ctx->first_len = ctx->recv_len < sizeof(ctx->first_bytes) ?
+                        ctx->recv_len : sizeof(ctx->first_bytes);
+                    memcpy(ctx->first_bytes, ctx->recv_buf, ctx->first_len);
+                }
                 break;
             case READ_TIMEOUT:
                 log_to(ctx->logger, EBISU_LOG_ERROR, "TLS handshake timed out.");
@@ -716,6 +789,7 @@ static int tls_connect(ebisu_schannel_socket_t* ctx)
         log_to(ctx->logger, EBISU_LOG_WARNING,
                 "connected to %s without verifying its certificate.", ctx->host);
     }
+    note_negotiated(ctx);
     return 0;
 }
 

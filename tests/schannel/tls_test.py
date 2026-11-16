@@ -38,6 +38,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import warnings
 import time
 
 TIMEOUT = 120
@@ -165,6 +166,10 @@ class TlsConnection:
             except ssl.SSLWantReadError:
                 self.flush()
                 self.feed()
+            except ssl.SSLError:
+                # The alert OpenSSL wrote, saying why, goes to the client.
+                self.flush()
+                raise
         self.flush()
 
     def read_until(self, done):
@@ -307,12 +312,15 @@ def serve_commands(conn):
 class Server:
     """Listens on 127.0.0.1 and records how each connection went."""
 
-    def __init__(self, cert=None, key=None, silent=False):
+    def __init__(self, cert=None, key=None, silent=False, canned=None):
+        """With canned, bytes, answers the ClientHello with them, and waits for
+        the client to close."""
         self.ctx = None
         if cert:
             self.ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
             self.ctx.load_cert_chain(cert, key)
         self.silent = silent
+        self.canned = canned
         self.listener = socket.socket()
         self.listener.bind(('127.0.0.1', 0))
         self.listener.listen(16)
@@ -336,6 +344,14 @@ class Server:
                 while sock.recv(65536):
                     pass
                 end = 'eof'
+                return
+            if self.canned is not None:
+                sock.settimeout(TIMEOUT)
+                sock.recv(65536)
+                sock.sendall(self.canned)
+                while sock.recv(65536):
+                    pass
+                end = 'canned'
                 return
             sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             conn = TlsConnection(sock, self.ctx)
@@ -689,6 +705,71 @@ def run_tests(t, d):
     t.check('keepalive and TCP_NODELAY: neither again once off',
             result_code(steps, 13) == ('connect', 'OK') and step(steps, 14)[1].startswith(off) and
             step(steps, 14)[1].endswith(' nodelay=0'), out)
+
+    # ebisu_schannel_socket_get_protocol() and _get_cipher(). wine's Schannel
+    # names some suites wrongly, as TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384.
+    windows = sys.platform == 'win32'
+    none = ('negotiated', 'protocol=(null) cipher=(null)')
+    out, steps = t.run(port, 10, 'negotiated', 'connect', 'negotiated', 'close', 'negotiated')
+    protocol, cipher = field(step(steps, 2)[1], 'protocol'), field(step(steps, 2)[1], 'cipher')
+    t.check('negotiated: nothing before a connect, nor once closed',
+            step(steps, 0) == none and step(steps, 4) == none, out)
+    t.check('negotiated: the version and the suite of the connection',
+            result_code(steps, 1) == ('connect', 'OK') and protocol in ('TLSv1.2', 'TLSv1.3') and
+            (cipher or '').startswith('TLS_'), out)
+    tls12 = Server(os.path.join(d, 'good.pem'), os.path.join(d, 'good.key'))
+    tls12.ctx.maximum_version = ssl.TLSVersion.TLSv1_2
+    tls12.ctx.set_ciphers('ECDHE-RSA-AES128-GCM-SHA256')
+    out, steps = t.run(tls12.port, 10, 'connect', 'negotiated', 'close')
+    t.check('negotiated: TLS 1.2, and its suite by its standard name',
+            result_code(steps, 0) == ('connect', 'OK') and
+            field(step(steps, 1)[1], 'protocol') == 'TLSv1.2' and
+            (field(step(steps, 1)[1], 'cipher') == 'TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256' if windows else
+             (field(step(steps, 1)[1], 'cipher') or '').startswith('TLS_ECDHE_RSA_WITH_AES_128_GCM')), out)
+
+    # A server with no TLS version or suite in common: last_error TLS_MISMATCH,
+    # and a line saying what Windows needs.
+    hint = 'localhost may take only TLS older than 1.2, or none of the cipher suites Windows enables.'
+    for description, mismatch in ((40, True), (70, True), (71, True), (80, False)):
+        alerting = Server(canned=bytes([0x15, 3, 3, 0, 2, 2, description]))
+        out, steps = t.run(alerting.port, 10, 'connect', 'close')
+        expected = 'TLS_MISMATCH' if mismatch else 'TLS'
+        t.check('a fatal alert %d: last_error %s%s' % (description, expected, ', and the hint' if mismatch else ''),
+                result_code(steps, 0) == ('connect', 'FAIL') and last_error(steps, 0)[0] == expected and
+                (('LOG error ' + hint) in out) == mismatch, out)
+    camellia = Server(os.path.join(d, 'good.pem'), os.path.join(d, 'good.key'))
+    camellia.ctx.maximum_version = ssl.TLSVersion.TLSv1_2
+    camellia.ctx.set_ciphers('CAMELLIA128-SHA:@SECLEVEL=0')
+    out, steps = t.run(camellia.port, 10, 'connect', 'close')
+    t.check('a server of a suite Windows has none of: last_error TLS_MISMATCH, and the hint',
+            result_code(steps, 0) == ('connect', 'FAIL') and last_error(steps, 0)[0] == 'TLS_MISMATCH' and
+            ('LOG error ' + hint) in out, out)
+    # Windows, as it is set up by default, enables neither TLS 1.0 nor 1.1, nor
+    # AES128-SHA: the server refuses them with an alert, and Windows a TLS 1.0
+    # ServerHello itself. wine's Schannel, over GnuTLS, takes TLS 1.0.
+    if windows:
+        old = [('TLS 1.0 alone', ssl.TLSVersion.TLSv1, 'AES128-SHA'),
+               ('TLS 1.1 alone', ssl.TLSVersion.TLSv1_1, 'AES128-SHA'),
+               ('TLS 1.2 with AES128-SHA alone', ssl.TLSVersion.TLSv1_2, 'AES128-SHA')]
+        for what, version, ciphers in old:
+            srv = Server(os.path.join(d, 'good.pem'), os.path.join(d, 'good.key'))
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', DeprecationWarning)
+                srv.ctx.minimum_version = version
+                srv.ctx.maximum_version = version
+            srv.ctx.set_ciphers(ciphers + ':@SECLEVEL=0')
+            out, steps = t.run(srv.port, 10, 'connect', 'negotiated', 'close')
+            t.check('a server of %s: last_error TLS_MISMATCH, and the hint' % what,
+                    result_code(steps, 0) == ('connect', 'FAIL') and
+                    last_error(steps, 0)[0] == 'TLS_MISMATCH' and ('LOG error ' + hint) in out and
+                    step(steps, 1) == none, out)
+        tls10_hello = (bytes([0x16, 3, 1, 0, 0x2a, 2, 0, 0, 0x26, 3, 1]) + bytes(range(32)) +
+                       bytes([0, 0, 0x2f, 0]))
+        canned = Server(canned=tls10_hello)
+        out, steps = t.run(canned.port, 3, 'connect', 'close')
+        t.check('a TLS 1.0 ServerHello, which Windows refuses itself: last_error TLS_MISMATCH, and the hint',
+                result_code(steps, 0) == ('connect', 'FAIL') and
+                last_error(steps, 0)[0] == 'TLS_MISMATCH' and ('LOG error ' + hint) in out, out)
 
     # Without a logger, the port writes nothing, to stdout or stderr, and
     # last_error still says why.

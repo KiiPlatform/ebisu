@@ -318,6 +318,11 @@ static int run_step(ebisu_schannel_socket_t* ctx, const char** host, uint16_t po
     } else if (strncmp(step, "nodelay:", 8) == 0) {
         ebisu_schannel_socket_set_nodelay(ctx, step[8] == '1');
         printf("STEP nodelay OK\n");
+    } else if (strcmp(step, "negotiated") == 0) {
+        const char* protocol = ebisu_schannel_socket_get_protocol(ctx);
+        const char* cipher = ebisu_schannel_socket_get_cipher(ctx);
+        printf("STEP negotiated protocol=%s cipher=%s\n", protocol != NULL ? protocol : "(null)",
+                cipher != NULL ? cipher : "(null)");
     } else if (strcmp(step, "options") == 0) {
         /* What getsockopt() reads of the connection's socket, -1 for an
            option it doesn't give. */
