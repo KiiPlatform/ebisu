@@ -116,11 +116,14 @@ if(TARGET freertos_kernel)
     ebisu_configure_target(ebisu_freertos)
 endif()
 
-# FreeRTOS-Plus-TCP's socket, where the build has FreeRTOS-Plus-TCP's own
-# target too, freertos_plus_tcp, as adding its directory makes it, with the
-# application's FreeRTOSIPConfig.h. Not installed, as FreeRTOS-Plus-TCP isn't.
+# FreeRTOS-Plus-TCP's socket and name servers, where the build has
+# FreeRTOS-Plus-TCP's own target too, freertos_plus_tcp, as adding its
+# directory makes it, with the application's FreeRTOSIPConfig.h. Not installed,
+# as FreeRTOS-Plus-TCP isn't.
 if(TARGET freertos_kernel AND TARGET freertos_plus_tcp)
-    add_library(ebisu_freertos_tcp STATIC freertos/src/ebisu_freertos_tcp.c)
+    add_library(ebisu_freertos_tcp STATIC
+        freertos/src/ebisu_freertos_tcp.c
+        freertos/src/ebisu_freertos_tcp_dns.c)
     target_include_directories(ebisu_freertos_tcp
         PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/freertos/include>)

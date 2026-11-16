@@ -1,12 +1,13 @@
-# The FreeRTOS-Plus-TCP socket's tests
+# The FreeRTOS-Plus-TCP socket's and name servers' tests
 
 A firmware for the MPS2 AN385 board QEMU emulates, a Cortex-M3 with a LAN9118
 Ethernet controller, that tests
 [`ebisu_freertos_tcp.h`](../../platform/freertos/include/ebisu_freertos_tcp.h) on
-FreeRTOS-Plus-TCP. [run_tcp_test.py](run_tcp_test.py) starts servers on the
-host's loopback and runs the firmware in QEMU, whose user-mode networking
-reaches them at 10.0.2.2. Their ports go to the firmware on its command line,
-through semihosting. Each check that fails prints a line on the console, and
+FreeRTOS-Plus-TCP: its socket, and its name servers for the DNS probe.
+[run_tcp_test.py](run_tcp_test.py) starts servers on the host's loopback, TCP
+ones and name servers over UDP, and runs the firmware in QEMU, whose user-mode
+networking reaches them at 10.0.2.2. Their ports go to the firmware on its
+command line, through semihosting. Each check that fails prints a line on the console, and
 QEMU exits with 1 if any did. FreeRTOS-Kernel and FreeRTOS-Plus-TCP are built
 with their own CMake and ebisu with its own, as an application builds them. The
 board's support is the [FreeRTOS sample's](../../tio/freertos-sample/board/board.h).
@@ -33,6 +34,26 @@ board's support is the [FreeRTOS sample's](../../tio/freertos-sample/board/board
   would, asking the name servers, or LLMNR, for its text: with a name server
   that never answers, connecting to an IPv4 address takes no longer than the
   connect timeout, and, with IPv6, so does connecting to an IPv6 one.
+- **Asking a name server**, with the name servers' `ask`:
+  - one that answers, and one that answers that the name doesn't exist, which
+    is an answer too;
+  - one that first sends the answer to another query, which is skipped;
+  - one that sends only those, one that doesn't answer, and one that answers
+    from another port: each waited for the whole of the time given, a short
+    one too;
+  - a port nothing listens on, whose port unreachable doesn't reach the
+    socket: as one that doesn't answer;
+  - many times over, each with a socket of its own;
+  - an IPv6 server, without IPv6, which fails.
+- **The name servers** the DNS client asks, with `servers`: QEMU's, as DHCP
+  gives it, then others set on the end-points, three each: from the one the
+  next lookup asks, each other in turn but those of 0, and on to a second
+  end-point where the first has none for the next lookup, or after one the
+  client doesn't ask, as the broadcast address.
+- **The DNS probe:** QEMU's server, which passes the query on to the host's
+  resolver, answers; given servers, the second answers after the first
+  doesn't; and the probe's socket over the TCP one doesn't connect where no
+  server answers, with `pdFREERTOS_ERRNO_ENOENT`, and connects where one does.
 
 Built against FreeRTOS-Kernel V11.1.0 and FreeRTOS-Plus-TCP V4.2.6, those of
 FreeRTOS LTS 202406, the oldest the socket supports, and V11.3.3 and V4.4.2,

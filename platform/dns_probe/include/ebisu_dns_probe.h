@@ -75,7 +75,9 @@ typedef struct ebisu_dns_server_t {
  * lookups ask them: a server repeated takes a place, but is asked once. Each is
  * asked with dns's ask. platform's ports have the system's: ebisu_posix_dns(),
  * the servers of /etc/resolv.conf over BSD sockets, as the C libraries read
- * it, and ebisu_win32_dns(), those of the network adapters over Winsock 2.
+ * it, ebisu_win32_dns(), those of the network adapters over Winsock 2, and
+ * ebisu_freertos_tcp_dns(), those of FreeRTOS-Plus-TCP's end-points, as its
+ * DNS client asks them.
  *
  * A name a lookup gets from elsewhere, such as /etc/hosts, still needs the
  * servers to answer: the probe tells only whether they do.
@@ -132,7 +134,9 @@ ebisu_dns_probe_result_t ebisu_dns_probe_servers(
  * connect, unless no server answered: then it fails, without the other socket
  * connecting, and its last_error is EBISU_SOCK_ERROR_DNS, with the resolver's
  * error for one that didn't answer, as dns's no_answer_error has it: EAI_AGAIN
- * for platform's ports, which on Windows is WSATRY_AGAIN. A connect the other
+ * for platform's POSIX and Win32 ports, which on Windows is WSATRY_AGAIN, and
+ * pdFREERTOS_ERRNO_ENOENT for the FreeRTOS-Plus-TCP one's, as its socket's
+ * last_error has a lookup that failed. A connect the other
  * socket goes on with, after EBISU_SOCK_AGAIN, isn't probed again. Close
  * closes the other socket, or does nothing if it didn't connect.
  *
@@ -174,8 +178,8 @@ typedef struct ebisu_dns_probe_socket_t {
  * \param [in] inner The socket that connects, initialized, whose operations
  * sock takes: it has to outlive sock.
  * \param [in] dns The system's name servers, and how one is asked, as
- * ebisu_posix_dns() or ebisu_win32_dns() gives them, which have to outlive
- * sock.
+ * ebisu_posix_dns(), ebisu_win32_dns() or ebisu_freertos_tcp_dns() gives
+ * them, which have to outlive sock.
  * \param [in] timeout_ms How long each server has to answer, in milliseconds.
  */
 void ebisu_dns_probe_socket_init(

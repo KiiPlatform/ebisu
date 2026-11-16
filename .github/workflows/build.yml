@@ -848,10 +848,11 @@ jobs:
           report_paths: "**/test-results/junit/*.xml"
           check_name: JUnit Test Report (freertos port, ${{ matrix.kernel }})
 
-  # The FreeRTOS-Plus-TCP socket's tests: a firmware for the same board, run in
-  # QEMU against servers on the runner, with FreeRTOS-Plus-TCP and the kernel of
-  # FreeRTOS LTS 202406, the oldest the socket supports, and the latest, and the
-  # latest again with IPv6 and LLMNR, the network still IPv4 only. See
+  # The FreeRTOS-Plus-TCP socket's and name servers' tests: a firmware for the
+  # same board, run in QEMU against servers on the runner, TCP ones and name
+  # servers over UDP, with FreeRTOS-Plus-TCP and the kernel of FreeRTOS LTS
+  # 202406, the oldest the socket supports, and the latest, and the latest
+  # again with IPv6 and LLMNR, the network still IPv4 only. See
   # tests/freertos_tcp/README.md.
   freertos-tcp:
     name: freertos tcp socket (${{ matrix.plus_tcp }}${{ matrix.ipv6 && ', IPv6' || '' }}, Cortex-M3, QEMU)
