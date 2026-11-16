@@ -100,6 +100,7 @@ ebisu_add_test_suite(small_test_core
         core/log_test.cpp
         core/mem_test.cpp
         core/str_test.cpp
+        core/system_test.cpp
         core/time_test.cpp
     # Threads for the loggers' tests that log from several tasks at once.
     LINK ebisu_core_objs Threads::Threads)
@@ -158,6 +159,16 @@ if(small_test_tcp_socket_port)
         SOURCES tcp_socket/tcp_socket_test.cpp
         # Core's objects, as the other suites link them, so that a Windows
         # build's test doesn't need its DLL.
+        LINK ${small_test_tcp_socket_port} ebisu_core_objs Threads::Threads)
+endif()
+
+# platform's system, the POSIX port's, or on Windows the Win32 port's: the locks
+# it makes, and the inline calls over its operations.
+if(small_test_tcp_socket_port)
+    ebisu_add_test_suite(small_test_system
+        LABEL small
+        WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR}
+        SOURCES system/system_test.cpp
         LINK ${small_test_tcp_socket_port} ebisu_core_objs Threads::Threads)
 endif()
 

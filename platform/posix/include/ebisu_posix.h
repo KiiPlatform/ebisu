@@ -28,8 +28,9 @@ extern "C" {
  *
  * Each task is a detached thread, which goes by itself when it ends. A delay is
  * nanosleep(), resumed through signals until the whole time has passed. The
- * monotonic clock is CLOCK_MONOTONIC. The system has no state, so this one
- * serves everything.
+ * monotonic clock is CLOCK_MONOTONIC. Its locks, from
+ * ebisu_system_lock_create(), are ebisu_posix_lock_t's from the heap. The
+ * system has no state, so this one serves everything.
  *
  * \return The system.
  */

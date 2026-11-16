@@ -2,6 +2,7 @@
 
 #include <errno.h>
 #include <pthread.h>
+#include <stdlib.h>
 #include <time.h>
 
 static ebisu_task_code_t task_create(
@@ -36,10 +37,15 @@ static uint64_t monotonic_ms(ebisu_system_t* self)
     return (uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000;
 }
 
+static ebisu_lock_t* lock_create(ebisu_system_t* self);
+static void lock_destroy(ebisu_system_t* self, ebisu_lock_t* lock);
+
 static const ebisu_system_ops_t posix_system_ops = {
     task_create,
     delay_ms,
-    monotonic_ms
+    monotonic_ms,
+    lock_create,
+    lock_destroy
 };
 
 static ebisu_system_t posix_system = { &posix_system_ops };
@@ -73,4 +79,25 @@ int ebisu_posix_lock_init(ebisu_posix_lock_t* lock)
 void ebisu_posix_lock_destroy(ebisu_posix_lock_t* lock)
 {
     pthread_mutex_destroy(&lock->mutex);
+}
+
+/* An ebisu_posix_lock_t of its own, from the heap. */
+static ebisu_lock_t* lock_create(ebisu_system_t* self)
+{
+    ebisu_posix_lock_t* lock = (ebisu_posix_lock_t*)malloc(sizeof(*lock));
+    if (lock == NULL) {
+        return NULL;
+    }
+    if (ebisu_posix_lock_init(lock) != 0) {
+        free(lock);
+        return NULL;
+    }
+    return &lock->base;
+}
+
+static void lock_destroy(ebisu_system_t* self, ebisu_lock_t* lock)
+{
+    ebisu_posix_lock_t* posix_lock = EBISU_CONTAINER_OF(lock, ebisu_posix_lock_t, base);
+    ebisu_posix_lock_destroy(posix_lock);
+    free(posix_lock);
 }

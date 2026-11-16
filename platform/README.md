@@ -13,6 +13,12 @@ Implementations for a kind of system, each a static library of its own, built
 where what it needs is found, which links `libebisu_core`. Link one with
 `libebisu_tio`, `libebisu_kii` or `libebisu_khc`.
 
+Each system also makes locks of its port's kind, for
+`ebisu_system_lock_create()`, so code given only the system can have one. The
+POSIX and Win32 systems take them from the heap, with `malloc()`. The FreeRTOS
+one takes them from FreeRTOS's heap with `configSUPPORT_DYNAMIC_ALLOCATION`,
+and makes none without it.
+
 - **POSIX** (`ebisu_posix.h`, library `ebisu_posix`): `ebisu_posix_system()`,
   whose tasks are detached threads, whose delays are `nanosleep()` and whose
   monotonic clock is `CLOCK_MONOTONIC`, `ebisu_posix_lock_t`, a pthread

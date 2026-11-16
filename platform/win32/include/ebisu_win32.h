@@ -31,8 +31,9 @@ extern "C" {
  *
  * Each task runs on a thread of its own, made with _beginthreadex(), which
  * nothing waits for. A delay is Sleep(). The monotonic clock is
- * GetTickCount64(), which doesn't jump when the wall clock is set. The system
- * has no state, so this one serves everything.
+ * GetTickCount64(), which doesn't jump when the wall clock is set. Its locks,
+ * from ebisu_system_lock_create(), are ebisu_win32_lock_t's from the heap. The
+ * system has no state, so this one serves everything.
  *
  * \return The system.
  */

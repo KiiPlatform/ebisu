@@ -424,6 +424,33 @@ static void test_lock_memory(void)
 #endif
 }
 
+/* A lock the system makes, from the heap, and gives back. */
+static void test_lock_create(void)
+{
+#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+    const size_t heap = heap_free();
+    ebisu_lock_t* lock = ebisu_system_lock_create(&test_system.base);
+    CHECK(lock != NULL);
+    if (lock != NULL) {
+        SemaphoreHandle_t mutex = EBISU_CONTAINER_OF(lock, ebisu_freertos_lock_t, base)->_mutex;
+        CHECK(heap_free() < heap);
+        ebisu_lock_acquire(lock);
+        /* Held, and not recursive. */
+        CHECK(xSemaphoreTake(mutex, 0) == pdFALSE);
+        ebisu_lock_release(lock);
+        CHECK(xSemaphoreTake(mutex, 0) == pdTRUE);
+        (void)xSemaphoreGive(mutex);
+        ebisu_system_lock_destroy(&test_system.base, lock);
+    }
+    CHECK_EQ(heap_free(), heap);
+#else
+    CHECK(ebisu_system_lock_create(&test_system.base) == NULL);
+#endif
+    /* No lock, as in code that runs in one task. */
+    ebisu_lock_acquire(NULL);
+    ebisu_lock_release(NULL);
+}
+
 static void runner(void* arg)
 {
     (void)arg;
@@ -449,6 +476,7 @@ static void runner(void* arg)
     test_lock_excludes();
     test_lock_waits();
     test_lock_memory();
+    test_lock_create();
     print("%d checks, %d failed", checks, failures);
     board_exit(failures == 0 ? 0 : 1);
 }
