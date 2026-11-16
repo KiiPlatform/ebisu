@@ -8,6 +8,7 @@
 
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <stdio.h>
@@ -1394,6 +1395,63 @@ TEST_CASE( "The OpenSSL socket checks the server's certificate as its configurat
 
 // A session resumed has no certificate to check: those kept under a mode that
 // checked less would let the next connection skip the check.
+// close used to shut down, free and close what the socket held, whether or
+// not it had a connection: NULL on a socket never connected, and the last
+// connection's SSL, freed already, and descriptor, maybe another's by then, on
+// one used again. A connect that fails, closed as khc closes it, was one.
+TEST_CASE( "The OpenSSL socket's close does nothing without a connection" ) {
+    LocalServer server;
+    REQUIRE( server.listening );
+    CaFile ca;
+    LogCtx log;
+    ebisu_openssl_tls_t tls;
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_init(&sock, 5, 5);
+    ebisu_openssl_socket_set_logger(&sock, log.get());
+    // In full, the server's certificate, which isn't for the address
+    // connected to, is refused; its chain alone is taken.
+    ebisu_openssl_socket_set_tls(&sock, &tls);
+    ebisu_socket_t* base = &sock.base;
+
+    SECTION("never connected") {
+        CHECK( base->ops->close(base) == EBISU_SOCK_OK );
+    }
+    SECTION("a connect that failed, never connected before") {
+        REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_FAIL );
+        CHECK( base->ops->close(base) == EBISU_SOCK_OK );
+    }
+    SECTION("a connect that failed, after a connection closed") {
+        REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
+        REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
+        CHECK( base->ops->close(base) == EBISU_SOCK_OK );
+        // The lowest descriptor free, which the connection's was.
+        int other = open("/dev/null", O_RDONLY);
+        REQUIRE( other >= 0 );
+        REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_FULL, nullptr) );
+        REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_FAIL );
+        CHECK( base->ops->close(base) == EBISU_SOCK_OK );
+        CHECK( fcntl(other, F_GETFD) != -1 );
+        close(other);
+
+        // And connects again.
+        REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
+        REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
+        CHECK( base->ops->close(base) == EBISU_SOCK_OK );
+    }
+    SECTION("closed already") {
+        REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
+        REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
+        CHECK( base->ops->close(base) == EBISU_SOCK_OK );
+        CHECK( base->ops->close(base) == EBISU_SOCK_OK );
+    }
+    CHECK( sock.ssl == nullptr );
+    CHECK( sock.socket == -1 );
+    CHECK_FALSE( logged(log, EBISU_LOG_ERROR, "shutdown") );
+    CHECK_FALSE( logged(log, EBISU_LOG_ERROR, "failed to close") );
+    ebisu_openssl_tls_free(&tls);
+}
+
 TEST_CASE( "A TLS configuration checks in full again once set to, with no session kept" ) {
     LocalServer server(AF_INET, true);
     REQUIRE( server.listening );

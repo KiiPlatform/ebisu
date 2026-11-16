@@ -919,6 +919,12 @@ static ebisu_sock_code_t
     openssl_close(ebisu_socket_t* self)
 {
     ebisu_openssl_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_openssl_socket_t, base);
+    if (ctx->ssl == NULL) {
+        /* No connection: none made yet, the last connect failed, or the last
+           connection is closed already. openssl_connect() sets ctx->ssl and
+           ctx->socket only once connected. */
+        return EBISU_SOCK_OK;
+    }
     /* 1 means the bidirectional shutdown completed. 0 means our close_notify
        went out but the peer's has not arrived yet, which is not an error and is
        the normal outcome against a server that closes the connection itself.
@@ -941,6 +947,8 @@ static ebisu_sock_code_t
     }
     close(ctx->socket);
     SSL_free(ctx->ssl);
+    ctx->ssl = NULL;
+    ctx->socket = -1;
     if (!shutdown_ok) {
         log_to(ctx->logger, EBISU_LOG_ERROR, "failed to close.");
         return EBISU_SOCK_FAIL;
