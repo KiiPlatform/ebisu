@@ -3,10 +3,11 @@
 // parses has to format back to something that parses to the same value. They
 // are split, and each field found again and compared but for case. Then
 // a builder with a buffer the input sizes, fed appends the input chooses, some
-// written into its room by a writer of their own: it never writes past its
-// buffer, always leaves it terminated, and holds exactly the appends that
-// fitted. The same bytes, up to a NUL, are read as a level's name, which only
-// the names take, in any case, and whose name reads back as the level.
+// written into its room by a writer of their own, and some of bytes escaped:
+// it never writes past its buffer, always leaves it terminated, and holds
+// exactly the appends that fitted. The same bytes, up to a NUL, are read as a
+// level's name, which only the names take, in any case, and whose name reads
+// back as the level.
 #include <ebisu_log.h>
 #include <ebisu_str.h>
 #include <stdio.h>
@@ -132,7 +133,7 @@ void check_builder(FuzzInput* in) {
         uint8_t n = in->take();
         std::string piece;
         char tmp[64];
-        switch (op % 7) {
+        switch (op % 8) {
         case 0: {
             piece.assign((const char*)in->data, n < in->size ? n : in->size);
             in->data += piece.size();
@@ -179,6 +180,36 @@ void check_builder(FuzzInput* in) {
                 piece += tmp;
             }
             ebisu_strbuf_append_hex_bytes(&sb, count > 0 ? in->data : nullptr, count);
+            in->data += count;
+            in->size -= count;
+            break;
+        }
+        case 7: {
+            // Bytes escaped, either way, as an escaper of the fuzzer's own
+            // escapes them.
+            static const char* const names[33] = {
+                "NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL",
+                "BS", "HT", "LF", "VT", "FF", "CR", "SO", "SI",
+                "DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB",
+                "CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US", "DEL"
+            };
+            bool by_name = (n & 0x80) != 0;
+            size_t count = (n & 0x7f) < in->size ? (n & 0x7f) : in->size;
+            for (size_t i = 0; i < count; ++i) {
+                uint8_t c = in->data[i];
+                if (by_name && (c < 0x20 || c == 0x7f)) {
+                    piece += std::string("<") + names[c < 0x20 ? c : 32] + ">";
+                } else if (c == '\\') {
+                    piece += "\\\\";
+                } else if (c >= 0x20 && c < 0x7f && !(by_name && c == '<')) {
+                    piece += (char)c;
+                } else {
+                    snprintf(tmp, sizeof(tmp), "\\x%02x", c);
+                    piece += tmp;
+                }
+            }
+            ebisu_strbuf_append_escaped(&sb, count > 0 ? in->data : nullptr, count,
+                    by_name ? EBISU_ESCAPE_CONTROL_NAMES : EBISU_ESCAPE_HEX);
             in->data += count;
             in->size -= count;
             break;

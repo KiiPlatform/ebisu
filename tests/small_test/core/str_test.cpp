@@ -523,6 +523,178 @@ TEST_CASE("ebisu_strbuf_append_hex_bytes") {
     CHECK(memcmp(back, bytes, sizeof(bytes)) == 0);
 }
 
+TEST_CASE("ebisu_strbuf_append_escaped writes any bytes as printable ASCII") {
+    char buff[128];
+    ebisu_strbuf_t sb;
+    const char bytes[] = "a\\b\x01\xff ~\x7f<\r\n";
+    const size_t n = sizeof(bytes) - 1;
+
+    ebisu_strbuf_init(&sb, buff, sizeof(buff));
+    ebisu_strbuf_append_escaped(&sb, bytes, n, EBISU_ESCAPE_HEX);
+    CHECK(ebisu_strbuf_ok(&sb));
+    CHECK(std::string(buff) == "a\\\\b\\x01\\xff ~\\x7f<\\x0d\\x0a");
+    CHECK(sb.len == strlen(buff));
+
+    ebisu_strbuf_init(&sb, buff, sizeof(buff));
+    ebisu_strbuf_append_escaped(&sb, bytes, n, EBISU_ESCAPE_CONTROL_NAMES);
+    CHECK(ebisu_strbuf_ok(&sb));
+    CHECK(std::string(buff) == "a\\\\b<SOH>\\xff ~<DEL>\\x3c<CR><LF>");
+
+    // Bytes of a NUL too, and none.
+    ebisu_strbuf_init(&sb, buff, sizeof(buff));
+    ebisu_strbuf_append_escaped(&sb, "\0x", 2, EBISU_ESCAPE_HEX);
+    ebisu_strbuf_append_escaped(&sb, "\0", 1, EBISU_ESCAPE_CONTROL_NAMES);
+    ebisu_strbuf_append_escaped(&sb, nullptr, 0, EBISU_ESCAPE_HEX);
+    CHECK(ebisu_strbuf_ok(&sb));
+    CHECK(std::string(buff) == "\\x00x<NUL>");
+}
+
+namespace {
+
+// Reads back what ebisu_strbuf_append_escaped() wrote, or fails if it isn't
+// what that writes.
+bool unescape(const std::string& s, bool names, std::string* out) {
+    static const char* const control[33] = {
+        "NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL",
+        "BS", "HT", "LF", "VT", "FF", "CR", "SO", "SI",
+        "DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB",
+        "CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US", "DEL"
+    };
+    out->clear();
+    for (size_t i = 0; i < s.size();) {
+        unsigned char c = (unsigned char)s[i];
+        if (c < 0x20 || c >= 0x7f) {
+            return false;
+        }
+        if (c == '\\' && i + 1 < s.size() && s[i + 1] == '\\') {
+            *out += '\\';
+            i += 2;
+        } else if (c == '\\' && i + 3 < s.size() && s[i + 1] == 'x') {
+            uint8_t byte = 0;
+            size_t len = 0;
+            if (ebisu_parse_hex_bytes(&s[i + 2], 2, &byte, 1, &len) != EBISU_PARSE_OK) {
+                return false;
+            }
+            *out += (char)byte;
+            i += 4;
+        } else if (c == '\\') {
+            return false;
+        } else if (c == '<' && names) {
+            size_t end = s.find('>', i);
+            if (end == std::string::npos) {
+                return false;
+            }
+            const std::string name = s.substr(i + 1, end - i - 1);
+            int found = -1;
+            for (int k = 0; k < 33; ++k) {
+                if (name == control[k]) {
+                    found = k;
+                }
+            }
+            if (found < 0) {
+                return false;
+            }
+            *out += (char)(found < 32 ? found : 0x7f);
+            i = end + 1;
+        } else {
+            *out += (char)c;
+            ++i;
+        }
+    }
+    return true;
+}
+
+}
+
+TEST_CASE("ebisu_strbuf_append_escaped can be read back, a byte at a time") {
+    std::string all;
+    for (int c = 0; c < 256; ++c) {
+        all += (char)c;
+    }
+    for (bool names : { false, true }) {
+        INFO(names);
+        ebisu_escape_t style = names ? EBISU_ESCAPE_CONTROL_NAMES : EBISU_ESCAPE_HEX;
+        char buff[2048];
+        ebisu_strbuf_t sb;
+        ebisu_strbuf_init(&sb, buff, sizeof(buff));
+        ebisu_strbuf_append_escaped(&sb, all.data(), all.size(), style);
+        REQUIRE(ebisu_strbuf_ok(&sb));
+        std::string back;
+        CHECK(unescape(buff, names, &back));
+        CHECK(back == all);
+        // Each byte alone, within the most it can take.
+        for (int c = 0; c < 256; ++c) {
+            char one = (char)c;
+            ebisu_strbuf_init(&sb, buff, sizeof(buff));
+            ebisu_strbuf_append_escaped(&sb, &one, 1, style);
+            CHECK(sb.len <= (names ? 5u : 4u));
+            CHECK(unescape(buff, names, &back));
+            CHECK(back == std::string(1, one));
+        }
+    }
+    // Every name, for its byte.
+    char buff[8];
+    ebisu_strbuf_t sb;
+    const char* const expected[] = {
+        "<NUL>", "<SOH>", "<STX>", "<ETX>", "<EOT>", "<ENQ>", "<ACK>", "<BEL>",
+        "<BS>", "<HT>", "<LF>", "<VT>", "<FF>", "<CR>", "<SO>", "<SI>",
+        "<DLE>", "<DC1>", "<DC2>", "<DC3>", "<DC4>", "<NAK>", "<SYN>", "<ETB>",
+        "<CAN>", "<EM>", "<SUB>", "<ESC>", "<FS>", "<GS>", "<RS>", "<US>"
+    };
+    for (int c = 0; c < 32; ++c) {
+        char one = (char)c;
+        ebisu_strbuf_init(&sb, buff, sizeof(buff));
+        ebisu_strbuf_append_escaped(&sb, &one, 1, EBISU_ESCAPE_CONTROL_NAMES);
+        CHECK(std::string(buff) == expected[c]);
+    }
+}
+
+TEST_CASE("ebisu_strbuf_append_escaped appends whole, or not at all") {
+    ebisu_strbuf_t sb;
+    SECTION("exactly the room there is") {
+        char small[7];
+        ebisu_strbuf_init(&sb, small, sizeof(small));
+        ebisu_strbuf_append(&sb, "x");
+        ebisu_strbuf_append_escaped(&sb, "\x01", 1, EBISU_ESCAPE_CONTROL_NAMES);
+        CHECK(ebisu_strbuf_ok(&sb));
+        CHECK(std::string(small) == "x<SOH>");
+    }
+    SECTION("one byte short, of the escape and not of the bytes") {
+        char small[6];
+        ebisu_strbuf_init(&sb, small, sizeof(small));
+        ebisu_strbuf_append(&sb, "x");
+        ebisu_strbuf_append_escaped(&sb, "\x01", 1, EBISU_ESCAPE_CONTROL_NAMES);
+        CHECK_FALSE(ebisu_strbuf_ok(&sb));
+        CHECK(std::string(small) == "x");
+        CHECK(sb.len == 1);
+        // And failed it stays.
+        ebisu_strbuf_append(&sb, "y");
+        CHECK(std::string(small) == "x");
+    }
+    SECTION("a long run that doesn't fit is not cut short") {
+        char small[16];
+        const std::string bytes(1000, '\xff');
+        ebisu_strbuf_init(&sb, small, sizeof(small));
+        ebisu_strbuf_append_escaped(&sb, bytes.data(), bytes.size(), EBISU_ESCAPE_HEX);
+        CHECK_FALSE(ebisu_strbuf_ok(&sb));
+        CHECK(std::string(small).empty());
+    }
+    SECTION("with no buffer") {
+        ebisu_strbuf_init(&sb, nullptr, 0);
+        ebisu_strbuf_append_escaped(&sb, nullptr, 0, EBISU_ESCAPE_HEX);
+        CHECK(ebisu_strbuf_ok(&sb));
+        ebisu_strbuf_append_escaped(&sb, "a", 1, EBISU_ESCAPE_HEX);
+        CHECK_FALSE(ebisu_strbuf_ok(&sb));
+    }
+    SECTION("a style that is none fails the builder, even for no bytes") {
+        char small[16];
+        ebisu_strbuf_init(&sb, small, sizeof(small));
+        ebisu_strbuf_append_escaped(&sb, nullptr, 0, (ebisu_escape_t)7);
+        CHECK_FALSE(ebisu_strbuf_ok(&sb));
+        CHECK(std::string(small).empty());
+    }
+}
+
 TEST_CASE("ebisu_parse_fixed") {
     int64_t v = 99;
     CHECK(fixed_of("12.5", 2, &v) == EBISU_PARSE_OK);

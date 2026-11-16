@@ -138,6 +138,83 @@ void ebisu_strbuf_append_hex_bytes(ebisu_strbuf_t* sb, const uint8_t* bytes, siz
     sb->buff[sb->len] = '\0';
 }
 
+/* The names of the ASCII control bytes 0x00 to 0x1f, and of 0x7f last. */
+static const char _control_names[33][4] = {
+    "NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL",
+    "BS", "HT", "LF", "VT", "FF", "CR", "SO", "SI",
+    "DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB",
+    "CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US",
+    "DEL"
+};
+
+/* Writes byte c, escaped, into out, which has room for 5, and returns how
+ * many it wrote. */
+static size_t _escape_byte(unsigned char c, ebisu_escape_t style, char out[5])
+{
+    if (style == EBISU_ESCAPE_CONTROL_NAMES && (c < 0x20 || c == 0x7f)) {
+        const char* name = _control_names[c < 0x20 ? c : 32];
+        size_t len = strlen(name);
+        out[0] = '<';
+        memcpy(&out[1], name, len);
+        out[len + 1] = '>';
+        return len + 2;
+    }
+    if (c == '\\') {
+        out[0] = '\\';
+        out[1] = '\\';
+        return 2;
+    }
+    if (c >= 0x20 && c < 0x7f && !(c == '<' && style == EBISU_ESCAPE_CONTROL_NAMES)) {
+        out[0] = (char)c;
+        return 1;
+    }
+    out[0] = '\\';
+    out[1] = 'x';
+    out[2] = _hex_digits[c >> 4];
+    out[3] = _hex_digits[c & 0xf];
+    return 4;
+}
+
+void ebisu_strbuf_append_escaped(ebisu_strbuf_t* sb, const void* data, size_t n,
+        ebisu_escape_t style)
+{
+    const unsigned char* bytes = (const unsigned char*)data;
+    char out[5];
+    size_t room;
+    size_t needed = 0;
+    size_t i;
+    if (sb->overflow) {
+        return;
+    }
+    if (style != EBISU_ESCAPE_HEX && style != EBISU_ESCAPE_CONTROL_NAMES) {
+        sb->overflow = true;
+        return;
+    }
+    if (n == 0) {
+        return;
+    }
+    if (sb->size == 0) {
+        sb->overflow = true;
+        return;
+    }
+    /* Whole or not at all: measured first, stopping as soon as it can't fit,
+       so that the sum never wraps. */
+    room = sb->size - sb->len - 1;
+    for (i = 0; i < n; ++i) {
+        needed += _escape_byte(bytes[i], style, out);
+        if (needed > room) {
+            sb->overflow = true;
+            return;
+        }
+    }
+    for (i = 0; i < n; ++i) {
+        size_t len = _escape_byte(bytes[i], style, out);
+        memcpy(&sb->buff[sb->len], out, len);
+        sb->len += len;
+    }
+    sb->buff[sb->len] = '\0';
+}
+
 void ebisu_strbuf_append_fixed(ebisu_strbuf_t* sb, int64_t v, unsigned int decimals)
 {
     /* Sign, 19 integer digits at most, the point and the decimals. */

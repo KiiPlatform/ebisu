@@ -135,6 +135,43 @@ void ebisu_strbuf_append_hex(ebisu_strbuf_t* sb, uint64_t v, unsigned int min_di
 void ebisu_strbuf_append_hex_bytes(ebisu_strbuf_t* sb, const uint8_t* bytes, size_t n);
 
 /**
+ * \brief How ebisu_strbuf_append_escaped() writes the bytes that aren't
+ * printable ASCII.
+ */
+typedef enum ebisu_escape_t {
+    /** \brief Each as `\xNN`, in two lowercase hexadecimal digits:
+     * `a\x0d\x0a` for an a, a CR and an LF. */
+    EBISU_ESCAPE_HEX,
+    /** \brief An ASCII control byte by its name, between angle brackets, as
+     * line protocols name them: `<SOH>1<ETX><CR><LF>`. The names are NUL,
+     * SOH, STX, ETX, EOT, ENQ, ACK, BEL, BS, HT, LF, VT, FF, CR, SO, SI,
+     * DLE, DC1, DC2, DC3, DC4, NAK, SYN, ETB, CAN, EM, SUB, ESC, FS, GS, RS
+     * and US for 0x00 to 0x1f, and DEL for 0x7f. Any other byte is as with
+     * #EBISU_ESCAPE_HEX, and so is '<' itself, as `\x3c`, so that a name in
+     * angle brackets always stands for its byte. */
+    EBISU_ESCAPE_CONTROL_NAMES
+} ebisu_escape_t;
+
+/**
+ * \brief Appends bytes as text, for a log line: printable ASCII as it is, a
+ * backslash doubled, as `\\`, and every other byte escaped as style says.
+ *
+ * Any bytes come out as one line of printable ASCII, from which each byte can
+ * be read back. Appended whole, or not at all, as the other appends: for n
+ * bytes, 4 times n at most, and 5 times n with
+ * ebisu_escape_t#EBISU_ESCAPE_CONTROL_NAMES. To log the start of something
+ * longer, escape fewer of its bytes.
+ *
+ * \param [in,out] sb The builder.
+ * \param [in] data The bytes. May be NULL when n is 0.
+ * \param [in] n How many.
+ * \param [in] style How to escape the bytes that aren't printable ASCII. A
+ * value that is none of ebisu_escape_t's fails the builder.
+ */
+void ebisu_strbuf_append_escaped(ebisu_strbuf_t* sb, const void* data, size_t n,
+        ebisu_escape_t style);
+
+/**
  * \brief Appends a scaled integer as a decimal number: (12345, 2) is
  * "123.45", (-5, 2) is "-0.05" and (7, 0) is "7".
  *
@@ -205,8 +242,9 @@ void ebisu_strbuf_commit(ebisu_strbuf_t* sb, size_t n);
  * \brief Whether every append so far fitted.
  *
  * \param [in] sb The builder.
- * \return false if one didn't, or the decimals given to
- * ebisu_strbuf_append_fixed() were too many.
+ * \return false if one didn't, the decimals given to
+ * ebisu_strbuf_append_fixed() were too many, or the style given to
+ * ebisu_strbuf_append_escaped() was none.
  */
 bool ebisu_strbuf_ok(const ebisu_strbuf_t* sb);
 
