@@ -4,14 +4,20 @@
 #include "kii_impl.h"
 #include "kii_req_impl.h"
 
-// With as_thing, the request carries the token of the thing kii acts as, and
-// otherwise access_token, or none if it is NULL.
+// What a request authorizes itself with: the token of the thing kii acts as,
+// another token, or none if it is NULL, or the application's own credentials.
+typedef enum _server_code_auth_t {
+    _SERVER_CODE_AS_THING,
+    _SERVER_CODE_WITH_TOKEN,
+    _SERVER_CODE_AS_APP
+} _server_code_auth_t;
+
 static kii_code_t _execute_server_code(
         kii_t* kii,
         const char* version,
         const char* endpoint_name,
         const char* params,
-        bool as_thing,
+        _server_code_auth_t auth,
         const char* access_token)
 {
     khc_set_host(&kii->_khc, kii->_app_host);
@@ -40,10 +46,20 @@ static kii_code_t _execute_server_code(
         _req_headers_free_all(kii);
         return res;
     }
-    if (as_thing) {
-        res = _set_auth_header(kii);
-    } else if (access_token != NULL) {
-        res = _set_auth_bearer_token(kii, access_token);
+    switch (auth) {
+        case _SERVER_CODE_AS_THING:
+            res = _set_auth_header(kii);
+            break;
+        case _SERVER_CODE_AS_APP:
+            // After the path, which khc has copied: the header is made in the
+            // same buffer.
+            res = _set_auth_basic_app(kii);
+            break;
+        default:
+            if (access_token != NULL) {
+                res = _set_auth_bearer_token(kii, access_token);
+            }
+            break;
     }
     if (res != KII_ERR_OK) {
         _req_headers_free_all(kii);
@@ -69,7 +85,7 @@ static kii_code_t _run_server_code(
         const char* version,
         const char* endpoint_name,
         const char* params,
-        bool as_thing,
+        _server_code_auth_t auth,
         const char* access_token)
 {
     _reset_khc(kii);
@@ -77,7 +93,7 @@ static kii_code_t _run_server_code(
 
 
     kii_code_t res = _execute_server_code(kii, version, endpoint_name, params,
-            as_thing, access_token);
+            auth, access_token);
     if (res != KII_ERR_OK) {
         goto exit;
     }
@@ -99,7 +115,7 @@ kii_code_t kii_execute_server_code_version(
         const char* endpoint_name,
         const char* params)
 {
-    return _run_server_code(kii, version, endpoint_name, params, true, NULL);
+    return _run_server_code(kii, version, endpoint_name, params, _SERVER_CODE_AS_THING, NULL);
 }
 
 kii_code_t kii_execute_server_code(
@@ -118,7 +134,17 @@ kii_code_t kii_execute_server_code_with_token(
         const char* access_token)
 {
     return _run_server_code(kii, version != NULL ? version : "current",
-            endpoint_name, params, false, access_token);
+            endpoint_name, params, _SERVER_CODE_WITH_TOKEN, access_token);
+}
+
+kii_code_t kii_execute_server_code_with_app_auth(
+        kii_t* kii,
+        const char* version,
+        const char* endpoint_name,
+        const char* params)
+{
+    return _run_server_code(kii, version != NULL ? version : "current",
+            endpoint_name, params, _SERVER_CODE_AS_APP, NULL);
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
 
