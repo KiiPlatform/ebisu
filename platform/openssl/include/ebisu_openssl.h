@@ -267,6 +267,31 @@ void ebisu_openssl_socket_set_keepalive(ebisu_openssl_socket_t* sock,
  */
 void ebisu_openssl_socket_set_nodelay(ebisu_openssl_socket_t* sock, bool nodelay);
 
+/**
+ * \brief The TLS version the connection open negotiated.
+ *
+ * As OpenSSL names it, with SSL_get_version(): "TLSv1.2" or "TLSv1.3".
+ *
+ * \param [in] sock The socket.
+ * \return The version, which lasts as long as the connection does, or NULL
+ * while there is none: before a connect, after one that failed, and once
+ * closed.
+ */
+const char* ebisu_openssl_socket_get_protocol(const ebisu_openssl_socket_t* sock);
+
+/**
+ * \brief The cipher suite the connection open negotiated.
+ *
+ * As OpenSSL names it, with SSL_get_cipher_name(): in TLS 1.2 OpenSSL's own
+ * names, such as "ECDHE-RSA-AES128-GCM-SHA256", and in TLS 1.3 the standard
+ * ones, such as "TLS_AES_256_GCM_SHA384".
+ *
+ * \param [in] sock The socket.
+ * \return The suite, which lasts as long as the connection does, or NULL
+ * while there is none.
+ */
+const char* ebisu_openssl_socket_get_cipher(const ebisu_openssl_socket_t* sock);
+
 #ifdef __cplusplus
 }
 #endif
