@@ -152,6 +152,196 @@ TEST_CASE( "The JSON writer escapes strings and keys as jkii_escape_str does" ) 
     CHECK( json_of([](jkii_writer_t* w) { jkii_write_string_n(w, nullptr, 0); }) == "\"\"" );
 }
 
+TEST_CASE( "The JSON writer writes a key of a given length" ) {
+    CHECK( json_of([](jkii_writer_t* w) {
+        jkii_write_object_start(w);
+        jkii_write_key_n(w, "a\0b", 3);
+        jkii_write_int(w, 1);
+        jkii_write_key_n(w, "cd", 1);
+        jkii_write_int(w, 2);
+        jkii_write_key_n(w, nullptr, 0);
+        jkii_write_int(w, 3);
+        jkii_write_object_end(w);
+    }) == "{\"a\\u0000b\":1,\"c\":2,\"\":3}" );
+    CHECK( into_buffer([](jkii_writer_t* w) {
+        jkii_write_object_start(w);
+        jkii_write_key_n(w, nullptr, 1);
+    }).err == JKII_WRITE_ERR_VALUE );
+    CHECK( into_buffer([](jkii_writer_t* w) {
+        jkii_write_array_start(w);
+        jkii_write_key_n(w, "k", 1);
+    }).err == JKII_WRITE_ERR_STRUCTURE );
+}
+
+namespace {
+
+// The members of an object, or the elements of an array, written back as jkii
+// read them.
+Writes copy_of(const std::string& json)
+{
+    return [json](jkii_writer_t* w) {
+        jkii_member_t root;
+        REQUIRE( jkii_root_value(json.data(), json.size(), &root) == JKII_ERR_OK );
+        bool object = root.type == JKII_FIELD_TYPE_OBJECT;
+        if (object) {
+            jkii_write_object_start(w);
+        } else {
+            jkii_write_array_start(w);
+        }
+        jkii_member_iter_t it = { 0, 0 };
+        jkii_member_t m;
+        jkii_parse_err_t res;
+        while ((res = jkii_next_member(json.data(), json.size(), &it, &m)) == JKII_ERR_OK) {
+            if (object) {
+                jkii_write_member_key(w, &m);
+            }
+            jkii_write_member_value(w, &m);
+        }
+        CHECK( res == JKII_ERR_NOT_FOUND );
+        if (object) {
+            jkii_write_object_end(w);
+        } else {
+            jkii_write_array_end(w);
+        }
+    };
+}
+
+std::string string_at(const std::string& json, const char* path)
+{
+    jkii_member_t m;
+    char s[64];
+    REQUIRE( jkii_find_member(json.data(), json.size(), path, &m) == JKII_ERR_OK );
+    REQUIRE( jkii_member_string(&m, s, sizeof(s)) == JKII_FIELD_ERR_OK );
+    return s;
+}
+
+}
+
+TEST_CASE( "The JSON writer writes members jkii read as they were written" ) {
+    // The whitespace between members goes, as the writer puts in its own
+    // commas and colons; inside a value it stays, as written.
+    const std::string doc =
+        "{ \"a\\u0000b\" : \"x\\\"y\\u00e9 \\/\",\n"
+        "  \"n\": -1.5e3, \"o\": { \"k\" : [1, 2] }, \"t\": true,"
+        " \"z\": null, \"e\": \"\", \"big\": 123456789012345678901234567890 }";
+    const std::string copy = json_of(copy_of(doc));
+    CHECK( copy ==
+        "{\"a\\u0000b\":\"x\\\"y\\u00e9 \\/\",\"n\":-1.5e3,"
+        "\"o\":{ \"k\" : [1, 2] },\"t\":true,\"z\":null,\"e\":\"\","
+        "\"big\":123456789012345678901234567890}" );
+    CHECK( json_of(copy_of("[\"s\", 1, [ ], {}]")) == "[\"s\",1,[ ],{}]" );
+
+    // It reads as the document did.
+    for (const char* path : { "/a\\u0000b", "/e" }) {
+        INFO( path );
+        CHECK( string_at(copy, path) == string_at(doc, path) );
+    }
+    jkii_member_t m;
+    int64_t k = 0;
+    REQUIRE( jkii_find_member(copy.data(), copy.size(), "/o/k/[1]", &m) == JKII_ERR_OK );
+    CHECK( jkii_member_integer(&m, 0, 10, &k) == JKII_FIELD_ERR_OK );
+    CHECK( k == 2 );
+}
+
+TEST_CASE( "The JSON writer copies a string of any length, a small buffer at a time" ) {
+    // Unescaped, the key would be a C string no longer, with its null bytes.
+    std::string text;
+    for (int i = 0; i < 1000; ++i) {
+        text += "ab\\n\\u0000\\u00e9";
+    }
+    const std::string doc = "{\"" + text + "\":\"" + text + "\"}";
+    Written written = through_callback(copy_of(doc), 8);
+    CHECK( written.err == JKII_WRITE_OK );
+    CHECK( written.json == doc );
+    CHECK( written.len == doc.size() );
+}
+
+TEST_CASE( "The JSON writer writes a value found, a root one, or one unquoted" ) {
+    const std::string doc = "{\"a\":{\"s\":\"q\\\"\",\"n\":\"30\"}}";
+    jkii_member_t m;
+    REQUIRE( jkii_find_member(doc.data(), doc.size(), "/a/s", &m) == JKII_ERR_OK );
+    CHECK( json_of([&](jkii_writer_t* w) { jkii_write_member_value(w, &m); }) == "\"q\\\"\"" );
+    REQUIRE( jkii_find_member(doc.data(), doc.size(), "/a", &m) == JKII_ERR_OK );
+    CHECK( json_of([&](jkii_writer_t* w) { jkii_write_member_value(w, &m); })
+            == "{\"s\":\"q\\\"\",\"n\":\"30\"}" );
+
+    const std::string root = "\"r\\u00e9\"";
+    REQUIRE( jkii_root_value(root.data(), root.size(), &m) == JKII_ERR_OK );
+    CHECK( json_of([&](jkii_writer_t* w) { jkii_write_member_value(w, &m); }) == root );
+
+    // A number in a string, as the string, or as the number it holds.
+    jkii_member_t n, unquoted;
+    REQUIRE( jkii_find_member(doc.data(), doc.size(), "/a/n", &n) == JKII_ERR_OK );
+    CHECK( json_of([&](jkii_writer_t* w) { jkii_write_member_value(w, &n); }) == "\"30\"" );
+    CHECK( json_of([&](jkii_writer_t* w) {
+        jkii_write_member_value(w, jkii_member_unquote(&n, &unquoted));
+    }) == "30" );
+
+    // An empty string needs no characters.
+    jkii_member_t empty;
+    memset(&empty, 0, sizeof(empty));
+    empty.type = JKII_FIELD_TYPE_STRING;
+    CHECK( json_of([&](jkii_writer_t* w) { jkii_write_member_value(w, &empty); }) == "\"\"" );
+}
+
+TEST_CASE( "The JSON writer refuses a member it can't write, or where it can't go" ) {
+    const std::string array = "[1]";
+    jkii_member_iter_t it = { 0, 0 };
+    jkii_member_t element;
+    REQUIRE( jkii_next_member(array.data(), array.size(), &it, &element) == JKII_ERR_OK );
+    const std::string object = "{\"k\":1}";
+    jkii_member_iter_t it2 = { 0, 0 };
+    jkii_member_t member;
+    REQUIRE( jkii_next_member(object.data(), object.size(), &it2, &member) == JKII_ERR_OK );
+
+    // An array's element has no key.
+    CHECK( into_buffer([&](jkii_writer_t* w) {
+        jkii_write_object_start(w);
+        jkii_write_member_key(w, &element);
+    }).err == JKII_WRITE_ERR_VALUE );
+    CHECK( into_buffer([](jkii_writer_t* w) {
+        jkii_write_object_start(w);
+        jkii_write_member_key(w, nullptr);
+    }).err == JKII_WRITE_ERR_VALUE );
+    CHECK( into_buffer([](jkii_writer_t* w) { jkii_write_member_value(w, nullptr); }).err
+            == JKII_WRITE_ERR_VALUE );
+    // A number of no length, and characters that aren't there.
+    jkii_member_t no_length = element;
+    no_length.value_length = 0;
+    CHECK( into_buffer([&](jkii_writer_t* w) { jkii_write_member_value(w, &no_length); }).err
+            == JKII_WRITE_ERR_VALUE );
+    jkii_member_t no_value = element;
+    no_value.type = JKII_FIELD_TYPE_STRING;
+    no_value.value = nullptr;
+    CHECK( into_buffer([&](jkii_writer_t* w) { jkii_write_member_value(w, &no_value); }).err
+            == JKII_WRITE_ERR_VALUE );
+
+    CHECK( into_buffer([&](jkii_writer_t* w) { jkii_write_member_key(w, &member); }).err
+            == JKII_WRITE_ERR_STRUCTURE );
+    CHECK( into_buffer([&](jkii_writer_t* w) {
+        jkii_write_array_start(w);
+        jkii_write_member_key(w, &member);
+    }).err == JKII_WRITE_ERR_STRUCTURE );
+    CHECK( into_buffer([&](jkii_writer_t* w) {
+        jkii_write_object_start(w);
+        jkii_write_member_key(w, &member);
+        jkii_write_member_key(w, &member);
+    }).err == JKII_WRITE_ERR_STRUCTURE );
+    CHECK( into_buffer([&](jkii_writer_t* w) {
+        jkii_write_object_start(w);
+        jkii_write_member_value(w, &member);
+    }).err == JKII_WRITE_ERR_STRUCTURE );
+    // Two members, with a comma between.
+    CHECK( json_of([&](jkii_writer_t* w) {
+        jkii_write_object_start(w);
+        jkii_write_member_key(w, &member);
+        jkii_write_member_value(w, &member);
+        jkii_write_member_key(w, &member);
+        jkii_write_member_value(w, &element);
+        jkii_write_object_end(w);
+    }) == "{\"k\":1,\"k\":1}" );
+}
+
 TEST_CASE( "The JSON writer writes integers whole" ) {
     CHECK( json_of([](jkii_writer_t* w) { jkii_write_int(w, 0); }) == "0" );
     CHECK( json_of([](jkii_writer_t* w) {

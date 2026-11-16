@@ -4,6 +4,7 @@
 // records were ended, and the others have to agree with it: the same JSON, the
 // same length, or the small buffer's JKII_WRITE_ERR_TOO_LARGE with the length
 // that was needed.
+#include <jkii.h>
 #include <jkii_writer.h>
 #include <stdlib.h>
 #include <string.h>
@@ -116,11 +117,31 @@ bool is_json_lines(const std::string& s) {
     return !s.empty();
 }
 
+// Members jkii read, to write back with their keys and values as written.
+const std::vector<jkii_member_t>& members() {
+    static std::vector<jkii_member_t> all;
+    if (all.empty()) {
+        static const char* docs[] = {
+            "{\"k\\\"\":\"v\\u00e9\",\"n\":-12.5,\"o\":{\"a\":[true,null]},\"e\":\"\"}",
+            "[\"x\",7]",
+        };
+        for (const char* doc : docs) {
+            jkii_member_iter_t it = { 0, 0 };
+            jkii_member_t m;
+            while (jkii_next_member(doc, strlen(doc), &it, &m) == JKII_ERR_OK) {
+                all.push_back(m);
+            }
+        }
+        if (all.size() != 6) abort();
+    }
+    return all;
+}
+
 // The calls, the same each time they are made.
 void calls(jkii_writer_t* w, FuzzInput in) {
     static const char* raws[] = { "1", "{}", "[]", "\"r\"", "{\"a\":[true,null]}" };
     while (in.size > 0) {
-        switch (in.take() % 14) {
+        switch (in.take() % 17) {
             case 0: jkii_write_object_start(w); break;
             case 1: jkii_write_object_end(w); break;
             case 2: jkii_write_array_start(w); break;
@@ -165,6 +186,15 @@ void calls(jkii_writer_t* w, FuzzInput in) {
                 break;
             }
             case 13: jkii_write_record_end(w); break;
+            case 14: {
+                size_t n = in.take() % 16;
+                std::string text;
+                for (size_t i = 0; i < n && in.size > 0; ++i) text += (char)in.take();
+                jkii_write_key_n(w, text.data(), text.size());
+                break;
+            }
+            case 15: jkii_write_member_key(w, &members()[in.take() % members().size()]); break;
+            case 16: jkii_write_member_value(w, &members()[in.take() % members().size()]); break;
         }
     }
 }
