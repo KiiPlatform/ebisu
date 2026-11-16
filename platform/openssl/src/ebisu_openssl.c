@@ -670,6 +670,17 @@ void ebisu_openssl_socket_set_nodelay(ebisu_openssl_socket_t* sock, bool nodelay
     sock->nodelay = nodelay;
 }
 
+/* ctx->ssl is set once connected, and cleared as the connection is closed. */
+const char* ebisu_openssl_socket_get_protocol(const ebisu_openssl_socket_t* sock)
+{
+    return sock->ssl != NULL ? SSL_get_version(sock->ssl) : NULL;
+}
+
+const char* ebisu_openssl_socket_get_cipher(const ebisu_openssl_socket_t* sock)
+{
+    return sock->ssl != NULL ? SSL_get_cipher_name(sock->ssl) : NULL;
+}
+
 /* OpenSSL has checked the server's certificate chain, its host name and the
    validity period of each certificate, at the clock's time when there is a
    clock. While the clock has only a lower bound of the time, its floor, a

@@ -229,6 +229,32 @@ void ebisu_mbedtls_socket_set_clock(ebisu_mbedtls_socket_t* sock, ebisu_clock_t*
  */
 void ebisu_mbedtls_socket_set_logger(ebisu_mbedtls_socket_t* sock, ebisu_logger_t* logger);
 
+/**
+ * \brief The TLS version the connection open negotiated.
+ *
+ * As mbedTLS names it, with mbedtls_ssl_get_version(): "TLSv1.2" or
+ * "TLSv1.3".
+ *
+ * \param [in] sock The socket.
+ * \return The version, which lasts as long as the connection does, or NULL
+ * while there is none: before a connect, after one that failed, and once
+ * closed.
+ */
+const char* ebisu_mbedtls_socket_get_protocol(const ebisu_mbedtls_socket_t* sock);
+
+/**
+ * \brief The cipher suite the connection open negotiated.
+ *
+ * As mbedTLS names it, with mbedtls_ssl_get_ciphersuite(): the standard name
+ * with dashes, such as "TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256" or
+ * "TLS1-3-AES-128-GCM-SHA256".
+ *
+ * \param [in] sock The socket.
+ * \return The suite, which lasts as long as the connection does, or NULL
+ * while there is none.
+ */
+const char* ebisu_mbedtls_socket_get_cipher(const ebisu_mbedtls_socket_t* sock);
+
 #ifdef __cplusplus
 }
 #endif

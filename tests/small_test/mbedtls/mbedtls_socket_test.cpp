@@ -994,3 +994,50 @@ TEST_CASE( "The mbedTLS socket takes a host's commonName for its name without a 
     CHECK( refused.connect(other.port) == EBISU_SOCK_FAIL );
     CHECK( refused.error() == EBISU_SOCK_ERROR_VERIFY );
 }
+
+TEST_CASE( "The mbedTLS socket gives the TLS version and cipher suite its connection negotiated" ) {
+    Config config;
+    {
+        Client client(&config.tls);
+        CHECK( ebisu_mbedtls_socket_get_protocol(&client.tls) == nullptr );
+        CHECK( ebisu_mbedtls_socket_get_cipher(&client.tls) == nullptr );
+    }
+    SECTION("TLS 1.2") {
+        TlsServer server(pki().server(), echo, 1, TLS1_2_VERSION);
+        // The tests' keys are of P-256.
+        REQUIRE( SSL_CTX_set_cipher_list(server.ctx, "ECDHE-ECDSA-AES128-GCM-SHA256") == 1 );
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+        REQUIRE( ebisu_mbedtls_socket_get_protocol(&client.tls) != nullptr );
+        CHECK( std::string(ebisu_mbedtls_socket_get_protocol(&client.tls)) == "TLSv1.2" );
+        REQUIRE( ebisu_mbedtls_socket_get_cipher(&client.tls) != nullptr );
+        CHECK( std::string(ebisu_mbedtls_socket_get_cipher(&client.tls)) ==
+                "TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256" );
+        client.send("hello");
+        CHECK( client.recv(64) == "hello" );
+        REQUIRE( client.sock->ops->close(client.sock) == EBISU_SOCK_OK );
+        CHECK( ebisu_mbedtls_socket_get_protocol(&client.tls) == nullptr );
+        CHECK( ebisu_mbedtls_socket_get_cipher(&client.tls) == nullptr );
+    }
+#if defined(MBEDTLS_SSL_PROTO_TLS1_3)
+    SECTION("TLS 1.3, where mbedTLS has it") {
+        TlsServer server(pki().server(), echo);
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+        REQUIRE( ebisu_mbedtls_socket_get_protocol(&client.tls) != nullptr );
+        CHECK( std::string(ebisu_mbedtls_socket_get_protocol(&client.tls)) == "TLSv1.3" );
+        REQUIRE( ebisu_mbedtls_socket_get_cipher(&client.tls) != nullptr );
+        CAPTURE( ebisu_mbedtls_socket_get_cipher(&client.tls) );
+        CHECK( std::string(ebisu_mbedtls_socket_get_cipher(&client.tls)).find("TLS1-3-") == 0 );
+        client.send("hello");
+        CHECK( client.recv(64) == "hello" );
+    }
+#endif
+    SECTION("nothing after a connect that failed") {
+        TlsServer server(pki().server("other.example", pki().now - DAY, pki().now + DAY), nothing);
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        CHECK( ebisu_mbedtls_socket_get_protocol(&client.tls) == nullptr );
+        CHECK( ebisu_mbedtls_socket_get_cipher(&client.tls) == nullptr );
+    }
+}

@@ -44,7 +44,10 @@ where what it needs is found, which links `libebisu_core`. Link one with
   takes it. Its `last_error` says why an operation failed, which also goes to
   the logger set with `ebisu_openssl_socket_set_logger()`, if any, unless it is
   built with `-DEBISU_LOG=OFF`, and its `recv_wait` waits with `poll()`, after
-  what OpenSSL has decrypted. Needs OpenSSL 1.0.2 or later, and POSIX threads.
+  what OpenSSL has decrypted. `ebisu_openssl_socket_get_protocol()` and
+  `ebisu_openssl_socket_get_cipher()` give the TLS version and cipher suite a
+  connection negotiated, as OpenSSL names them. Needs OpenSSL 1.0.2 or later,
+  and POSIX threads.
 - **Win32** (`ebisu_win32.h`, library `ebisu_win32`): `ebisu_win32_system()`,
   whose tasks are threads of their own, made with `_beginthreadex()`, whose
   delays are `Sleep()` and whose monotonic clock is `GetTickCount64()`,
@@ -125,7 +128,9 @@ where what it needs is found, which links `libebisu_core`. Link one with
   there, a certificate refused, with mbedTLS's verify flags, or another TLS
   failure, with mbedTLS's error, which also goes to the logger set with
   `ebisu_mbedtls_socket_set_logger()`, if any, unless it is built with
-  `-DEBISU_LOG=OFF`. Built where CMake finds mbedTLS: the application's,
+  `-DEBISU_LOG=OFF`. `ebisu_mbedtls_socket_get_protocol()` and
+  `ebisu_mbedtls_socket_get_cipher()` give the TLS version and cipher suite a
+  connection negotiated, as mbedTLS names them. Built where CMake finds mbedTLS: the application's,
   added before ebisu's, or one installed, as its CMake package has it, both
   `MbedTLS::mbedtls`. Sockets of a configuration on more than one task at once
   need mbedTLS built with `MBEDTLS_THREADING_C`.

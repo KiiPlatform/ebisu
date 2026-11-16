@@ -1789,3 +1789,48 @@ TEST_CASE( "The OpenSSL socket takes a host's commonName for its name only befor
     CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
     ebisu_openssl_tls_free(&tls);
 }
+
+TEST_CASE( "The OpenSSL socket gives the TLS version and cipher suite its connection negotiated" ) {
+    CaFile ca;
+    ebisu_openssl_tls_t tls;
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
+    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_init(&sock, 5, 5);
+    ebisu_openssl_socket_set_tls(&sock, &tls);
+    CHECK( ebisu_openssl_socket_get_protocol(&sock) == nullptr );
+    CHECK( ebisu_openssl_socket_get_cipher(&sock) == nullptr );
+
+    SECTION("TLS 1.2, with one of the port's suites") {
+        LocalServer server(AF_INET, false, TLS1_2_VERSION, nullptr);
+        REQUIRE( server.listening );
+        REQUIRE( SSL_CTX_set_cipher_list(server.ctx, "ECDHE-RSA-AES128-GCM-SHA256") == 1 );
+        REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
+        REQUIRE( ebisu_openssl_socket_get_protocol(&sock) != nullptr );
+        CHECK( std::string(ebisu_openssl_socket_get_protocol(&sock)) == "TLSv1.2" );
+        REQUIRE( ebisu_openssl_socket_get_cipher(&sock) != nullptr );
+        CHECK( std::string(ebisu_openssl_socket_get_cipher(&sock)) == "ECDHE-RSA-AES128-GCM-SHA256" );
+        CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+    }
+#if (OPENSSL_VERSION_NUMBER >= 0x10101000L)
+    SECTION("TLS 1.3, where there is TLS 1.3") {
+        LocalServer server;
+        REQUIRE( server.listening );
+        REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
+        REQUIRE( ebisu_openssl_socket_get_protocol(&sock) != nullptr );
+        CHECK( std::string(ebisu_openssl_socket_get_protocol(&sock)) == "TLSv1.3" );
+        REQUIRE( ebisu_openssl_socket_get_cipher(&sock) != nullptr );
+        CHECK( std::string(ebisu_openssl_socket_get_cipher(&sock)).find("TLS_") == 0 );
+        CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+    }
+#endif
+    SECTION("nothing after a connect that failed") {
+        REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_FULL, nullptr) );
+        LocalServer server;
+        REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_FAIL );
+    }
+    // Nor once closed.
+    CHECK( ebisu_openssl_socket_get_protocol(&sock) == nullptr );
+    CHECK( ebisu_openssl_socket_get_cipher(&sock) == nullptr );
+    ebisu_openssl_tls_free(&tls);
+}

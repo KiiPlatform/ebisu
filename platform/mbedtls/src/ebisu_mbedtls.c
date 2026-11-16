@@ -609,4 +609,14 @@ void ebisu_mbedtls_socket_set_logger(ebisu_mbedtls_socket_t* sock, ebisu_logger_
     sock->_logger = logger;
 }
 
+const char* ebisu_mbedtls_socket_get_protocol(const ebisu_mbedtls_socket_t* sock)
+{
+    return sock->_open ? mbedtls_ssl_get_version(&sock->_ssl) : NULL;
+}
+
+const char* ebisu_mbedtls_socket_get_cipher(const ebisu_mbedtls_socket_t* sock)
+{
+    return sock->_open ? mbedtls_ssl_get_ciphersuite(&sock->_ssl) : NULL;
+}
+
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
