@@ -38,8 +38,8 @@ set on.
   over a fixed buffer that fails instead of cutting a string short, and that a
   function of the caller's, such as an escaper or an encoder, can write into,
   strict parsers of decimal, hexadecimal and fixed-point numbers from spans
-  that need no NUL, bytes to hexadecimal and back, and splitting on a
-  delimiter without copying. No allocation, floating point, locale or `errno`.
+  that need no NUL, bytes to hexadecimal and back, any bytes as one line of
+  printable text for a log, and splitting on a delimiter without copying. No allocation, floating point, locale or `errno`.
 - **Dates** (`ebisu_time.h`): a UTC date and time of the Gregorian calendar to
   seconds since the epoch and back, from year 1 to 9999, as `timegm()` and
   `gmtime()` would but without the C library, for a certificate's dates or an
