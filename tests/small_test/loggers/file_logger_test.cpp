@@ -7,6 +7,13 @@
 
 #ifdef _WIN32
 #include <direct.h>
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
 #else
 #include <sys/stat.h>
 #include <unistd.h>
@@ -268,8 +275,23 @@ long long timestamp_of(const std::string& line, std::string* rest) {
         s * 1000LL + ms;
 }
 
+// The time of day in milliseconds since the epoch, from the clock the logger
+// reads: time() may not be it, as glibc's reads a coarser clock, which can be
+// behind it by a few milliseconds, and so a second behind just after one
+// starts.
 long long now_ms() {
-    return (long long)time(nullptr) * 1000;
+#ifdef _WIN32
+    FILETIME now;
+    GetSystemTimeAsFileTime(&now);
+    ULARGE_INTEGER intervals;
+    intervals.LowPart = now.dwLowDateTime;
+    intervals.HighPart = now.dwHighDateTime;
+    return (long long)(intervals.QuadPart / 10000u) - 11644473600000LL;
+#else
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME, &now);
+    return (long long)now.tv_sec * 1000 + now.tv_nsec / 1000000;
+#endif
 }
 
 } // namespace
@@ -291,10 +313,10 @@ TEST_CASE("The file logger starts each line with the time it is written, if aske
     CHECK(rest == "error: failed to connect to example.com.");
     long long second = timestamp_of(lines[1], &rest);
     CHECK(rest == "info: 3 tries");
-    // To the second the test reads its clock at.
+    // Between the test's readings of the same clock.
     CHECK(first >= before);
     CHECK(second >= first);
-    CHECK(second < after + 1000);
+    CHECK(second <= after);
 
     SECTION("and not unless asked") {
         Files::clear();
