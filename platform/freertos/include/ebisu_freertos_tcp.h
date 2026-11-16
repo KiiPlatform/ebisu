@@ -26,10 +26,10 @@ extern "C" {
  * port without TLS, which kii_enable_insecure_mqtt() connects to. Nothing it
  * sends or receives itself is encrypted or authenticated.
  *
- * It connects to an IPv4 address as written, without a lookup, or looks a
- * name up with FreeRTOS_getaddrinfo(), and tries each of its addresses in
- * turn. With ipconfigUSE_IPv6, it looks the host's IPv6 addresses up too, if
- * none of its IPv4 ones connects. A lookup takes as long as
+ * It connects to an IPv4 address as written, or, with ipconfigUSE_IPv6, an
+ * IPv6 one, without a lookup, or looks a name up with FreeRTOS_getaddrinfo(),
+ * and tries each of its addresses in turn. With ipconfigUSE_IPv6, it looks the
+ * host's IPv6 addresses up too, if none of its IPv4 ones connects. A lookup takes as long as
  * FreeRTOS-Plus-TCP's DNS client does, as ipconfigDNS_REQUEST_ATTEMPTS and
  * ipconfigDNS_RECEIVE_BLOCK_TIME_TICKS have it, and each attempt to connect
  * the connect timeout at the most: see

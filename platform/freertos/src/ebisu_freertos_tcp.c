@@ -105,21 +105,17 @@ static bool read_address(const char* host, BaseType_t family, struct freertos_so
     return FreeRTOS_inet_pton(family, host, &out->sin_address.ulIP_IPv4) == pdPASS;
 }
 
-/* Connects to the host, an address of the family or a name with addresses of
-   it, each in turn until one takes the connection. Whether one did; otherwise
-   why the last failed is the socket's error. */
+/* Connects to the host, a name, with its addresses of the family, each in turn
+   until one takes the connection. Whether one did; otherwise why the last
+   failed is the socket's error. */
 static bool connect_family(ebisu_freertos_tcp_socket_t* sock, const char* host, uint16_t port,
         BaseType_t family)
 {
     struct freertos_addrinfo hints;
     struct freertos_addrinfo* results = NULL;
     struct freertos_addrinfo* address;
-    struct freertos_sockaddr written;
     BaseType_t ret;
 
-    if (read_address(host, family, &written)) {
-        return connect_to(sock, written, port);
-    }
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = family;
     ret = FreeRTOS_getaddrinfo(host, NULL, &hints, &results);
@@ -142,15 +138,25 @@ static bool connect_family(ebisu_freertos_tcp_socket_t* sock, const char* host, 
     return false;
 }
 
-static ebisu_sock_code_t tcp_connect(ebisu_socket_t* self, const char* host, uint16_t port)
+/* The host as an address as written: IPv4, or, with ipconfigUSE_IPv6, IPv6.
+   Whether it is one. */
+static bool read_written(const char* host, struct freertos_sockaddr* out)
 {
-    ebisu_freertos_tcp_socket_t* sock =
-        EBISU_CONTAINER_OF(self, ebisu_freertos_tcp_socket_t, base);
-    sock->_error = EBISU_SOCK_ERROR_NONE;
-    sock->_error_detail = 0;
-    sock->_recv_timed_out = false;
+#if ipconfigUSE_IPv6 != 0
+    if (read_address(host, FREERTOS_AF_INET6, out)) {
+        return true;
+    }
+#endif
+    return read_address(host, FREERTOS_AF_INET4, out);
+}
+
+/* Connects to the host, a name, with its IPv4 addresses, then, with
+   ipconfigUSE_IPv6, its IPv6 ones. Whether one took the connection;
+   otherwise why is the socket's error. */
+static bool connect_name(ebisu_freertos_tcp_socket_t* sock, const char* host, uint16_t port)
+{
     if (connect_family(sock, host, port, FREERTOS_AF_INET4)) {
-        return EBISU_SOCK_OK;
+        return true;
     }
 #if ipconfigUSE_IPv6 != 0
     {
@@ -158,7 +164,7 @@ static ebisu_sock_code_t tcp_connect(ebisu_socket_t* self, const char* host, uin
         ebisu_sock_error_t error = sock->_error;
         long detail = sock->_error_detail;
         if (connect_family(sock, host, port, FREERTOS_AF_INET6)) {
-            return EBISU_SOCK_OK;
+            return true;
         }
         if (sock->_error == EBISU_SOCK_ERROR_DNS && error != EBISU_SOCK_ERROR_DNS) {
             sock->_error = error;
@@ -166,6 +172,24 @@ static ebisu_sock_code_t tcp_connect(ebisu_socket_t* self, const char* host, uin
         }
     }
 #endif
+    return false;
+}
+
+static ebisu_sock_code_t tcp_connect(ebisu_socket_t* self, const char* host, uint16_t port)
+{
+    ebisu_freertos_tcp_socket_t* sock =
+        EBISU_CONTAINER_OF(self, ebisu_freertos_tcp_socket_t, base);
+    struct freertos_sockaddr written;
+    sock->_error = EBISU_SOCK_ERROR_NONE;
+    sock->_error_detail = 0;
+    sock->_recv_timed_out = false;
+    /* An address as written is connected to as it is, and not looked up as a
+       name of the other family: FreeRTOS_getaddrinfo() would ask the name
+       servers for its text, as for any name. */
+    if (read_written(host, &written) ? connect_to(sock, written, port) :
+            connect_name(sock, host, port)) {
+        return EBISU_SOCK_OK;
+    }
     log_to(sock->_logger, EBISU_LOG_ERROR, "failed to %s %s:%u: %ld",
             sock->_error == EBISU_SOCK_ERROR_DNS ? "look up" : "connect to", host,
             (unsigned int)port, sock->_error_detail);
