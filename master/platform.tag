@@ -206,6 +206,13 @@
       <arglist>(ebisu_mbedtls_tls_t *tls)</arglist>
     </member>
     <member kind="function">
+      <type>bool</type>
+      <name>ebisu_mbedtls_tls_set_verify</name>
+      <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
+      <anchor>a96a7bd80131796ffeca813304b294907</anchor>
+      <arglist>(ebisu_mbedtls_tls_t *tls, ebisu_tls_verify_t verify, const unsigned char *pin)</arglist>
+    </member>
+    <member kind="function">
       <type>void</type>
       <name>ebisu_mbedtls_tls_free</name>
       <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
@@ -267,6 +274,13 @@
       <anchorfile>ebisu__openssl_8h.html</anchorfile>
       <anchor>af15941ca02f6af688cce18ee10115528</anchor>
       <arglist>(ebisu_openssl_tls_t *tls)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_openssl_tls_set_verify</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>aba563d2537454c08028164a09a93ddd0</anchor>
+      <arglist>(ebisu_openssl_tls_t *tls, ebisu_tls_verify_t verify, const unsigned char *pin)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -399,6 +413,13 @@
       <anchorfile>ebisu__schannel_8h.html</anchorfile>
       <anchor>a8046578a6e5f4aece44baa818cfa4ba4</anchor>
       <arglist>(ebisu_schannel_socket_t *sock, unsigned int seconds)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_schannel_socket_set_verify</name>
+      <anchorfile>ebisu__schannel_8h.html</anchorfile>
+      <anchor>a16c330826f114badbfea60c79ff13325</anchor>
+      <arglist>(ebisu_schannel_socket_t *sock, ebisu_tls_verify_t verify, const unsigned char *pin)</arglist>
     </member>
     <member kind="function">
       <type>void</type>

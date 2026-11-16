@@ -114,6 +114,8 @@ Functions</h2></td></tr>
 <tr class="memdesc:a0cd7e01753d8d4c89fd6e4fb791ef517"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets up a TLS configuration.  <br /></td></tr>
 <tr class="memitem:af15941ca02f6af688cce18ee10115528" id="r_af15941ca02f6af688cce18ee10115528"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af15941ca02f6af688cce18ee10115528">ebisu_openssl_tls_free</a> (<a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> *tls)</td></tr>
 <tr class="memdesc:af15941ca02f6af688cce18ee10115528"><td class="mdescLeft">&#160;</td><td class="mdescRight">Frees a TLS configuration.  <br /></td></tr>
+<tr class="memitem:aba563d2537454c08028164a09a93ddd0" id="r_aba563d2537454c08028164a09a93ddd0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aba563d2537454c08028164a09a93ddd0">ebisu_openssl_tls_set_verify</a> (<a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> *tls, <a class="elRef" href="../../core/html/ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721">ebisu_tls_verify_t</a> verify, const unsigned char *pin)</td></tr>
+<tr class="memdesc:aba563d2537454c08028164a09a93ddd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets how the configuration's connections check the server's certificate.  <br /></td></tr>
 <tr class="memitem:adbc237cc5b52c24a208886300ee0a8a2" id="r_adbc237cc5b52c24a208886300ee0a8a2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adbc237cc5b52c24a208886300ee0a8a2">ebisu_openssl_socket_init</a> (<a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *sock, unsigned int to_recv, unsigned int to_send)</td></tr>
 <tr class="memdesc:adbc237cc5b52c24a208886300ee0a8a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the socket, with its timeouts, and makes base a socket of it.  <br /></td></tr>
 <tr class="memitem:a360ec4c1f29d9ab30a4b41aaeedb560d" id="r_a360ec4c1f29d9ab30a4b41aaeedb560d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a360ec4c1f29d9ab30a4b41aaeedb560d">ebisu_openssl_socket_set_connect_timeout</a> (<a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *sock, unsigned int seconds)</td></tr>
@@ -386,6 +388,45 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true, or false if the certificates couldn't be loaded or OpenSSL failed, which OpenSSL's error queue on the calling thread says more of, as ERR_get_error() reads it. </dd></dl>
+
+</div>
+</div>
+<a id="aba563d2537454c08028164a09a93ddd0" name="aba563d2537454c08028164a09a93ddd0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aba563d2537454c08028164a09a93ddd0">&#9670;&#160;</a></span>ebisu_openssl_tls_set_verify()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ebisu_openssl_tls_set_verify </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> *</td>          <td class="paramname"><span class="paramname"><em>tls</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="elRef" href="../../core/html/ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721">ebisu_tls_verify_t</a></td>          <td class="paramname"><span class="paramname"><em>verify</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const unsigned char *</td>          <td class="paramname"><span class="paramname"><em>pin</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets how the configuration's connections check the server's certificate. </p>
+<p>Every connection is checked in full unless this says otherwise: see <a class="elRef" href="../../core/html/ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721">ebisu_tls_verify_t</a> for what each mode checks, and what it doesn't. With EBISU_TLS_VERIFY_CHAIN, the chain and the dates are checked as in full, at the clock's time; with EBISU_TLS_VERIFY_PIN or EBISU_TLS_VERIFY_NONE, they aren't, and the configuration's CA certificates aren't used. A pin is the SHA-256 of the server's certificate in DER, <span class="tt">openssl x509 -in cert.pem -outform der | openssl dgst -sha256</span>, or of its public key's SubjectPublicKeyInfo in DER, <span class="tt">openssl x509 -in cert.pem -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256</span>.</p>
+<p>Set it before any socket connects with the configuration. The TLS sessions it keeps, which connections resume without a certificate, are dropped. The configuration sockets without one share is always checked in full.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">tls</td><td>The configuration. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">verify</td><td>How servers' certificates are checked. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pin</td><td>With EBISU_TLS_VERIFY_PIN, the EBISU_TLS_PIN_SIZE bytes of the pin; otherwise ignored, and may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true, or false, leaving the configuration as it was, for EBISU_TLS_VERIFY_PIN without a pin, a mode that isn't one, a configuration that wasn't set up, or memory that ran out. </dd></dl>
 
 </div>
 </div>

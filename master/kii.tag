@@ -1006,6 +1006,13 @@
     </member>
     <member kind="function">
       <type>kii_code_t</type>
+      <name>kii_execute_server_code_with_app_auth</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a94b0a1712cda2fb64a78e860044caa78</anchor>
+      <arglist>(kii_t *kii, const char *version, const char *endpoint_name, const char *params)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_code_t</type>
       <name>kii_ti_onboard</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>adaf6e5b9a952127cacd4cbf2e911039c</anchor>

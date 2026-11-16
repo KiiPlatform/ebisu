@@ -78,6 +78,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Data Structures</a> &#124;
+<a href="#define-members">Macros</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
 <a href="#enum-members">Enumerations</a>  </div>
   <div class="headertitle"><div class="title">ebisu_socket.h File Reference</div></div>
@@ -97,6 +98,12 @@ Data Structures</h2></td></tr>
 <tr class="memitem:ebisu_5Fsocket_5Ft" id="r_ebisu_5Fsocket_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__socket__t.html">ebisu_socket_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A socket.  <a href="structebisu__socket__t.html#details">More...</a><br /></td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-define-members" class="groupheader"><a id="define-members" name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:aeb8fc168da9cf5ce97af52a63d5a5ec3" id="r_aeb8fc168da9cf5ce97af52a63d5a5ec3"><td class="memItemLeft" align="right" valign="top"><a id="aeb8fc168da9cf5ce97af52a63d5a5ec3" name="aeb8fc168da9cf5ce97af52a63d5a5ec3"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>EBISU_TLS_PIN_SIZE</b>&#160;&#160;&#160;32</td></tr>
+<tr class="memdesc:aeb8fc168da9cf5ce97af52a63d5a5ec3"><td class="mdescLeft">&#160;</td><td class="mdescRight">The size of a pin: a SHA-256, in bytes. See ebisu_tls_verify_t#EBISU_TLS_VERIFY_PIN. <br /></td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-typedef-members" class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
 <tr class="memitem:a2845d194b5ba641d5321831147cef126" id="r_a2845d194b5ba641d5321831147cef126"><td class="memItemLeft" align="right" valign="top"><a id="a2845d194b5ba641d5321831147cef126" name="a2845d194b5ba641d5321831147cef126"></a>
@@ -105,6 +112,8 @@ typedef enum <a class="el" href="#a7b634b2cbb6bc4349dab223fbee058ba">ebisu_sock_
 <tr class="memitem:af8cc3d6d42f30eea15da340261f2d657" id="r_af8cc3d6d42f30eea15da340261f2d657"><td class="memItemLeft" align="right" valign="top"><a id="af8cc3d6d42f30eea15da340261f2d657" name="af8cc3d6d42f30eea15da340261f2d657"></a>
 typedef enum <a class="el" href="#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ebisu_sock_error_t</b></td></tr>
 <tr class="memdesc:af8cc3d6d42f30eea15da340261f2d657"><td class="mdescLeft">&#160;</td><td class="mdescRight">Why a socket operation failed, as the socket can tell. See <a class="el" href="structebisu__socket__ops__t.html#a7d723df34a7a3ec7b0813d4949375fda" title="Why the last operation that returned EBISU_SOCK_FAIL failed.">ebisu_socket_ops_t::last_error</a>. <br /></td></tr>
+<tr class="memitem:a56f12c83051e14dedca8c647b3cf041b" id="r_a56f12c83051e14dedca8c647b3cf041b"><td class="memItemLeft" align="right" valign="top">typedef enum <a class="el" href="#a87249a7f26fd09c560c84470dd9cf721">ebisu_tls_verify_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a56f12c83051e14dedca8c647b3cf041b">ebisu_tls_verify_t</a></td></tr>
+<tr class="memdesc:a56f12c83051e14dedca8c647b3cf041b"><td class="mdescLeft">&#160;</td><td class="mdescRight">How a TLS socket checks the server's certificate.  <br /></td></tr>
 <tr class="memitem:af0e306cd72dfb837b228cdc12fae19a7" id="r_af0e306cd72dfb837b228cdc12fae19a7"><td class="memItemLeft" align="right" valign="top"><a id="af0e306cd72dfb837b228cdc12fae19a7" name="af0e306cd72dfb837b228cdc12fae19a7"></a>
 typedef struct ebisu_socket_t&#160;</td><td class="memItemRight" valign="bottom"><b>ebisu_socket_t</b></td></tr>
 <tr class="memdesc:af0e306cd72dfb837b228cdc12fae19a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">A socket. See struct <a class="el" href="structebisu__socket__t.html" title="A socket.">ebisu_socket_t</a>. <br /></td></tr>
@@ -131,6 +140,12 @@ Enumerations</h2></td></tr>
 <br />
  }</td></tr>
 <tr class="memdesc:a19f16391089f04ceb79936a6ecc26963"><td class="mdescLeft">&#160;</td><td class="mdescRight">Why a socket operation failed, as the socket can tell. See <a class="el" href="structebisu__socket__ops__t.html#a7d723df34a7a3ec7b0813d4949375fda" title="Why the last operation that returned EBISU_SOCK_FAIL failed.">ebisu_socket_ops_t::last_error</a>.  <a href="#a19f16391089f04ceb79936a6ecc26963">More...</a><br /></td></tr>
+<tr class="memitem:a87249a7f26fd09c560c84470dd9cf721" id="r_a87249a7f26fd09c560c84470dd9cf721"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a87249a7f26fd09c560c84470dd9cf721">ebisu_tls_verify_t</a> { <a class="el" href="#a87249a7f26fd09c560c84470dd9cf721a19aad6ac7a16aeb9e84fdb127057b433">EBISU_TLS_VERIFY_FULL</a>
+, <a class="el" href="#a87249a7f26fd09c560c84470dd9cf721ac6aa358ecd8803b20f817bbadbfc321b">EBISU_TLS_VERIFY_CHAIN</a>
+, <a class="el" href="#a87249a7f26fd09c560c84470dd9cf721a6e78929ffbf156570275febb010a6775">EBISU_TLS_VERIFY_PIN</a>
+, <a class="el" href="#a87249a7f26fd09c560c84470dd9cf721af2a23dcd681ed4fe49914eec24a69d59">EBISU_TLS_VERIFY_NONE</a>
+ }</td></tr>
+<tr class="memdesc:a87249a7f26fd09c560c84470dd9cf721"><td class="mdescLeft">&#160;</td><td class="mdescRight">How a TLS socket checks the server's certificate.  <a href="#a87249a7f26fd09c560c84470dd9cf721">More...</a><br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Provides socket abstraction. </p>
@@ -149,6 +164,24 @@ Enumerations</h2></td></tr>
 
 <p>What a socket does. </p>
 <p>Applications implement these for the target environment, doing TLS inside them unless the connection is insecure. See <a class="el" href="ebisu__object_8h.html" title="How ebisu calls the objects an application gives it.">ebisu_object.h</a> for how self leads to the socket's state. </p>
+
+</div>
+</div>
+<a id="a56f12c83051e14dedca8c647b3cf041b" name="a56f12c83051e14dedca8c647b3cf041b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a56f12c83051e14dedca8c647b3cf041b">&#9670;&#160;</a></span>ebisu_tls_verify_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef enum <a class="el" href="#a87249a7f26fd09c560c84470dd9cf721">ebisu_tls_verify_t</a> <a class="el" href="#a87249a7f26fd09c560c84470dd9cf721">ebisu_tls_verify_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>How a TLS socket checks the server's certificate. </p>
+<p>Every mode encrypts the connection. Only EBISU_TLS_VERIFY_FULL, the default, and EBISU_TLS_VERIFY_CHAIN tell the server from whoever else may answer for its address, with a certificate a CA trusted issued; a pin, from whoever lacks that certificate's key. The others are for servers whose certificates no CA issued, such as devices on a local network that make their own.</p>
+<p>The TLS ports take one with ebisu_openssl_tls_set_verify(), ebisu_mbedtls_tls_set_verify() and ebisu_schannel_socket_set_verify(). </p>
 
 </div>
 </div>
@@ -207,6 +240,34 @@ Enumerations</h2></td></tr>
 <tr><td class="fieldname"><a id="a19f16391089f04ceb79936a6ecc26963ab7a641310a57f3a2e49eb2bd85746963" name="a19f16391089f04ceb79936a6ecc26963ab7a641310a57f3a2e49eb2bd85746963"></a>EBISU_SOCK_ERROR_CLOSED&#160;</td><td class="fielddoc"><p>The peer closed or reset the connection. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a19f16391089f04ceb79936a6ecc26963a25c85a793f6a5231da0c877f65699d19" name="a19f16391089f04ceb79936a6ecc26963a25c85a793f6a5231da0c877f65699d19"></a>EBISU_SOCK_ERROR_OTHER&#160;</td><td class="fielddoc"><p>Another failure. The detail is the system's error, if there is one. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<a id="a87249a7f26fd09c560c84470dd9cf721" name="a87249a7f26fd09c560c84470dd9cf721"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a87249a7f26fd09c560c84470dd9cf721">&#9670;&#160;</a></span>ebisu_tls_verify_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="#a87249a7f26fd09c560c84470dd9cf721">ebisu_tls_verify_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>How a TLS socket checks the server's certificate. </p>
+<p>Every mode encrypts the connection. Only EBISU_TLS_VERIFY_FULL, the default, and EBISU_TLS_VERIFY_CHAIN tell the server from whoever else may answer for its address, with a certificate a CA trusted issued; a pin, from whoever lacks that certificate's key. The others are for servers whose certificates no CA issued, such as devices on a local network that make their own.</p>
+<p>The TLS ports take one with ebisu_openssl_tls_set_verify(), ebisu_mbedtls_tls_set_verify() and ebisu_schannel_socket_set_verify(). </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a87249a7f26fd09c560c84470dd9cf721a19aad6ac7a16aeb9e84fdb127057b433" name="a87249a7f26fd09c560c84470dd9cf721a19aad6ac7a16aeb9e84fdb127057b433"></a>EBISU_TLS_VERIFY_FULL&#160;</td><td class="fielddoc"><p>The certificate chains to a CA certificate trusted, is in date, and is issued for the host connected to. The default. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a87249a7f26fd09c560c84470dd9cf721ac6aa358ecd8803b20f817bbadbfc321b" name="a87249a7f26fd09c560c84470dd9cf721ac6aa358ecd8803b20f817bbadbfc321b"></a>EBISU_TLS_VERIFY_CHAIN&#160;</td><td class="fielddoc"><p>As EBISU_TLS_VERIFY_FULL, but issued for any host: for a private CA whose certificates don't name the address their servers are reached at, such as an IP address on a local network. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a87249a7f26fd09c560c84470dd9cf721a6e78929ffbf156570275febb010a6775" name="a87249a7f26fd09c560c84470dd9cf721a6e78929ffbf156570275febb010a6775"></a>EBISU_TLS_VERIFY_PIN&#160;</td><td class="fielddoc"><p>The certificate, or its public key, has the SHA-256 given, its pin: the server's own certificate, known beforehand. Nothing else of it is checked, neither its chain, its dates nor its names. A pin of the public key, its SubjectPublicKeyInfo in DER, stays the same across certificates for the same key. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a87249a7f26fd09c560c84470dd9cf721af2a23dcd681ed4fe49914eec24a69d59" name="a87249a7f26fd09c560c84470dd9cf721af2a23dcd681ed4fe49914eec24a69d59"></a>EBISU_TLS_VERIFY_NONE&#160;</td><td class="fielddoc"><p>Any certificate. The connection is encrypted, but whoever answers for the server's address is taken for it: for a network where nobody else can, or for trying a server out. Each connection logs a warning that the server wasn't verified. </p>
 </td></tr>
 </table>
 

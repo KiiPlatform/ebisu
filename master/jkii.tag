@@ -225,6 +225,48 @@
       <anchor>adfa6f89edc29e6f8b9543d9b6d9a4d40</anchor>
       <arglist>(const char *json_string, size_t json_string_len, jkii_member_t *out_value)</arglist>
     </member>
+    <member kind="function">
+      <type>jkii_parse_err_t</type>
+      <name>jkii_find_member</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a0d7f3eab561143c6cf2634d24cf98910</anchor>
+      <arglist>(const char *json_string, size_t json_string_len, const char *path, jkii_member_t *out_member)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_field_err_t</type>
+      <name>jkii_member_string</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>ac7f09c33ef5afeb6184403bf144b2291</anchor>
+      <arglist>(const jkii_member_t *member, char *buff, size_t buff_size)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_field_err_t</type>
+      <name>jkii_member_integer</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>adb15abfa496de1fb41539e759caa9e43</anchor>
+      <arglist>(const jkii_member_t *member, int64_t min, int64_t max, int64_t *out_value)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_field_err_t</type>
+      <name>jkii_member_double</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a8ddf44407cd96c778135bf49b3d72183</anchor>
+      <arglist>(const jkii_member_t *member, double *out_value)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_field_err_t</type>
+      <name>jkii_member_boolean</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a8ba7cc4e7a1c9af68565f64f50373aa9</anchor>
+      <arglist>(const jkii_member_t *member, jkii_boolean_t *out_value)</arglist>
+    </member>
+    <member kind="function">
+      <type>const jkii_member_t *</type>
+      <name>jkii_member_unquote</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a8db3315efb4948dc54966f19a181fedd</anchor>
+      <arglist>(const jkii_member_t *member, jkii_member_t *unquoted)</arglist>
+    </member>
   </compound>
   <compound kind="file">
     <name>jkii_lines.h</name>

@@ -112,8 +112,14 @@ var searchData=
   ['ebisu_5ftime_2eh_109',['ebisu_time.h',['../ebisu__time_8h.html',1,'']]],
   ['ebisu_5ftime_5ffrom_5fcivil_110',['ebisu_time_from_civil',['../ebisu__time_8h.html#a5a0f3e53e949f6cad1134f58d1df632c',1,'ebisu_time.h']]],
   ['ebisu_5ftime_5fto_5fcivil_111',['ebisu_time_to_civil',['../ebisu__time_8h.html#ac5e28e8f61669eb81df1ed85703267a6',1,'ebisu_time.h']]],
-  ['ebisu_5fvalidity_5fexpired_112',['EBISU_VALIDITY_EXPIRED',['../ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21faf5b66643f3b20a24140cfba2247cfe90',1,'ebisu_clock.h']]],
-  ['ebisu_5fvalidity_5fnot_5fyet_5fvalid_113',['EBISU_VALIDITY_NOT_YET_VALID',['../ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21fac5f12e616a91de19f45ef0cb95a27344',1,'ebisu_clock.h']]],
-  ['ebisu_5fvalidity_5fok_114',['EBISU_VALIDITY_OK',['../ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21fa98ee80daf2d7954ad5c8fadb2f3076b3',1,'ebisu_clock.h']]],
-  ['ebisu_5fvalidity_5ft_115',['ebisu_validity_t',['../ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21f',1,'ebisu_validity_t:&#160;ebisu_clock.h'],['../ebisu__clock_8h.html#a1cbb339f4419d4fe901d9ca09fa70573',1,'ebisu_validity_t:&#160;ebisu_clock.h']]]
+  ['ebisu_5ftls_5fpin_5fsize_112',['EBISU_TLS_PIN_SIZE',['../ebisu__socket_8h.html#aeb8fc168da9cf5ce97af52a63d5a5ec3',1,'ebisu_socket.h']]],
+  ['ebisu_5ftls_5fverify_5fchain_113',['EBISU_TLS_VERIFY_CHAIN',['../ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721ac6aa358ecd8803b20f817bbadbfc321b',1,'ebisu_socket.h']]],
+  ['ebisu_5ftls_5fverify_5ffull_114',['EBISU_TLS_VERIFY_FULL',['../ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721a19aad6ac7a16aeb9e84fdb127057b433',1,'ebisu_socket.h']]],
+  ['ebisu_5ftls_5fverify_5fnone_115',['EBISU_TLS_VERIFY_NONE',['../ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721af2a23dcd681ed4fe49914eec24a69d59',1,'ebisu_socket.h']]],
+  ['ebisu_5ftls_5fverify_5fpin_116',['EBISU_TLS_VERIFY_PIN',['../ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721a6e78929ffbf156570275febb010a6775',1,'ebisu_socket.h']]],
+  ['ebisu_5ftls_5fverify_5ft_117',['ebisu_tls_verify_t',['../ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721',1,'ebisu_tls_verify_t:&#160;ebisu_socket.h'],['../ebisu__socket_8h.html#a56f12c83051e14dedca8c647b3cf041b',1,'ebisu_tls_verify_t:&#160;ebisu_socket.h']]],
+  ['ebisu_5fvalidity_5fexpired_118',['EBISU_VALIDITY_EXPIRED',['../ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21faf5b66643f3b20a24140cfba2247cfe90',1,'ebisu_clock.h']]],
+  ['ebisu_5fvalidity_5fnot_5fyet_5fvalid_119',['EBISU_VALIDITY_NOT_YET_VALID',['../ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21fac5f12e616a91de19f45ef0cb95a27344',1,'ebisu_clock.h']]],
+  ['ebisu_5fvalidity_5fok_120',['EBISU_VALIDITY_OK',['../ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21fa98ee80daf2d7954ad5c8fadb2f3076b3',1,'ebisu_clock.h']]],
+  ['ebisu_5fvalidity_5ft_121',['ebisu_validity_t',['../ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21f',1,'ebisu_validity_t:&#160;ebisu_clock.h'],['../ebisu__clock_8h.html#a1cbb339f4419d4fe901d9ca09fa70573',1,'ebisu_validity_t:&#160;ebisu_clock.h']]]
 ];

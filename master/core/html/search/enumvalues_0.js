@@ -25,7 +25,11 @@ var searchData=
   ['ebisu_5fsock_5fok_22',['EBISU_SOCK_OK',['../ebisu__socket_8h.html#a7b634b2cbb6bc4349dab223fbee058baaba8e4dfed7fc8240ee78425110020017',1,'ebisu_socket.h']]],
   ['ebisu_5ftaskc_5ffail_23',['EBISU_TASKC_FAIL',['../ebisu__system_8h.html#a90188fadee3bc027156aa75ab532454aadb245d24463ad5c39c95dae216af46ea',1,'ebisu_system.h']]],
   ['ebisu_5ftaskc_5fok_24',['EBISU_TASKC_OK',['../ebisu__system_8h.html#a90188fadee3bc027156aa75ab532454aa21b207febbcc0f779b0754a6da63d0d4',1,'ebisu_system.h']]],
-  ['ebisu_5fvalidity_5fexpired_25',['EBISU_VALIDITY_EXPIRED',['../ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21faf5b66643f3b20a24140cfba2247cfe90',1,'ebisu_clock.h']]],
-  ['ebisu_5fvalidity_5fnot_5fyet_5fvalid_26',['EBISU_VALIDITY_NOT_YET_VALID',['../ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21fac5f12e616a91de19f45ef0cb95a27344',1,'ebisu_clock.h']]],
-  ['ebisu_5fvalidity_5fok_27',['EBISU_VALIDITY_OK',['../ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21fa98ee80daf2d7954ad5c8fadb2f3076b3',1,'ebisu_clock.h']]]
+  ['ebisu_5ftls_5fverify_5fchain_25',['EBISU_TLS_VERIFY_CHAIN',['../ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721ac6aa358ecd8803b20f817bbadbfc321b',1,'ebisu_socket.h']]],
+  ['ebisu_5ftls_5fverify_5ffull_26',['EBISU_TLS_VERIFY_FULL',['../ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721a19aad6ac7a16aeb9e84fdb127057b433',1,'ebisu_socket.h']]],
+  ['ebisu_5ftls_5fverify_5fnone_27',['EBISU_TLS_VERIFY_NONE',['../ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721af2a23dcd681ed4fe49914eec24a69d59',1,'ebisu_socket.h']]],
+  ['ebisu_5ftls_5fverify_5fpin_28',['EBISU_TLS_VERIFY_PIN',['../ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721a6e78929ffbf156570275febb010a6775',1,'ebisu_socket.h']]],
+  ['ebisu_5fvalidity_5fexpired_29',['EBISU_VALIDITY_EXPIRED',['../ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21faf5b66643f3b20a24140cfba2247cfe90',1,'ebisu_clock.h']]],
+  ['ebisu_5fvalidity_5fnot_5fyet_5fvalid_30',['EBISU_VALIDITY_NOT_YET_VALID',['../ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21fac5f12e616a91de19f45ef0cb95a27344',1,'ebisu_clock.h']]],
+  ['ebisu_5fvalidity_5fok_31',['EBISU_VALIDITY_OK',['../ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21fa98ee80daf2d7954ad5c8fadb2f3076b3',1,'ebisu_clock.h']]]
 ];

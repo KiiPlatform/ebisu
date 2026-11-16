@@ -116,6 +116,8 @@ Functions</h2></td></tr>
 <tr class="memdesc:af86d53b56ce8eaf362a6f4617b495920"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets up a TLS configuration, with the CA certificates the server's has to chain to.  <br /></td></tr>
 <tr class="memitem:a9bc64be69d423f56fc0fef57934cba8e" id="r_a9bc64be69d423f56fc0fef57934cba8e"><td class="memItemLeft" align="right" valign="top">mbedtls_ssl_config *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9bc64be69d423f56fc0fef57934cba8e">ebisu_mbedtls_tls_config</a> (<a class="el" href="structebisu__mbedtls__tls__t.html">ebisu_mbedtls_tls_t</a> *tls)</td></tr>
 <tr class="memdesc:a9bc64be69d423f56fc0fef57934cba8e"><td class="mdescLeft">&#160;</td><td class="mdescRight">mbedTLS's configuration, for settings of the application's.  <br /></td></tr>
+<tr class="memitem:a96a7bd80131796ffeca813304b294907" id="r_a96a7bd80131796ffeca813304b294907"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a96a7bd80131796ffeca813304b294907">ebisu_mbedtls_tls_set_verify</a> (<a class="el" href="structebisu__mbedtls__tls__t.html">ebisu_mbedtls_tls_t</a> *tls, <a class="elRef" href="../../core/html/ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721">ebisu_tls_verify_t</a> verify, const unsigned char *pin)</td></tr>
+<tr class="memdesc:a96a7bd80131796ffeca813304b294907"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets how the configuration's connections check the server's certificate.  <br /></td></tr>
 <tr class="memitem:ab86dbd0f0ac75ceb587fd8b19128aaa0" id="r_ab86dbd0f0ac75ceb587fd8b19128aaa0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab86dbd0f0ac75ceb587fd8b19128aaa0">ebisu_mbedtls_tls_free</a> (<a class="el" href="structebisu__mbedtls__tls__t.html">ebisu_mbedtls_tls_t</a> *tls)</td></tr>
 <tr class="memdesc:ab86dbd0f0ac75ceb587fd8b19128aaa0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Frees a TLS configuration, which no connection may use any more.  <br /></td></tr>
 <tr class="memitem:a01d7f2e770693bad198923c60da99a51" id="r_a01d7f2e770693bad198923c60da99a51"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a01d7f2e770693bad198923c60da99a51">ebisu_mbedtls_socket_init</a> (<a class="el" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a> *sock, <a class="elRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a> *transport, <a class="el" href="structebisu__mbedtls__tls__t.html">ebisu_mbedtls_tls_t</a> *tls)</td></tr>
@@ -162,7 +164,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>The TLS configuration connections share. </p>
-<p>TLS 1.2 or later, 1.3 where mbedTLS is built with it, with mbedTLS's default cipher suites. The server's certificate has to chain to one of the configuration's CA certificates, and be issued for the host connected to.</p>
+<p>TLS 1.2 or later, 1.3 where mbedTLS is built with it, with mbedTLS's default cipher suites. The server's certificate has to chain to one of the configuration's CA certificates, and be issued for the host connected to, unless <a class="el" href="#a96a7bd80131796ffeca813304b294907" title="Sets how the configuration&#39;s connections check the server&#39;s certificate.">ebisu_mbedtls_tls_set_verify()</a> says otherwise.</p>
 <p>Random numbers come from PSA's generator, which <a class="el" href="#af86d53b56ce8eaf362a6f4617b495920" title="Sets up a TLS configuration, with the CA certificates the server&#39;s has to chain to.">ebisu_mbedtls_tls_init()</a> starts with psa_crypto_init(), from mbedTLS's entropy sources: on a device, the hardware's, as mbedTLS is configured to take them, with MBEDTLS_ENTROPY_HARDWARE_ALT in mbedTLS 3.6, or MBEDTLS_PSA_DRIVER_GET_ENTROPY in 4.x. Connections share the generator: on more than one task at once, mbedTLS has to be built with MBEDTLS_THREADING_C, with MBEDTLS_THREADING_PTHREAD on POSIX, or MBEDTLS_THREADING_ALT and functions of the system's.</p>
 <p>mbedTLS 3.6 and 4.x. Initialize with <a class="el" href="#af86d53b56ce8eaf362a6f4617b495920" title="Sets up a TLS configuration, with the CA certificates the server&#39;s has to chain to.">ebisu_mbedtls_tls_init()</a>, before the connections, and free with <a class="el" href="#ab86dbd0f0ac75ceb587fd8b19128aaa0" title="Frees a TLS configuration, which no connection may use any more.">ebisu_mbedtls_tls_free()</a> once none is open. </p>
 
@@ -349,12 +351,50 @@ Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">tls</td><td>The configuration. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">ca</td><td>The CA certificates: PEM, one or more, with the terminating NUL, or one in DER. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ca</td><td>The CA certificates: PEM, one or more, with the terminating NUL, or one in DER. NULL, with a ca_size of 0, for none, for a configuration that pins the server's certificate or checks none, with <a class="el" href="#a96a7bd80131796ffeca813304b294907" title="Sets how the configuration&#39;s connections check the server&#39;s certificate.">ebisu_mbedtls_tls_set_verify()</a>: checked in full, no server's is taken. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">ca_size</td><td>The size of ca, its NUL included for PEM. </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>0, or mbedTLS's or PSA's error, in which case the configuration holds nothing to free. </dd></dl>
+
+</div>
+</div>
+<a id="a96a7bd80131796ffeca813304b294907" name="a96a7bd80131796ffeca813304b294907"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a96a7bd80131796ffeca813304b294907">&#9670;&#160;</a></span>ebisu_mbedtls_tls_set_verify()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ebisu_mbedtls_tls_set_verify </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__mbedtls__tls__t.html">ebisu_mbedtls_tls_t</a> *</td>          <td class="paramname"><span class="paramname"><em>tls</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="elRef" href="../../core/html/ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721">ebisu_tls_verify_t</a></td>          <td class="paramname"><span class="paramname"><em>verify</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const unsigned char *</td>          <td class="paramname"><span class="paramname"><em>pin</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets how the configuration's connections check the server's certificate. </p>
+<p>Every connection is checked in full unless this says otherwise: see <a class="elRef" href="../../core/html/ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721">ebisu_tls_verify_t</a> for what each mode checks, and what it doesn't. With EBISU_TLS_VERIFY_CHAIN, the chain and the dates are checked as in full, at the clock's time; with EBISU_TLS_VERIFY_PIN or EBISU_TLS_VERIFY_NONE, they aren't, the configuration's CA certificates aren't used, and a socket without a clock connects without the system's time too. A pin is the SHA-256 of the server's certificate in DER, or of its public key's SubjectPublicKeyInfo in DER. Set it before the first connection.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">tls</td><td>The configuration. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">verify</td><td>How servers' certificates are checked. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pin</td><td>With EBISU_TLS_VERIFY_PIN, the EBISU_TLS_PIN_SIZE bytes of the pin; otherwise ignored, and may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true, or false, leaving the configuration as it was, for EBISU_TLS_VERIFY_PIN without a pin, or a mode that isn't one. </dd></dl>
 
 </div>
 </div>

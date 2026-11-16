@@ -151,6 +151,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a41ad96e57ad3b992e2f173336f6755f7" id="r_a41ad96e57ad3b992e2f173336f6755f7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse</a> (const char *json_string, size_t json_string_len, <a class="el" href="structjkii__field__t.html">jkii_field_t</a> *fields)</td></tr>
 <tr class="memitem:a1abb4f25c1fab77f02ceeed2e988f401" id="r_a1abb4f25c1fab77f02ceeed2e988f401"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member</a> (const char *json_string, size_t json_string_len, <a class="el" href="structjkii__member__iter__t.html">jkii_member_iter_t</a> *iter, <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *out_member)</td></tr>
 <tr class="memitem:adfa6f89edc29e6f8b9543d9b6d9a4d40" id="r_adfa6f89edc29e6f8b9543d9b6d9a4d40"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value</a> (const char *json_string, size_t json_string_len, <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *out_value)</td></tr>
+<tr class="memitem:a0d7f3eab561143c6cf2634d24cf98910" id="r_a0d7f3eab561143c6cf2634d24cf98910"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0d7f3eab561143c6cf2634d24cf98910">jkii_find_member</a> (const char *json_string, size_t json_string_len, const char *path, <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *out_member)</td></tr>
+<tr class="memitem:ac7f09c33ef5afeb6184403bf144b2291" id="r_ac7f09c33ef5afeb6184403bf144b2291"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac7f09c33ef5afeb6184403bf144b2291">jkii_member_string</a> (const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member, char *buff, size_t buff_size)</td></tr>
+<tr class="memitem:adb15abfa496de1fb41539e759caa9e43" id="r_adb15abfa496de1fb41539e759caa9e43"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adb15abfa496de1fb41539e759caa9e43">jkii_member_integer</a> (const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member, int64_t min, int64_t max, int64_t *out_value)</td></tr>
+<tr class="memitem:a8ddf44407cd96c778135bf49b3d72183" id="r_a8ddf44407cd96c778135bf49b3d72183"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8ddf44407cd96c778135bf49b3d72183">jkii_member_double</a> (const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member, double *out_value)</td></tr>
+<tr class="memitem:a8ba7cc4e7a1c9af68565f64f50373aa9" id="r_a8ba7cc4e7a1c9af68565f64f50373aa9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8ba7cc4e7a1c9af68565f64f50373aa9">jkii_member_boolean</a> (const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member, <a class="el" href="#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a> *out_value)</td></tr>
+<tr class="memitem:a8db3315efb4948dc54966f19a181fedd" id="r_a8db3315efb4948dc54966f19a181fedd"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8db3315efb4948dc54966f19a181fedd">jkii_member_unquote</a> (const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *member, <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *unquoted)</td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This is a file defining Kii JSON APIs. </p>
@@ -372,6 +378,212 @@ Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
+<a id="a0d7f3eab561143c6cf2634d24cf98910" name="a0d7f3eab561143c6cf2634d24cf98910"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0d7f3eab561143c6cf2634d24cf98910">&#9670;&#160;</a></span>jkii_find_member()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a> jkii_find_member </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>json_string</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>json_string_len</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>path</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structjkii__member__t.html">jkii_member_t</a> *</td>          <td class="paramname"><span class="paramname"><em>out_member</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Gives the value a path leads to in a JSON string, as <a class="el" href="#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a> gives a member: one value, where <a class="el" href="#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a> reads several. The string is checked as <a class="el" href="#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a> does. The path is as <a class="el" href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a> has it: "/name" for a member of the root, "/a/b/[0]" through objects and arrays, with <span class="tt">\/</span>, <span class="tt">\[</span>, <span class="tt">\]</span> and <span class="tt">\\</span> for those characters in a name. A name is compared as the document writes it, escapes and all, and an object's first member of that name is taken, as <a class="el" href="#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a> takes it. The value comes with <a class="el" href="structjkii__member__t.html#a59c73f95abf1537745b9b0c744695517">jkii_member_t::key</a> NULL. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">json_string</td><td>The document. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">json_string_len</td><td>Its length. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">path</td><td>The path, null-terminated. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_member</td><td>The value, set only when JKII_ERR_OK is returned. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JKII_ERR_OK, JKII_ERR_NOT_FOUND if the path leads to nothing or isn't one, JKII_ERR_ROOT_TYPE if the root is neither an object nor an array, or JKII_ERR_INVALID_INPUT if the string is not JSON. </dd></dl>
+
+</div>
+</div>
+<a id="a8ba7cc4e7a1c9af68565f64f50373aa9" name="a8ba7cc4e7a1c9af68565f64f50373aa9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ba7cc4e7a1c9af68565f64f50373aa9">&#9670;&#160;</a></span>jkii_member_boolean()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a> jkii_member_boolean </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *</td>          <td class="paramname"><span class="paramname"><em>member</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a> *</td>          <td class="paramname"><span class="paramname"><em>out_value</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Reads a member's true or false. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">member</td><td>The member, as <a class="el" href="#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a>, <a class="el" href="#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value()</a> or <a class="el" href="#a0d7f3eab561143c6cf2634d24cf98910">jkii_find_member()</a> gives it. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_value</td><td>JKII_TRUE or JKII_FALSE, set only when JKII_FIELD_ERR_OK is returned. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JKII_FIELD_ERR_OK, or JKII_FIELD_ERR_TYPE_MISMATCH for anything else, null and "true" as a string included. </dd></dl>
+
+</div>
+</div>
+<a id="a8ddf44407cd96c778135bf49b3d72183" name="a8ddf44407cd96c778135bf49b3d72183"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ddf44407cd96c778135bf49b3d72183">&#9670;&#160;</a></span>jkii_member_double()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a> jkii_member_double </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *</td>          <td class="paramname"><span class="paramname"><em>member</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *</td>          <td class="paramname"><span class="paramname"><em>out_value</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Reads a member's number as a double. A number of any form, an integer, a fraction or one with an exponent, as <a class="el" href="#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a> reads a double, to the nearest double. Anything but a number, null and a number in a string included, is a type mismatch. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">member</td><td>The member, as <a class="el" href="#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a>, <a class="el" href="#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value()</a> or <a class="el" href="#a0d7f3eab561143c6cf2634d24cf98910">jkii_find_member()</a> gives it. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_value</td><td>The double, never NaN nor an infinity, set only when JKII_FIELD_ERR_OK is returned. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JKII_FIELD_ERR_OK; JKII_FIELD_ERR_TYPE_MISMATCH; or, as <a class="el" href="#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a> reports them, JKII_FIELD_ERR_NUM_OVERFLOW for a magnitude past a double's, and JKII_FIELD_ERR_NUM_UNDERFLOW for one too small for it. </dd></dl>
+
+</div>
+</div>
+<a id="adb15abfa496de1fb41539e759caa9e43" name="adb15abfa496de1fb41539e759caa9e43"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adb15abfa496de1fb41539e759caa9e43">&#9670;&#160;</a></span>jkii_member_integer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a> jkii_member_integer </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *</td>          <td class="paramname"><span class="paramname"><em>member</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int64_t</td>          <td class="paramname"><span class="paramname"><em>min</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int64_t</td>          <td class="paramname"><span class="paramname"><em>max</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int64_t *</td>          <td class="paramname"><span class="paramname"><em>out_value</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Reads a member's number as an integer within [min, max]. The number's value, read exactly from its digits, without rounding: an integer as written, or a number with a fraction or an exponent whose value is whole, as 30.0, 3e1 or 300e-1 for 30, or 1e18 for 10^18. One that isn't whole, as 30.5 or 1e-1, is a type mismatch, as is anything but a number, null included. Numbers in strings, as "30", are left to the caller. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">member</td><td>The member, as <a class="el" href="#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a>, <a class="el" href="#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value()</a> or <a class="el" href="#a0d7f3eab561143c6cf2634d24cf98910">jkii_find_member()</a> gives it. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">min</td><td>The least it may be. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">max</td><td>The most it may be. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_value</td><td>The integer, set only when JKII_FIELD_ERR_OK is returned. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JKII_FIELD_ERR_OK; JKII_FIELD_ERR_TYPE_MISMATCH; or JKII_FIELD_ERR_NUM_OVERFLOW if it is above max, or JKII_FIELD_ERR_NUM_UNDERFLOW below min, int64_t's range included. </dd></dl>
+
+</div>
+</div>
+<a id="ac7f09c33ef5afeb6184403bf144b2291" name="ac7f09c33ef5afeb6184403bf144b2291"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac7f09c33ef5afeb6184403bf144b2291">&#9670;&#160;</a></span>jkii_member_string()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a> jkii_member_string </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *</td>          <td class="paramname"><span class="paramname"><em>member</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>buff</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>buff_size</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Copies a member's string, unescaped as jkii_unescape_str() does, into a buffer, null-terminated. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">member</td><td>The member, as <a class="el" href="#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a>, <a class="el" href="#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value()</a> or <a class="el" href="#a0d7f3eab561143c6cf2634d24cf98910">jkii_find_member()</a> gives it. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">buff</td><td>The string. On failure, an empty string, if buff_size isn't 0. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">buff_size</td><td>Its size, the terminator included: the member's <a class="el" href="structjkii__member__t.html#a0e77eeb09c0118246785b017014949bf">jkii_member_t::value_length</a> + 1 always suffices. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JKII_FIELD_ERR_OK; JKII_FIELD_ERR_TYPE_MISMATCH if the member isn't a string, null included; or JKII_FIELD_ERR_COPY if it doesn't fit, or holds <span class="tt">\u0000</span>, which a C string can't. </dd></dl>
+
+</div>
+</div>
+<a id="a8db3315efb4948dc54966f19a181fedd" name="a8db3315efb4948dc54966f19a181fedd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8db3315efb4948dc54966f19a181fedd">&#9670;&#160;</a></span>jkii_member_unquote()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> * jkii_member_unquote </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *</td>          <td class="paramname"><span class="paramname"><em>member</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structjkii__member__t.html">jkii_member_t</a> *</td>          <td class="paramname"><span class="paramname"><em>unquoted</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>A string holding a number, true or false, as that value, for the readers. For JSON that sends a number or a boolean in a string: "30", "-2.5", "3e1", "true". The readers take only their own JSON type: through this, a caller takes such a string too, as in jkii_member_integer(jkii_member_unquote(&amp;m, &amp;u), 1, 3600, &amp;value).</p>
+<p>A string is taken only if its characters, as written between its quotes, are exactly a JSON number, true or false, as ECMA-404 has them. So " 30", "30 ", "+30", "030", ".5", "0x1E", "NaN", "Infinity", "TRUE", "null" and "" are not, nor is a string with an escape, <span class="tt">"\u0033\u0030"</span> included. A string taken reads as the value would: "30.5" is no integer, and "1e400" is JKII_FIELD_ERR_NUM_OVERFLOW as a double.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">member</td><td>The member, as <a class="el" href="#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a>, <a class="el" href="#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value()</a> or <a class="el" href="#a0d7f3eab561143c6cf2634d24cf98910">jkii_find_member()</a> gives it. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">unquoted</td><td>Set, if member is such a string, to the member with the type of what the string holds, as the value would have it; with the same key and the same characters. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>unquoted, if member is such a string; member itself otherwise, a string or not, for the readers to read or refuse as it is. </dd></dl>
+
+</div>
+</div>
 <a id="a1abb4f25c1fab77f02ceeed2e988f401" name="a1abb4f25c1fab77f02ceeed2e988f401"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1abb4f25c1fab77f02ceeed2e988f401">&#9670;&#160;</a></span>jkii_next_member()</h2>
 
@@ -439,7 +651,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Parse JSON string.</p>
-<p>The string has to be one JSON object or array, after whitespace if any, and before whitespace if any: valid JSON, as ECMA-404 has it, which is checked whole, nesting objects and arrays at most 32 levels deep. Nothing is allocated, and the string is not changed. Anything else is jkii_parse_err_t#JKII_ERR_INVALID_INPUT, and each field's <a class="el" href="structjkii__field__t.html#a490735c809794c5f8c4c07c423b9b7e6">jkii_field_t::result</a> jkii_field_err_t#JKII_FIELD_ERR_NOT_FOUND.</p>
+<p>The string has to be one JSON object or array, after whitespace if any, and before whitespace if any: valid JSON, as ECMA-404 has it, which is checked whole, nesting objects and arrays at most 32 levels deep. Nothing is allocated, and the string is not changed. Anything else is jkii_parse_err_t#JKII_ERR_INVALID_INPUT, and each field's <a class="el" href="structjkii__field__t.html#a490735c809794c5f8c4c07c423b9b7e6">jkii_field_t::result</a> jkii_field_err_t#JKII_FIELD_ERR_NOT_FOUND. So is a field whose value is a number of more than 310 characters, DBL_MAX_10_EXP + 2, with a fraction or an exponent: JSON, but longer than jkii reads.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">json_string</td><td>of JSON string. </td></tr>

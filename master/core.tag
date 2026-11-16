@@ -390,6 +390,13 @@
     <includes id="ebisu__object_8h" name="ebisu_object.h" local="yes" import="no" module="no" objc="no">ebisu_object.h</includes>
     <class kind="struct">ebisu_socket_ops_t</class>
     <class kind="struct">ebisu_socket_t</class>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_TLS_PIN_SIZE</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>aeb8fc168da9cf5ce97af52a63d5a5ec3</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="typedef">
       <type>enum ebisu_sock_code_t</type>
       <name>ebisu_sock_code_t</name>
@@ -402,6 +409,13 @@
       <name>ebisu_sock_error_t</name>
       <anchorfile>ebisu__socket_8h.html</anchorfile>
       <anchor>af8cc3d6d42f30eea15da340261f2d657</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>enum ebisu_tls_verify_t</type>
+      <name>ebisu_tls_verify_t</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a56f12c83051e14dedca8c647b3cf041b</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
@@ -496,6 +510,37 @@
       <name>EBISU_SOCK_ERROR_OTHER</name>
       <anchorfile>ebisu__socket_8h.html</anchorfile>
       <anchor>a19f16391089f04ceb79936a6ecc26963a25c85a793f6a5231da0c877f65699d19</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumeration">
+      <type></type>
+      <name>ebisu_tls_verify_t</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a87249a7f26fd09c560c84470dd9cf721</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_TLS_VERIFY_FULL</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a87249a7f26fd09c560c84470dd9cf721a19aad6ac7a16aeb9e84fdb127057b433</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_TLS_VERIFY_CHAIN</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a87249a7f26fd09c560c84470dd9cf721ac6aa358ecd8803b20f817bbadbfc321b</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_TLS_VERIFY_PIN</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a87249a7f26fd09c560c84470dd9cf721a6e78929ffbf156570275febb010a6775</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_TLS_VERIFY_NONE</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a87249a7f26fd09c560c84470dd9cf721af2a23dcd681ed4fe49914eec24a69d59</anchor>
       <arglist></arglist>
     </member>
   </compound>

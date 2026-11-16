@@ -26,5 +26,6 @@ var searchData=
   ['ebisu_5fsystem_5ft_23',['ebisu_system_t',['../ebisu__system_8h.html#a46cc0d1b6d1d6eea76e3dad3ec8115a1',1,'ebisu_system.h']]],
   ['ebisu_5ftask_5fcode_5ft_24',['ebisu_task_code_t',['../ebisu__system_8h.html#aaa3b1940a5a1fe2b64e28b21470d52ff',1,'ebisu_system.h']]],
   ['ebisu_5ftask_5fentry_25',['EBISU_TASK_ENTRY',['../ebisu__system_8h.html#aa88036fe3014d1b2c19cd4808b5424d7',1,'ebisu_system.h']]],
-  ['ebisu_5fvalidity_5ft_26',['ebisu_validity_t',['../ebisu__clock_8h.html#a1cbb339f4419d4fe901d9ca09fa70573',1,'ebisu_clock.h']]]
+  ['ebisu_5ftls_5fverify_5ft_26',['ebisu_tls_verify_t',['../ebisu__socket_8h.html#a56f12c83051e14dedca8c647b3cf041b',1,'ebisu_socket.h']]],
+  ['ebisu_5fvalidity_5ft_27',['ebisu_validity_t',['../ebisu__clock_8h.html#a1cbb339f4419d4fe901d9ca09fa70573',1,'ebisu_clock.h']]]
 ];
