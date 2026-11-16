@@ -505,6 +505,20 @@
       <anchor>a3d87d45f92a60a96e54695131e24ad66</anchor>
       <arglist>(ebisu_schannel_socket_t *sock, bool nodelay)</arglist>
     </member>
+    <member kind="function">
+      <type>const char *</type>
+      <name>ebisu_schannel_socket_get_protocol</name>
+      <anchorfile>ebisu__schannel_8h.html</anchorfile>
+      <anchor>a461073d39731a7273217d93acc906a5f</anchor>
+      <arglist>(const ebisu_schannel_socket_t *sock)</arglist>
+    </member>
+    <member kind="function">
+      <type>const char *</type>
+      <name>ebisu_schannel_socket_get_cipher</name>
+      <anchorfile>ebisu__schannel_8h.html</anchorfile>
+      <anchor>ae8069f0c938e7a6ca3d01b0404726036</anchor>
+      <arglist>(const ebisu_schannel_socket_t *sock)</arglist>
+    </member>
   </compound>
   <compound kind="file">
     <name>ebisu_win32.h</name>
