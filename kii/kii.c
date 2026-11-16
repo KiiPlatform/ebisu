@@ -51,7 +51,9 @@ size_t _cb_read_buff(char *buffer, size_t size, void *userdata)
 size_t _cb_write_header(char *buffer, size_t size, void *userdata)
 {
     kii_t* kii = (kii_t*)userdata;
-    _parse_etag(buffer, size, kii->_etag, KII_ETAG_MAX_SIZE);
+    if (_parse_etag(buffer, size, kii->_etag, KII_ETAG_MAX_SIZE) == -3) {
+        kii->_etag_lost = true;
+    }
     _kii_read_resp_header(kii, buffer, size);
     return size;
 }
@@ -59,6 +61,7 @@ size_t _cb_write_header(char *buffer, size_t size, void *userdata)
 void _kii_clear_resp_headers(kii_t* kii)
 {
     kii->_etag[0] = '\0';
+    kii->_etag_lost = false;
     kii->_resp_kii_error = false;
     kii->_resp_step_count = -1;
     kii->_resp_environment_version = -1;
@@ -114,6 +117,12 @@ void _kii_read_resp_header(kii_t* kii, const char* header, size_t header_len)
     } else if (ebisu_span_eq_nocase(name, "X-Environment-Version")) {
         kii->_resp_environment_version = _header_count(value);
     }
+}
+
+bool _kii_etag_unknown(kii_t* kii)
+{
+    return kii->_etag_lost ||
+        (kii->_etag[0] == '\0' && khc_get_resp_header_skipped(&kii->_khc));
 }
 
 void kii_init(kii_t* kii)
@@ -513,7 +522,8 @@ int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len) {
                     ++j;
                     continue;
                 } else {
-                    // Etag too large.
+                    // Too long for the buffer: none, rather than part of it.
+                    buff[0] = '\0';
                     return -3;
                 }
             }

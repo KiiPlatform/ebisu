@@ -244,3 +244,127 @@ TEST_CASE( "The ETag is read from the response, whatever the other headers" ) {
     REQUIRE( send() == KII_ERR_OK );
     CHECK( std::string(kii_get_etag(&kii)) == "" );
 }
+
+// kii_get_etag() gave the first 63 bytes of a longer ETag, and nothing for one
+// in a header too long for the response header buffer. Given to
+// kii_put_object(), the first fails as if the object had changed, and the
+// second sends no If-Match: the update goes through unconditionally.
+TEST_CASE( "An ETag kii can't keep whole fails the object call that got it" ) {
+    kii_t kii;
+    kii_init(&kii);
+    char kii_buff[4096];
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_site(&kii, "api.kii.com");
+    // kii's own, of 256 bytes: none is set.
+
+    std::string resp;
+    size_t resp_pos = 0;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&resp_pos](void*, const char*, unsigned int) {
+        resp_pos = 0;
+        return EBISU_SOCK_OK;
+    };
+    http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    http_ctx.on_recv = [&resp, &resp_pos](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        size_t n = resp.size() - resp_pos;
+        if (n > length_to_read) { n = length_to_read; }
+        memcpy(buffer, resp.data() + resp_pos, n);
+        resp_pos += n;
+        *out_actual_length = n;
+        return EBISU_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
+    kii_set_http_socket(&kii, http_ctx.socket());
+
+    kii_bucket_t bucket;
+    bucket.scope = KII_SCOPE_THING;
+    bucket.bucket_name = "b";
+    bucket.scope_id = "th.1";
+    auto respond = [&resp](int status, const std::string& headers, const std::string& body) {
+        resp = "HTTP/1.1 " + std::to_string(status) + " Status\r\n" + headers +
+            "Content-Length: " + std::to_string(body.size()) + "\r\n\r\n" + body;
+    };
+    const std::string kept(KII_ETAG_MAX_SIZE - 1, 'k');
+    const std::string too_long(KII_ETAG_MAX_SIZE, 'x');
+    // Its header, 6 bytes and the value, longer than the buffer.
+    const std::string skipped(300, 's');
+    const std::string object = "{\"a\":1}";
+    const std::string created = "{\"objectID\":\"o.1\",\"createdAt\":1}";
+    kii_object_id_t id;
+
+    SECTION("kept whole, to the last byte that fits") {
+        respond(200, "ETag: " + kept + "\r\n", object);
+        CHECK( kii_get_object(&kii, &bucket, "o.1") == KII_ERR_OK );
+        CHECK( std::string(kii_get_etag(&kii)) == kept );
+    }
+    SECTION("one byte longer, or in a header skipped") {
+        for (const std::string& etag : { too_long, skipped, std::string(1000, 'y') }) {
+            CAPTURE( etag.size() );
+            const std::string header = "ETag: " + etag + "\r\n";
+            respond(200, header, object);
+            CHECK( kii_get_object(&kii, &bucket, "o.1") == KII_ERR_TOO_LARGE_DATA );
+            CHECK( std::string(kii_get_etag(&kii)) == "" );
+            // The object, read all the same.
+            CHECK( std::string(kii_buff, kii_get_resp_body_length(&kii)) == object );
+
+            respond(200, header, "");
+            CHECK( kii_put_object(&kii, &bucket, "o.1", object.c_str(), NULL, kept.c_str()) ==
+                    KII_ERR_TOO_LARGE_DATA );
+            CHECK( std::string(kii_get_etag(&kii)) == "" );
+            CHECK( kii_patch_object(&kii, &bucket, "o.1", object.c_str(), kept.c_str()) ==
+                    KII_ERR_TOO_LARGE_DATA );
+
+            respond(201, header, created);
+            memset(&id, 0, sizeof(id));
+            CHECK( kii_post_object(&kii, &bucket, object.c_str(), NULL, &id) ==
+                    KII_ERR_TOO_LARGE_DATA );
+            CHECK( std::string(id.id) == "o.1" );
+
+            // The next response's is read as ever.
+            respond(200, "ETag: \"2\"\r\n", object);
+            CHECK( kii_get_object(&kii, &bucket, "o.1") == KII_ERR_OK );
+            CHECK( std::string(kii_get_etag(&kii)) == "\"2\"" );
+        }
+    }
+    SECTION("whatever comes after one too long") {
+        respond(200, "ETag: " + too_long + "\r\nETag: \"3\"\r\n", object);
+        CHECK( kii_get_object(&kii, &bucket, "o.1") == KII_ERR_TOO_LARGE_DATA );
+        respond(200, "ETag: \"3\"\r\nETag: " + too_long + "\r\n", object);
+        CHECK( kii_get_object(&kii, &bucket, "o.1") == KII_ERR_TOO_LARGE_DATA );
+        CHECK( std::string(kii_get_etag(&kii)) == "" );
+    }
+    SECTION("another header skipped, with the ETag read") {
+        respond(200, "Set-Cookie: " + skipped + "\r\nETag: \"4\"\r\n", object);
+        CHECK( kii_get_object(&kii, &bucket, "o.1") == KII_ERR_OK );
+        CHECK( std::string(kii_get_etag(&kii)) == "\"4\"" );
+    }
+    SECTION("another header skipped, and no ETag") {
+        // It may have been one.
+        respond(200, "Set-Cookie: " + skipped + "\r\n", object);
+        CHECK( kii_get_object(&kii, &bucket, "o.1") == KII_ERR_TOO_LARGE_DATA );
+        // Not without a header skipped.
+        respond(200, "Set-Cookie: c=1\r\n", object);
+        CHECK( kii_get_object(&kii, &bucket, "o.1") == KII_ERR_OK );
+        CHECK( std::string(kii_get_etag(&kii)) == "" );
+    }
+    SECTION("an error is reported as one") {
+        respond(404, "ETag: " + too_long + "\r\n", "{\"errorCode\":\"OBJECT_NOT_FOUND\"}");
+        CHECK( kii_get_object(&kii, &bucket, "o.1") == KII_ERR_RESP_STATUS );
+        respond(409, "ETag: " + too_long + "\r\n", "{\"errorCode\":\"OBJECT_VERSION_IS_STALE\"}");
+        CHECK( kii_put_object(&kii, &bucket, "o.1", object.c_str(), NULL, kept.c_str()) ==
+                KII_ERR_RESP_STATUS );
+    }
+    SECTION("calls that give no ETag to use go on") {
+        respond(204, "ETag: " + too_long + "\r\n", "");
+        CHECK( kii_delete_object(&kii, &bucket, "o.1") == KII_ERR_OK );
+        CHECK( std::string(kii_get_etag(&kii)) == "" );
+        respond(200, "ETag: " + too_long + "\r\n", "{}");
+        REQUIRE( kii_api_call_start(&kii, "GET", "/api/apps/dummyAppID", NULL, false) == KII_ERR_OK );
+        CHECK( kii_api_call_run(&kii) == KII_ERR_OK );
+        CHECK( std::string(kii_get_etag(&kii)) == "" );
+    }
+}

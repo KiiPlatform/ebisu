@@ -50,7 +50,8 @@ kii_code_t kii_post_object(
         goto exit;
     }
 
-    ret = KII_ERR_OK;
+    // The object is made, and its ID given, but its ETag can't be.
+    ret = _kii_etag_unknown(kii) ? KII_ERR_TOO_LARGE_DATA : KII_ERR_OK;
 
 exit:
     return ret;
@@ -82,7 +83,8 @@ kii_code_t kii_put_object(
         ret = KII_ERR_RESP_STATUS;
         goto exit;
     }
-    ret = KII_ERR_OK;
+    // The object is replaced, but its ETag can't be given.
+    ret = _kii_etag_unknown(kii) ? KII_ERR_TOO_LARGE_DATA : KII_ERR_OK;
 
 exit:
     return ret;
@@ -114,7 +116,8 @@ kii_code_t kii_patch_object(
         goto exit;
     }
 
-    code = KII_ERR_OK;
+    // The object is updated, but its ETag can't be given.
+    code = _kii_etag_unknown(kii) ? KII_ERR_TOO_LARGE_DATA : KII_ERR_OK;
 
 exit:
     return code;	
@@ -167,7 +170,8 @@ kii_code_t kii_get_object(
         goto exit;
     }
 
-    ret = KII_ERR_OK;
+    // The object is in the buffer, but its ETag can't be given.
+    ret = _kii_etag_unknown(kii) ? KII_ERR_TOO_LARGE_DATA : KII_ERR_OK;
 exit:
     return ret;
 }
