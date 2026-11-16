@@ -198,6 +198,54 @@ static ebisu_mbedtls_socket_t sock;
 ```
 
 
+## Servers whose certificates no CA issued
+
+The TLS ports check the server's certificate in full: a chain to a CA
+certificate trusted, in date, issued for the host connected to. A server on a
+local network often has a certificate it made itself, or one of a private CA
+that doesn't name the address it's reached at. For those, a configuration can
+check less, as `ebisu_tls_verify_t` in `ebisu_socket.h` has it, with
+`ebisu_openssl_tls_set_verify()`, `ebisu_mbedtls_tls_set_verify()` and, on a
+socket, `ebisu_schannel_socket_set_verify()`:
+
+- **`EBISU_TLS_VERIFY_CHAIN`:** the chain and the dates, not the name.
+- **`EBISU_TLS_VERIFY_PIN`:** the SHA-256 of the certificate, or of its public
+  key, known beforehand; nothing else. A pin of the public key stays the same
+  when the server makes a new certificate for the same key.
+- **`EBISU_TLS_VERIFY_NONE`:** nothing. The connection is encrypted, but
+  whoever answers for the address is taken for the server, and each connection
+  logs a warning that it wasn't verified.
+
+Each is asked for; none is a default, and the configuration that sockets
+without one share is always checked in full. A pin is computed from the
+server's certificate with the `openssl` command:
+
+```sh
+# Of the certificate:
+openssl x509 -in server.pem -outform der | openssl dgst -sha256
+# Of its public key:
+openssl x509 -in server.pem -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256
+```
+
+```c
+#include <ebisu_openssl.h>
+
+static ebisu_openssl_tls_t tls;
+static ebisu_openssl_socket_t sock;
+
+    /* The server's public key's SHA-256, as the second command prints it. */
+    static const unsigned char pin[EBISU_TLS_PIN_SIZE] = { 0x5c, 0x1f, /* ... */ };
+    if (!ebisu_openssl_tls_init(&tls, NULL, NULL) ||
+            !ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_PIN, pin)) {
+        /* OpenSSL failed, or memory ran out. */
+    }
+    ebisu_openssl_socket_init(&sock, 15, 15);
+    ebisu_openssl_socket_set_tls(&sock, &tls);
+```
+
+With mbedTLS, a configuration that pins or checks nothing needs no CA
+certificates: `ebisu_mbedtls_tls_init(&tls, NULL, 0)`.
+
 ## Loggers
 
 `ebisu_loggers.h`, library `ebisu_loggers`, built on POSIX and on Windows, has

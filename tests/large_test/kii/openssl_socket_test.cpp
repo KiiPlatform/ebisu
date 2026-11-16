@@ -42,12 +42,13 @@ EVP_PKEY* generate_key()
     return key;
 }
 
-X509* issue_certificate(EVP_PKEY* key)
+// Valid from from seconds from now, until to seconds from now.
+X509* issue_certificate(EVP_PKEY* key, long from = 0, long to = 3600)
 {
     X509* cert = X509_new();
     ASN1_INTEGER_set(X509_get_serialNumber(cert), 1);
-    X509_gmtime_adj(X509_get_notBefore(cert), 0);
-    X509_gmtime_adj(X509_get_notAfter(cert), 3600);
+    X509_gmtime_adj(X509_get_notBefore(cert), from);
+    X509_gmtime_adj(X509_get_notAfter(cert), to);
     X509_set_pubkey(cert, key);
     X509_NAME* name = X509_get_subject_name(cert);
     X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
@@ -1236,4 +1237,200 @@ TEST_CASE( "OpenSSL sockets waiting on a running lookup take its addresses when 
         CHECK( errors[i] == EBISU_SOCK_ERROR_CONNECT );
     }
     CHECK( std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() < 8 );
+}
+
+namespace {
+
+// The SHA-256 of cert in DER, or of its public key's SubjectPublicKeyInfo.
+std::vector<unsigned char> certificate_pin(X509* cert)
+{
+    std::vector<unsigned char> pin(EBISU_TLS_PIN_SIZE);
+    unsigned int len = 0;
+    REQUIRE( X509_digest(cert, EVP_sha256(), pin.data(), &len) == 1 );
+    REQUIRE( len == EBISU_TLS_PIN_SIZE );
+    return pin;
+}
+
+std::vector<unsigned char> public_key_pin(X509* cert)
+{
+    EVP_PKEY* key = X509_get_pubkey(cert);
+    unsigned char* der = nullptr;
+    int der_len = i2d_PUBKEY(key, &der);
+    REQUIRE( der_len > 0 );
+    std::vector<unsigned char> pin(EBISU_TLS_PIN_SIZE);
+    unsigned int len = 0;
+    REQUIRE( EVP_Digest(der, (size_t)der_len, pin.data(), &len, EVP_sha256(), nullptr) == 1 );
+    OPENSSL_free(der);
+    EVP_PKEY_free(key);
+    return pin;
+}
+
+ebisu_sock_code_t connect_by_address(ebisu_openssl_socket_t* sock, const LocalServer& server)
+{
+    return sock->base.ops->connect(&sock->base, "127.0.0.1", server.port);
+}
+
+bool logged(const LogCtx& log, ebisu_log_level_t level, const std::string& part)
+{
+    for (const auto& m : log.messages) {
+        if (m.first == level && m.second.find(part) != std::string::npos) {
+            return true;
+        }
+    }
+    return false;
+}
+
+}
+
+// The server's certificate is for localhost, self-signed, and the server is
+// reached at 127.0.0.1, a name it isn't issued for.
+TEST_CASE( "The OpenSSL socket checks the server's certificate as its configuration says" ) {
+    LocalServer server;
+    REQUIRE( server.listening );
+    CaFile ca;
+    LogCtx log;
+    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_init(&sock, 5, 5);
+    ebisu_openssl_socket_set_logger(&sock, log.get());
+    long detail = 0;
+
+    SECTION("in full, by default: its name too") {
+        ebisu_openssl_tls_t tls;
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        ebisu_openssl_socket_set_tls(&sock, &tls);
+        CHECK( connect_by_address(&sock, server) == EBISU_SOCK_FAIL );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( detail == X509_V_ERR_HOSTNAME_MISMATCH );
+        REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_FULL, nullptr) );
+        CHECK( connect_by_address(&sock, server) == EBISU_SOCK_FAIL );
+        ebisu_openssl_tls_free(&tls);
+    }
+
+    SECTION("its chain without its name") {
+        ebisu_openssl_tls_t tls;
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
+        ebisu_openssl_socket_set_tls(&sock, &tls);
+        REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
+        CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+        CHECK_FALSE( logged(log, EBISU_LOG_WARNING, "without verifying") );
+        ebisu_openssl_tls_free(&tls);
+
+        // Still to a CA certificate trusted.
+        REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr) );
+        REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
+        CHECK( connect_by_address(&sock, server) == EBISU_SOCK_FAIL );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( detail == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT );
+        ebisu_openssl_tls_free(&tls);
+    }
+
+    SECTION("pinned, its certificate or its public key, with no CA certificate of its") {
+        for (const std::vector<unsigned char>& pin :
+                { certificate_pin(server_certificate()), public_key_pin(server_certificate()) }) {
+            ebisu_openssl_tls_t tls;
+            REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr) );
+            REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_PIN, pin.data()) );
+            ebisu_openssl_socket_set_tls(&sock, &tls);
+            REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
+            CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+            ebisu_openssl_tls_free(&tls);
+        }
+    }
+
+    SECTION("pinned, and another certificate refused") {
+        std::vector<unsigned char> pin = certificate_pin(server_certificate());
+        pin[0] ^= 1;
+        ebisu_openssl_tls_t tls;
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_PIN, pin.data()) );
+        ebisu_openssl_socket_set_tls(&sock, &tls);
+        // At localhost, which its chain and its name would have passed.
+        CHECK( connect_to(&sock, server) == EBISU_SOCK_FAIL );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( detail == X509_V_ERR_CERT_REJECTED );
+#ifndef EBISU_NO_LOG
+        CHECK( logged(log, EBISU_LOG_ERROR, "neither it nor its public key has the pin") );
+#endif
+        ebisu_openssl_tls_free(&tls);
+    }
+
+    SECTION("pinned, whatever its dates") {
+        X509* expired = issue_certificate(server_key(), -7200, -3600);
+        REQUIRE( SSL_CTX_use_certificate(server.ctx, expired) == 1 );
+        ebisu_openssl_tls_t tls;
+        REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr) );
+        REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_PIN,
+                    certificate_pin(expired).data()) );
+        ebisu_openssl_socket_set_tls(&sock, &tls);
+        REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
+        CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+        ebisu_openssl_tls_free(&tls);
+        X509_free(expired);
+    }
+
+    SECTION("not at all, with a warning on each connection") {
+        ebisu_openssl_tls_t tls;
+        REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr) );
+        REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_NONE, nullptr) );
+        ebisu_openssl_socket_set_tls(&sock, &tls);
+        for (int i = 0; i < 2; ++i) {
+            REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
+            CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+        }
+#ifndef EBISU_NO_LOG
+        int warnings = 0;
+        for (const auto& m : log.messages) {
+            if (m.first == EBISU_LOG_WARNING &&
+                    m.second == "connected to 127.0.0.1 without verifying its certificate.") {
+                ++warnings;
+            }
+        }
+        CHECK( warnings == 2 );
+#endif
+        ebisu_openssl_tls_free(&tls);
+    }
+}
+
+// A session resumed has no certificate to check: those kept under a mode that
+// checked less would let the next connection skip the check.
+TEST_CASE( "A TLS configuration checks in full again once set to, with no session kept" ) {
+    LocalServer server(AF_INET, true);
+    REQUIRE( server.listening );
+    ebisu_openssl_tls_t tls;
+    REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr) );
+    REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_NONE, nullptr) );
+    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_init(&sock, 5, 5);
+    ebisu_openssl_socket_set_tls(&sock, &tls);
+    CHECK_FALSE( connect_resumed(&sock, server) );
+    CHECK( connect_resumed(&sock, server) );
+
+    REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_FULL, nullptr) );
+    CHECK( connect_to(&sock, server) == EBISU_SOCK_FAIL );
+    long detail = 0;
+    CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_VERIFY );
+    ebisu_openssl_tls_free(&tls);
+}
+
+TEST_CASE( "A TLS configuration refuses a mode it can't take, as it was" ) {
+    LocalServer server;
+    REQUIRE( server.listening );
+    CaFile ca;
+    ebisu_openssl_tls_t tls;
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    CHECK_FALSE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_PIN, nullptr) );
+    CHECK_FALSE( ebisu_openssl_tls_set_verify(&tls, (ebisu_tls_verify_t)42, nullptr) );
+    // Still in full: by name, at localhost.
+    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_init(&sock, 5, 5);
+    ebisu_openssl_socket_set_tls(&sock, &tls);
+    REQUIRE( connect_to(&sock, server) == EBISU_SOCK_OK );
+    CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+    CHECK( connect_by_address(&sock, server) == EBISU_SOCK_FAIL );
+    ebisu_openssl_tls_free(&tls);
+
+    ebisu_openssl_tls_t unset;
+    CHECK_FALSE( ebisu_openssl_tls_init(&unset, "/nonexistent/ca.pem", nullptr) );
+    CHECK_FALSE( ebisu_openssl_tls_set_verify(&unset, EBISU_TLS_VERIFY_NONE, nullptr) );
 }

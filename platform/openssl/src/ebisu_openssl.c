@@ -356,6 +356,168 @@ void ebisu_openssl_tls_free(ebisu_openssl_tls_t* tls)
     tls->ssl_ctx = NULL;
 }
 
+/* How a configuration checks servers' certificates, other than in full. Kept
+   in its SSL_CTX's ex_data, which the connections still open hold on to, and
+   which SSL_CTX_free() frees. */
+typedef struct {
+    ebisu_tls_verify_t verify;
+    unsigned char pin[EBISU_TLS_PIN_SIZE];
+} verify_settings_t;
+
+static int verify_settings_index = -1;
+
+static void free_verify_settings(void* parent, void* ptr, CRYPTO_EX_DATA* ad,
+        int idx, long argl, void* argp)
+{
+    (void)parent;
+    (void)ad;
+    (void)idx;
+    (void)argl;
+    (void)argp;
+    free(ptr);
+}
+
+static void init_verify_settings_index(void)
+{
+    verify_settings_index = SSL_CTX_get_ex_new_index(0, NULL, NULL, NULL, free_verify_settings);
+}
+
+/* How ssl_ctx checks certificates. */
+static ebisu_tls_verify_t verify_of(SSL_CTX* ssl_ctx, const unsigned char** out_pin)
+{
+    const verify_settings_t* settings = verify_settings_index < 0 ? NULL :
+        (const verify_settings_t*)SSL_CTX_get_ex_data(ssl_ctx, verify_settings_index);
+    if (settings == NULL) {
+        return EBISU_TLS_VERIFY_FULL;
+    }
+    if (out_pin != NULL) {
+        *out_pin = settings->pin;
+    }
+    return settings->verify;
+}
+
+/* Whether the SHA-256 of cert, or of its public key's SubjectPublicKeyInfo in
+   DER, is pin. */
+static bool matches_pin(X509* cert, const unsigned char* pin)
+{
+    unsigned char md[EVP_MAX_MD_SIZE];
+    unsigned int md_len = 0;
+    if (cert == NULL) {
+        return false;
+    }
+    if (X509_digest(cert, EVP_sha256(), md, &md_len) == 1 &&
+            md_len == EBISU_TLS_PIN_SIZE && CRYPTO_memcmp(md, pin, EBISU_TLS_PIN_SIZE) == 0) {
+        return true;
+    }
+    bool matches = false;
+    EVP_PKEY* key = X509_get_pubkey(cert);
+    unsigned char* der = NULL;
+    int der_len = key == NULL ? -1 : i2d_PUBKEY(key, &der);
+    if (der_len > 0 && EVP_Digest(der, (size_t)der_len, md, &md_len, EVP_sha256(), NULL) == 1 &&
+            md_len == EBISU_TLS_PIN_SIZE) {
+        matches = CRYPTO_memcmp(md, pin, EBISU_TLS_PIN_SIZE) == 0;
+    }
+    OPENSSL_free(der);
+    EVP_PKEY_free(key);
+    return matches;
+}
+
+/* In place of OpenSSL's check of the chain, for a configuration that pins the
+   server's certificate or checks none. */
+static int check_without_chain(X509_STORE_CTX* store, void* arg)
+{
+    (void)arg;
+    SSL* ssl = (SSL*)X509_STORE_CTX_get_ex_data(store, SSL_get_ex_data_X509_STORE_CTX_idx());
+    const unsigned char* pin = NULL;
+    switch (verify_of(SSL_get_SSL_CTX(ssl), &pin)) {
+        case EBISU_TLS_VERIFY_NONE:
+            break;
+        case EBISU_TLS_VERIFY_PIN: {
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+            X509* cert = store->cert;
+#else
+            X509* cert = X509_STORE_CTX_get0_cert(store);
+#endif
+            if (!matches_pin(cert, pin)) {
+                X509_STORE_CTX_set_error(store, X509_V_ERR_CERT_REJECTED);
+                return 0;
+            }
+            break;
+        }
+        default:
+            return X509_verify_cert(store);
+    }
+    X509_STORE_CTX_set_error(store, X509_V_OK);
+    return 1;
+}
+
+/* Drops every session kept: they were checked as the configuration was. */
+static void forget_sessions(SSL_CTX* ssl_ctx)
+{
+    session_cache_t* cache = session_cache_of(ssl_ctx);
+    if (cache == NULL) {
+        return;
+    }
+    pthread_mutex_lock(&cache->lock);
+    for (int i = 0; i < SESSION_CACHE_SIZE; ++i) {
+        if (cache->entries[i].session != NULL) {
+            SSL_SESSION_free(cache->entries[i].session);
+            cache->entries[i].session = NULL;
+        }
+    }
+    pthread_mutex_unlock(&cache->lock);
+}
+
+bool ebisu_openssl_tls_set_verify(ebisu_openssl_tls_t* tls, ebisu_tls_verify_t verify,
+        const unsigned char* pin)
+{
+    static pthread_once_t index_made = PTHREAD_ONCE_INIT;
+    if (tls->ssl_ctx == NULL) {
+        return false;
+    }
+    switch (verify) {
+        case EBISU_TLS_VERIFY_FULL:
+        case EBISU_TLS_VERIFY_CHAIN:
+        case EBISU_TLS_VERIFY_NONE:
+            break;
+        case EBISU_TLS_VERIFY_PIN:
+            if (pin == NULL) {
+                return false;
+            }
+            break;
+        default:
+            return false;
+    }
+    pthread_once(&index_made, init_verify_settings_index);
+    if (verify_settings_index < 0) {
+        return false;
+    }
+    verify_settings_t* settings =
+        (verify_settings_t*)SSL_CTX_get_ex_data(tls->ssl_ctx, verify_settings_index);
+    if (settings == NULL) {
+        settings = (verify_settings_t*)calloc(1, sizeof(*settings));
+        if (settings == NULL) {
+            return false;
+        }
+        if (SSL_CTX_set_ex_data(tls->ssl_ctx, verify_settings_index, settings) != 1) {
+            free(settings);
+            return false;
+        }
+    }
+    settings->verify = verify;
+    if (verify == EBISU_TLS_VERIFY_PIN) {
+        memcpy(settings->pin, pin, EBISU_TLS_PIN_SIZE);
+    } else {
+        memset(settings->pin, 0, EBISU_TLS_PIN_SIZE);
+    }
+    /* The chain is OpenSSL's to check, unless none is checked. */
+    SSL_CTX_set_cert_verify_callback(tls->ssl_ctx,
+            verify == EBISU_TLS_VERIFY_PIN || verify == EBISU_TLS_VERIFY_NONE ?
+                check_without_chain : NULL, NULL);
+    forget_sessions(tls->ssl_ctx);
+    return true;
+}
+
 static ebisu_sock_code_t openssl_connect(ebisu_socket_t* self, const char* host,
         uint16_t port);
 static ebisu_sock_code_t openssl_send(ebisu_socket_t* self, const char* buffer,
@@ -550,11 +712,13 @@ static ebisu_sock_code_t
     SSL_set_app_data(ssl, ctx);
 
     /* The name the server is to present a certificate for, and the one the
-       certificate has to be issued for. */
+       certificate has to be issued for, unless the configuration checks
+       less. */
+    const ebisu_tls_verify_t verify = verify_of(ssl_ctx, NULL);
     SSL_set_tlsext_host_name(ssl, host);
     X509_VERIFY_PARAM* param = SSL_get0_param(ssl);
     X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
-    if (X509_VERIFY_PARAM_set1_host(param, host, 0) != 1) {
+    if (verify == EBISU_TLS_VERIFY_FULL && X509_VERIFY_PARAM_set1_host(param, host, 0) != 1) {
         log_to(ctx->logger, EBISU_LOG_ERROR, "failed to set the host name to verify.");
         error = EBISU_SOCK_ERROR_OTHER;
         goto fail;
@@ -596,7 +760,9 @@ static ebisu_sock_code_t
         long verified = SSL_get_verify_result(ssl);
         if (verified != X509_V_OK) {
             log_to(ctx->logger, EBISU_LOG_ERROR, "server certificate for %s rejected: %s",
-                    host, X509_verify_cert_error_string(verified));
+                    host, verify == EBISU_TLS_VERIFY_PIN ?
+                        "neither it nor its public key has the pin" :
+                        X509_verify_cert_error_string(verified));
             error = EBISU_SOCK_ERROR_VERIFY;
             detail = verified;
         } else {
@@ -613,6 +779,10 @@ static ebisu_sock_code_t
 
     if (SSL_session_reused(ssl)) {
         log_to(ctx->logger, EBISU_LOG_DEBUG, "resumed the TLS session with %s.", host);
+    }
+    if (verify == EBISU_TLS_VERIFY_NONE) {
+        log_to(ctx->logger, EBISU_LOG_WARNING,
+                "connected to %s without verifying its certificate.", host);
     }
     ctx->socket = sock;
     ctx->ssl = ssl;

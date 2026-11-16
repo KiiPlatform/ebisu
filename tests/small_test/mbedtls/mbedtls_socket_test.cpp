@@ -404,6 +404,142 @@ TEST_CASE( "The mbedTLS socket refuses a certificate for another host" ) {
     CHECK( (detail & MBEDTLS_X509_BADCERT_CN_MISMATCH) != 0 );
 }
 
+namespace {
+
+// A configuration without CA certificates.
+struct NoCaConfig {
+    ebisu_mbedtls_tls_t tls;
+    NoCaConfig() {
+        REQUIRE( ebisu_mbedtls_tls_init(&tls, nullptr, 0) == 0 );
+    }
+    ~NoCaConfig() {
+        ebisu_mbedtls_tls_free(&tls);
+    }
+};
+
+// The SHA-256 of cert in DER, or of its public key's SubjectPublicKeyInfo.
+std::vector<unsigned char> certificate_pin(X509* cert)
+{
+    std::vector<unsigned char> pin(EBISU_TLS_PIN_SIZE);
+    unsigned int len = 0;
+    REQUIRE( X509_digest(cert, EVP_sha256(), pin.data(), &len) == 1 );
+    REQUIRE( len == EBISU_TLS_PIN_SIZE );
+    return pin;
+}
+
+std::vector<unsigned char> public_key_pin(X509* cert)
+{
+    EVP_PKEY* key = X509_get_pubkey(cert);
+    unsigned char* der = nullptr;
+    int der_len = i2d_PUBKEY(key, &der);
+    REQUIRE( der_len > 0 );
+    std::vector<unsigned char> pin(EBISU_TLS_PIN_SIZE);
+    unsigned int len = 0;
+    REQUIRE( EVP_Digest(der, (size_t)der_len, pin.data(), &len, EVP_sha256(), nullptr) == 1 );
+    OPENSSL_free(der);
+    EVP_PKEY_free(key);
+    return pin;
+}
+
+// Self-signed, for another name, and expired: nothing a CA would pass.
+X509* own_certificate()
+{
+    return pki().server("other.example", pki().now - 60 * DAY, pki().now - 30 * DAY, true);
+}
+
+} // namespace
+
+TEST_CASE( "The mbedTLS socket checks a certificate's chain without its name, when asked" ) {
+    Config config;
+    REQUIRE( ebisu_mbedtls_tls_set_verify(&config.tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
+
+    SECTION("one the CA issued for another name is taken") {
+        TlsServer server(pki().server("other.example", pki().now - DAY, pki().now + DAY), nothing);
+        Client client(&config.tls);
+        CHECK( client.connect(server.port) == EBISU_SOCK_OK );
+    }
+
+    SECTION("one self-signed is still refused") {
+        TlsServer server(pki().server("localhost", pki().now - DAY, pki().now + DAY, true), nothing);
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        long detail = 0;
+        CHECK( client.error(&detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( (detail & MBEDTLS_X509_BADCERT_NOT_TRUSTED) != 0 );
+    }
+
+    SECTION("one expired is still refused") {
+        TlsServer server(pki().server("other.example", pki().now - 60 * DAY, pki().now - 30 * DAY),
+                nothing);
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        long detail = 0;
+        CHECK( client.error(&detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( (detail & MBEDTLS_X509_BADCERT_EXPIRED) != 0 );
+    }
+}
+
+TEST_CASE( "The mbedTLS socket takes a pinned certificate, whatever else it is" ) {
+    X509* cert = own_certificate();
+    NoCaConfig config;
+    // Two pins, and another; the server holds the certificate.
+    TlsServer server(cert, nothing, 3);
+
+    for (const std::vector<unsigned char>& pin : { certificate_pin(cert), public_key_pin(cert) }) {
+        REQUIRE( ebisu_mbedtls_tls_set_verify(&config.tls, EBISU_TLS_VERIFY_PIN, pin.data()) );
+        Client client(&config.tls);
+        CHECK( client.connect(server.port) == EBISU_SOCK_OK );
+    }
+
+    SECTION("and refuses another") {
+        std::vector<unsigned char> pin = public_key_pin(cert);
+        pin[EBISU_TLS_PIN_SIZE - 1] ^= 0x80;
+        REQUIRE( ebisu_mbedtls_tls_set_verify(&config.tls, EBISU_TLS_VERIFY_PIN, pin.data()) );
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        long detail = 0;
+        CHECK( client.error(&detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( (detail & MBEDTLS_X509_BADCERT_OTHER) != 0 );
+#ifndef EBISU_NO_LOG
+        CHECK( client.logger.has(
+                    "server certificate for localhost refused: neither it nor its public key has the pin") );
+#endif
+    }
+}
+
+TEST_CASE( "The mbedTLS socket takes any certificate when asked to check none, with a warning" ) {
+    NoCaConfig config;
+    TlsServer server(own_certificate(), echo);
+    REQUIRE( ebisu_mbedtls_tls_set_verify(&config.tls, EBISU_TLS_VERIFY_NONE, nullptr) );
+    Client client(&config.tls);
+    REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+    client.send("hello");
+    CHECK( client.recv(5) == "hello" );
+#ifndef EBISU_NO_LOG
+    CHECK( client.logger.has("connected to localhost without verifying its certificate.") );
+#endif
+}
+
+TEST_CASE( "A TLS configuration without CA certificates takes no server's in full" ) {
+    NoCaConfig config;
+    TlsServer server(pki().server(), nothing);
+    Client client(&config.tls);
+    REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+    CHECK( client.error() == EBISU_SOCK_ERROR_VERIFY );
+}
+
+TEST_CASE( "A TLS configuration refuses a mode it can't take, as it was" ) {
+    Config config;
+    CHECK_FALSE( ebisu_mbedtls_tls_set_verify(&config.tls, EBISU_TLS_VERIFY_PIN, nullptr) );
+    CHECK_FALSE( ebisu_mbedtls_tls_set_verify(&config.tls, (ebisu_tls_verify_t)42, nullptr) );
+    TlsServer server(pki().server("other.example", pki().now - DAY, pki().now + DAY), nothing);
+    Client client(&config.tls);
+    REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+    long detail = 0;
+    CHECK( client.error(&detail) == EBISU_SOCK_ERROR_VERIFY );
+    CHECK( (detail & MBEDTLS_X509_BADCERT_CN_MISMATCH) != 0 );
+}
+
 TEST_CASE( "The mbedTLS socket checks the certificates' dates at the clock's time" ) {
     Config config;
     const time_t now = pki().now;

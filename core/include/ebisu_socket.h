@@ -64,6 +64,43 @@ typedef enum ebisu_sock_error_t {
     EBISU_SOCK_ERROR_OTHER
 } ebisu_sock_error_t;
 
+/** \brief How a TLS socket checks the server's certificate.
+ *
+ * Every mode encrypts the connection. Only EBISU_TLS_VERIFY_FULL, the
+ * default, and EBISU_TLS_VERIFY_CHAIN tell the server from whoever else may
+ * answer for its address, with a certificate a CA trusted issued; a pin, from
+ * whoever lacks that certificate's key. The others are for servers whose
+ * certificates no CA issued, such as devices on a local network that make
+ * their own.
+ *
+ * The TLS ports take one with ebisu_openssl_tls_set_verify(),
+ * ebisu_mbedtls_tls_set_verify() and ebisu_schannel_socket_set_verify().
+ */
+typedef enum ebisu_tls_verify_t {
+    /** \brief The certificate chains to a CA certificate trusted, is in
+     * date, and is issued for the host connected to. The default. */
+    EBISU_TLS_VERIFY_FULL,
+    /** \brief As EBISU_TLS_VERIFY_FULL, but issued for any host: for a
+     * private CA whose certificates don't name the address their servers are
+     * reached at, such as an IP address on a local network. */
+    EBISU_TLS_VERIFY_CHAIN,
+    /** \brief The certificate, or its public key, has the SHA-256 given, its
+     * pin: the server's own certificate, known beforehand. Nothing else of it
+     * is checked, neither its chain, its dates nor its names. A pin of the
+     * public key, its SubjectPublicKeyInfo in DER, stays the same across
+     * certificates for the same key. */
+    EBISU_TLS_VERIFY_PIN,
+    /** \brief Any certificate. The connection is encrypted, but whoever
+     * answers for the server's address is taken for it: for a network where
+     * nobody else can, or for trying a server out. Each connection logs a
+     * warning that the server wasn't verified. */
+    EBISU_TLS_VERIFY_NONE
+} ebisu_tls_verify_t;
+
+/** \brief The size of a pin: a SHA-256, in bytes. See
+ * ebisu_tls_verify_t#EBISU_TLS_VERIFY_PIN. */
+#define EBISU_TLS_PIN_SIZE 32
+
 /** \brief A socket. See struct ebisu_socket_t. */
 typedef struct ebisu_socket_t ebisu_socket_t;
 

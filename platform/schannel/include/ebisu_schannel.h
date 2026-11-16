@@ -32,7 +32,8 @@ extern "C" {
  * most, and the socket checks the server's certificate itself, with crypt32: a
  * chain to a root in the Windows root store, valid for server authentication,
  * issued for the host, and in date at the time of the clock set by
- * ebisu_schannel_socket_set_clock(), or the system's without one. Revocation
+ * ebisu_schannel_socket_set_clock(), or the system's without one, unless
+ * ebisu_schannel_socket_set_verify() says otherwise. Revocation
  * isn't checked. A receive that times out is EBISU_SOCK_FAIL, which
  * recv_timed_out tells from a lost connection, and leaves the connection as it
  * was. One serves one connection at a time, and is used again for the next once
@@ -56,6 +57,9 @@ typedef struct ebisu_schannel_socket_t {
     /* The time the server's certificate is checked at, or NULL for the
        system's. See ebisu_clock_t. */
     ebisu_clock_t* clock; /**< \private */
+    /* How the server's certificate is checked, and the pin it has to have. */
+    ebisu_tls_verify_t verify; /**< \private */
+    unsigned char pin[EBISU_TLS_PIN_SIZE]; /**< \private */
 
     /* The server's name, which its certificate must be issued for. */
     char host[256]; /**< \private */
@@ -126,6 +130,28 @@ void ebisu_schannel_socket_init(
  */
 void ebisu_schannel_socket_set_connect_timeout(ebisu_schannel_socket_t* sock,
         unsigned int seconds);
+
+/**
+ * \brief Sets how the socket's connections check the server's certificate.
+ *
+ * Every connection is checked in full unless this says otherwise: see
+ * ebisu_tls_verify_t for what each mode checks, and what it doesn't. With
+ * EBISU_TLS_VERIFY_CHAIN, the chain and the dates are checked as in full, at
+ * the clock's time, the name ignored as SECURITY_FLAG_IGNORE_CERT_CN_INVALID
+ * has it; with EBISU_TLS_VERIFY_PIN or EBISU_TLS_VERIFY_NONE, they aren't,
+ * and the Windows root store isn't used. A pin is the SHA-256 of the server's
+ * certificate in DER, or of its public key's SubjectPublicKeyInfo in DER. A
+ * certificate without the pin is refused with TRUST_E_EXPLICIT_DISTRUST.
+ *
+ * \param [out] sock The socket.
+ * \param [in] verify How the server's certificate is checked.
+ * \param [in] pin With EBISU_TLS_VERIFY_PIN, the EBISU_TLS_PIN_SIZE bytes of
+ * the pin; otherwise ignored, and may be NULL.
+ * \return true, or false, leaving the socket as it was, for
+ * EBISU_TLS_VERIFY_PIN without a pin, or a mode that isn't one.
+ */
+bool ebisu_schannel_socket_set_verify(ebisu_schannel_socket_t* sock,
+        ebisu_tls_verify_t verify, const unsigned char* pin);
 
 /**
  * \brief Sets the clock the server's certificate is checked at the time of.

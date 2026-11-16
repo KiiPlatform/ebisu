@@ -30,7 +30,8 @@ extern "C" {
  *
  * TLS 1.2 or later, 1.3 where mbedTLS is built with it, with mbedTLS's default
  * cipher suites. The server's certificate has to chain to one of the
- * configuration's CA certificates, and be issued for the host connected to.
+ * configuration's CA certificates, and be issued for the host connected to,
+ * unless ebisu_mbedtls_tls_set_verify() says otherwise.
  *
  * Random numbers come from PSA's generator, which ebisu_mbedtls_tls_init()
  * starts with psa_crypto_init(), from mbedTLS's entropy sources: on a device,
@@ -47,6 +48,8 @@ extern "C" {
 typedef struct ebisu_mbedtls_tls_t {
     mbedtls_ssl_config _config; /**< \private */
     mbedtls_x509_crt _ca; /**< \private */
+    ebisu_tls_verify_t _verify; /**< \private */
+    unsigned char _pin[EBISU_TLS_PIN_SIZE]; /**< \private */
 } ebisu_mbedtls_tls_t;
 
 /**
@@ -59,7 +62,9 @@ typedef struct ebisu_mbedtls_tls_t {
  *
  * \param [out] tls The configuration.
  * \param [in] ca The CA certificates: PEM, one or more, with the terminating
- * NUL, or one in DER.
+ * NUL, or one in DER. NULL, with a ca_size of 0, for none, for a
+ * configuration that pins the server's certificate or checks none, with
+ * ebisu_mbedtls_tls_set_verify(): checked in full, no server's is taken.
  * \param [in] ca_size The size of ca, its NUL included for PEM.
  * \return 0, or mbedTLS's or PSA's error, in which case the configuration
  * holds nothing to free.
@@ -79,6 +84,29 @@ int ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, si
  * \return mbedTLS's configuration.
  */
 mbedtls_ssl_config* ebisu_mbedtls_tls_config(ebisu_mbedtls_tls_t* tls);
+
+/**
+ * \brief Sets how the configuration's connections check the server's
+ * certificate.
+ *
+ * Every connection is checked in full unless this says otherwise: see
+ * ebisu_tls_verify_t for what each mode checks, and what it doesn't. With
+ * EBISU_TLS_VERIFY_CHAIN, the chain and the dates are checked as in full, at
+ * the clock's time; with EBISU_TLS_VERIFY_PIN or EBISU_TLS_VERIFY_NONE, they
+ * aren't, the configuration's CA certificates aren't used, and a socket
+ * without a clock connects without the system's time too. A pin is the
+ * SHA-256 of the server's certificate in DER, or of its public key's
+ * SubjectPublicKeyInfo in DER. Set it before the first connection.
+ *
+ * \param [in,out] tls The configuration.
+ * \param [in] verify How servers' certificates are checked.
+ * \param [in] pin With EBISU_TLS_VERIFY_PIN, the EBISU_TLS_PIN_SIZE bytes of
+ * the pin; otherwise ignored, and may be NULL.
+ * \return true, or false, leaving the configuration as it was, for
+ * EBISU_TLS_VERIFY_PIN without a pin, or a mode that isn't one.
+ */
+bool ebisu_mbedtls_tls_set_verify(ebisu_mbedtls_tls_t* tls, ebisu_tls_verify_t verify,
+        const unsigned char* pin);
 
 /**
  * \brief Frees a TLS configuration, which no connection may use any more.

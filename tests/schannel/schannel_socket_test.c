@@ -273,6 +273,29 @@ static int run_step(ebisu_schannel_socket_t* ctx, const char** host, uint16_t po
     } else if (strncmp(step, "to_connect:", 11) == 0) {
         ebisu_schannel_socket_set_connect_timeout(ctx, (unsigned int)strtoul(step + 11, NULL, 10));
         printf("STEP to_connect OK\n");
+    } else if (strncmp(step, "verify:", 7) == 0) {
+        /* verify:full, verify:chain, verify:none, verify:pin:<64 hex digits>,
+           or verify:pin alone, for one without a pin. */
+        const char* mode = step + 7;
+        ebisu_tls_verify_t verify = EBISU_TLS_VERIFY_FULL;
+        unsigned char pin[EBISU_TLS_PIN_SIZE];
+        const unsigned char* given = NULL;
+        if (strcmp(mode, "chain") == 0) {
+            verify = EBISU_TLS_VERIFY_CHAIN;
+        } else if (strcmp(mode, "none") == 0) {
+            verify = EBISU_TLS_VERIFY_NONE;
+        } else if (strncmp(mode, "pin", 3) == 0) {
+            verify = EBISU_TLS_VERIFY_PIN;
+            if (mode[3] == ':' && strlen(mode + 4) == 2 * EBISU_TLS_PIN_SIZE) {
+                for (int i = 0; i < EBISU_TLS_PIN_SIZE; ++i) {
+                    char byte[3] = { mode[4 + 2 * i], mode[5 + 2 * i], '\0' };
+                    pin[i] = (unsigned char)strtoul(byte, NULL, 16);
+                }
+                given = pin;
+            }
+        }
+        printf("STEP verify %s\n",
+                ebisu_schannel_socket_set_verify(ctx, verify, given) ? "OK" : "FAIL");
     } else if (strncmp(step, "pause:", 6) == 0) {
         Sleep((DWORD)strtoul(step + 6, NULL, 10));
         printf("STEP pause OK\n");
