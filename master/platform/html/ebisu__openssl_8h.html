@@ -130,6 +130,10 @@ Functions</h2></td></tr>
 <tr class="memdesc:ae4e42852de91009d47a8b8bc54514920"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets whether TCP checks an idle connection is still there.  <br /></td></tr>
 <tr class="memitem:acdbbc62d3e2c6d09d001c13c1fcffc4a" id="r_acdbbc62d3e2c6d09d001c13c1fcffc4a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acdbbc62d3e2c6d09d001c13c1fcffc4a">ebisu_openssl_socket_set_nodelay</a> (<a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *sock, bool nodelay)</td></tr>
 <tr class="memdesc:acdbbc62d3e2c6d09d001c13c1fcffc4a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets whether what is sent goes at once, with TCP_NODELAY.  <br /></td></tr>
+<tr class="memitem:a7586f63055adc4c3545043ec9ba245ac" id="r_a7586f63055adc4c3545043ec9ba245ac"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7586f63055adc4c3545043ec9ba245ac">ebisu_openssl_socket_get_protocol</a> (const <a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *sock)</td></tr>
+<tr class="memdesc:a7586f63055adc4c3545043ec9ba245ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">The TLS version the connection open negotiated.  <br /></td></tr>
+<tr class="memitem:ad349643c6602f01d97b4c594284544c1" id="r_ad349643c6602f01d97b4c594284544c1"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad349643c6602f01d97b4c594284544c1">ebisu_openssl_socket_get_cipher</a> (const <a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *sock)</td></tr>
+<tr class="memdesc:ad349643c6602f01d97b4c594284544c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">The cipher suite the connection open negotiated.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A socket of OpenSSL over BSD sockets. </p>
@@ -169,6 +173,60 @@ Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
+<a id="ad349643c6602f01d97b4c594284544c1" name="ad349643c6602f01d97b4c594284544c1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad349643c6602f01d97b4c594284544c1">&#9670;&#160;</a></span>ebisu_openssl_socket_get_cipher()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * ebisu_openssl_socket_get_cipher </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *</td>          <td class="paramname"><span class="paramname"><em>sock</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The cipher suite the connection open negotiated. </p>
+<p>As OpenSSL names it, with SSL_get_cipher_name(): in TLS 1.2 OpenSSL's own names, such as "ECDHE-RSA-AES128-GCM-SHA256", and in TLS 1.3 the standard ones, such as "TLS_AES_256_GCM_SHA384".</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">sock</td><td>The socket. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The suite, which lasts as long as the connection does, or NULL while there is none. </dd></dl>
+
+</div>
+</div>
+<a id="a7586f63055adc4c3545043ec9ba245ac" name="a7586f63055adc4c3545043ec9ba245ac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7586f63055adc4c3545043ec9ba245ac">&#9670;&#160;</a></span>ebisu_openssl_socket_get_protocol()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * ebisu_openssl_socket_get_protocol </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *</td>          <td class="paramname"><span class="paramname"><em>sock</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The TLS version the connection open negotiated. </p>
+<p>As OpenSSL names it, with SSL_get_version(): "TLSv1.2" or "TLSv1.3".</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">sock</td><td>The socket. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The version, which lasts as long as the connection does, or NULL while there is none: before a connect, after one that failed, and once closed. </dd></dl>
+
+</div>
+</div>
 <a id="adbc237cc5b52c24a208886300ee0a8a2" name="adbc237cc5b52c24a208886300ee0a8a2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#adbc237cc5b52c24a208886300ee0a8a2">&#9670;&#160;</a></span>ebisu_openssl_socket_init()</h2>
 

@@ -240,6 +240,20 @@
       <anchor>a96077bf9eb7956f90a0a92643fe6c2c3</anchor>
       <arglist>(ebisu_mbedtls_socket_t *sock, ebisu_logger_t *logger)</arglist>
     </member>
+    <member kind="function">
+      <type>const char *</type>
+      <name>ebisu_mbedtls_socket_get_protocol</name>
+      <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
+      <anchor>a7d856d4dbb0184cc58ad64b34d6d92cd</anchor>
+      <arglist>(const ebisu_mbedtls_socket_t *sock)</arglist>
+    </member>
+    <member kind="function">
+      <type>const char *</type>
+      <name>ebisu_mbedtls_socket_get_cipher</name>
+      <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
+      <anchor>a888a21004ed7d10309707f233a3acb17</anchor>
+      <arglist>(const ebisu_mbedtls_socket_t *sock)</arglist>
+    </member>
   </compound>
   <compound kind="file">
     <name>ebisu_openssl.h</name>
@@ -330,6 +344,20 @@
       <anchorfile>ebisu__openssl_8h.html</anchorfile>
       <anchor>acdbbc62d3e2c6d09d001c13c1fcffc4a</anchor>
       <arglist>(ebisu_openssl_socket_t *sock, bool nodelay)</arglist>
+    </member>
+    <member kind="function">
+      <type>const char *</type>
+      <name>ebisu_openssl_socket_get_protocol</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>a7586f63055adc4c3545043ec9ba245ac</anchor>
+      <arglist>(const ebisu_openssl_socket_t *sock)</arglist>
+    </member>
+    <member kind="function">
+      <type>const char *</type>
+      <name>ebisu_openssl_socket_get_cipher</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>ad349643c6602f01d97b4c594284544c1</anchor>
+      <arglist>(const ebisu_openssl_socket_t *sock)</arglist>
     </member>
   </compound>
   <compound kind="file">

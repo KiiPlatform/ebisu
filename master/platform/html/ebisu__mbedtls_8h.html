@@ -126,6 +126,10 @@ Functions</h2></td></tr>
 <tr class="memdesc:a5a585d6e421c64c646b6ffb83fa5b2bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the clock the server's certificate is checked at the time of.  <br /></td></tr>
 <tr class="memitem:a96077bf9eb7956f90a0a92643fe6c2c3" id="r_a96077bf9eb7956f90a0a92643fe6c2c3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a96077bf9eb7956f90a0a92643fe6c2c3">ebisu_mbedtls_socket_set_logger</a> (<a class="el" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a> *sock, <a class="elRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a> *logger)</td></tr>
 <tr class="memdesc:a96077bf9eb7956f90a0a92643fe6c2c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets where the socket's diagnostics go.  <br /></td></tr>
+<tr class="memitem:a7d856d4dbb0184cc58ad64b34d6d92cd" id="r_a7d856d4dbb0184cc58ad64b34d6d92cd"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7d856d4dbb0184cc58ad64b34d6d92cd">ebisu_mbedtls_socket_get_protocol</a> (const <a class="el" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a> *sock)</td></tr>
+<tr class="memdesc:a7d856d4dbb0184cc58ad64b34d6d92cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">The TLS version the connection open negotiated.  <br /></td></tr>
+<tr class="memitem:a888a21004ed7d10309707f233a3acb17" id="r_a888a21004ed7d10309707f233a3acb17"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a888a21004ed7d10309707f233a3acb17">ebisu_mbedtls_socket_get_cipher</a> (const <a class="el" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a> *sock)</td></tr>
+<tr class="memdesc:a888a21004ed7d10309707f233a3acb17"><td class="mdescLeft">&#160;</td><td class="mdescRight">The cipher suite the connection open negotiated.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>TLS with mbedTLS, over another socket of the system's. </p>
@@ -171,6 +175,60 @@ Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
+<a id="a888a21004ed7d10309707f233a3acb17" name="a888a21004ed7d10309707f233a3acb17"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a888a21004ed7d10309707f233a3acb17">&#9670;&#160;</a></span>ebisu_mbedtls_socket_get_cipher()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * ebisu_mbedtls_socket_get_cipher </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a> *</td>          <td class="paramname"><span class="paramname"><em>sock</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The cipher suite the connection open negotiated. </p>
+<p>As mbedTLS names it, with mbedtls_ssl_get_ciphersuite(): the standard name with dashes, such as "TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256" or "TLS1-3-AES-128-GCM-SHA256".</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">sock</td><td>The socket. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The suite, which lasts as long as the connection does, or NULL while there is none. </dd></dl>
+
+</div>
+</div>
+<a id="a7d856d4dbb0184cc58ad64b34d6d92cd" name="a7d856d4dbb0184cc58ad64b34d6d92cd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d856d4dbb0184cc58ad64b34d6d92cd">&#9670;&#160;</a></span>ebisu_mbedtls_socket_get_protocol()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * ebisu_mbedtls_socket_get_protocol </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a> *</td>          <td class="paramname"><span class="paramname"><em>sock</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The TLS version the connection open negotiated. </p>
+<p>As mbedTLS names it, with mbedtls_ssl_get_version(): "TLSv1.2" or "TLSv1.3".</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">sock</td><td>The socket. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The version, which lasts as long as the connection does, or NULL while there is none: before a connect, after one that failed, and once closed. </dd></dl>
+
+</div>
+</div>
 <a id="a01d7f2e770693bad198923c60da99a51" name="a01d7f2e770693bad198923c60da99a51"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a01d7f2e770693bad198923c60da99a51">&#9670;&#160;</a></span>ebisu_mbedtls_socket_init()</h2>
 
