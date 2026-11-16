@@ -6,6 +6,7 @@
 #define _EBISU_TIME
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 /* The library is compiled with hidden visibility, so what this header declares
@@ -84,6 +85,50 @@ bool ebisu_time_from_civil(
  * \return true if converted, false if seconds is out of that range.
  */
 bool ebisu_time_to_civil(int64_t seconds, ebisu_civil_time_t* out);
+
+/**
+ * \brief Whether a year is a leap year of the Gregorian calendar: one that 4
+ * divides, unless 100 does and 400 doesn't. So 2024 and 2000 are, and 2023
+ * and 1900 aren't.
+ *
+ * \param [in] year Any year, as the rule has no range.
+ * \return true for a leap year.
+ */
+bool ebisu_time_is_leap_year(int year);
+
+/**
+ * \brief The days in a month of a year of the Gregorian calendar.
+ *
+ * \param [in] year Any year.
+ * \param [in] month 1 to 12.
+ * \return 28 to 31, or 0 for a month outside 1 to 12.
+ */
+int ebisu_time_days_in_month(int year, int month);
+
+/**
+ * \brief The size of a buffer that ebisu_time_format_iso8601() can write
+ * into: 20 characters, as in 2026-11-06T13:53:21Z, and the terminating NUL.
+ */
+#define EBISU_TIME_ISO8601_SIZE 21
+
+/**
+ * \brief Writes seconds since the epoch as a UTC date and time of ISO 8601,
+ * as RFC 3339 has it: 2026-11-06T13:53:21Z.
+ *
+ * Without the C library's printf() or time functions, as the conversions are.
+ *
+ * \param [in] seconds Seconds since 1970-01-01T00:00:00Z, in
+ * ebisu_time_to_civil()'s range.
+ * \param [in] sep What goes between the date and the time: 'T', as ISO 8601
+ * has it, or another character but NUL, such as ' ', which RFC 3339 allows for
+ * a person to read, as in a log line.
+ * \param [out] buff The date and time, terminated. On failure, "" if size isn't
+ * 0.
+ * \param [in] size Its size, at least #EBISU_TIME_ISO8601_SIZE.
+ * \return true if written, false if seconds is out of range, size is less than
+ * #EBISU_TIME_ISO8601_SIZE, or sep is NUL.
+ */
+bool ebisu_time_format_iso8601(int64_t seconds, char sep, char* buff, size_t size);
 
 #ifdef __cplusplus
 }

@@ -89,3 +89,50 @@ bool ebisu_time_to_civil(int64_t seconds, ebisu_civil_time_t* out)
     out->weekday = (int)((days - _FIRST_SECOND / 86400 + 1) % 7);
     return true;
 }
+
+bool ebisu_time_is_leap_year(int year)
+{
+    return _is_leap(year);
+}
+
+int ebisu_time_days_in_month(int year, int month)
+{
+    if (month < 1 || month > 12) {
+        return 0;
+    }
+    return _days_in_month(year, month);
+}
+
+/* v, 0 to 10 to the digits less 1, in that many digits, zeros first. */
+static void _put_digits(char* out, int v, int digits)
+{
+    while (digits-- > 0) {
+        out[digits] = (char)('0' + v % 10);
+        v /= 10;
+    }
+}
+
+bool ebisu_time_format_iso8601(int64_t seconds, char sep, char* buff, size_t size)
+{
+    ebisu_civil_time_t t;
+    if (size > 0) {
+        buff[0] = '\0';
+    }
+    if (size < EBISU_TIME_ISO8601_SIZE || sep == '\0' || !ebisu_time_to_civil(seconds, &t)) {
+        return false;
+    }
+    _put_digits(&buff[0], t.year, 4);
+    buff[4] = '-';
+    _put_digits(&buff[5], t.month, 2);
+    buff[7] = '-';
+    _put_digits(&buff[8], t.day, 2);
+    buff[10] = sep;
+    _put_digits(&buff[11], t.hour, 2);
+    buff[13] = ':';
+    _put_digits(&buff[14], t.minute, 2);
+    buff[16] = ':';
+    _put_digits(&buff[17], t.second, 2);
+    buff[19] = 'Z';
+    buff[20] = '\0';
+    return true;
+}
