@@ -163,6 +163,11 @@ failing the build, and without a C++ compiler for the target,
 `-DBUILD_TESTING=OFF` leaves the tests out. `tests/samples/armhf.sh` builds it
 all in Debian stretch, glibc 2.24, against OpenSSL 1.0.2 or 1.1.1, as CI does.
 
+On a microcontroller, `tests/freertos_small/run.sh` builds the small tests as
+firmware for a Cortex-M3 board that QEMU emulates, with newlib and FreeRTOS,
+and runs them in QEMU, as CI does: see
+[tests/freertos_small/README.md](tests/freertos_small/README.md).
+
 Other useful targets and options:
 
 ```

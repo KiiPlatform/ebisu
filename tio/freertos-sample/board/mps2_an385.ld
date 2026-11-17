@@ -20,12 +20,31 @@ SECTIONS
         KEEP(*(.vectors))
         *(.text .text.*)
         *(.rodata .rodata.*)
+        /* C++'s tables for unwinding the stack past each function. */
+        *(.ARM.extab .ARM.extab.*)
         . = ALIGN(4);
     } > CODE
 
+    /* Which function's unwinding tables are where: the unwinder looks for
+       them between these two. */
     .ARM.exidx :
     {
+        __exidx_start = .;
         *(.ARM.exidx .ARM.exidx.*)
+        __exidx_end = .;
+    } > CODE
+
+    /* The constructors, C++'s for its static objects, and C's with
+       __attribute__((constructor)), which reset_handler() calls in this order
+       before main(). */
+    .init_array :
+    {
+        . = ALIGN(4);
+        __init_array_start = .;
+        KEEP(*(.preinit_array))
+        KEEP(*(SORT_BY_INIT_PRIORITY(.init_array.*)))
+        KEEP(*(.init_array))
+        __init_array_end = .;
     } > CODE
 
     /* Copied to RAM by reset_handler(). */
@@ -53,6 +72,8 @@ SECTIONS
     {
         . = ALIGN(8);
         __heap_start = .;
+        /* Where the C library's own sbrk() would start the heap. */
+        PROVIDE(end = .);
         . = ORIGIN(RAM) + LENGTH(RAM) - STACK_SIZE;
         __heap_end = .;
     } > RAM
