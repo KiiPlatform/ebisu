@@ -44,9 +44,7 @@ inline kii_author_t author(kii_t* kii) {
 // that the CI cells running at once against the same application never pick
 // the same name.
 inline long long current_time() {
-    auto now = std::chrono::system_clock::now();
-    return std::chrono::duration_cast<std::chrono::microseconds>(
-            now.time_since_epoch()).count();
+    return ebisu::ltest::wall_us();
 }
 
 inline void check_error_response(

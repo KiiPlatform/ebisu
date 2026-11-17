@@ -3,35 +3,22 @@
 
 #include <ebisu_socket.h>
 #include "kii.h"
-#ifdef _WIN32
-#include "ebisu_schannel.h"
-#else
-#include "ebisu_openssl.h"
-#endif
+#include "ltest_platform.h"
 
 #include <chrono>
 #include <functional>
-#include <mutex>
 #include <string>
-#include <thread>
 
 namespace ebisu {
 namespace ltest {
 
-// The large tests' monotonic clock.
-inline uint64_t steady_ms()
-{
-    return (uint64_t)std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count();
-}
-
-// A lock that is a std::mutex.
+// A lock that is a mutex.
 struct MutexLock {
     struct Link {
         ebisu_lock_t base;
         MutexLock* owner;
     } link;
-    std::mutex mutex;
+    ltest::mutex mutex;
 
     MutexLock() {
         static const ebisu_lock_ops_t ops = {
@@ -49,23 +36,23 @@ struct MutexLock {
     }
 };
 
-// The system the large tests run tasks with: each task is a std::thread, given
-// to keep, delays sleep, and the monotonic clock is steady_ms().
+// The system the large tests run tasks with: each task is a thread, given to
+// keep, delays sleep, and the monotonic clock is steady_ms().
 struct ThreadSystem {
     struct Link {
         ebisu_system_t base;
         ThreadSystem* owner;
     } link;
-    std::function<void(std::thread)> keep;
+    std::function<void(ltest::thread)> keep;
 
     ThreadSystem() {
         static const ebisu_system_ops_t ops = {
             [](ebisu_system_t* self, const char*, EBISU_TASK_ENTRY entry, void* entry_param) {
-                ((Link*)self)->owner->keep(std::thread(entry, entry_param));
+                ((Link*)self)->owner->keep(ltest::thread(entry, entry_param));
                 return EBISU_TASKC_OK;
             },
             [](ebisu_system_t*, uint32_t msec) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(msec));
+                sleep_for(std::chrono::milliseconds(msec));
             },
             [](ebisu_system_t*) { return steady_ms(); },
         };
@@ -98,36 +85,6 @@ inline ebisu_clock_t* test_clock()
     static Clock c;
     return &c.clock;
 }
-
-// The platform's socket, with TLS: platform's Schannel port, Winsock and
-// Schannel, or its OpenSSL port, BSD sockets and OpenSSL.
-#ifdef _WIN32
-typedef ebisu_schannel_socket_t platform_socket_t;
-
-inline void init_platform_socket(platform_socket_t* sock, unsigned int to_recv,
-        unsigned int to_send)
-{
-    ebisu_schannel_socket_init(sock, to_recv, to_send);
-}
-
-inline void set_platform_socket_clock(platform_socket_t* sock, ebisu_clock_t* clock)
-{
-    ebisu_schannel_socket_set_clock(sock, clock);
-}
-#else
-typedef ebisu_openssl_socket_t platform_socket_t;
-
-inline void init_platform_socket(platform_socket_t* sock, unsigned int to_recv,
-        unsigned int to_send)
-{
-    ebisu_openssl_socket_init(sock, to_recv, to_send);
-}
-
-inline void set_platform_socket_clock(platform_socket_t* sock, ebisu_clock_t* clock)
-{
-    ebisu_openssl_socket_set_clock(sock, clock);
-}
-#endif
 
 namespace ssl {
 // TLS, through the platform's socket.

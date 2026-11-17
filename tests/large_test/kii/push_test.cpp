@@ -1,5 +1,4 @@
 #include "catch.hpp"
-#include <thread>
 #include <cstring>
 #include <kii.h>
 #include "large_test.h"
@@ -7,7 +6,7 @@
 TEST_CASE("Push Tests")
 {
     // To Avoid 429 Too Many Requests
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    ebisu::ltest::sleep_for(std::chrono::milliseconds(200));
     const size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;
@@ -96,7 +95,7 @@ TEST_CASE("Push Tests")
 
         SECTION("Send push message to thing scope topic") {
             // To Avoid 429 Too Many Requests
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            ebisu::ltest::sleep_for(std::chrono::milliseconds(200));
 
             const char message[] =
                 "{\"data\":{\"key\":\"value\"},\"mqtt\":{\"enabled\":true}}";
@@ -118,7 +117,7 @@ TEST_CASE("Push Tests")
 
         SECTION("Delete thing scope topic") {
             // To Avoid 429 Too Many Requests
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            ebisu::ltest::sleep_for(std::chrono::milliseconds(200));
 
             kii_code_t del_res = kii_delete_topic(&kii, &topic);
             CHECK(del_res == KII_ERR_OK);
@@ -144,7 +143,7 @@ TEST_CASE("Push Tests")
             int status = 0;
             kii_code_t get_ep_res = KII_ERR_FAIL;
             do {
-                std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                ebisu::ltest::sleep_for(std::chrono::milliseconds(200));
                 get_ep_res = kii_get_mqtt_endpoint(&kii, ins_id.id, &endpoint);
                 status = khc_get_status_code(&kii._khc);
             } while (status == 503);

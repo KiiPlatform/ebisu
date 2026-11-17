@@ -20,11 +20,9 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
-#include <condition_variable>
 #include <functional>
 #include <mutex>
 #include <string>
-#include <thread>
 #include <vector>
 #include <string.h>
 
@@ -45,10 +43,10 @@ struct MqttTest {
         MqttTest* t;
     } socket;
     ebisu::ltest::ThreadSystem system;
-    std::thread task;
+    ebisu::ltest::thread task;
 
-    std::mutex mutex;
-    std::condition_variable changed;
+    ebisu::ltest::mutex mutex;
+    ebisu::ltest::condition_variable changed;
     // Guarded by mutex.
     // The task's states, each time it entered one other than the last.
     std::vector<kii_mqtt_task_state> states;
@@ -135,7 +133,7 @@ bool cb_continue(void* task_info, void* userdata)
     kii_mqtt_task_state state = ((kii_mqtt_task_info*)task_info)->task_state;
     std::function<void()> step;
     {
-        std::lock_guard<std::mutex> lock(t->mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t->mutex);
         if (t->states.empty() || t->states.back() != state) {
             t->states.push_back(state);
             t->changed.notify_all();
@@ -149,7 +147,7 @@ bool cb_continue(void* task_info, void* userdata)
     }
     if (step) {
         step();
-        std::lock_guard<std::mutex> lock(t->mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t->mutex);
         ++t->steps_done;
         t->changed.notify_all();
     }
@@ -159,7 +157,7 @@ bool cb_continue(void* task_info, void* userdata)
 void cb_exit(void* task_info, void* userdata)
 {
     MqttTest* t = (MqttTest*)userdata;
-    std::lock_guard<std::mutex> lock(t->mutex);
+    std::lock_guard<ebisu::ltest::mutex> lock(t->mutex);
     t->exit_info = *(kii_mqtt_task_info*)task_info;
     t->exited = true;
     t->changed.notify_all();
@@ -168,7 +166,7 @@ void cb_exit(void* task_info, void* userdata)
 void cb_push(const kii_mqtt_message_t* message, void* userdata)
 {
     MqttTest* t = (MqttTest*)userdata;
-    std::lock_guard<std::mutex> lock(t->mutex);
+    std::lock_guard<ebisu::ltest::mutex> lock(t->mutex);
     t->received.push_back(std::string(message->payload, message->payload_length));
     t->changed.notify_all();
 }
@@ -176,7 +174,7 @@ void cb_push(const kii_mqtt_message_t* message, void* userdata)
 // Waits up to seconds for done(), called with the mutex held.
 bool wait_for(MqttTest& t, int seconds, std::function<bool()> done)
 {
-    std::unique_lock<std::mutex> lock(t.mutex);
+    std::unique_lock<ebisu::ltest::mutex> lock(t.mutex);
     return t.changed.wait_for(lock, std::chrono::seconds(seconds), done);
 }
 
@@ -188,14 +186,14 @@ bool run_on_task(MqttTest& t, std::function<void()> step)
 {
     int done_before;
     {
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         t.step = step;
         done_before = t.steps_done;
     }
     wait_for(t, 60, [&t, done_before] {
         return t.steps_done > done_before || t.exited;
     });
-    std::lock_guard<std::mutex> lock(t.mutex);
+    std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
     t.step = nullptr;
     return t.steps_done > done_before;
 }
@@ -218,7 +216,7 @@ struct StopTask {
     MqttTest& t;
     ~StopTask() {
         {
-            std::lock_guard<std::mutex> lock(t.mutex);
+            std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
             t.stop = true;
         }
         if (t.task.joinable()) {
@@ -237,7 +235,7 @@ void set_up_task(kii_t* kii, MqttTest& t, char* mqtt_buff, size_t mqtt_buff_size
     };
     t.socket.base.ops = &socket_ops;
     t.socket.t = &t;
-    t.system.keep = [&t](std::thread task) { t.task = std::move(task); };
+    t.system.keep = [&t](ebisu::ltest::thread task) { t.task = std::move(task); };
     kii_set_mqtt_buff(kii, mqtt_buff, mqtt_buff_size);
     kii_set_mqtt_socket(kii, &t.socket.base);
     kii_set_mqtt_to_sock_recv(kii, TO_RECV);
@@ -273,7 +271,7 @@ bool spoiled(kii_session_t* session)
 TEST_CASE("MQTT push from the broker")
 {
     // To Avoid 429 Too Many Requests
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    ebisu::ltest::sleep_for(std::chrono::milliseconds(200));
     const size_t buff_size = 4096;
     char buff[buff_size];
     char mqtt_buff[2048];
@@ -311,11 +309,11 @@ TEST_CASE("MQTT push from the broker")
                 kii_send_push_message_to_thing(&kii, thing_id.c_str(), message.c_str()) :
                 kii_send_push_message(&kii, &topic, message.c_str());
             int status = khc_get_status_code(&kii._khc);
-            std::lock_guard<std::mutex> lock(t.mutex);
+            std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
             t.send_res = res;
             t.send_status = status;
         }) );
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         INFO( "status " << t.send_status );
         REQUIRE( t.send_res == KII_ERR_OK );
     };
@@ -332,7 +330,7 @@ TEST_CASE("MQTT push from the broker")
         return t.count(KII_MQTT_ST_RECV_READY) > 0 || t.exited;
     }) );
     {
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         REQUIRE_FALSE( t.exited );
         CHECK( t.count(KII_MQTT_ST_INSTALL_PUSH) == 0 );
         CHECK( t.count(KII_MQTT_ST_GET_ENDPOINT) == 0 );
@@ -349,11 +347,11 @@ TEST_CASE("MQTT push from the broker")
     // Idle across several receive timeouts and keep-alive intervals. A timeout
     // taken for a lost connection, or a PINGREQ whose PINGRESP was not read,
     // would reconnect.
-    std::this_thread::sleep_for(std::chrono::seconds(25));
+    ebisu::ltest::sleep_for(std::chrono::seconds(25));
     send("idle-" + run_id, false);
     REQUIRE( received(t, "idle-" + run_id) );
     {
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         CHECK( t.count(KII_MQTT_ST_SEND_PINGREQ) >= 2 );
         CHECK( t.count(KII_MQTT_ST_RECONNECT) == 0 );
     }
@@ -367,12 +365,12 @@ TEST_CASE("MQTT push from the broker")
         return t.ready_after_reconnect() || t.exited;
     }) );
     {
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         REQUIRE_FALSE( t.exited );
     }
     CHECK( t.connects.load() == 2 );
     {
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         CHECK( t.count(KII_MQTT_ST_GET_ENDPOINT) == 0 );
     }
     send("reconnected-" + run_id, false);
@@ -381,13 +379,13 @@ TEST_CASE("MQTT push from the broker")
     // Asked to stop, it ends within a receive timeout, and closes the
     // connection it has open: each of the two has been closed.
     {
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         t.stop = true;
     }
     REQUIRE( wait_for(t, TO_RECV * 3 + 10, [&t] { return t.exited; }) );
     t.task.join();
     {
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         CHECK( t.exit_info.task_state == KII_MQTT_ST_DISCONTINUED );
         CHECK( t.exit_info.error == KII_MQTT_ERR_OK );
     }
@@ -400,7 +398,7 @@ TEST_CASE("MQTT push from the broker")
 TEST_CASE("The MQTT task renews a token the server refuses")
 {
     // To Avoid 429 Too Many Requests
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    ebisu::ltest::sleep_for(std::chrono::milliseconds(200));
     const size_t buff_size = 4096;
     char buff[buff_size];
     char mqtt_buff[2048];
@@ -435,7 +433,7 @@ TEST_CASE("The MQTT task renews a token the server refuses")
         return t.count(KII_MQTT_ST_RECV_READY) > 0 || t.exited;
     }) );
     {
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         REQUIRE_FALSE( t.exited );
     }
 
@@ -447,12 +445,12 @@ TEST_CASE("The MQTT task renews a token the server refuses")
     REQUIRE( run_on_task(t, [&kii, &t, &thing_id, &message] {
         kii_code_t res = kii_send_push_message_to_thing(&kii, thing_id.c_str(), message.c_str());
         int status = khc_get_status_code(&kii._khc);
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         t.send_res = res;
         t.send_status = status;
     }) );
     {
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         INFO( "status " << t.send_status );
         REQUIRE( t.send_res == KII_ERR_OK );
     }
@@ -467,7 +465,7 @@ TEST_CASE("The MQTT task renews a token the server refuses")
 TEST_CASE("QoS 1 messages sent while the task is away arrive when it is back")
 {
     // To Avoid 429 Too Many Requests
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    ebisu::ltest::sleep_for(std::chrono::milliseconds(200));
     const size_t buff_size = 4096;
     char buff[buff_size];
     char mqtt_buff[2048];
@@ -497,7 +495,7 @@ TEST_CASE("QoS 1 messages sent while the task is away arrive when it is back")
         return t.count(KII_MQTT_ST_RECV_READY) > 0 || t.exited;
     }) );
     {
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         REQUIRE_FALSE( t.exited );
     }
 
@@ -505,12 +503,12 @@ TEST_CASE("QoS 1 messages sent while the task is away arrive when it is back")
     REQUIRE( run_on_task(t, [&kii, &t, &thing_id, &present] {
         kii_code_t res = kii_send_push_message_to_thing(&kii, thing_id.c_str(), present.c_str());
         int status = khc_get_status_code(&kii._khc);
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         t.send_res = res;
         t.send_status = status;
     }) );
     {
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         INFO( "status " << t.send_status );
         REQUIRE( t.send_res == KII_ERR_OK );
     }
@@ -518,13 +516,13 @@ TEST_CASE("QoS 1 messages sent while the task is away arrive when it is back")
 
     // Stopped, so the kii_t is this thread's again.
     {
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         t.stop = true;
     }
     REQUIRE( wait_for(t, TO_RECV * 3 + 10, [&t] { return t.exited; }) );
     t.task.join();
     // Long enough for the broker to have seen the connection end.
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+    ebisu::ltest::sleep_for(std::chrono::seconds(2));
     const std::string away = message("away-" + run_id);
     {
         kii_code_t res = kii_send_push_message_to_thing(&kii, thing_id.c_str(), away.c_str());
@@ -533,7 +531,7 @@ TEST_CASE("QoS 1 messages sent while the task is away arrive when it is back")
     }
 
     {
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         t.stop = false;
         t.exited = false;
         t.states.clear();
@@ -542,9 +540,9 @@ TEST_CASE("QoS 1 messages sent while the task is away arrive when it is back")
     REQUIRE( kii_start_push_task(&kii, KEEP_ALIVE) == KII_ERR_OK );
     REQUIRE( received(t, "away-" + run_id) );
     // Time for anything else the broker kept to arrive.
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    ebisu::ltest::sleep_for(std::chrono::seconds(5));
     {
-        std::lock_guard<std::mutex> lock(t.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(t.mutex);
         REQUIRE_FALSE( t.exited );
         for (const std::string& m : t.received) {
             CHECK( m.find("present-" + run_id) == std::string::npos );

@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <cstring>
 #include <chrono>
-#include <thread>
 #include <sstream>
 #include <string>
 #include <functional>
@@ -17,7 +16,7 @@
 TEST_CASE("Object Tests")
 {
     // To Avoid 429 Too Many Requests
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    ebisu::ltest::sleep_for(std::chrono::milliseconds(200));
     const size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;
@@ -44,7 +43,7 @@ TEST_CASE("Object Tests")
         bucket.scope_id = NULL;
 
         SECTION("POST") {
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            ebisu::ltest::sleep_for(std::chrono::milliseconds(200));
             const char object[] = "{}";
             kii_object_id_t obj_id;
             kii_code_t post_res = kii_post_object(&kii, &bucket, object, NULL, &obj_id);

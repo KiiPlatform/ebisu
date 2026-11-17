@@ -1,13 +1,12 @@
 #include "catch.hpp"
 #include "kii.h"
-#include <thread>
 #include "large_test.h"
 #include "picojson.h"
 
 TEST_CASE("Server code tests")
 {
     // To Avoid 429 Too Many Requests
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    ebisu::ltest::sleep_for(std::chrono::milliseconds(200));
     const size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;

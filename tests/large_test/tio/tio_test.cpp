@@ -29,13 +29,11 @@
 
 #include <algorithm>
 #include <chrono>
-#include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
 #include <mutex>
 #include <string>
-#include <thread>
 #include <vector>
 #include <string.h>
 
@@ -145,10 +143,10 @@ struct Device {
     ebisu::ltest::ObservedSocket updater_sent{updater_http.tls()};
     // What the tasks sent over HTTP, to tell where they went. It holds tokens
     // and the password, so it is searched and never printed.
-    std::mutex sent_mutex;
+    ebisu::ltest::mutex sent_mutex;
     std::string sent;
     ebisu::ltest::platform_socket_t mqtt;
-    std::vector<std::thread> tasks;
+    std::vector<ebisu::ltest::thread> tasks;
     ebisu::ltest::ThreadSystem system;
 
     kii_session_t session;
@@ -157,8 +155,8 @@ struct Device {
     // lock held.
     int author_updates = 0;
 
-    std::mutex mutex;
-    std::condition_variable changed;
+    ebisu::ltest::mutex mutex;
+    ebisu::ltest::condition_variable changed;
     // Guarded by mutex.
     std::vector<kii_mqtt_task_state> handler_states;
     std::vector<Action> actions;
@@ -174,13 +172,13 @@ struct Device {
 
 bool sent_has(Device& d, const char* text)
 {
-    std::lock_guard<std::mutex> lock(d.sent_mutex);
+    std::lock_guard<ebisu::ltest::mutex> lock(d.sent_mutex);
     return d.sent.find(text) != std::string::npos;
 }
 
 void forget_sent(Device& d)
 {
-    std::lock_guard<std::mutex> lock(d.sent_mutex);
+    std::lock_guard<ebisu::ltest::mutex> lock(d.sent_mutex);
     d.sent.clear();
 }
 
@@ -188,7 +186,7 @@ bool cb_handler_continue(void* task_info, void* userdata)
 {
     Device* d = (Device*)userdata;
     kii_mqtt_task_state state = ((tio_handler_task_info_t*)task_info)->task_state;
-    std::lock_guard<std::mutex> lock(d->mutex);
+    std::lock_guard<ebisu::ltest::mutex> lock(d->mutex);
     if (d->handler_states.empty() || d->handler_states.back() != state) {
         d->handler_states.push_back(state);
         d->changed.notify_all();
@@ -199,14 +197,14 @@ bool cb_handler_continue(void* task_info, void* userdata)
 bool cb_updater_continue(void* task_info, void* userdata)
 {
     Device* d = (Device*)userdata;
-    std::lock_guard<std::mutex> lock(d->mutex);
+    std::lock_guard<ebisu::ltest::mutex> lock(d->mutex);
     return d->stop ? false : true;
 }
 
 void cb_exit(void* task_info, void* userdata)
 {
     Device* d = (Device*)userdata;
-    std::lock_guard<std::mutex> lock(d->mutex);
+    std::lock_guard<ebisu::ltest::mutex> lock(d->mutex);
     ++d->exits;
     d->changed.notify_all();
 }
@@ -214,7 +212,7 @@ void cb_exit(void* task_info, void* userdata)
 void cb_err(tio_code_t code, const char* err_message, void* userdata)
 {
     Device* d = (Device*)userdata;
-    std::lock_guard<std::mutex> lock(d->mutex);
+    std::lock_guard<ebisu::ltest::mutex> lock(d->mutex);
     d->errors.push_back(std::string(err_message) + " (" + std::to_string(code) + ")");
 }
 
@@ -248,7 +246,7 @@ bool cb_action(tio_action_t* action, tio_action_err_t* err,
     a.type = action->action_value.type;
     a.value = value_of(action->action_value);
     {
-        std::lock_guard<std::mutex> lock(d->mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(d->mutex);
         d->actions.push_back(a);
         d->changed.notify_all();
     }
@@ -265,7 +263,7 @@ bool cb_action(tio_action_t* action, tio_action_err_t* err,
 size_t cb_state_size(void* userdata)
 {
     Device* d = (Device*)userdata;
-    std::lock_guard<std::mutex> lock(d->mutex);
+    std::lock_guard<ebisu::ltest::mutex> lock(d->mutex);
     d->upload = d->state;
     d->upload_read = 0;
     ++d->uploads;
@@ -275,7 +273,7 @@ size_t cb_state_size(void* userdata)
 size_t cb_state_read(char* buffer, size_t size, void* userdata)
 {
     Device* d = (Device*)userdata;
-    std::lock_guard<std::mutex> lock(d->mutex);
+    std::lock_guard<ebisu::ltest::mutex> lock(d->mutex);
     size_t n = d->upload.copy(buffer, size, d->upload_read);
     d->upload_read += n;
     return n;
@@ -289,7 +287,7 @@ void cb_author_updated(const kii_author_t* author, void* userdata)
 
 int author_updates(Device& d)
 {
-    std::lock_guard<std::mutex> lock(d.session_lock.mutex);
+    std::lock_guard<ebisu::ltest::mutex> lock(d.session_lock.mutex);
     return d.author_updates;
 }
 
@@ -318,9 +316,9 @@ bool spoiled(kii_session_t* session)
 void init_device(Device& d)
 {
     ebisu::ltest::init_platform_socket(&d.mqtt, TO_RECV, TO_SEND);
-    d.system.keep = [&d](std::thread task) { d.tasks.push_back(std::move(task)); };
+    d.system.keep = [&d](ebisu::ltest::thread task) { d.tasks.push_back(std::move(task)); };
     auto record = [&d](const char* data, size_t length) {
-        std::lock_guard<std::mutex> lock(d.sent_mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(d.sent_mutex);
         d.sent.append(data, length);
     };
     d.handler_sent.on_sent = record;
@@ -360,7 +358,7 @@ void init_device(Device& d)
 // Waits up to seconds for done(), called with the device's mutex held.
 bool wait_for(Device& d, int seconds, std::function<bool()> done)
 {
-    std::unique_lock<std::mutex> lock(d.mutex);
+    std::unique_lock<ebisu::ltest::mutex> lock(d.mutex);
     return d.changed.wait_for(lock, std::chrono::seconds(seconds), done);
 }
 
@@ -368,7 +366,7 @@ bool wait_for(Device& d, int seconds, std::function<bool()> done)
 // messages and codes.
 std::string errors_of(Device& d)
 {
-    std::lock_guard<std::mutex> lock(d.mutex);
+    std::lock_guard<ebisu::ltest::mutex> lock(d.mutex);
     std::string errors;
     for (const std::string& e : d.errors) {
         errors += (errors.empty() ? "" : "; ") + e;
@@ -387,7 +385,7 @@ kiiltest::Response poll(int seconds, std::function<kiiltest::Response()> fetch,
         if (done(r)) {
             break;
         }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        ebisu::ltest::sleep_for(std::chrono::seconds(1));
     }
     return r;
 }
@@ -398,10 +396,10 @@ struct StopDevice {
     Device& d;
     ~StopDevice() {
         {
-            std::lock_guard<std::mutex> lock(d.mutex);
+            std::lock_guard<ebisu::ltest::mutex> lock(d.mutex);
             d.stop = true;
         }
-        for (std::thread& t : d.tasks) {
+        for (ebisu::ltest::thread& t : d.tasks) {
             if (t.joinable()) {
                 t.join();
             }
@@ -527,7 +525,7 @@ TEST_CASE("tio against Kii Cloud")
                 KII_MQTT_ST_RECV_READY) != d.handler_states.end() || d.exits > 0;
     }) );
     {
-        std::lock_guard<std::mutex> lock(d.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(d.mutex);
         REQUIRE( d.exits == 0 );
         CHECK( std::count(d.handler_states.begin(), d.handler_states.end(), KII_MQTT_ST_INSTALL_PUSH) == 0 );
         CHECK( std::count(d.handler_states.begin(), d.handler_states.end(), KII_MQTT_ST_GET_ENDPOINT) == 1 );
@@ -569,7 +567,7 @@ TEST_CASE("tio against Kii Cloud")
         REQUIRE( wait_for(d, 60, [&d] { return d.actions.size() >= 6; }) );
         std::vector<Action> actions;
         {
-            std::lock_guard<std::mutex> lock(d.mutex);
+            std::lock_guard<ebisu::ltest::mutex> lock(d.mutex);
             actions = d.actions;
         }
         REQUIRE( actions.size() == 6 );
@@ -628,7 +626,7 @@ TEST_CASE("tio against Kii Cloud")
 
     // An action that fails leaves the command incomplete, with its error.
     {
-        std::lock_guard<std::mutex> lock(d.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(d.mutex);
         d.actions.clear();
     }
     {
@@ -677,7 +675,7 @@ TEST_CASE("tio against Kii Cloud")
         CHECK( alias1->serialize() == "{\"power\":true,\"presetTemperature\":23}" );
 
         {
-            std::lock_guard<std::mutex> lock(d.mutex);
+            std::lock_guard<ebisu::ltest::mutex> lock(d.mutex);
             d.state = "{\"" + std::string(ALIAS1) + "\":{\"power\":false,\"presetTemperature\":20},\"" +
                 ALIAS2 + "\":{\"mode\":\"next-" + run + "\"}}";
         }
@@ -695,7 +693,7 @@ TEST_CASE("tio against Kii Cloud")
     CHECK( author_updates(d) == 2 );
     spoil(&d.session);
     {
-        std::lock_guard<std::mutex> lock(d.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(d.mutex);
         d.actions.clear();
         d.state = "{\"" + std::string(ALIAS1) + "\":{\"power\":true,\"presetTemperature\":21},\"" +
             ALIAS2 + "\":{\"mode\":\"renewed-" + run + "\"}}";
@@ -708,7 +706,7 @@ TEST_CASE("tio against Kii Cloud")
         INFO( "errors reported by the device: " << errors_of(d) );
         REQUIRE( command.ok() );
         CHECK( command.get("commandState") == "DONE" );
-        std::lock_guard<std::mutex> lock(d.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(d.mutex);
         CHECK( d.actions.size() == 1 );
     }
     {
@@ -727,13 +725,13 @@ TEST_CASE("tio against Kii Cloud")
     // Asked to stop, both tasks end: the handler within a receive timeout, the
     // updater within a second of its interval.
     {
-        std::lock_guard<std::mutex> lock(d.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(d.mutex);
         d.stop = true;
     }
     CHECK( wait_for(d, TO_RECV * 3 + UPDATE_INTERVAL + 10, [&d] { return d.exits == 2; }) );
     progress("tasks ended");
     {
-        std::lock_guard<std::mutex> lock(d.mutex);
+        std::lock_guard<ebisu::ltest::mutex> lock(d.mutex);
         for (const std::string& e : d.errors) {
             UNSCOPED_INFO( e );
         }

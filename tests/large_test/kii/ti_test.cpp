@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <cstring>
 #include <chrono>
-#include <thread>
 #include <ctime>
 #include <sstream>
 #include <functional>
@@ -25,7 +24,7 @@ picojson::value read_state(kii_t& kii, const std::string& path, const std::strin
         kiiltest::author(&kii).author_id + "/states";
     for (int i = 0; i < 10; ++i) {
         if (i > 0) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            ebisu::ltest::sleep_for(std::chrono::seconds(1));
         }
         REQUIRE( kii_api_call_start(&kii, "GET", resource.c_str(), NULL, true) == KII_ERR_OK );
         REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
@@ -50,7 +49,7 @@ picojson::value read_state(kii_t& kii, const std::string& path, const std::strin
 TEST_CASE("TI Tests")
 {
     // To Avoid 429 Too Many Requests
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    ebisu::ltest::sleep_for(std::chrono::milliseconds(200));
     const size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;
@@ -298,7 +297,7 @@ TEST_CASE("TI Tests")
 }
 
 TEST_CASE("Empty request payloads", "[empty-request]") {
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    ebisu::ltest::sleep_for(std::chrono::milliseconds(200));
     const size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;

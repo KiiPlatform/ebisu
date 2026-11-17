@@ -16,7 +16,6 @@
 #include <cstdlib>
 #include <random>
 #include <string>
-#include <thread>
 #include <vector>
 
 #include <picojson.h>
@@ -31,8 +30,7 @@ namespace kiiltest {
 const int64_t TOKEN_LIFETIME_MS = 20 * 60 * 1000;
 
 inline int64_t now_ms() {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
+    return ebisu::ltest::wall_us() / 1000;
 }
 
 // A password for something a run creates.
@@ -106,7 +104,7 @@ public:
         Response r;
         for (int attempt = 0; attempt < 5; ++attempt) {
             if (attempt > 0) {
-                std::this_thread::sleep_for(std::chrono::seconds(attempt));
+                ebisu::ltest::sleep_for(std::chrono::seconds(attempt));
             }
             r = send(method, path, content_type, body, token);
             if (r.res != KII_ERR_OK || r.status != 429) {
