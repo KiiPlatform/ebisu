@@ -878,6 +878,47 @@ jobs:
           report_paths: "**/test-results/junit/*.xml"
           check_name: JUnit Test Report (freertos small tests)
 
+  # The large tests, each suite a firmware for the same board that runs it in
+  # a FreeRTOS task against the live Kii application the secrets name, over
+  # platform's mbedTLS port and its FreeRTOS-Plus-TCP socket, run in QEMU by
+  # CTest. See tests/freertos_large/README.md.
+  freertos-large:
+    name: freertos large tests (Cortex-M3, QEMU)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      checks: write # for the JUnit report
+    env:
+      LIVE: ${{ secrets.CLIENT_ID != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # For git describe, which ebisu_version.h takes the version from.
+          fetch-depth: 0
+      - name: Setup build env
+        uses: ./.github/actions/apt-install
+        with:
+          packages: cmake gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib qemu-system-arm
+          options: --no-install-recommends
+      # As in the large job: on master, losing the secrets must not look like
+      # passing, and run.sh fails without them.
+      - name: Build and run the suites
+        if: env.LIVE == 'true' || github.ref == 'refs/heads/master'
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: tests/freertos_large/run.sh
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@a16be3a69023e9bd7e748ede768b3282ea7b30ce # v6.7.1
+        if: success() || failure() # always run even if the previous step fails
+        with:
+          report_paths: "**/test-results/junit/*.xml"
+          check_name: JUnit Test Report (freertos large tests)
+
   # The FreeRTOS-Plus-TCP socket's and name servers' tests: a firmware for the
   # same board, run in QEMU against servers on the runner, TCP ones and name
   # servers over UDP, with FreeRTOS-Plus-TCP and the kernel of FreeRTOS LTS

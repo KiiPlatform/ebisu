@@ -27,12 +27,18 @@ endif()
 # Shared by both large suites: the sockets, with TLS and, for
 # EBISU_PLAIN_HTTP, without. platform's OpenSSL port, except on Windows, where
 # they are its Schannel port, over Winsock and Schannel, so that the port's TLS
-# runs against the live server too.
+# runs against the live server too, and on a board, whose project, adding this
+# directory, has them in a target of its own, ebisu_ltest_board, with its
+# ltest_board.h, as tests/freertos_large does.
 #
 # kii/mqtt_test.cpp connects to the MQTT broker through the platform's socket,
-# which times out its receives as the push task needs: the Schannel port, or
-# the OpenSSL port.
-if(WIN32)
+# which times out its receives as the push task needs: the Schannel port, the
+# OpenSSL port, or the board's.
+if(TARGET ebisu_ltest_board)
+    set(large_test_common "")
+    set(large_test_socket_libs ebisu_ltest_board)
+    set(large_test_socket_includes ${PROJECT_SOURCE_DIR}/kii/include)
+elseif(WIN32)
     set(large_test_common ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_win32.cpp)
     # ws2_32 for the plain sockets of EBISU_PLAIN_HTTP too, which the port
     # brings, with WIN32_LEAN_AND_MEAN.
