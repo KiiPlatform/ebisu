@@ -5295,28 +5295,12 @@ TEST_CASE( "What MQTT doesn't allow a broker to send is refused" ) {
     }
 
     // Every topic of 1 and 2 bytes, and those of 3 and 4 that start as a
-    // character of that length does, against the table.
+    // character of that length does, against the table. Each as it's made,
+    // for a board without the memory for all of them at once, some 180000.
     SECTION("topics, byte by byte") {
-        std::vector<std::string> topics;
-        for (int a = 0; a < 256; ++a) {
-            topics.push_back(std::string(1, (char)a));
-            for (int b = 0; b < 256; ++b) {
-                topics.push_back(std::string(1, (char)a) + (char)b);
-            }
-        }
-        for (int a = 0xe0; a < 0x100; ++a) {
-            for (int b = 0; b < 256; ++b) {
-                for (int c : { 0x00, 0x41, 0x7f, 0x80, 0xbf, 0xc0, 0xff }) {
-                    topics.push_back(std::string(1, (char)a) + (char)b + (char)c);
-                    if (a >= 0xf0) {
-                        topics.push_back(std::string(1, (char)a) + (char)b + (char)c + '\x80');
-                        topics.push_back(std::string(1, (char)a) + (char)b + (char)c + '\xc0');
-                    }
-                }
-            }
-        }
+        size_t tried = 0;
         size_t taken = 0;
-        for (const std::string& topic : topics) {
+        auto check = [&](const std::string& topic) {
             receive(publish_packet(topic, "{}"));
             const bool expected = is_publish_topic(topic);
             if ((state.info.task_state == KII_MQTT_ST_RECV_READY) != expected) {
@@ -5326,10 +5310,28 @@ TEST_CASE( "What MQTT doesn't allow a broker to send is refused" ) {
                         " " << (topic.size() > 3 ? (int)(unsigned char)topic[3] : -1));
                 CHECK( expected == !expected );
             }
+            ++tried;
             taken += expected ? 1 : 0;
+        };
+        for (int a = 0; a < 256; ++a) {
+            check(std::string(1, (char)a));
+            for (int b = 0; b < 256; ++b) {
+                check(std::string(1, (char)a) + (char)b);
+            }
+        }
+        for (int a = 0xe0; a < 0x100; ++a) {
+            for (int b = 0; b < 256; ++b) {
+                for (int c : { 0x00, 0x41, 0x7f, 0x80, 0xbf, 0xc0, 0xff }) {
+                    check(std::string(1, (char)a) + (char)b + (char)c);
+                    if (a >= 0xf0) {
+                        check(std::string(1, (char)a) + (char)b + (char)c + '\x80');
+                        check(std::string(1, (char)a) + (char)b + (char)c + '\xc0');
+                    }
+                }
+            }
         }
         CHECK( taken > 0 );
-        CHECK( taken < topics.size() );
+        CHECK( taken < tried );
     }
 }
 

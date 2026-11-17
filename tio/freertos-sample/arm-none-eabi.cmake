@@ -4,6 +4,9 @@ set(CMAKE_SYSTEM_PROCESSOR cortex-m3)
 
 set(CMAKE_C_COMPILER arm-none-eabi-gcc)
 set(CMAKE_C_FLAGS_INIT "-mcpu=cortex-m3 -mthumb")
+# For a project that enables C++, as ebisu's tests do.
+set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
+set(CMAKE_CXX_FLAGS_INIT "-mcpu=cortex-m3 -mthumb")
 
 # A program cannot link without the board's start-up code and linker script, so
 # CMake checks the compiler with a library.

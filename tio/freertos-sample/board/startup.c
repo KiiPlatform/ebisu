@@ -7,6 +7,8 @@
 extern uint32_t __data_load[], __data_start[], __data_end[];
 extern uint32_t __bss_start[], __bss_end[];
 extern uint32_t __stack_top[];
+extern void (* const __init_array_start[])(void);
+extern void (* const __init_array_end[])(void);
 
 int main(void);
 
@@ -47,6 +49,11 @@ void reset_handler(void)
 {
     memcpy(__data_start, __data_load, (char*)__data_end - (char*)__data_start);
     memset(__bss_start, 0, (char*)__bss_end - (char*)__bss_start);
+    /* As the C library's own start-up code would. */
+    for (void (* const* constructor)(void) = __init_array_start;
+            constructor < __init_array_end; ++constructor) {
+        (*constructor)();
+    }
     board_exit(main());
 }
 
