@@ -1,7 +1,6 @@
 #include <chrono>
 #include <cstring>
 #include <string>
-#include <thread>
 
 #include <kii.h>
 #include "secure_socket_impl.h"
@@ -93,7 +92,7 @@ void spoil(kii_session_t* session) {
 
 TEST_CASE( "The session renews a token the server refuses" ) {
     // To Avoid 429 Too Many Requests
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    ebisu::ltest::sleep_for(std::chrono::milliseconds(200));
     char buff[4096];
     kii_t kii;
     ebisu::ltest::ssl::SSLData http_ssl_ctx;
@@ -181,7 +180,7 @@ TEST_CASE( "The session renews a token the server refuses" ) {
 
         // The refresh token that refresh spent is refused, and the session
         // logs in with the password instead.
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        ebisu::ltest::sleep_for(std::chrono::seconds(2));
         kii_author_t spent = logged_in;
         strcpy(spent.access_token, UNKNOWN_TOKEN);
         kii_session_set_author(&session, &spent);

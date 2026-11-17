@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <chrono>
-#include <thread>
 
 #include <kii.h>
 #include <jkii.h>
@@ -15,7 +14,7 @@ TEST_CASE("Thing tests")
 {
 
     // To Avoid 429 Too Many Requests
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    ebisu::ltest::sleep_for(std::chrono::milliseconds(200));
     const size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;
@@ -95,7 +94,7 @@ TEST_CASE("Thing tests")
         REQUIRE ( desc.get<std::string>() == std::string("The login name is locked") );
 
         // wait for unlock
-        std::this_thread::sleep_for(std::chrono::seconds(3 + 1));
+        ebisu::ltest::sleep_for(std::chrono::seconds(3 + 1));
 
         // check unlocked
         ret = kii_auth_thing(&kii, vid.c_str(), password);
