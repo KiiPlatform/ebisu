@@ -316,6 +316,10 @@ bool spoiled(kii_session_t* session)
 void init_device(Device& d)
 {
     ebisu::ltest::init_platform_socket(&d.mqtt, TO_RECV, TO_SEND);
+    // The server's certificate checked at the tests' clock's time, as the
+    // other sockets have it. A port without the system's time, as on a board,
+    // has nothing else to check it at.
+    ebisu::ltest::set_platform_socket_clock(&d.mqtt, ebisu::ltest::test_clock());
     d.system.keep = [&d](ebisu::ltest::thread task) { d.tasks.push_back(std::move(task)); };
     auto record = [&d](const char* data, size_t length) {
         std::lock_guard<ebisu::ltest::mutex> lock(d.sent_mutex);
@@ -372,6 +376,17 @@ std::string errors_of(Device& d)
         errors += (errors.empty() ? "" : "; ") + e;
     }
     return errors.empty() ? "none" : errors;
+}
+
+// The states the handler's MQTT task entered, in order, as numbers.
+std::string states_of(Device& d)
+{
+    std::lock_guard<ebisu::ltest::mutex> lock(d.mutex);
+    std::string states;
+    for (kii_mqtt_task_state state : d.handler_states) {
+        states += (states.empty() ? "" : " ") + std::to_string((int)state);
+    }
+    return states.empty() ? "none" : states;
 }
 
 // Polls fetch() once a second, up to seconds, until done() holds for what it
@@ -520,10 +535,15 @@ TEST_CASE("tio against Kii Cloud")
     // installing push or fetching the endpoint. Refused, it gets new
     // credentials by onboarding again, which renews the token too, and
     // subscribes.
-    REQUIRE( wait_for(d, 120, [&d] {
+    const bool ready = wait_for(d, 120, [&d] {
         return std::find(d.handler_states.begin(), d.handler_states.end(),
                 KII_MQTT_ST_RECV_READY) != d.handler_states.end() || d.exits > 0;
-    }) );
+    });
+    {
+        INFO( "the handler's states: " << states_of(d) );
+        INFO( "errors reported by the device: " << errors_of(d) );
+        REQUIRE( ready );
+    }
     {
         std::lock_guard<ebisu::ltest::mutex> lock(d.mutex);
         REQUIRE( d.exits == 0 );

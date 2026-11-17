@@ -1,7 +1,9 @@
 #ifndef __large_test__
 #define __large_test__
 
+#include <algorithm>
 #include <string>
+#include <vector>
 #include <chrono>
 #include <functional>
 #include <picojson.h>
@@ -47,27 +49,43 @@ inline long long current_time() {
     return ebisu::ltest::wall_us();
 }
 
+// The response a request gets that kii_t holds: an error, of the status, and
+// in the body, an errorCode, which is one of those expected.
 inline void check_error_response(
     kii_t& kii,
     char* buff,
-    const int res, 
-    const int expected_status_code, 
-    const std::string& expected_error_code
+    const int res,
+    const int expected_status_code,
+    const std::vector<std::string>& expected_error_codes
     ) {
     REQUIRE(res == KII_ERR_RESP_STATUS);
-    
+
     int actual_status_code = khc_get_status_code(&kii._khc);
     REQUIRE(actual_status_code == expected_status_code);
-    
+
     picojson::value v;
     auto err_str = picojson::parse(v, buff);
     REQUIRE(err_str.empty());
     REQUIRE(v.is<picojson::object>());
-    
+
     picojson::object obj = v.get<picojson::object>();
     auto errorCode = obj.at("errorCode");
     REQUIRE(errorCode.is<std::string>());
-    REQUIRE(errorCode.get<std::string>() == expected_error_code);
+    const std::string code = errorCode.get<std::string>();
+    INFO( "errorCode: " << code );
+    REQUIRE(std::find(expected_error_codes.begin(), expected_error_codes.end(), code) !=
+            expected_error_codes.end());
+}
+
+inline void check_error_response(
+    kii_t& kii,
+    char* buff,
+    const int res,
+    const int expected_status_code,
+    const std::string& expected_error_code
+    ) {
+    check_error_response(kii, buff, res, expected_status_code,
+            std::vector<std::string>{ expected_error_code });
 }
 
 class RWFunc {
