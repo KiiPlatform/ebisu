@@ -167,6 +167,11 @@ On a microcontroller, `tests/freertos_small/run.sh` builds the small tests as
 firmware for a Cortex-M3 board that QEMU emulates, with newlib and FreeRTOS,
 and runs them in QEMU, as CI does: see
 [tests/freertos_small/README.md](tests/freertos_small/README.md).
+`tests/freertos_large/run.sh` does the same for the large tests, against the
+live application, over platform's mbedTLS port and FreeRTOS-Plus-TCP, with
+`APP_ID`, `DEFAULT_SITE`, `CLIENT_ID` and `CLIENT_SECRET` in the environment:
+see
+[tests/freertos_large/README.md](tests/freertos_large/README.md).
 
 Other useful targets and options:
 

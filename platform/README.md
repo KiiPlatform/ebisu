@@ -191,7 +191,10 @@ FreeRTOS-Plus-TCP socket's,
 in QEMU against servers on the host, against the oldest FreeRTOS-Plus-TCP and
 kernel it supports and the latest. It runs the small tests of the libraries
 too, each suite in a FreeRTOS task on the same board, with newlib:
-[tests/freertos_small](https://github.com/KiiPlatform/ebisu/blob/master/tests/freertos_small/README.md).
+[tests/freertos_small](https://github.com/KiiPlatform/ebisu/blob/master/tests/freertos_small/README.md),
+and the large ones, against the live application, over the mbedTLS port and
+the FreeRTOS-Plus-TCP socket:
+[tests/freertos_large](https://github.com/KiiPlatform/ebisu/blob/master/tests/freertos_large/README.md).
 
 With mbedTLS over the POSIX port's socket, and the CA certificates of the
 application's:

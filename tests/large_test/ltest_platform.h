@@ -6,7 +6,13 @@
 // and condition variables the tests and those tasks share; sleeping; and the
 // clocks. The tests use these, never the standard library's threads and
 // clocks themselves. On a host they are the standard library's, with
-// platform's Schannel port on Windows, or else its OpenSSL port.
+// platform's Schannel port on Windows, or else its OpenSSL port. On a board,
+// with EBISU_LTEST_BOARD, they are its ltest_board.h's, as
+// tests/freertos_large has them.
+
+#ifdef EBISU_LTEST_BOARD
+#include "ltest_board.h"
+#else
 
 #include <stdint.h>
 
@@ -86,5 +92,7 @@ inline int64_t wall_us()
 
 }
 }
+
+#endif /* EBISU_LTEST_BOARD */
 
 #endif /* EBISU_LTEST_PLATFORM_H */
