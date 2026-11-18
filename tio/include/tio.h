@@ -762,7 +762,8 @@ void tio_handler_copy_author(tio_handler_t* handler, tio_author_t* out_author);
  *
  * \param [out] handler tio_handler_t instance.
  * \param [in] session Session to use, or NULL to stop using one.
- * \return TIO_ERR_FAIL if the session has no lock or clock set.
+ * \return TIO_ERR_FAIL if the session has no lock or clock set, or for any
+ * session when built with EBISU_NO_SESSION, as -DEBISU_SESSION=OFF builds it.
  */
 tio_code_t tio_handler_set_session(tio_handler_t* handler, kii_session_t* session);
 
@@ -1212,7 +1213,8 @@ void tio_updater_copy_author(tio_updater_t* updater, tio_author_t* out_author);
  *
  * \param [out] updater tio_updater_t instance.
  * \param [in] session Session to use, or NULL to stop using one.
- * \return TIO_ERR_FAIL if the session has no lock or clock set.
+ * \return TIO_ERR_FAIL if the session has no lock or clock set, or for any
+ * session when built with EBISU_NO_SESSION, as -DEBISU_SESSION=OFF builds it.
  */
 tio_code_t tio_updater_set_session(tio_updater_t* updater, kii_session_t* session);
 

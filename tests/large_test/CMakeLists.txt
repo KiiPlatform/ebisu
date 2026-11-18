@@ -24,6 +24,12 @@ if(EBISU_SOCKET_LOG)
     list(APPEND large_test_defines SOCKET_LOG)
 endif()
 
+# As the libraries are built, for the tests to leave out what the build does:
+# a project that adds ebisu as a subdirectory doesn't get its definitions.
+if(NOT EBISU_SESSION)
+    list(APPEND large_test_defines EBISU_NO_SESSION)
+endif()
+
 # Shared by both large suites: the sockets, with TLS and, for
 # EBISU_PLAIN_HTTP, without. platform's OpenSSL port, except on Windows, where
 # they are its Schannel port, over Winsock and Schannel, so that the port's TLS
@@ -75,6 +81,13 @@ ebisu_add_test_suite(large_test_khc
         ${large_test_socket_includes}
     DEFINES ${large_test_defines})
 
+# Sessions are tested where the libraries have them, -DEBISU_SESSION=OFF
+# leaving them out, and with them tio, whose test runs on one.
+set(large_test_kii_session "")
+if(EBISU_SESSION)
+    set(large_test_kii_session kii/session_test.cpp)
+endif()
+
 ebisu_add_test_suite(large_test_kii
     LABEL large
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/kii
@@ -84,7 +97,7 @@ ebisu_add_test_suite(large_test_kii
         kii/object_test.cpp
         kii/push_test.cpp
         kii/server_code_test.cpp
-        kii/session_test.cpp
+        ${large_test_kii_session}
         kii/thing_test.cpp
         kii/ti_test.cpp
         ${large_test_kii_openssl}
@@ -102,18 +115,20 @@ ebisu_add_test_suite(large_test_kii
 # tio end to end: the handler and the updater against the live application,
 # with a user owning the thing. The test sets the application up as its admin,
 # from CLIENT_ID and CLIENT_SECRET in the environment at run time.
-ebisu_add_test_suite(large_test_tio
-    LABEL large
-    WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tio
-    SOURCES
-        tio/tio_test.cpp
-        ${large_test_common}
-    LINK ${EBISU_TIO_OBJS} ${large_test_socket_libs} Threads::Threads
-    INCLUDES
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/kii
-        ${PROJECT_SOURCE_DIR}/khc/include
-        ${PROJECT_SOURCE_DIR}/jkii/include
-        ${PROJECT_SOURCE_DIR}/tio/include
-        ${large_test_socket_includes}
-    DEFINES ${large_test_defines})
+if(EBISU_SESSION)
+    ebisu_add_test_suite(large_test_tio
+        LABEL large
+        WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tio
+        SOURCES
+            tio/tio_test.cpp
+            ${large_test_common}
+        LINK ${EBISU_TIO_OBJS} ${large_test_socket_libs} Threads::Threads
+        INCLUDES
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/kii
+            ${PROJECT_SOURCE_DIR}/khc/include
+            ${PROJECT_SOURCE_DIR}/jkii/include
+            ${PROJECT_SOURCE_DIR}/tio/include
+            ${large_test_socket_includes}
+        DEFINES ${large_test_defines})
+endif()
