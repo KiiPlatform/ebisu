@@ -775,7 +775,7 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
             strcmp(kii->_onboarded_thing_id, kii->_author.author_id) == 0) {
         // Onboarding installed push and returned the endpoint: connect with it.
         state->ins_id = kii->_onboarded_installation_id;
-        state->endpoint = kii->_onboarded_endpoint;
+        state->endpoint = kii->_mqtt_endpoint;
         state->info.task_state = KII_MQTT_ST_SOCK_CONNECT;
     }
     _reset_elapsed(state, 0);
@@ -868,7 +868,7 @@ static kii_code_t _onboard_for_endpoint(mqtt_state_t* state)
         return KII_ERR_FAIL;
     }
     state->ins_id = kii->_onboarded_installation_id;
-    state->endpoint = kii->_onboarded_endpoint;
+    state->endpoint = kii->_mqtt_endpoint;
     return KII_ERR_OK;
 }
 

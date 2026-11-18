@@ -530,7 +530,11 @@ typedef struct kii_t {
      * kii_start_mqtt_task_with_endpoint() started it, rather than by push's
      * own flow. */
     bool _mqtt_endpoint_given;
-    kii_mqtt_endpoint_t _mqtt_endpoint; /**< \private */
+    /** \private The endpoint the task connects with: the application's, from
+     * the last kii_start_mqtt_task_with_endpoint(), or the one the last
+     * kii_ti_onboard() returned, while _onboarded_thing_id names its thing.
+     * One copy serves both, the application's replacing onboarding's. */
+    kii_mqtt_endpoint_t _mqtt_endpoint;
     KII_CB_MQTT_CREDENTIALS _cb_mqtt_credentials; /**< \private */
     void* _mqtt_credentials_data; /**< \private */
     bool _mqtt_clean_session; /**< \private */
@@ -611,13 +615,11 @@ typedef struct kii_t {
      * cannot be sent again from here. */
     bool _req_streamed;
 
-    /** \private The MQTT endpoint the last kii_ti_onboard() returned, which
-     * the push task connects with. */
-    kii_mqtt_endpoint_t _onboarded_endpoint;
-    /** \private The installation _onboarded_endpoint belongs to. */
+    /** \private The installation of the endpoint onboarding returned. */
     kii_installation_id_t _onboarded_installation_id;
-    /** \private The thing _onboarded_endpoint was returned for, or empty
-     * when the last onboarding returned none. */
+    /** \private The thing the last kii_ti_onboard() returned _mqtt_endpoint
+     * for, or empty when _mqtt_endpoint holds none of onboarding's: the last
+     * onboarding returned none, or the application's replaced it. */
     char _onboarded_thing_id[KII_AUTHOR_ID_MAX_SIZE];
 } kii_t;
 
@@ -1222,11 +1224,12 @@ void kii_set_cb_mqtt_message(kii_t* kii, KII_CB_MQTT_MESSAGE cb, void* userdata)
  * KII_ERR_CREATE_TASK is returned.
  *
  * After kii_ti_onboard() returned an MQTT endpoint for the thing kii acts as,
- * the task connects with that endpoint. Otherwise it installs push and fetches
- * the endpoint first. If the broker refuses the credentials, it fetches new ones
- * for the same installation; or, when kii's session renews its token by
- * onboarding again, it onboards again for new ones, which renews the token
- * too.
+ * the task connects with that endpoint, unless a task started by
+ * kii_start_mqtt_task_with_endpoint() has replaced it since. Otherwise it
+ * installs push and fetches the endpoint first. If the broker refuses the
+ * credentials, it fetches new ones for the same installation; or, when kii's
+ * session renews its token by onboarding again, it onboards again for new
+ * ones, which renews the token too.
 
  * \param [in,out] kii kii_t instance.
  * \param [in] keep_alive_interval_sec MQTT Keep-Alive interval in seconds.
@@ -1257,7 +1260,9 @@ kii_code_t kii_start_push_task(
  * As kii_start_push_task(), but for a broker the application has the
  * credentials of, obtained some other way: the task connects with a copy of
  * endpoint, rather than installing push or using what onboarding returned,
- * and subscribes to its topic. Neither the HTTP socket nor the buffer set by
+ * and subscribes to its topic. The copy replaces the endpoint onboarding
+ * returned, so a task kii_start_push_task() starts later installs push and
+ * fetches its endpoint again. Neither the HTTP socket nor the buffer set by
  * kii_set_buff() is needed.
  *
  * When the broker refuses the credentials, the task asks the callback set by

@@ -4198,14 +4198,18 @@ TEST_CASE( "The MQTT task with an endpoint of the application's" ) {
 
     SECTION("connects with it, whatever onboarding returned") {
         strcpy(kii._onboarded_thing_id, "th.1");
-        strcpy(kii._onboarded_endpoint.host, "kii-broker");
+        strcpy(kii._mqtt_endpoint.host, "kii-broker");
         REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60) == KII_ERR_OK );
         mqtt_state_t state;
         _init_mqtt_state(&kii, &state);
         CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
         CHECK( strcmp(state.endpoint.host, "broker.example.com") == 0 );
 
-        // A push task started after it uses push's own again.
+        // kii keeps one endpoint, which the application's replaced, so a push
+        // task started after it uses push's own flow from the start: it
+        // installs push and fetches the endpoint, rather than connecting with
+        // the application's taken for onboarding's.
+        CHECK( kii._onboarded_thing_id[0] == '\0' );
         kii._push_task_running = false;
         char buff[256];
         kii_set_buff(&kii, buff, sizeof(buff));
@@ -4213,7 +4217,8 @@ TEST_CASE( "The MQTT task with an endpoint of the application's" ) {
         kii_set_http_socket(&kii, http_ctx.socket());
         REQUIRE( kii_start_push_task(&kii, 60) == KII_ERR_OK );
         _init_mqtt_state(&kii, &state);
-        CHECK( strcmp(state.endpoint.host, "kii-broker") == 0 );
+        CHECK( state.info.task_state == KII_MQTT_ST_INSTALL_PUSH );
+        CHECK( state.endpoint.host[0] == '\0' );
     }
 
     SECTION("with the client identifier set, or the topic") {
@@ -4345,7 +4350,7 @@ TEST_CASE( "The task can be stopped during a wait" ) {
     kii_init(&kii);
     strcpy(kii._author.author_id, "th.1");
     strcpy(kii._onboarded_thing_id, "th.1");
-    strcpy(kii._onboarded_endpoint.host, "mqtt.example.com");
+    strcpy(kii._mqtt_endpoint.host, "mqtt.example.com");
 
     char kii_buff[512];
     kii_set_buff(&kii, kii_buff, sizeof(kii_buff));

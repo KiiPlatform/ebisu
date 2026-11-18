@@ -130,7 +130,7 @@ TEST_CASE( "kii clears the password, the token and the MQTT credentials of onboa
 
     // Kept where kii uses them.
     CHECK( std::string(c.kii._author.access_token) == "ACCESS-TOKEN-SECRET" );
-    CHECK( std::string(c.kii._onboarded_endpoint.password) == "MQTT-PASSWORD-SECRET" );
+    CHECK( std::string(c.kii._mqtt_endpoint.password) == "MQTT-PASSWORD-SECRET" );
     // And nowhere else.
     CHECK_FALSE( c.holds(PASSWORD) );
     CHECK_FALSE( c.holds("ACCESS-TOKEN-SECRET") );

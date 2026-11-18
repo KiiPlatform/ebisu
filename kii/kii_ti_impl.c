@@ -159,7 +159,7 @@ static kii_code_t _onboard_and_read(
             0 < fields[8].field_copy.int_value && fields[8].field_copy.int_value <= 65535) {
         endpoint.port_tcp = (uint16_t)fields[7].field_copy.int_value;
         endpoint.port_ssl = (uint16_t)fields[8].field_copy.int_value;
-        kii->_onboarded_endpoint = endpoint;
+        kii->_mqtt_endpoint = endpoint;
         kii->_onboarded_installation_id = installation_id;
         memcpy(kii->_onboarded_thing_id, kii->_author.author_id,
                 sizeof(kii->_onboarded_thing_id));
