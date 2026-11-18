@@ -62,9 +62,6 @@ void sig_handler(int sig, siginfo_t *info, void *ctx) {
 }
 
 static ebisu_posix_lock_t session_lock;
-// The clock's, which has to be a lock of its own: the sockets use the clock
-// while kii may hold the session's.
-static ebisu_posix_lock_t clock_lock;
 
 void author_updated_callback(const kii_author_t* author, void* userdata)
 {
@@ -212,15 +209,11 @@ int main(int argc, char** argv)
     // the write fail with EPIPE instead.
     signal(SIGPIPE, SIG_IGN);
 
-    // The time the server's certificate is checked at, which this sample takes
-    // from the server as a device without a real-time clock would: until the
-    // first response, the clock has only a floor, a time it is known not to be
-    // earlier than.
+    // The time the server's certificate is checked at: the system's, which
+    // keeps it. A device without a real-time clock takes it from the server
+    // instead, with an ebisu_server_clock_t, as the FreeRTOS sample does.
     ebisu_posix_lock_init(&session_lock);
-    ebisu_posix_lock_init(&clock_lock);
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, ebisu_posix_system());
-    ebisu_clock_set_lock(&clock, &clock_lock.base);
+    ebisu_clock_t* clock = ebisu_system_clock(ebisu_posix_system());
 
     // Why a connection failed, to stderr: the sockets log nothing without a
     // logger.
@@ -231,7 +224,7 @@ int main(int argc, char** argv)
 
     ebisu_openssl_socket_t updater_http_ctx;
     ebisu_openssl_socket_init(&updater_http_ctx, TO_RECV_SEC, TO_SEND_SEC);
-    ebisu_openssl_socket_set_clock(&updater_http_ctx, &clock);
+    ebisu_openssl_socket_set_clock(&updater_http_ctx, clock);
     ebisu_openssl_socket_set_logger(&updater_http_ctx, &to_stderr.base);
 
     updater_file_context_t updater_file_ctx;
@@ -248,12 +241,12 @@ int main(int argc, char** argv)
 
     ebisu_openssl_socket_t handler_http_ctx;
     ebisu_openssl_socket_init(&handler_http_ctx, TO_RECV_SEC, TO_SEND_SEC);
-    ebisu_openssl_socket_set_clock(&handler_http_ctx, &clock);
+    ebisu_openssl_socket_set_clock(&handler_http_ctx, clock);
     ebisu_openssl_socket_set_logger(&handler_http_ctx, &to_stderr.base);
 
     ebisu_openssl_socket_t handler_mqtt_ctx;
     ebisu_openssl_socket_init(&handler_mqtt_ctx, TO_RECV_SEC, TO_SEND_SEC);
-    ebisu_openssl_socket_set_clock(&handler_mqtt_ctx, &clock);
+    ebisu_openssl_socket_set_clock(&handler_mqtt_ctx, clock);
     ebisu_openssl_socket_set_logger(&handler_mqtt_ctx, &to_stderr.base);
 
     char handler_http_buff[HANDLER_HTTP_BUFF_SIZE];
@@ -281,12 +274,6 @@ int main(int argc, char** argv)
     if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK ||
             tio_updater_set_session(&updater, &session) != TIO_ERR_OK) {
         printf("failed to set the session.\n");
-        exit(1);
-    }
-    // Each response's date sets the clock.
-    if (tio_handler_set_clock(&handler, &clock) != TIO_ERR_OK ||
-            tio_updater_set_clock(&updater, &clock) != TIO_ERR_OK) {
-        printf("failed to set the clock.\n");
         exit(1);
     }
 

@@ -412,8 +412,8 @@ static ebisu_sock_code_t mbedtls_connect(ebisu_socket_t* self, const char* host,
     if (ret == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED) {
         uint32_t flags = mbedtls_ssl_get_verify_result(&sock->_ssl);
         /* Not valid yet at the time the clock had: more likely than a
-           certificate from the future, the time fell behind. Checked at the
-           clock's floor, the next connection goes through, and its response
+           certificate from the future, the time fell behind. Checked at a
+           lower bound, the next connection goes through, and its response
            gives the clock the time again. */
         if ((flags & MBEDTLS_X509_BADCERT_FUTURE) != 0 && sock->_clock != NULL &&
                 sock->_time_exact) {

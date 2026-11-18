@@ -630,8 +630,8 @@ static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
     chain_para.RequestedUsage.dwType = USAGE_MATCH_TYPE_AND;
     chain_para.RequestedUsage.Usage.cUsageIdentifier = 1;
     chain_para.RequestedUsage.Usage.rgpszUsageIdentifier = usages;
-    /* Checked at the clock's time: its floor until a server has stated the
-       time, that time from then on. Without a clock, at the system's. */
+    /* Checked at the clock's time, or the lower bound it has of it. Without a
+       clock, at the system's. */
     FILETIME at;
     FILETIME* at_ptr = NULL;
     bool time_exact = true;
@@ -663,10 +663,10 @@ static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
     policy_para.cbSize = sizeof(policy_para);
     policy_para.pvExtraPolicyPara = &ssl_para;
 
-    /* While the clock has only its floor, a certificate that is not valid yet
-       cannot be told from one that is: it may simply have been issued after
-       the floor. The policy then leaves the validity periods alone, and they
-       are checked here for expiry only. */
+    /* While the clock has only a lower bound of the time, a certificate that
+       is not valid yet cannot be told from one that is: it may simply have
+       been issued after the bound. The policy then leaves the validity periods
+       alone, and they are checked here for expiry only. */
     if (!time_exact) {
         policy_para.dwFlags = CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
         PCERT_SIMPLE_CHAIN simple = chain->rgpChain[0];

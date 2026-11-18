@@ -19,6 +19,18 @@ POSIX and Win32 systems take them from the heap, with `malloc()`. The FreeRTOS
 one takes them from FreeRTOS's heap with `configSUPPORT_DYNAMIC_ALLOCATION`,
 and makes none without it.
 
+The POSIX and Win32 systems give the time of day as a clock too, for
+`ebisu_system_clock()`, the same one each time: the time the system has, which
+a TLS port checks the server's certificate at once set with its
+`*_socket_set_clock()`. One earlier than the library's source, a time the
+system has not set, is a lower bound, against which a certificate is refused
+only if it expired before it. FreeRTOS keeps no time of day, so its system
+gives the clock the application keeps and sets on it, if any: on a board
+without a real-time clock, an `ebisu_server_clock_t`, which takes the time
+servers state, or a time source of the application's gives it, or else a clock
+of the application's own, as the
+[kii README](https://github.com/KiiPlatform/ebisu/blob/master/kii/README.md#the-time) describes.
+
 - **POSIX** (`ebisu_posix.h`, library `ebisu_posix`): `ebisu_posix_system()`,
   whose tasks are detached threads, whose delays are `nanosleep()` and whose
   monotonic clock is `CLOCK_MONOTONIC`, `ebisu_posix_lock_t`, a pthread
@@ -84,20 +96,21 @@ and makes none without it.
 - **FreeRTOS** (`ebisu_freertos.h`, library `ebisu_freertos`):
   `ebisu_freertos_system_t`, whose tasks are FreeRTOS tasks of the stack depth
   and priority it is initialized with, made with `xTaskCreate()`, whose delays
-  are `vTaskDelay()`, for at least the time asked for, and whose monotonic
-  clock is the tick count with the times it has overflowed, which doesn't
-  wrap, and `ebisu_freertos_lock_t`, a FreeRTOS mutex, in the lock itself with
-  `configSUPPORT_STATIC_ALLOCATION`, and waiting past `portMAX_DELAY` without
-  `INCLUDE_vTaskSuspend`. Built where the application's CMake build has
-  FreeRTOS-Kernel's own target, `freertos_kernel`, which adding the kernel's
-  directory before ebisu's makes, with the application's `FreeRTOSConfig.h`,
-  and not installed, as the kernel isn't. Needs FreeRTOS-Kernel V11.1 or
-  later, that of FreeRTOS LTS 202406, `configUSE_MUTEXES` and
-  `INCLUDE_vTaskDelay`, and for tasks `configSUPPORT_DYNAMIC_ALLOCATION` and
-  `INCLUDE_vTaskDelete`, without which the system has none to make. jkii reads
-  `errno` after `strtoll()`, and the handler's and the updater's tasks parse
-  JSON at once, so each task needs its own: with newlib,
-  `configUSE_NEWLIB_REENTRANT`.
+  are `vTaskDelay()`, for at least the time asked for, whose monotonic clock
+  is the tick count with the times it has overflowed, which doesn't wrap, and
+  whose clock is the one the application sets with
+  `ebisu_freertos_system_set_clock()`, and `ebisu_freertos_lock_t`, a FreeRTOS
+  mutex, in the lock itself with `configSUPPORT_STATIC_ALLOCATION`, and
+  waiting past `portMAX_DELAY` without `INCLUDE_vTaskSuspend`. Built where the
+  application's CMake build has FreeRTOS-Kernel's own target,
+  `freertos_kernel`, which adding the kernel's directory before ebisu's makes,
+  with the application's `FreeRTOSConfig.h`, and not installed, as the kernel
+  isn't. Needs FreeRTOS-Kernel V11.1 or later, that of FreeRTOS LTS 202406,
+  `configUSE_MUTEXES` and `INCLUDE_vTaskDelay`, and for tasks
+  `configSUPPORT_DYNAMIC_ALLOCATION` and `INCLUDE_vTaskDelete`, without which
+  the system has none to make. jkii reads `errno` after `strtoll()`, and the
+  handler's and the updater's tasks parse JSON at once, so each task needs its
+  own: with newlib, `configUSE_NEWLIB_REENTRANT`.
 - **FreeRTOS-Plus-TCP** (`ebisu_freertos_tcp.h`, library `ebisu_freertos_tcp`):
   `ebisu_freertos_tcp_socket_t`, plain TCP over FreeRTOS-Plus-TCP, for TLS over
   it with the mbedTLS port's socket, or for a server without TLS. Nothing it
@@ -214,7 +227,9 @@ static ebisu_mbedtls_socket_t sock;
     }
     ebisu_posix_tcp_socket_init(&tcp, 15, 15);
     ebisu_mbedtls_socket_init(&sock, &tcp.base, &tls);
-    ebisu_mbedtls_socket_set_clock(&sock, &clock);
+    /* The system's time. A device without a real-time clock has an
+       ebisu_server_clock_t's instead. */
+    ebisu_mbedtls_socket_set_clock(&sock, ebisu_system_clock(ebisu_posix_system()));
     tio_handler_set_http_socket(&handler, &sock.base);
 ```
 

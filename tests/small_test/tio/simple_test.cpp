@@ -1,6 +1,7 @@
 #include "catch.hpp"
 #include "task_needs.h"
 #include "tio.h"
+#include "ebisu_server_clock.h"
 
 #include <functional>
 #include <stdint.h>
@@ -582,17 +583,19 @@ TEST_CASE( "The handler and the updater give a clock the time, through their kii
     tio_handler_init(&handler);
     tio_updater_init(&updater);
 
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, NULL);
-    CHECK( tio_handler_set_clock(&handler, &clock) == TIO_ERR_FAIL );
-    CHECK( tio_updater_set_clock(&updater, &clock) == TIO_ERR_FAIL );
+    // A clock that gives no time is none.
+    const ebisu_clock_ops_t no_now = { nullptr, nullptr, nullptr };
+    ebisu_clock_t not_a_clock = { &no_now };
+    CHECK( tio_handler_set_clock(&handler, &not_a_clock) == TIO_ERR_FAIL );
+    CHECK( tio_updater_set_clock(&updater, &not_a_clock) == TIO_ERR_FAIL );
     CHECK( handler._kii._clock == nullptr );
     CHECK( updater._kii._clock == nullptr );
 
     khct::cb::SystemCtx sys;
-    ebisu_clock_init(&clock, sys.system());
-    CHECK( tio_handler_set_clock(&handler, &clock) == TIO_ERR_OK );
-    CHECK( tio_updater_set_clock(&updater, &clock) == TIO_ERR_OK );
-    CHECK( handler._kii._clock == &clock );
-    CHECK( updater._kii._clock == &clock );
+    ebisu_server_clock_t clock;
+    REQUIRE( ebisu_server_clock_init(&clock, sys.system()) );
+    CHECK( tio_handler_set_clock(&handler, &clock.base) == TIO_ERR_OK );
+    CHECK( tio_updater_set_clock(&updater, &clock.base) == TIO_ERR_OK );
+    CHECK( handler._kii._clock == &clock.base );
+    CHECK( updater._kii._clock == &clock.base );
 }

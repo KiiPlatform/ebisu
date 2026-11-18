@@ -1,6 +1,6 @@
 /**
  * @file ebisu_system.h
- * @brief Task, delay, monotonic time and lock abstraction.
+ * @brief Task, delay, monotonic time, lock and clock abstraction.
  *
  * The inline functions at the end call the operations, so that code given a
  * system or a lock reads as calls: ebisu_system_delay_ms(system, 100) rather
@@ -9,6 +9,7 @@
 #ifndef _EBISU_SYSTEM
 #define _EBISU_SYSTEM
 
+#include "ebisu_clock.h"
 #include "ebisu_object.h"
 
 #include <stddef.h>
@@ -82,12 +83,12 @@ typedef struct ebisu_system_ops_t {
      * The value must never decrease, and must not jump when the wall clock is
      * changed, for example by NTP. It must keep counting while the device
      * sleeps: a tick counter that stops in low-power modes has tokens renewed
-     * late, and ebisu_clock_t falling behind. Its origin is arbitrary; only
-     * differences are used. Platforms whose tick counter is 32 bits wide must
-     * extend it to 64, or it wraps after about 49.7 days.
+     * late, and ebisu_server_clock_t falling behind. Its origin is arbitrary;
+     * only differences are used. Platforms whose tick counter is 32 bits wide
+     * must extend it to 64, or it wraps after about 49.7 days.
      *
      * More than one task may call it at once: the MQTT task times its
-     * keep-alive by it, while a session or an ebisu_clock_t reads it in
+     * keep-alive by it, while a session or an ebisu_server_clock_t reads it in
      * another task.
      *
      * \param [in] self The system.
@@ -118,9 +119,29 @@ typedef struct ebisu_system_ops_t {
      * \param [in] lock The lock.
      */
     void (*lock_destroy)(ebisu_system_t* self, ebisu_lock_t* lock);
+
+    /**
+     * \brief Gives the device's time of day, as a clock.
+     *
+     * The time the system keeps, as the POSIX and Win32 systems give it; or,
+     * on a system that keeps none, the clock the application keeps and gave
+     * the system, as the FreeRTOS system takes one: an ebisu_server_clock_t
+     * on a device without a real-time clock, or a clock of the application's
+     * own. The same clock each time, until the application sets another: a
+     * device has one time of day. ebisu itself never calls it.
+     *
+     * Optional: NULL in a system that has no clock to give, for which
+     * ebisu_system_clock() gives NULL.
+     *
+     * \param [in] self The system.
+     * \return The clock, which lives as long as the system uses it; or NULL
+     * if the system has none.
+     */
+    ebisu_clock_t* (*clock)(ebisu_system_t* self);
 } ebisu_system_ops_t;
 
-/** \brief The system: tasks, delays, a monotonic clock, and maybe locks.
+/** \brief The system: tasks, delays, a monotonic clock, and maybe locks and
+ * the time of day.
  *
  * One is normally enough for a device, shared by everything it is set on.
  * Embed it in a struct of the application's if it needs state, as
@@ -208,6 +229,18 @@ static inline void ebisu_system_lock_destroy(ebisu_system_t* system, ebisu_lock_
     if (lock != NULL) {
         system->ops->lock_destroy(system, lock);
     }
+}
+
+/**
+ * \brief The device's time of day, with the system's clock.
+ *
+ * \param [in] system The system.
+ * \return The clock; or NULL if the system has none to give, or no clock
+ * operation.
+ */
+static inline ebisu_clock_t* ebisu_system_clock(ebisu_system_t* system)
+{
+    return system->ops->clock != NULL ? system->ops->clock(system) : NULL;
 }
 
 /**

@@ -65,8 +65,8 @@ typedef struct ebisu_openssl_socket_t {
     /** \private The time the server's certificate is checked at, or NULL for
      * the system's. */
     ebisu_clock_t* clock;
-    /** \private Whether the clock had the time, rather than its floor only,
-     * when the connection was made. */
+    /** \private Whether the clock had the time, rather than a lower bound
+     * only, when the connection was made. */
     bool time_exact;
     /** \private Where diagnostics go, or NULL for nowhere. */
     ebisu_logger_t* logger;

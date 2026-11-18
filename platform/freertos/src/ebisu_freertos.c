@@ -103,6 +103,12 @@ static ebisu_lock_t* lock_create(ebisu_system_t* self);
 static void lock_destroy(ebisu_system_t* self, ebisu_lock_t* lock);
 #endif
 
+/* The clock the application set: FreeRTOS keeps no time of day. */
+static ebisu_clock_t* system_clock(ebisu_system_t* self)
+{
+    return EBISU_CONTAINER_OF(self, ebisu_freertos_system_t, base)->_clock;
+}
+
 static const ebisu_system_ops_t system_ops = {
 #if configSUPPORT_DYNAMIC_ALLOCATION == 1
     task_create,
@@ -113,11 +119,12 @@ static const ebisu_system_ops_t system_ops = {
     monotonic_ms,
 #if configSUPPORT_DYNAMIC_ALLOCATION == 1
     lock_create,
-    lock_destroy
+    lock_destroy,
 #else
     NULL,
-    NULL
+    NULL,
 #endif
+    system_clock
 };
 
 void ebisu_freertos_system_init(
@@ -128,6 +135,12 @@ void ebisu_freertos_system_init(
     system->base.ops = &system_ops;
     system->_stack_depth = stack_depth;
     system->_priority = priority;
+    system->_clock = NULL;
+}
+
+void ebisu_freertos_system_set_clock(ebisu_freertos_system_t* system, ebisu_clock_t* clock)
+{
+    system->_clock = clock;
 }
 
 static void lock(ebisu_lock_t* self)

@@ -42,12 +42,17 @@ extern "C" {
  * configSUPPORT_STATIC_ALLOCATION. Without configSUPPORT_DYNAMIC_ALLOCATION it
  * makes none, and ebisu_system_lock_create() gives NULL.
  *
+ * FreeRTOS keeps no time of day, so the system's clock, ebisu_system_clock()'s,
+ * is the one the application keeps and sets with
+ * ebisu_freertos_system_set_clock(), and none until then.
+ *
  * Initialize with ebisu_freertos_system_init().
  */
 typedef struct ebisu_freertos_system_t {
     ebisu_system_t base; /**< \brief What ebisu is given. */
     configSTACK_DEPTH_TYPE _stack_depth; /**< \private */
     UBaseType_t _priority; /**< \private */
+    ebisu_clock_t* _clock; /**< \private */
 } ebisu_freertos_system_t;
 
 /**
@@ -65,6 +70,31 @@ void ebisu_freertos_system_init(
         ebisu_freertos_system_t* system,
         configSTACK_DEPTH_TYPE stack_depth,
         UBaseType_t priority);
+
+/**
+ * \brief Set the clock the system gives, as ebisu_system_clock().
+ *
+ * FreeRTOS keeps no time of day, so the system gives the one the application
+ * keeps, for code given only the system to find:
+ * - an ebisu_server_clock_t over this system, for a board without a real-time
+ *   clock: the time servers state over TLS, or a time source of the
+ *   application's gives it, counted on with the tick count;
+ * - or a clock of the application's own, implementing ebisu_clock_ops_t over a
+ *   board's real-time clock, with ebisu_clock_from_system_time(), or over a
+ *   time source of its own, an NTP client that authenticates its servers for
+ *   instance, which may keep the time it is given in an ebisu_server_clock_t.
+ *   The kii README's section on the time shows one.
+ *
+ * ebisu itself never asks the system for its clock: set the clock on the
+ * sockets, and a clock that takes the time servers state on each kii_t, too.
+ * Set it before tasks other than the caller's may ask for it: the system
+ * doesn't guard it.
+ *
+ * \param [out] system The system.
+ * \param [in] clock The clock, which has to outlive the system's use of it; or
+ * NULL for none, as the system has until this sets one.
+ */
+void ebisu_freertos_system_set_clock(ebisu_freertos_system_t* system, ebisu_clock_t* clock);
 
 /**
  * \brief A lock that is a FreeRTOS mutex.

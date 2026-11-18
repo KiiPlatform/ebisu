@@ -87,6 +87,33 @@ static uint64_t monotonic_ms(ebisu_system_t* self)
     return GetTickCount64();
 }
 
+/* The time of day, unless it is one not set. A FILETIME counts 100 ns since
+   1601-01-01, 11644473600 seconds before the epoch. */
+static bool clock_now(ebisu_clock_t* self, int64_t* out_now)
+{
+    FILETIME ft;
+    ULARGE_INTEGER t;
+    GetSystemTimeAsFileTime(&ft);
+    t.LowPart = ft.dwLowDateTime;
+    t.HighPart = ft.dwHighDateTime;
+    return ebisu_clock_from_system_time(
+            (int64_t)(t.QuadPart / 10000000) - 11644473600LL, out_now);
+}
+
+/* The system keeps the time: none from servers, and nothing to doubt. */
+static const ebisu_clock_ops_t win32_clock_ops = {
+    clock_now,
+    NULL,
+    NULL
+};
+
+static ebisu_clock_t win32_clock = { &win32_clock_ops };
+
+static ebisu_clock_t* system_clock(ebisu_system_t* self)
+{
+    return &win32_clock;
+}
+
 static ebisu_lock_t* lock_create(ebisu_system_t* self);
 static void lock_destroy(ebisu_system_t* self, ebisu_lock_t* lock);
 
@@ -95,7 +122,8 @@ static const ebisu_system_ops_t win32_system_ops = {
     delay_ms,
     monotonic_ms,
     lock_create,
-    lock_destroy
+    lock_destroy,
+    system_clock
 };
 
 static ebisu_system_t system_ = { &win32_system_ops };

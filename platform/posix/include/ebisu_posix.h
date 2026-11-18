@@ -1,7 +1,7 @@
 /**
  * @file ebisu_posix.h
- * @brief The system, a lock, a socket of plain TCP and the name servers on
- * POSIX.
+ * @brief The system, its clock, a lock, a socket of plain TCP and the name
+ * servers on POSIX.
  */
 #ifndef _EBISU_POSIX
 #define _EBISU_POSIX
@@ -29,8 +29,12 @@ extern "C" {
  * Each task is a detached thread, which goes by itself when it ends. A delay is
  * nanosleep(), resumed through signals until the whole time has passed. The
  * monotonic clock is CLOCK_MONOTONIC. Its locks, from
- * ebisu_system_lock_create(), are ebisu_posix_lock_t's from the heap. The
- * system has no state, so this one serves everything.
+ * ebisu_system_lock_create(), are ebisu_posix_lock_t's from the heap. Its
+ * clock, from ebisu_system_clock(), is the time of day, CLOCK_REALTIME, as
+ * ebisu_clock_from_system_time() takes it: earlier than the library's source,
+ * a time the system has not set, it is a lower bound. It takes no time from
+ * servers, and has nothing to doubt: the time is what sets the system's, NTP
+ * for instance, keeps. The system has no state, so this one serves everything.
  *
  * \return The system.
  */

@@ -22,6 +22,10 @@ is the [FreeRTOS sample's](../../tio/freertos-sample/board/board.h).
   between, lose nothing; a task waiting for it, without `INCLUDE_vTaskSuspend`,
   waits on past `portMAX_DELAY`'s timeout of 65535 ticks; and it takes from the
   heap only without `configSUPPORT_STATIC_ALLOCATION`, which it gives back.
+- **The clock**: the system has none until the application sets one, then
+  gives the one set, a clock of the test's own as well as a server clock, and
+  none once set to none; and a server clock over the system, given a time,
+  counts on from it with the tick count, 5 seconds of ticks moved on later.
 
 `xTaskCatchUpTicks()` moves the tick count on for what would take minutes, in
 turns of 1000 ticks.

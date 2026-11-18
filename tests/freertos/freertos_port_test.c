@@ -2,6 +2,7 @@
    emulates. Each check that fails prints a line on the console, and the
    program ends with 1 if any did, which QEMU exits with. */
 #include <ebisu_freertos.h>
+#include <ebisu_server_clock.h>
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -451,6 +452,66 @@ static void test_lock_create(void)
     ebisu_lock_release(NULL);
 }
 
+/* The clock. */
+
+#define FIXED_TIME 1800000000
+
+static bool fixed_now(ebisu_clock_t* self, int64_t* out_now)
+{
+    (void)self;
+    *out_now = FIXED_TIME;
+    return true;
+}
+
+/* None until the application sets one, then the one it set, whatever the
+   clock. */
+static void test_clock_set(void)
+{
+    static const ebisu_clock_ops_t fixed_ops = { fixed_now, NULL, NULL };
+    ebisu_clock_t fixed = { &fixed_ops };
+    ebisu_freertos_system_t system;
+    /* Whatever was in it before. */
+    memset(&system, 0xa5, sizeof(system));
+    ebisu_freertos_system_init(&system, SYSTEM_STACK, SYSTEM_PRIORITY);
+    CHECK(ebisu_system_clock(&system.base) == NULL);
+    ebisu_freertos_system_set_clock(&system, &fixed);
+    ebisu_clock_t* got = ebisu_system_clock(&system.base);
+    CHECK(got == &fixed);
+    if (got == &fixed) {
+        int64_t now = 0;
+        CHECK(ebisu_clock_get_time(got, &now));
+        CHECK_EQ(now, FIXED_TIME);
+    }
+    ebisu_freertos_system_set_clock(&system, NULL);
+    CHECK(ebisu_system_clock(&system.base) == NULL);
+}
+
+/* A server clock over the system, set on it, counts on from a time given with
+   the tick count. */
+static void test_clock_counts(void)
+{
+    ebisu_server_clock_t clock;
+    CHECK(ebisu_server_clock_init(&clock, &test_system.base));
+    ebisu_freertos_system_set_clock(&test_system, &clock.base);
+    ebisu_clock_t* system_clock = ebisu_system_clock(&test_system.base);
+    CHECK(system_clock == &clock.base);
+    if (system_clock != &clock.base) {
+        return;
+    }
+    int64_t floor = 0;
+    CHECK(!ebisu_clock_get_time(system_clock, &floor));
+    const int64_t given = floor + 30 * 86400;
+    CHECK(ebisu_server_clock_set_time(&clock, given));
+    int64_t now = 0;
+    CHECK(ebisu_clock_get_time(system_clock, &now));
+    CHECK_EQ(now, given);
+    catch_up(5 * configTICK_RATE_HZ);
+    CHECK(ebisu_clock_get_time(system_clock, &now));
+    CHECK_LE(given + 5, now);
+    CHECK_LE(now, given + 6);
+    ebisu_freertos_system_set_clock(&test_system, NULL);
+}
+
 static void runner(void* arg)
 {
     (void)arg;
@@ -477,6 +538,8 @@ static void runner(void* arg)
     test_lock_waits();
     test_lock_memory();
     test_lock_create();
+    test_clock_set();
+    test_clock_counts();
     print("%d checks, %d failed", checks, failures);
     board_exit(failures == 0 ? 0 : 1);
 }

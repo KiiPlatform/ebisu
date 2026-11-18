@@ -683,11 +683,11 @@ const char* ebisu_openssl_socket_get_cipher(const ebisu_openssl_socket_t* sock)
 
 /* OpenSSL has checked the server's certificate chain, its host name and the
    validity period of each certificate, at the clock's time when there is a
-   clock. While the clock has only a lower bound of the time, its floor, a
-   certificate that is not valid yet cannot be told from one that is: it may
-   simply have been issued after the floor. That alone is accepted here.
-   Everything else OpenSSL refused stands, a certificate that expired before
-   the floor included.
+   clock. While the clock has only a lower bound of the time, a certificate
+   that is not valid yet cannot be told from one that is: it may simply have
+   been issued after the bound. That alone is accepted here. Everything else
+   OpenSSL refused stands, a certificate that expired before the bound
+   included.
 
    A certificate not valid yet at a time the clock had as exact is refused,
    and the time forgotten: more likely than a certificate from the future, the
@@ -800,8 +800,8 @@ static ebisu_sock_code_t
         goto fail;
     }
 
-    /* Checked at the clock's time: its floor until a server has stated the
-       time, that time from then on. Without a clock, at the system's. */
+    /* Checked at the clock's time, or the lower bound it has of it. Without a
+       clock, at the system's. */
     if (ctx->clock != NULL) {
         int64_t now = 0;
         ctx->time_exact = ebisu_clock_get_time(ctx->clock, &now);

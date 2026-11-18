@@ -1,6 +1,7 @@
 #include "catch.hpp"
 #include "kii.h"
 #include "khc.h"
+#include "ebisu_server_clock.h"
 #include "ebisu_version.h"
 #include "ebisu_time.h"
 #include "test_callbacks.h"
@@ -76,9 +77,9 @@ void unlock(void* userdata) {
     --((Platform*)userdata)->depth;
 }
 
-int64_t time_of(ebisu_clock_t* clock, bool* exact) {
+int64_t time_of(ebisu_server_clock_t* clock, bool* exact) {
     int64_t now = 0;
-    *exact = ebisu_clock_get_time(clock, &now);
+    *exact = ebisu_clock_get_time(&clock->base, &now);
     return now;
 }
 
@@ -86,12 +87,16 @@ int64_t time_of(ebisu_clock_t* clock, bool* exact) {
 
 TEST_CASE( "A new clock has the floor khc has, and no time" ) {
     Platform p;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
+    ebisu_server_clock_t clock;
+    REQUIRE( ebisu_server_clock_init(&clock, p.system.system()) );
     khc http;
     khc_init(&http);
     CHECK( clock._floor == http._resp_date_floor );
     CHECK( clock._floor == EBISU_SOURCE_TIME - 7 * 86400 );
+    // The floor a system's time of day earlier than it gives way to.
+    int64_t system_floor = 0;
+    CHECK_FALSE( ebisu_clock_from_system_time(0, &system_floor) );
+    CHECK( system_floor == clock._floor );
 
     bool exact = true;
     CHECK( time_of(&clock, &exact) == clock._floor );
@@ -100,32 +105,32 @@ TEST_CASE( "A new clock has the floor khc has, and no time" ) {
 
 TEST_CASE( "The floor is only ever raised" ) {
     Platform p;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
     const int64_t floor = clock._floor;
     bool exact = true;
 
-    ebisu_clock_set_floor(&clock, floor - 1);
+    ebisu_server_clock_set_floor(&clock, floor - 1);
     CHECK( time_of(&clock, &exact) == floor );
-    ebisu_clock_set_floor(&clock, SOON);
+    ebisu_server_clock_set_floor(&clock, SOON);
     CHECK( time_of(&clock, &exact) == SOON );
     CHECK_FALSE( exact );
-    ebisu_clock_set_floor(&clock, SOON - 100);
+    ebisu_server_clock_set_floor(&clock, SOON - 100);
     CHECK( time_of(&clock, &exact) == SOON );
 }
 
 TEST_CASE( "A time given is counted on with the monotonic clock" ) {
     Platform p;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
     bool exact = false;
 
     // Earlier than the floor: not taken.
-    CHECK( ebisu_clock_set_time(&clock, clock._floor - 1) == false );
+    CHECK( ebisu_server_clock_set_time(&clock, clock._floor - 1) == false );
     CHECK( time_of(&clock, &exact) == clock._floor );
     CHECK_FALSE( exact );
 
-    REQUIRE( ebisu_clock_set_time(&clock, SOON) == true );
+    REQUIRE( ebisu_server_clock_set_time(&clock, SOON) == true );
     CHECK( time_of(&clock, &exact) == SOON );
     CHECK( exact );
     // Whole seconds elapsed.
@@ -149,21 +154,21 @@ TEST_CASE( "A time given is counted on with the monotonic clock" ) {
 
     // A floor set later than the time counted on is the better bound, but a
     // bound only.
-    ebisu_clock_set_floor(&clock, LATER);
+    ebisu_server_clock_set_floor(&clock, LATER);
     CHECK( time_of(&clock, &exact) == LATER );
     CHECK_FALSE( exact );
     // And a time given after it, later still, is the time again.
-    REQUIRE( ebisu_clock_set_time(&clock, LATER + 10) == true );
+    REQUIRE( ebisu_server_clock_set_time(&clock, LATER + 10) == true );
     CHECK( time_of(&clock, &exact) == LATER + 10 );
     CHECK( exact );
 }
 
 TEST_CASE( "A time given stays exact for a day, and is a lower bound after" ) {
     Platform p;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
     bool exact = false;
-    REQUIRE( ebisu_clock_set_time(&clock, SOON) == true );
+    REQUIRE( ebisu_server_clock_set_time(&clock, SOON) == true );
 
     p.now_ms += 24ULL * 3600 * 1000 - 1;
     CHECK( time_of(&clock, &exact) == SOON + 86399 );
@@ -177,27 +182,27 @@ TEST_CASE( "A time given stays exact for a day, and is a lower bound after" ) {
     CHECK_FALSE( exact );
 
     // A response, or the application, giving the time again makes it exact.
-    REQUIRE( ebisu_clock_set_time(&clock, LATER) == true );
+    REQUIRE( ebisu_server_clock_set_time(&clock, LATER) == true );
     CHECK( time_of(&clock, &exact) == LATER );
     CHECK( exact );
 
     // A lower floor than the stale count is no better bound; a higher one is.
-    ebisu_clock_init(&clock, p.system.system());
-    REQUIRE( ebisu_clock_set_time(&clock, SOON) == true );
+    ebisu_server_clock_init(&clock, p.system.system());
+    REQUIRE( ebisu_server_clock_set_time(&clock, SOON) == true );
     p.now_ms += 10ULL * 86400 * 1000;
-    ebisu_clock_set_floor(&clock, SOON + 10 * 86400);
+    ebisu_server_clock_set_floor(&clock, SOON + 10 * 86400);
     CHECK( time_of(&clock, &exact) == SOON + 10 * 86400 );
     CHECK_FALSE( exact );
 }
 
 TEST_CASE( "How long a time stays exact can be set, to never as well" ) {
     Platform p;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
     bool exact = false;
 
-    ebisu_clock_set_exact_for(&clock, 60);
-    REQUIRE( ebisu_clock_set_time(&clock, SOON) == true );
+    ebisu_server_clock_set_exact_for(&clock, 60);
+    REQUIRE( ebisu_server_clock_set_time(&clock, SOON) == true );
     p.now_ms += 59999;
     CHECK( time_of(&clock, &exact) == SOON + 59 );
     CHECK( exact );
@@ -205,40 +210,40 @@ TEST_CASE( "How long a time stays exact can be set, to never as well" ) {
     CHECK( time_of(&clock, &exact) == SOON + 60 );
     CHECK_FALSE( exact );
 
-    ebisu_clock_set_exact_for(&clock, 0);
-    REQUIRE( ebisu_clock_set_time(&clock, LATER) == true );
+    ebisu_server_clock_set_exact_for(&clock, 0);
+    REQUIRE( ebisu_server_clock_set_time(&clock, LATER) == true );
     CHECK( time_of(&clock, &exact) == LATER );
     CHECK_FALSE( exact );
 }
 
 TEST_CASE( "A clock long without a time does not tell a period that has not started" ) {
     Platform p;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
-    REQUIRE( ebisu_clock_set_time(&clock, SOON) == true );
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
+    REQUIRE( ebisu_server_clock_set_time(&clock, SOON) == true );
     p.now_ms += 30ULL * 86400 * 1000;
     // 30 days on: at least SOON + 29.7 days. A certificate issued since
     // cannot be told from one valid now, but one that ended before is expired.
-    CHECK( ebisu_clock_check_validity(&clock, SOON + 30 * 86400, LATER) == EBISU_VALIDITY_OK );
-    CHECK( ebisu_clock_check_validity(&clock, SOON, SOON + 29 * 86400) == EBISU_VALIDITY_EXPIRED );
+    CHECK( ebisu_clock_check_validity(&clock.base, SOON + 30 * 86400, LATER) == EBISU_VALIDITY_OK );
+    CHECK( ebisu_clock_check_validity(&clock.base, SOON, SOON + 29 * 86400) == EBISU_VALIDITY_EXPIRED );
 }
 
 TEST_CASE( "Forgetting the time keeps what was counted, less 1%, as the floor" ) {
     Platform p;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
     bool exact = true;
 
     // Without a time, nothing to forget.
     const int64_t floor = clock._floor;
-    ebisu_clock_forget_time(&clock);
+    ebisu_clock_forget_time(&clock.base);
     CHECK( time_of(&clock, &exact) == floor );
     CHECK_FALSE( exact );
 
     // A fresh time: counted, less 1%.
-    REQUIRE( ebisu_clock_set_time(&clock, SOON) == true );
+    REQUIRE( ebisu_server_clock_set_time(&clock, SOON) == true );
     p.now_ms += 3600 * 1000ULL;
-    ebisu_clock_forget_time(&clock);
+    ebisu_clock_forget_time(&clock.base);
     CHECK( time_of(&clock, &exact) == SOON + 3600 - 36 );
     CHECK_FALSE( exact );
     // And it stays forgotten as the monotonic clock goes on.
@@ -247,59 +252,59 @@ TEST_CASE( "Forgetting the time keeps what was counted, less 1%, as the floor" )
     CHECK_FALSE( exact );
 
     // A stale time: counted less 1% already.
-    REQUIRE( ebisu_clock_set_time(&clock, LATER) == true );
+    REQUIRE( ebisu_server_clock_set_time(&clock, LATER) == true );
     p.now_ms += 2ULL * 86400 * 1000;
-    ebisu_clock_forget_time(&clock);
+    ebisu_clock_forget_time(&clock.base);
     CHECK( time_of(&clock, &exact) == LATER + 2 * 86400 - 1728 );
     CHECK_FALSE( exact );
 
     // After the monotonic clock went back, the time given.
-    ebisu_clock_init(&clock, p.system.system());
-    REQUIRE( ebisu_clock_set_time(&clock, SOON) == true );
+    ebisu_server_clock_init(&clock, p.system.system());
+    REQUIRE( ebisu_server_clock_set_time(&clock, SOON) == true );
     p.now_ms -= 1000;
-    ebisu_clock_forget_time(&clock);
+    ebisu_clock_forget_time(&clock.base);
     CHECK( time_of(&clock, &exact) == SOON );
     CHECK_FALSE( exact );
 
     // A time given again is the time again.
-    REQUIRE( ebisu_clock_set_time(&clock, LATER) == true );
+    REQUIRE( ebisu_server_clock_set_time(&clock, LATER) == true );
     CHECK( time_of(&clock, &exact) == LATER );
     CHECK( exact );
 }
 
 TEST_CASE( "A validity period is checked against the time, or against its floor" ) {
     Platform p;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
-    ebisu_clock_set_floor(&clock, SOON);
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
+    ebisu_server_clock_set_floor(&clock, SOON);
 
     // With the floor only: expired if it ended before it, valid otherwise,
     // even if it starts later, which could not be told from now.
-    CHECK( ebisu_clock_check_validity(&clock, 0, SOON - 1) == EBISU_VALIDITY_EXPIRED );
-    CHECK( ebisu_clock_check_validity(&clock, 0, SOON) == EBISU_VALIDITY_OK );
-    CHECK( ebisu_clock_check_validity(&clock, LATER, LATER + 86400) == EBISU_VALIDITY_OK );
+    CHECK( ebisu_clock_check_validity(&clock.base, 0, SOON - 1) == EBISU_VALIDITY_EXPIRED );
+    CHECK( ebisu_clock_check_validity(&clock.base, 0, SOON) == EBISU_VALIDITY_OK );
+    CHECK( ebisu_clock_check_validity(&clock.base, LATER, LATER + 86400) == EBISU_VALIDITY_OK );
 
     // With the time: either end.
-    REQUIRE( ebisu_clock_set_time(&clock, LATER) == true );
-    CHECK( ebisu_clock_check_validity(&clock, SOON, LATER - 1) == EBISU_VALIDITY_EXPIRED );
-    CHECK( ebisu_clock_check_validity(&clock, LATER + 1, LATER + 86400) == EBISU_VALIDITY_NOT_YET_VALID );
+    REQUIRE( ebisu_server_clock_set_time(&clock, LATER) == true );
+    CHECK( ebisu_clock_check_validity(&clock.base, SOON, LATER - 1) == EBISU_VALIDITY_EXPIRED );
+    CHECK( ebisu_clock_check_validity(&clock.base, LATER + 1, LATER + 86400) == EBISU_VALIDITY_NOT_YET_VALID );
     // Both ends inclusive.
-    CHECK( ebisu_clock_check_validity(&clock, LATER, LATER) == EBISU_VALIDITY_OK );
-    CHECK( ebisu_clock_check_validity(&clock, SOON, LATER + 86400) == EBISU_VALIDITY_OK );
+    CHECK( ebisu_clock_check_validity(&clock.base, LATER, LATER) == EBISU_VALIDITY_OK );
+    CHECK( ebisu_clock_check_validity(&clock.base, SOON, LATER + 86400) == EBISU_VALIDITY_OK );
 }
 
 TEST_CASE( "With a lock set, the clock is used and read only with it held" ) {
     Platform p;
     p.locked = true;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
-    ebisu_clock_set_lock(&clock, p.lock.get());
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
+    ebisu_server_clock_set_lock(&clock, p.lock.get());
 
     int64_t now = 0;
-    ebisu_clock_set_floor(&clock, SOON);
-    REQUIRE( ebisu_clock_set_time(&clock, LATER) == true );
-    ebisu_clock_get_time(&clock, &now);
-    ebisu_clock_check_validity(&clock, 0, LATER);
+    ebisu_server_clock_set_floor(&clock, SOON);
+    REQUIRE( ebisu_server_clock_set_time(&clock, LATER) == true );
+    ebisu_clock_get_time(&clock.base, &now);
+    ebisu_clock_check_validity(&clock.base, 0, LATER);
 
     CHECK( p.locks == 4 );
     CHECK( p.depth == 0 );
@@ -307,18 +312,75 @@ TEST_CASE( "With a lock set, the clock is used and read only with it held" ) {
     CHECK( p.clock_reads_unlocked == 0 );
 }
 
-TEST_CASE( "kii_set_clock() needs a monotonic clock" ) {
+TEST_CASE( "Without a monotonic clock, the clock has its floor alone, and takes no time" ) {
+    ebisu_server_clock_t clock;
+    CHECK_FALSE( ebisu_server_clock_init(&clock, NULL) );
+    const int64_t floor = clock._floor;
+    bool exact = true;
+    CHECK_FALSE( ebisu_server_clock_set_time(&clock, SOON) );
+    CHECK_FALSE( ebisu_server_clock_override_time(&clock, SOON) );
+    clock.base.ops->stated(&clock.base, SOON);
+    CHECK( time_of(&clock, &exact) == floor );
+    CHECK_FALSE( exact );
+
+    // A system without monotonic_ms is none either.
+    khct::cb::SystemCtx system;
+    system.ops.monotonic_ms = nullptr;
+    CHECK_FALSE( ebisu_server_clock_init(&clock, system.system()) );
+    CHECK_FALSE( ebisu_server_clock_override_time(&clock, floor - 1) );
+    CHECK( time_of(&clock, &exact) == floor );
+    CHECK_FALSE( exact );
+}
+
+TEST_CASE( "A time overriding the clock's is taken, one earlier than the floor too" ) {
+    Platform p;
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
+    bool exact = false;
+    ebisu_server_clock_set_floor(&clock, LATER);
+
+    // As a server's, earlier than the floor: not taken.
+    CHECK_FALSE( ebisu_server_clock_set_time(&clock, SOON) );
+    CHECK( time_of(&clock, &exact) == LATER );
+    CHECK_FALSE( exact );
+
+    // Overriding: the time, the floor lowered to it, and counted on.
+    REQUIRE( ebisu_server_clock_override_time(&clock, SOON) );
+    CHECK( clock._floor == SOON );
+    CHECK( time_of(&clock, &exact) == SOON );
+    CHECK( exact );
+    p.now_ms += 5000;
+    CHECK( time_of(&clock, &exact) == SOON + 5 );
+    CHECK( exact );
+
+    // Over a time the clock has, later: taken, the floor left as it is.
+    REQUIRE( ebisu_server_clock_override_time(&clock, LATER) );
+    CHECK( clock._floor == SOON );
+    CHECK( time_of(&clock, &exact) == LATER );
+    CHECK( exact );
+
+    // A time given like any other: the next a server states replaces it.
+    REQUIRE( ebisu_server_clock_set_time(&clock, SOON + 100) );
+    CHECK( time_of(&clock, &exact) == SOON + 100 );
+    CHECK( exact );
+}
+
+TEST_CASE( "kii_set_clock() needs a clock that gives the time" ) {
     kii_t kii;
     kii_init(&kii);
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, NULL);
-    CHECK( kii_set_clock(&kii, &clock) == KII_ERR_FAIL );
+    const ebisu_clock_ops_t no_now = { nullptr, nullptr, nullptr };
+    ebisu_clock_t not_a_clock = { &no_now };
+    CHECK( kii_set_clock(&kii, &not_a_clock) == KII_ERR_FAIL );
+    CHECK( kii._clock == nullptr );
+    ebisu_clock_t no_ops = { nullptr };
+    CHECK( kii_set_clock(&kii, &no_ops) == KII_ERR_FAIL );
     CHECK( kii._clock == nullptr );
 
     Platform p;
-    ebisu_clock_init(&clock, p.system.system());
-    CHECK( kii_set_clock(&kii, &clock) == KII_ERR_OK );
-    CHECK( kii._clock == &clock );
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
+    CHECK( kii_set_clock(&kii, &clock.base) == KII_ERR_OK );
+    CHECK( kii._clock == &clock.base );
     CHECK( kii_set_clock(&kii, NULL) == KII_ERR_OK );
     CHECK( kii._clock == nullptr );
 }
@@ -384,10 +446,10 @@ std::string response(const std::string& date) {
 
 TEST_CASE( "The first connection has the floor, and the next the time the server stated" ) {
     Platform p;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
-    Client c(&clock);
-    REQUIRE( kii_set_clock(&c.kii, &clock) == KII_ERR_OK );
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
+    Client c(&clock.base);
+    REQUIRE( kii_set_clock(&c.kii, &clock.base) == KII_ERR_OK );
     c.responses = { response(date_header(SOON)), response(""), response(date_header(LATER)) };
 
     REQUIRE( c.get() == KII_ERR_OK );
@@ -412,12 +474,12 @@ TEST_CASE( "The first connection has the floor, and the next the time the server
 
 TEST_CASE( "Every kii_t sharing a clock has the time one of them got" ) {
     Platform p;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
-    Client first(&clock);
-    Client second(&clock);
-    REQUIRE( kii_set_clock(&first.kii, &clock) == KII_ERR_OK );
-    REQUIRE( kii_set_clock(&second.kii, &clock) == KII_ERR_OK );
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
+    Client first(&clock.base);
+    Client second(&clock.base);
+    REQUIRE( kii_set_clock(&first.kii, &clock.base) == KII_ERR_OK );
+    REQUIRE( kii_set_clock(&second.kii, &clock.base) == KII_ERR_OK );
     first.responses = { response(date_header(SOON)) };
     second.responses = { response("") };
 
@@ -430,13 +492,13 @@ TEST_CASE( "Every kii_t sharing a clock has the time one of them got" ) {
 
 TEST_CASE( "A date earlier than the clock's floor does not set it" ) {
     Platform p;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
     // Saved by the device: later than the server says, which khc's own floor
     // cannot know.
-    ebisu_clock_set_floor(&clock, LATER);
-    Client c(&clock);
-    REQUIRE( kii_set_clock(&c.kii, &clock) == KII_ERR_OK );
+    ebisu_server_clock_set_floor(&clock, LATER);
+    Client c(&clock.base);
+    REQUIRE( kii_set_clock(&c.kii, &clock.base) == KII_ERR_OK );
     c.responses = { response(date_header(SOON)) };
     REQUIRE( c.get() == KII_ERR_OK );
     REQUIRE( kii_get_resp_date(&c.kii) == SOON );
@@ -448,10 +510,10 @@ TEST_CASE( "A date earlier than the clock's floor does not set it" ) {
 
 TEST_CASE( "A response over plain HTTP gives the clock no time" ) {
     Platform p;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
-    Client c(&clock);
-    REQUIRE( kii_set_clock(&c.kii, &clock) == KII_ERR_OK );
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
+    Client c(&clock.base);
+    REQUIRE( kii_set_clock(&c.kii, &clock.base) == KII_ERR_OK );
     kii_enable_insecure_http(&c.kii, true);
     c.responses = { response(date_header(SOON)), response(date_header(LATER)) };
 
@@ -469,11 +531,115 @@ TEST_CASE( "A response over plain HTTP gives the clock no time" ) {
     CHECK( exact );
 }
 
+namespace {
+
+// A clock that keeps the time itself, as the system's: it has no stated.
+struct KeptClock {
+    ebisu_clock_t base;
+    int reads;
+};
+
+bool kept_now(ebisu_clock_t* self, int64_t* out_now) {
+    ++EBISU_CONTAINER_OF(self, KeptClock, base)->reads;
+    *out_now = LATER;
+    return true;
+}
+
+const ebisu_clock_ops_t kept_ops = { kept_now, nullptr, nullptr };
+
+} // namespace
+
+TEST_CASE( "A clock that keeps the time itself is given none, and is read" ) {
+    KeptClock kept = { { &kept_ops }, 0 };
+    Client c(&kept.base);
+    REQUIRE( kii_set_clock(&c.kii, &kept.base) == KII_ERR_OK );
+    c.responses = { response(date_header(SOON)) };
+    REQUIRE( c.get() == KII_ERR_OK );
+    REQUIRE( kii_get_resp_date(&c.kii) == SOON );
+    REQUIRE( c.times_at_connect.size() == 1 );
+    CHECK( c.times_at_connect[0].first == LATER );
+    CHECK( c.times_at_connect[0].second );
+    CHECK( kept.reads == 1 );
+    // And forgetting its time leaves it as it is.
+    ebisu_clock_forget_time(&kept.base);
+    int64_t now = 0;
+    CHECK( ebisu_clock_get_time(&kept.base, &now) );
+    CHECK( now == LATER );
+}
+
+namespace {
+
+// A clock of the application's over a time source of its own, an NTP client,
+// keeping the time in a server clock it holds, as the kii README shows.
+struct NtpClock {
+    ebisu_clock_t base;
+    ebisu_server_clock_t kept;
+    int syncs_asked;
+};
+
+bool ntp_now(ebisu_clock_t* self, int64_t* out_now) {
+    NtpClock* clock = EBISU_CONTAINER_OF(self, NtpClock, base);
+    return ebisu_clock_get_time(&clock->kept.base, out_now);
+}
+
+void ntp_doubt(ebisu_clock_t* self) {
+    NtpClock* clock = EBISU_CONTAINER_OF(self, NtpClock, base);
+    ebisu_clock_forget_time(&clock->kept.base);
+    ++clock->syncs_asked;
+}
+
+const ebisu_clock_ops_t ntp_ops = { ntp_now, nullptr, ntp_doubt };
+
+} // namespace
+
+TEST_CASE( "A clock of the application's keeps the time its own source gives" ) {
+    Platform p;
+    NtpClock ntp;
+    ntp.base.ops = &ntp_ops;
+    ntp.syncs_asked = 0;
+    REQUIRE( ebisu_server_clock_init(&ntp.kept, p.system.system()) );
+    int64_t now = 0;
+
+    // Until the source gives a time, the floor.
+    CHECK_FALSE( ebisu_clock_get_time(&ntp.base, &now) );
+    CHECK( now == ntp.kept._floor );
+
+    // The source's time, counted on.
+    REQUIRE( ebisu_server_clock_set_time(&ntp.kept, SOON) );
+    p.now_ms += 5000;
+    CHECK( ebisu_clock_get_time(&ntp.base, &now) );
+    CHECK( now == SOON + 5 );
+
+    // Set on a kii_t, it is given no server's Date: it has no stated.
+    Client c(&ntp.base);
+    REQUIRE( kii_set_clock(&c.kii, &ntp.base) == KII_ERR_OK );
+    c.responses = { response(date_header(LATER)) };
+    REQUIRE( c.get() == KII_ERR_OK );
+    REQUIRE( c.times_at_connect.size() == 1 );
+    CHECK( c.times_at_connect[0].first == SOON + 5 );
+    CHECK( c.times_at_connect[0].second );
+    CHECK( ebisu_clock_get_time(&ntp.base, &now) );
+    CHECK( now == SOON + 5 );
+
+    // A socket doubting it reaches the application, which can ask its source
+    // for the time, and the time kept is a lower bound until then.
+    ebisu_clock_forget_time(&ntp.base);
+    CHECK( ntp.syncs_asked == 1 );
+    CHECK_FALSE( ebisu_clock_get_time(&ntp.base, &now) );
+    CHECK( now <= SOON + 5 );
+    CHECK( now >= SOON );
+
+    // The source's next time is the time again.
+    REQUIRE( ebisu_server_clock_set_time(&ntp.kept, LATER) );
+    CHECK( ebisu_clock_get_time(&ntp.base, &now) );
+    CHECK( now == LATER );
+}
+
 TEST_CASE( "Without a clock set, responses set none" ) {
     Platform p;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
-    Client c(&clock);
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
+    Client c(&clock.base);
     c.responses = { response(date_header(SOON)) };
     REQUIRE( c.get() == KII_ERR_OK );
     bool exact = true;
@@ -488,17 +654,17 @@ TEST_CASE( "A certificate renewed while the clock fell behind is refused once, t
     // next connection is checked against a lower bound and goes through, and
     // its response gives the clock the time again.
     Platform p;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, p.system.system());
-    Client c(&clock);
-    REQUIRE( kii_set_clock(&c.kii, &clock) == KII_ERR_OK );
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, p.system.system());
+    Client c(&clock.base);
+    REQUIRE( kii_set_clock(&c.kii, &clock.base) == KII_ERR_OK );
     int64_t not_before = 0;
     const int64_t not_after = LATER + 365 * 86400;
     int refused = 0;
     auto check_certificate = c.http_ctx.on_connect;
     c.http_ctx.on_connect = [&](void* ctx, const char* host, unsigned int port) {
-        if (ebisu_clock_check_validity(&clock, not_before, not_after) != EBISU_VALIDITY_OK) {
-            ebisu_clock_forget_time(&clock);
+        if (ebisu_clock_check_validity(&clock.base, not_before, not_after) != EBISU_VALIDITY_OK) {
+            ebisu_clock_forget_time(&clock.base);
             ++refused;
             return EBISU_SOCK_FAIL;
         }
