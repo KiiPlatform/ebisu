@@ -314,10 +314,13 @@ the request had timed out or been cancelled, when it is not called again.
 `khc_get_resp_date()` gives the server's time from the response's `Date`
 header, as seconds since the epoch, for a device without a real-time clock. It
 takes the three forms RFC 9110 has recipients take, with UTC for GMT, and gives
--1 for anything else, for several `Date`s that disagree, and for a date before
-the library's source, which no server running properly sends. The time is as
-trustworthy as the connection it came through, so verify the server's
-certificate in the socket callbacks.
+-1 for anything else, for several `Date`s that disagree, for a date before the
+library's source, which no server running properly sends, and for one more than
+15 years after it, which says the server's clock is wrong too. That bound is a
+build setting, `-DEBISU_DATE_CEILING_YEARS=<years>`, 0 for none, as tlsdate's
+is, whose range khc takes a server's time in. The time is as trustworthy as the
+connection it came through, so verify the server's certificate in the socket
+callbacks.
 
 ## Logging
 

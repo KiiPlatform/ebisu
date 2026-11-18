@@ -525,6 +525,15 @@ Until a server states its time, it has a floor: a time it is known not to be
 earlier than. From the first response on, it has the time the response states,
 counted on with the monotonic clock.
 
+As tlsdate does, kii takes the time only from a connection the server is
+authenticated on, and only within a range: never from plain HTTP,
+`kii_enable_insecure_http()`, where anyone on the way could write it, and never
+from a date earlier than the library's source or later than
+`EBISU_DATE_CEILING_YEARS`, 15 unless the build sets another, after it, which
+khc refuses (see the [khc README](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#results)).
+A `kii_t` whose socket doesn't check the server's certificate should not be
+given the clock either.
+
 ```c
     ebisu_clock_t clock;
     ebisu_clock_init(&clock, &system);

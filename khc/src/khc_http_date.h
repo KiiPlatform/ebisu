@@ -3,6 +3,13 @@
 
 #include "khc.h"
 
+/* The latest date khc takes from a response, in years after the library's
+ * source, EBISU_SOURCE_TIME: a build setting, -DEBISU_DATE_CEILING_YEARS=<n>
+ * in CMake or the definition elsewhere. 0 takes any. */
+#ifndef EBISU_DATE_CEILING_YEARS
+#define EBISU_DATE_CEILING_YEARS 15
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {

@@ -917,6 +917,10 @@ kii_code_t kii_set_session(kii_t* kii, kii_session_t* session);
  * it, is given to the clock, which counts on from it. Every kii_t of a device
  * may share one clock, ebisu_clock_set_lock() permitting.
  *
+ * The time is only as good as the connection it came through. So a kii_t with
+ * kii_enable_insecure_http() gives the clock none, and one whose socket does
+ * not check the server's certificate should not be given the clock.
+ *
  * \param [out] kii kii_t instance.
  * \param [in] clock Clock to set, or NULL.
  * \return KII_ERR_FAIL if the clock has no monotonic clock.

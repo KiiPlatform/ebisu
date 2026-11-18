@@ -588,6 +588,30 @@ TEST_CASE( "A Date among a chunked response's trailers is not taken" ) {
     CHECK( khc_get_resp_date(&h.http) == -1 );
 }
 
+TEST_CASE( "A date more than EBISU_DATE_CEILING_YEARS after the source is not taken" ) {
+    Http h;
+#if EBISU_DATE_CEILING_YEARS > 0
+    // In years of 365.2425 days.
+    const int64_t ceiling = EBISU_SOURCE_TIME + (int64_t)EBISU_DATE_CEILING_YEARS * 31556952;
+    const std::string beyond = "Date: " + written(IMF, ceiling + 1);
+    h.script.responses = {
+        response("HTTP/1.1 200 OK", { "Date: " + written(IMF, ceiling) }),
+        response("HTTP/1.1 200 OK", { beyond }),
+    };
+    const int64_t expected[] = { ceiling, -1 };
+#else
+    // Built to take any: the last second of 2999.
+    h.script.responses = {
+        response("HTTP/1.1 200 OK", { "Date: " + written(IMF, 32503679999LL) }),
+    };
+    const int64_t expected[] = { 32503679999LL };
+#endif
+    for (int64_t e : expected) {
+        REQUIRE( h.get() == KHC_ERR_OK );
+        CHECK( khc_get_resp_date(&h.http) == e );
+    }
+}
+
 TEST_CASE( "khc_init() sets a floor shortly before the source was built" ) {
     Http h(true);
     REQUIRE( h.http._resp_date_floor <= EBISU_SOURCE_TIME );

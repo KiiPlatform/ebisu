@@ -788,8 +788,10 @@ bool khc_get_resp_header_skipped(khc* khc);
  * taken for GMT. RFC 850's two-digit year is read as RFC 9110 asks, against
  * the year the library's source dates from. Anything else counts as no Date
  * header, and so does a response with several that disagree or one in another
- * form, or a date earlier than the source of the library, which no server
- * running properly can send.
+ * form, a date earlier than the source of the library, which no server running
+ * properly can send, or one more than EBISU_DATE_CEILING_YEARS after it, 15
+ * unless the build sets another, 0 for no limit: a server's clock that far
+ * ahead is wrong too.
  *
  * The date is cleared when khc_perform(khc*) starts, at each response's status
  * line, so that an interim 1xx response's never stands for the final one's, and
