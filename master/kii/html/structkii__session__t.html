@@ -87,7 +87,7 @@ $(function() {
 </ul>
 <p>A request whose body was built in the buffer set by <a class="el" href="kii_8h.html#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a> is then sent again; see <a class="el" href="kii_8h.html#ae33b3be622e96687b213d0fbfd6edf0f" title="Attach a session, or detach it with NULL.">kii_set_session()</a>.</p>
 <p>Every <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> acting as the thing must use the same session: a refresh invalidates the previous tokens, which would fail the requests of a <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> holding its own copy, and sharing renews once for all of them.</p>
-<p>Initialize with <a class="el" href="kii_8h.html#a58ff8b06b612885dea237c6ba31d1820" title="Initializes kii_session_t instance.">kii_session_init()</a>, set the lock and the clock, then attach with <a class="el" href="kii_8h.html#ae33b3be622e96687b213d0fbfd6edf0f" title="Attach a session, or detach it with NULL.">kii_set_session()</a>. </p>
+<p>Initialize with <a class="el" href="kii_8h.html#a58ff8b06b612885dea237c6ba31d1820" title="Initializes kii_session_t instance.">kii_session_init()</a>, set the lock and the clock, then attach with <a class="el" href="kii_8h.html#ae33b3be622e96687b213d0fbfd6edf0f" title="Attach a session, or detach it with NULL.">kii_set_session()</a>. Built with EBISU_NO_SESSION, as -DEBISU_SESSION=OFF builds it, none can be attached. </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/<a class="el" href="kii_8h_source.html">kii.h</a></li>
 </ul>

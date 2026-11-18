@@ -790,7 +790,7 @@ Functions</h2></td></tr>
 </ul>
 <p>A request whose body was built in the buffer set by <a class="el" href="#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a> is then sent again; see <a class="el" href="#ae33b3be622e96687b213d0fbfd6edf0f" title="Attach a session, or detach it with NULL.">kii_set_session()</a>.</p>
 <p>Every <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> acting as the thing must use the same session: a refresh invalidates the previous tokens, which would fail the requests of a <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> holding its own copy, and sharing renews once for all of them.</p>
-<p>Initialize with <a class="el" href="#a58ff8b06b612885dea237c6ba31d1820" title="Initializes kii_session_t instance.">kii_session_init()</a>, set the lock and the clock, then attach with <a class="el" href="#ae33b3be622e96687b213d0fbfd6edf0f" title="Attach a session, or detach it with NULL.">kii_set_session()</a>. </p>
+<p>Initialize with <a class="el" href="#a58ff8b06b612885dea237c6ba31d1820" title="Initializes kii_session_t instance.">kii_session_init()</a>, set the lock and the clock, then attach with <a class="el" href="#ae33b3be622e96687b213d0fbfd6edf0f" title="Attach a session, or detach it with NULL.">kii_set_session()</a>. Built with EBISU_NO_SESSION, as -DEBISU_SESSION=OFF builds it, none can be attached. </p>
 
 </div>
 </div>
@@ -3507,6 +3507,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 <li>A renewal runs inside the request that needed it and takes about 1.5 KB more stack than a request does.</li>
 </ul>
 <p>Every <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> acting as the same thing must be attached to the same session. Attaching replaces the author held by kii with the session's, so attach before logging in or onboarding through kii, or give the session the author with <a class="el" href="#a72459c7ed527d9feb934be7287570402" title="Set the author held by the session, typically one saved earlier.">kii_session_set_author()</a>.</p>
+<p>Built with EBISU_NO_SESSION, as -DEBISU_SESSION=OFF builds it, kii has no sessions: this refuses any but NULL, and a token the server refuses fails the request as it does without one.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
@@ -3514,7 +3515,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>KII_ERR_FAIL if the session has no lock or clock set. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>KII_ERR_FAIL if the session has no lock or clock set, or for any session when built with EBISU_NO_SESSION. </dd></dl>
 
 </div>
 </div>
@@ -3675,7 +3676,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 </div><div class="memdoc">
 
 <p>Start the MQTT task with an endpoint of the application's. </p>
-<p>As <a class="el" href="#a86504ef8fee1d1ca4ff5add143557912" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and the call...">kii_start_push_task()</a>, but for a broker the application has the credentials of, obtained some other way: the task connects with a copy of endpoint, rather than installing push or using what onboarding returned, and subscribes to its topic. Neither the HTTP socket nor the buffer set by <a class="el" href="#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a> is needed.</p>
+<p>As <a class="el" href="#a86504ef8fee1d1ca4ff5add143557912" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and the call...">kii_start_push_task()</a>, but for a broker the application has the credentials of, obtained some other way: the task connects with a copy of endpoint, rather than installing push or using what onboarding returned, and subscribes to its topic. The copy replaces the endpoint onboarding returned, so a task <a class="el" href="#a86504ef8fee1d1ca4ff5add143557912" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and the call...">kii_start_push_task()</a> starts later installs push and fetches its endpoint again. Neither the HTTP socket nor the buffer set by <a class="el" href="#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a> is needed.</p>
 <p>When the broker refuses the credentials, the task asks the callback set by <a class="el" href="#a547c8e56022dc1ba57f3ee70776e65db" title="Set the callback asked for new credentials when the broker refuses those of a task started with kii_s...">kii_set_cb_mqtt_credentials()</a> for new ones. Without one, or if it gives none, the task ends, with KII_MQTT_ERR_CREDENTIALS. When it can't reach the broker, it goes on trying, with the waits <a class="el" href="#a01e28622c4c67c8b27e81522acea3070" title="Set the longest wait between the push task&#39;s attempts to reach the cloud.">kii_set_mqtt_retry_wait_max()</a> bounds.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -3709,7 +3710,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 </div><div class="memdoc">
 
 <p>Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and the callback set by <a class="el" href="#a1a63b9c50417f35ee24d2258ab529e9d" title="Set the callback the MQTT task gives each message it receives.">kii_set_cb_mqtt_message()</a> is called when message is delivered to the thing. The task is created by task_create of the system set by <a class="el" href="#a19398ca6a022a1025714df3ce49e4389" title="Set the system: tasks, delays and a monotonic clock.">kii_set_system()</a>. If there is none, or it fails to create the task, no task is started and KII_ERR_CREATE_TASK is returned. </p>
-<p>After <a class="el" href="#adaf6e5b9a952127cacd4cbf2e911039c" title="Execute onboarding.">kii_ti_onboard()</a> returned an MQTT endpoint for the thing kii acts as, the task connects with that endpoint. Otherwise it installs push and fetches the endpoint first. If the broker refuses the credentials, it fetches new ones for the same installation; or, when kii's session renews its token by onboarding again, it onboards again for new ones, which renews the token too.</p>
+<p>After <a class="el" href="#adaf6e5b9a952127cacd4cbf2e911039c" title="Execute onboarding.">kii_ti_onboard()</a> returned an MQTT endpoint for the thing kii acts as, the task connects with that endpoint, unless a task started by <a class="el" href="#a9a45e46fde50b06e7c42d74cabd9a853" title="Start the MQTT task with an endpoint of the application&#39;s.">kii_start_mqtt_task_with_endpoint()</a> has replaced it since. Otherwise it installs push and fetches the endpoint first. If the broker refuses the credentials, it fetches new ones for the same installation; or, when kii's session renews its token by onboarding again, it onboards again for new ones, which renews the token too.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
