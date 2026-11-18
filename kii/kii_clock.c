@@ -13,7 +13,9 @@ kii_code_t kii_set_clock(kii_t* kii, ebisu_clock_t* clock)
 
 void _kii_clock_record(kii_t* kii)
 {
-    if (kii->_clock == NULL) {
+    /* A time is only as good as the connection it came through: none from
+     * plain HTTP, where anyone on the way can write it. */
+    if (kii->_clock == NULL || kii->_khc._enable_insecure) {
         return;
     }
     int64_t date = khc_get_resp_date(&kii->_khc);

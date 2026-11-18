@@ -3,6 +3,11 @@
 #include <string.h>
 
 #include "ebisu_time.h"
+#include "ebisu_version.h"
+
+/* EBISU_DATE_CEILING_YEARS after the source, in years of 365.2425 days. */
+#define _DATE_CEILING \
+    (EBISU_SOURCE_TIME + (int64_t)EBISU_DATE_CEILING_YEARS * 31556952)
 
 static const char _DAY_NAMES[7][3] = {
     { 'S', 'u', 'n' }, { 'M', 'o', 'n' }, { 'T', 'u', 'e' }, { 'W', 'e', 'd' },
@@ -212,6 +217,14 @@ void _record_resp_date(khc* khc, const char* line, size_t line_len)
     if (date == -1) {
         return;
     }
+#if EBISU_DATE_CEILING_YEARS > 0
+    /* A date that far ahead says the server's clock is wrong, as one before
+     * the floor does: it is taken for none, as tlsdate ignores a time outside
+     * its range. */
+    if (date > _DATE_CEILING) {
+        date = -2;
+    }
+#endif
     /* A malformed Date, or Dates that disagree, leave the response without
      * one rather than with whichever came last. -2 holds that until the next
      * response's status line. */

@@ -41,6 +41,19 @@ option(EBISU_SESSION "Compile in sessions, which renew a thing's tokens" ON)
 if(NOT EBISU_SESSION)
     add_compile_definitions(EBISU_NO_SESSION)
 endif()
+# The latest date khc takes from a response's Date header, for
+# khc_get_resp_date(), kii_get_resp_date() and the clock given with
+# kii_set_clock(), in years after the library's source. A later one says the
+# server's clock is wrong, as one before the source does, and is taken for
+# none, as tlsdate ignores a time outside its range. 0 takes any. A build
+# without CMake defines EBISU_DATE_CEILING_YEARS for the same.
+set(EBISU_DATE_CEILING_YEARS 15 CACHE STRING
+    "Years after the source past which a response's date is not taken, 0 for none")
+if(NOT EBISU_DATE_CEILING_YEARS MATCHES "^[0-9]+$")
+    message(FATAL_ERROR
+        "EBISU_DATE_CEILING_YEARS must be a number of years, 0 or more: ${EBISU_DATE_CEILING_YEARS}")
+endif()
+add_compile_definitions(EBISU_DATE_CEILING_YEARS=${EBISU_DATE_CEILING_YEARS})
 
 # On by default so a warning cannot quietly return: the four fixed in #192 sat
 # unnoticed for years because the build target only ran doxygen and compiled

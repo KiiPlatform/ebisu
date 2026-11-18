@@ -28,10 +28,10 @@ extern "C" {
  * device without a real-time clock has none until something tells it. Until
  * then the clock has a floor, a time it is known not to be earlier than: when
  * the library's source was built, or a time the application saved and set with
- * ebisu_clock_set_floor(). Once a server states its time in a response to a
- * kii_t the clock is set on with kii_set_clock(), or the application sets one
- * with ebisu_clock_set_time(), the clock counts on from it with the monotonic
- * clock.
+ * ebisu_clock_set_floor(). Once a server states its time in a response over
+ * TLS to a kii_t the clock is set on with kii_set_clock(), or the application
+ * sets one with ebisu_clock_set_time(), the clock counts on from it with the
+ * monotonic clock.
  *
  * So a check made before then has a lower bound of the time only: a certificate
  * that expired before it is known to have expired, but one that is not valid
