@@ -524,7 +524,7 @@ TEST_CASE("tio against Kii Cloud")
     progress("device onboarded");
     // The broker refuses the MQTT credentials onboarding returned, as it would
     // once they were revoked.
-    strcpy(d.handler._kii._onboarded_endpoint.password, "ltest-refused");
+    strcpy(d.handler._kii._mqtt_endpoint.password, "ltest-refused");
     forget_sent(d);
     StopDevice stop_device{d};
     REQUIRE( tio_handler_start(&d.handler, NULL, cb_action, &d) == TIO_ERR_OK );

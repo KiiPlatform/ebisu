@@ -173,11 +173,11 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     // As onboarding leaves it, so that the task goes straight to the broker.
     strcpy(kii._author.author_id, "th.1");
     strcpy(kii._onboarded_thing_id, "th.1");
-    strcpy(kii._onboarded_endpoint.host, "mqtt.example.com");
-    strcpy(kii._onboarded_endpoint.username, "user");
-    strcpy(kii._onboarded_endpoint.password, "password");
-    strcpy(kii._onboarded_endpoint.topic, "topic");
-    kii._onboarded_endpoint.port_ssl = 8883;
+    strcpy(kii._mqtt_endpoint.host, "mqtt.example.com");
+    strcpy(kii._mqtt_endpoint.username, "user");
+    strcpy(kii._mqtt_endpoint.password, "password");
+    strcpy(kii._mqtt_endpoint.topic, "topic");
+    kii._mqtt_endpoint.port_ssl = 8883;
 
     mqtt_start_task(&kii);
     return 0;

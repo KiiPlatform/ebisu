@@ -344,7 +344,9 @@ static kii_code_t _start_task(kii_t* kii, uint32_t keep_alive_interval,
     }
     kii->_mqtt_endpoint_given = endpoint != NULL;
     if (endpoint != NULL) {
+        // In place of the one onboarding returned, if any: kii keeps one.
         kii->_mqtt_endpoint = *endpoint;
+        kii->_onboarded_thing_id[0] = '\0';
     }
     kii->_keep_alive_interval = (uint16_t)keep_alive_interval;
     // Before creating it, as it may have finished by the time that returns.
