@@ -6,8 +6,9 @@
 # - a program for a Cortex-M3 without an operating system, a thing that
 #   onboards and runs tio's handler and updater, linked with --gc-sections
 #   against the installed static libraries, built MinSizeRel, with
-#   EBISU_MIN_SIZE, with link-time optimization as well, and with
-#   EBISU_MIN_SIZE and without strtod(), EBISU_STRTOD=OFF.
+#   EBISU_MIN_SIZE, with link-time optimization as well, with EBISU_MIN_SIZE
+#   and without strtod(), EBISU_STRTOD=OFF, and with EBISU_MIN_SIZE and
+#   without sessions, EBISU_SESSION=OFF.
 #
 # Text is code and constant data, what takes flash; data and bss take RAM.
 # The sizes are for reading, in the log and, in GitHub Actions, in the job's
@@ -191,6 +192,9 @@ EOF
     thing arm_no_strtod -- -DEBISU_MIN_SIZE=ON -DEBISU_STRTOD=OFF > "$work/sizes"
     read -r t d b < "$work/sizes"
     echo "| MinSizeRel, EBISU_MIN_SIZE, without strtod() | $t | $d | $b |" >> "$report"
+    thing arm_no_session -- -DEBISU_MIN_SIZE=ON -DEBISU_SESSION=OFF > "$work/sizes"
+    read -r t d b < "$work/sizes"
+    echo "| MinSizeRel, EBISU_MIN_SIZE, without sessions | $t | $d | $b |" >> "$report"
 else
     printf '\nNo arm-none-eabi-gcc: no Cortex-M3 sizes.\n' >> "$report"
 fi

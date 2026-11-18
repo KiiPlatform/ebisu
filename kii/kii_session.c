@@ -8,6 +8,14 @@
 #include <ebisu_mem.h>
 #include <ebisu_str.h>
 
+/* Built with EBISU_NO_SESSION, as -DEBISU_SESSION=OFF builds it, this file
+ * keeps kii_session_t's own functions and the parsing of a token response,
+ * which logging in uses too, and leaves out what attaches a session to a kii_t
+ * and renews its token. Nothing can then be attached, kii->_session stays
+ * NULL, and the functions the rest of kii calls are reduced, at the end, to
+ * what they do without a session. */
+
+#ifndef EBISU_NO_SESSION
 /* Kii's own SDKs renew five minutes before expiry. Short-lived tokens get a
  * fifth of their lifetime instead, so they are not renewed as soon as issued. */
 #define _RENEW_MARGIN_MAX_MS ((uint64_t)5 * 60 * 1000)
@@ -32,6 +40,7 @@ static const char _AUTH_HEADER_PREFIX[] = "Authorization: Bearer ";
 /* The errorCode of the 403 Kii answers for a token that is not valid: one that
  * has expired, or been replaced by a renewal. */
 static const char _WRONG_TOKEN[] = "WRONG_TOKEN";
+#endif /* EBISU_NO_SESSION */
 
 void kii_session_init(kii_session_t* session)
 {
@@ -150,11 +159,17 @@ void _kii_session_sync(kii_t* kii)
 
 kii_code_t kii_set_session(kii_t* kii, kii_session_t* session)
 {
+#ifdef EBISU_NO_SESSION
+    if (session != NULL) {
+        return KII_ERR_FAIL;
+    }
+#else
     if (session != NULL &&
             (!_has_lock(session) || session->_system == NULL ||
              session->_system->ops->monotonic_ms == NULL)) {
         return KII_ERR_FAIL;
     }
+#endif
     kii->_session = session;
     if (session != NULL) {
         _kii_session_sync(kii);
@@ -162,6 +177,7 @@ kii_code_t kii_set_session(kii_t* kii, kii_session_t* session)
     return KII_ERR_OK;
 }
 
+#ifndef EBISU_NO_SESSION
 static uint64_t _now_ms(kii_session_t* session)
 {
     return session->_system->ops->monotonic_ms(session->_system);
@@ -268,6 +284,7 @@ static bool _due_locked(kii_session_t* session)
     uint64_t elapsed_ms = _now_ms(session) - session->_stored_at_ms;
     return (elapsed_ms >= session->_renew_after_ms);
 }
+#endif /* EBISU_NO_SESSION */
 
 kii_code_t _kii_parse_token_response(
         kii_t* kii,
@@ -327,6 +344,7 @@ kii_code_t _kii_parse_token_response(
     return KII_ERR_OK;
 }
 
+#ifndef EBISU_NO_SESSION
 /* Interprets the outcome of a token request. *rejected is set when the server
  * answered and refused the grant, as opposed to not answering. */
 static kii_code_t _token_response(
@@ -604,6 +622,7 @@ size_t _kii_session_resp_offset(kii_t* kii)
     size_t keep = kii->_rw_buff_req_size + 1;
     return (keep < kii->_rw_buff_size) ? keep : 0;
 }
+#endif /* EBISU_NO_SESSION */
 
 void _kii_resp_to_start(kii_t* kii)
 {
@@ -617,6 +636,7 @@ void _kii_resp_to_start(kii_t* kii)
     kii->_resp_offset = 0;
 }
 
+#ifndef EBISU_NO_SESSION
 /* Whether the response refuses the token it was sent with. Kii answers 401
  * for other reasons, a request without credentials among them. */
 static bool _token_refused(kii_t* kii)
@@ -677,3 +697,41 @@ khc_code _kii_perform(kii_t* kii)
     khc_reset_except_request(&kii->_khc);
     return khc_perform(&kii->_khc);
 }
+
+#else /* EBISU_NO_SESSION */
+
+/* What the rest of kii calls, on every request or past a check for a session,
+ * as it is without one. */
+
+void _kii_session_publish(kii_t* kii, int64_t expires_in_sec, kii_renew_mode_t mode)
+{
+    (void)kii;
+    (void)expires_in_sec;
+    (void)mode;
+}
+
+bool _kii_session_renews_by_onboarding(kii_t* kii)
+{
+    (void)kii;
+    return false;
+}
+
+kii_code_t _kii_session_onboard_again(kii_t* kii)
+{
+    (void)kii;
+    return KII_ERR_FAIL;
+}
+
+size_t _kii_session_resp_offset(kii_t* kii)
+{
+    (void)kii;
+    return 0;
+}
+
+khc_code _kii_perform(kii_t* kii)
+{
+    kii->_session_refused = false;
+    return khc_perform(&kii->_khc);
+}
+
+#endif /* EBISU_NO_SESSION */

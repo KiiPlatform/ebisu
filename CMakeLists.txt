@@ -29,6 +29,18 @@ option(EBISU_STRTOD "Read doubles with the C library's strtod()" ON)
 if(NOT EBISU_STRTOD)
     add_compile_definitions(EBISU_NO_STRTOD)
 endif()
+# Sessions, kii_session_t: a thing's tokens shared by its kii_t, and renewed
+# before they expire and whenever the server refuses one. OFF leaves out what
+# attaches a session and renews its token, some 3 KB of a thing's code, for a
+# device short of flash, as defining EBISU_NO_SESSION does in a build without
+# CMake: kii_set_session(), tio_handler_set_session() and
+# tio_updater_set_session() then refuse any session, and a token the server
+# refuses fails the request, as it does without one. Nothing else changes, the
+# layout of kii_t and kii_session_t included.
+option(EBISU_SESSION "Compile in sessions, which renew a thing's tokens" ON)
+if(NOT EBISU_SESSION)
+    add_compile_definitions(EBISU_NO_SESSION)
+endif()
 
 # On by default so a warning cannot quietly return: the four fixed in #192 sat
 # unnoticed for years because the build target only ran doxygen and compiled

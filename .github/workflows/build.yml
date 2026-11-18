@@ -143,6 +143,8 @@ jobs:
   # And on 64-bit with -DEBISU_LOG=OFF, which no other job builds all of ebisu
   # with: the libraries and the tests have to compile so without warnings, and
   # the tests that check that a library built so logs nothing run only here.
+  # Likewise with -DEBISU_SESSION=OFF, whose test suites leave the sessions'
+  # tests out; every build runs kii's tests without sessions as well.
   #
   # Small tests only: they are deterministic and need no credentials, so these
   # jobs stay fast and never touch the live backend.
@@ -179,6 +181,12 @@ jobs:
             variant: no-log
             preset: debug
             configure: -DEBISU_LOG=OFF
+            test-preset: small
+          - name: small (64-bit, without sessions)
+            bits: 64
+            variant: no-session
+            preset: debug
+            configure: -DEBISU_SESSION=OFF
             test-preset: small
     steps:
       - name: Checkout

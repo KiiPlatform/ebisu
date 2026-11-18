@@ -244,6 +244,7 @@ void set_up_task(kii_t* kii, MqttTest& t, char* mqtt_buff, size_t mqtt_buff_size
     kii_set_cb_task_exit(kii, cb_exit, &t);
 }
 
+#ifndef EBISU_NO_SESSION
 // A token the server doesn't know, which it treats as it does an expired one.
 const char UNKNOWN_TOKEN[] = "ltest-unknown-token";
 
@@ -265,6 +266,7 @@ bool spoiled(kii_session_t* session)
     kii_session_get_author(session, &author);
     return strcmp(author.access_token, UNKNOWN_TOKEN) == 0;
 }
+#endif
 
 }
 
@@ -395,6 +397,8 @@ TEST_CASE("MQTT push from the broker")
     CHECK( kii_delete_topic(&kii, &topic) == KII_ERR_OK );
 }
 
+// Built with -DEBISU_SESSION=OFF, kii has no sessions to renew a token with.
+#ifndef EBISU_NO_SESSION
 TEST_CASE("The MQTT task renews a token the server refuses")
 {
     // To Avoid 429 Too Many Requests
@@ -458,6 +462,7 @@ TEST_CASE("The MQTT task renews a token the server refuses")
     CHECK_FALSE( spoiled(&session) );
     CHECK( t.connects.load() == 1 );
 }
+#endif
 
 // With QoS 1 and a session the broker keeps, a message sent at QoS 1 while the
 // task is stopped arrives once it is started again. One that arrived while it

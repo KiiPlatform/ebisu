@@ -284,6 +284,14 @@ power of ten within 10^22, as a device's readings are, reads exactly as
 place off, and one that close to the largest double can be read as too large. A
 build without CMake defines `EBISU_NO_STRTOD` for the same.
 
+`-DEBISU_SESSION=OFF` leaves out sessions, `kii_session_t`, which share a
+thing's tokens among its `kii_t` and renew them. Every request goes through the
+check for a session's token, so its code stays in a program that never attaches
+one: some 3 KB of the Cortex-M3 thing below. Built so, `kii_set_session()`,
+`tio_handler_set_session()` and `tio_updater_set_session()` refuse any session
+but `NULL`, and a token the server refuses fails the request, as it does without
+a session. A build without CMake defines `EBISU_NO_SESSION` for the same.
+
 `tests/samples/size_report.sh` builds the libraries each way and reports their
 size, and that of a thing for a Cortex-M3 linked against them, as CI does. For
 that thing, with GCC 13, `EBISU_MIN_SIZE` takes the text, code and constant

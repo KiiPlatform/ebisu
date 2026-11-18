@@ -25,24 +25,70 @@ ebisu_add_test_suite(small_test_khc
     # khc's tests reach into its private headers.
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/khc ${PROJECT_SOURCE_DIR}/khc/src)
 
+# ebisu_objs_defining(<target> <objs> <definition>)
+#
+# Builds <target>'s sources again as <objs>, an object library, with its
+# include directories and definitions and <definition> besides, as an option
+# that defines <definition> would build them, so that each build runs a
+# library's tests both ways.
+function(ebisu_objs_defining target objs definition)
+    get_target_property(dir ${target} SOURCE_DIR)
+    get_target_property(target_sources ${target} SOURCES)
+    set(sources "")
+    foreach(source IN LISTS target_sources)
+        if(NOT IS_ABSOLUTE "${source}")
+            set(source "${dir}/${source}")
+        endif()
+        list(APPEND sources "${source}")
+    endforeach()
+    add_library(${objs} OBJECT ${sources})
+    target_include_directories(${objs}
+        PRIVATE $<TARGET_PROPERTY:${target},INCLUDE_DIRECTORIES>
+        INTERFACE $<TARGET_PROPERTY:${target},INTERFACE_INCLUDE_DIRECTORIES>)
+    target_compile_definitions(${objs}
+        PRIVATE $<TARGET_PROPERTY:${target},COMPILE_DEFINITIONS> ${definition})
+    ebisu_configure_target(${objs})
+endfunction()
+
+set(kii_test_sources
+    kii/clock_test.cpp
+    kii/date_test.cpp
+    kii/mqtt_test.cpp
+    kii/push_test.cpp
+    kii/request_test.cpp
+    kii/secrets_test.cpp
+    kii/server_code_test.cpp
+    kii/simple_test.cpp
+    kii/thing_test.cpp)
+# Sessions are tested where the libraries have them, -DEBISU_SESSION=OFF
+# leaving them out.
+set(kii_session_test "")
+if(EBISU_SESSION)
+    set(kii_session_test kii/session_test.cpp)
+endif()
+
 ebisu_add_test_suite(small_test_kii
     LABEL small
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/kii
-    SOURCES
-        kii/clock_test.cpp
-        kii/date_test.cpp
-        kii/mqtt_test.cpp
-        kii/push_test.cpp
-        kii/request_test.cpp
-        kii/secrets_test.cpp
-        kii/server_code_test.cpp
-        kii/session_test.cpp
-        kii/simple_test.cpp
-        kii/thing_test.cpp
+    SOURCES ${kii_test_sources} ${kii_session_test}
     # session_test runs tasks on std::thread, which before glibc 2.34 needs
     # libpthread.
     LINK ${EBISU_KII_OBJS} Threads::Threads
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/kii ${PROJECT_SOURCE_DIR}/kii)
+
+# kii again, without sessions, as -DEBISU_SESSION=OFF builds it: its tests but
+# the sessions', and that no session can be attached.
+ebisu_objs_defining(ebisu_kii_objs ebisu_kii_no_session_objs EBISU_NO_SESSION)
+target_link_libraries(ebisu_kii_no_session_objs
+    PRIVATE ebisu_khc_objs ebisu_core_objs ebisu_jkii_objs)
+
+ebisu_add_test_suite(small_test_kii_no_session
+    LABEL small
+    WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/kii
+    SOURCES ${kii_test_sources} kii/no_session_test.cpp
+    LINK ebisu_kii_no_session_objs ${EBISU_KHC_OBJS} ${EBISU_JKII_OBJS} Threads::Threads
+    INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/kii ${PROJECT_SOURCE_DIR}/kii
+    DEFINES EBISU_NO_SESSION)
 
 set(jkii_test_sources
     jkii/src/jkii_double_test.cpp
@@ -65,26 +111,9 @@ ebisu_add_test_suite(small_test_jkii
     LINK ${EBISU_JKII_OBJS}
     INCLUDES ${PROJECT_SOURCE_DIR}/jkii/libs/coreJSON)
 
-# jkii again, reading doubles without strtod(), as -DEBISU_STRTOD=OFF builds it,
-# so that each build runs jkii's tests both ways. Built from jkii's sources,
-# with its include directories and definitions.
-get_target_property(jkii_dir ebisu_jkii_objs SOURCE_DIR)
-get_target_property(jkii_sources ebisu_jkii_objs SOURCES)
-set(jkii_no_strtod_sources "")
-foreach(source IN LISTS jkii_sources)
-    if(NOT IS_ABSOLUTE "${source}")
-        set(source "${jkii_dir}/${source}")
-    endif()
-    list(APPEND jkii_no_strtod_sources "${source}")
-endforeach()
-add_library(ebisu_jkii_no_strtod_objs OBJECT ${jkii_no_strtod_sources})
-target_include_directories(ebisu_jkii_no_strtod_objs
-    PRIVATE $<TARGET_PROPERTY:ebisu_jkii_objs,INCLUDE_DIRECTORIES>
-    INTERFACE $<TARGET_PROPERTY:ebisu_jkii_objs,INTERFACE_INCLUDE_DIRECTORIES>)
-target_compile_definitions(ebisu_jkii_no_strtod_objs
-    PRIVATE $<TARGET_PROPERTY:ebisu_jkii_objs,COMPILE_DEFINITIONS> EBISU_NO_STRTOD)
+# jkii again, reading doubles without strtod(), as -DEBISU_STRTOD=OFF builds it.
+ebisu_objs_defining(ebisu_jkii_objs ebisu_jkii_no_strtod_objs EBISU_NO_STRTOD)
 target_link_libraries(ebisu_jkii_no_strtod_objs PUBLIC ebisu_core_objs)
-ebisu_configure_target(ebisu_jkii_no_strtod_objs)
 
 ebisu_add_test_suite(small_test_jkii_no_strtod
     LABEL small
@@ -195,12 +224,17 @@ if(TARGET ebisu_posix AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(small_test_tio_linux_libs ebisu_posix)
 endif()
 
+set(tio_session_test "")
+if(EBISU_SESSION)
+    set(tio_session_test tio/session_test.cpp)
+endif()
+
 ebisu_add_test_suite(small_test_tio
     LABEL small
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tio
     SOURCES
         tio/command_parser_test.cpp
-        tio/session_test.cpp
+        ${tio_session_test}
         tio/simple_test.cpp
         ${small_test_tio_linux_sources}
     LINK ${EBISU_TIO_OBJS} ${small_test_tio_linux_libs}

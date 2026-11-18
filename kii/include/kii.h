@@ -250,7 +250,8 @@ typedef enum kii_renew_mode_t {
  * holding its own copy, and sharing renews once for all of them.
  *
  * Initialize with kii_session_init(), set the lock and the clock, then attach
- * with kii_set_session().
+ * with kii_set_session(). Built with EBISU_NO_SESSION, as -DEBISU_SESSION=OFF
+ * builds it, none can be attached.
  */
 typedef struct kii_session_t {
     kii_author_t _author; /**< \private */
@@ -896,9 +897,14 @@ void kii_session_get_author(kii_session_t* session, kii_author_t* out_author);
  * before logging in or onboarding through kii, or give the session the author
  * with kii_session_set_author().
  *
+ * Built with EBISU_NO_SESSION, as -DEBISU_SESSION=OFF builds it, kii has no
+ * sessions: this refuses any but NULL, and a token the server refuses fails
+ * the request as it does without one.
+ *
  * \param [out] kii kii_t instance.
  * \param [in] session Session to attach, or NULL.
- * \return KII_ERR_FAIL if the session has no lock or clock set.
+ * \return KII_ERR_FAIL if the session has no lock or clock set, or for any
+ * session when built with EBISU_NO_SESSION.
  */
 kii_code_t kii_set_session(kii_t* kii, kii_session_t* session);
 
