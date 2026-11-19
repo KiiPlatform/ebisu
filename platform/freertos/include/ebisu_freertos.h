@@ -17,13 +17,48 @@ extern "C" {
 #endif
 
 /**
+ * \brief The type of a task's stack depth, as xTaskCreate() takes it:
+ * configSTACK_DEPTH_TYPE, or uint16_t before V10, which has none.
+ */
+#ifdef configSTACK_DEPTH_TYPE
+#define EBISU_FREERTOS_STACK_DEPTH_TYPE configSTACK_DEPTH_TYPE
+#else
+#define EBISU_FREERTOS_STACK_DEPTH_TYPE uint16_t
+#endif
+
+/**
+ * \brief Whether FreeRTOS makes tasks and mutexes from its heap: as
+ * configSUPPORT_DYNAMIC_ALLOCATION says, or, before V9, which has no such
+ * setting and makes them so alone, 1.
+ */
+#ifndef configSUPPORT_DYNAMIC_ALLOCATION
+#define EBISU_FREERTOS_DYNAMIC_ALLOCATION 1
+#elif configSUPPORT_DYNAMIC_ALLOCATION == 1
+#define EBISU_FREERTOS_DYNAMIC_ALLOCATION 1
+#else
+#define EBISU_FREERTOS_DYNAMIC_ALLOCATION 0
+#endif
+
+/**
+ * \brief Whether FreeRTOS makes mutexes in memory it is given: as
+ * configSUPPORT_STATIC_ALLOCATION says, or, before V9, which can't, 0.
+ */
+#ifndef configSUPPORT_STATIC_ALLOCATION
+#define EBISU_FREERTOS_STATIC_ALLOCATION 0
+#elif configSUPPORT_STATIC_ALLOCATION == 1
+#define EBISU_FREERTOS_STATIC_ALLOCATION 1
+#else
+#define EBISU_FREERTOS_STATIC_ALLOCATION 0
+#endif
+
+/**
  * \brief The system on FreeRTOS.
  *
  * Each task is a FreeRTOS task of its own, of the stack depth and priority the
  * system is initialized with, made with xTaskCreate(), which deletes itself
  * when it ends. Making one takes from FreeRTOS's heap what xTaskCreate() does,
  * and a few bytes more, given back as the task starts: it needs
- * configSUPPORT_DYNAMIC_ALLOCATION, without which the system makes no tasks,
+ * EBISU_FREERTOS_DYNAMIC_ALLOCATION, without which the system makes no tasks,
  * and a heap that frees, as heap_1 doesn't, for a task that ends and starts
  * again, as the MQTT task does when kii_start_push_task() is called again.
  *
@@ -39,8 +74,8 @@ extern "C" {
  *
  * Its locks, from ebisu_system_lock_create(), are ebisu_freertos_lock_t's from
  * FreeRTOS's heap, with their mutexes in them with
- * configSUPPORT_STATIC_ALLOCATION. Without configSUPPORT_DYNAMIC_ALLOCATION it
- * makes none, and ebisu_system_lock_create() gives NULL.
+ * EBISU_FREERTOS_STATIC_ALLOCATION. Without EBISU_FREERTOS_DYNAMIC_ALLOCATION
+ * it makes none, and ebisu_system_lock_create() gives NULL.
  *
  * FreeRTOS keeps no time of day, so the system's clock, ebisu_system_clock()'s,
  * is the one the application keeps and sets with
@@ -50,7 +85,7 @@ extern "C" {
  */
 typedef struct ebisu_freertos_system_t {
     ebisu_system_t base; /**< \brief What ebisu is given. */
-    configSTACK_DEPTH_TYPE _stack_depth; /**< \private */
+    EBISU_FREERTOS_STACK_DEPTH_TYPE _stack_depth; /**< \private */
     UBaseType_t _priority; /**< \private */
     ebisu_clock_t* _clock; /**< \private */
 } ebisu_freertos_system_t;
@@ -68,7 +103,7 @@ typedef struct ebisu_freertos_system_t {
  */
 void ebisu_freertos_system_init(
         ebisu_freertos_system_t* system,
-        configSTACK_DEPTH_TYPE stack_depth,
+        EBISU_FREERTOS_STACK_DEPTH_TYPE stack_depth,
         UBaseType_t priority);
 
 /**
@@ -108,7 +143,7 @@ void ebisu_freertos_system_set_clock(ebisu_freertos_system_t* system, ebisu_cloc
 typedef struct ebisu_freertos_lock_t {
     ebisu_lock_t base; /**< \brief What ebisu is given. */
     SemaphoreHandle_t _mutex; /**< \private */
-#if configSUPPORT_STATIC_ALLOCATION == 1
+#if EBISU_FREERTOS_STATIC_ALLOCATION
     StaticSemaphore_t _storage; /**< \private */
 #endif
 } ebisu_freertos_lock_t;
@@ -116,7 +151,7 @@ typedef struct ebisu_freertos_lock_t {
 /**
  * \brief Creates the mutex, and makes base a lock of it.
  *
- * In the lock itself, with configSUPPORT_STATIC_ALLOCATION, or else from
+ * In the lock itself, with EBISU_FREERTOS_STATIC_ALLOCATION, or else from
  * FreeRTOS's heap. Before the scheduler starts, or from a task.
  *
  * \param [out] lock The lock.

@@ -5,14 +5,23 @@ A firmware for the MPS2 AN385 board QEMU emulates, a Cortex-M3, that tests
 kernel: each check that fails prints a line on the console, and QEMU exits with
 1 if any did. CTest runs it in QEMU. FreeRTOS-Kernel is built with its own CMake
 and ebisu with its own, as an application builds them, and the board's support
-is the [FreeRTOS sample's](../../tio/freertos-sample/board/board.h). V10.0.1
-has no CMake build: [CMakeLists.txt](CMakeLists.txt) makes a library of its
-sources, of the name ebisu's CMake looks for, as an application's build would,
-and the test gives its idle task's memory, which V11.1 on gives with
-`configKERNEL_PROVIDED_STATIC_MEMORY`. Its `vTaskStartScheduler()` sets the tick
-count to 0 rather than `configINITIAL_TICK_COUNT`, which V10.1.0 fixed: the
-tests build its `tasks.c` with that line as V10.1.0 has it.
+is the [FreeRTOS sample's](../../tio/freertos-sample/board/board.h). V8.1.2,
+V9.0.0 and V10.0.1 have no CMake build: [CMakeLists.txt](CMakeLists.txt) makes
+a library of their sources, of the name ebisu's CMake looks for, as an
+application's build would, and the test gives V9.0.0's and V10.0.1's idle
+task's memory, which V11.1 on gives with `configKERNEL_PROVIDED_STATIC_MEMORY`.
+Their
+`vTaskStartScheduler()` sets the tick count to 0 rather than
+`configINITIAL_TICK_COUNT`, which V10.1.0 fixed: the tests build their
+`tasks.c` with that line as V10.1.0 has it. V8.1.2 has no static allocation,
+and none of V9's `configSUPPORT_STATIC_ALLOCATION` and
+`configSUPPORT_DYNAMIC_ALLOCATION`, which its configuration leaves out, as an
+application's for V8 does: it runs configurations b and d, which make
+everything from the heap.
 
+- **The kernel's allocation**: the port takes FreeRTOS to make tasks and
+  mutexes from its heap, in memory it is given, or both, as the configuration
+  has it, and V8.1.2, which has no setting for either, from the heap alone.
 - **The system's tasks**: the entry runs with its parameter, in a task of its
   own, of the name, stack depth and priority given; the task's memory, and what
   started it, go back to the heap once it ends, and to the heap too when the
@@ -38,16 +47,18 @@ turns of 1000 ticks. A kernel before V10.3, which hasn't it, counts the ticks
 as it does: with the scheduler suspended, `xTaskIncrementTick()` pends each,
 and resuming it counts them.
 
-Each test is built three ways, `EBISU_TEST_CONFIG`:
+Each test is built four ways, `EBISU_TEST_CONFIG`:
 
 | | Ticks | Rate | Static allocation | Heap | `INCLUDE_vTaskSuspend` |
 |---|---|---|---|---|---|
 | `a` | 32 bits | 1000 Hz | yes | heap_4 | yes |
 | `b` | 16 bits | 250 Hz | no | heap_4 | no |
 | `c` | 32 bits | 100 Hz | yes | none | yes |
+| `d` | 32 bits | 1000 Hz | no | heap_4 | yes |
 
-against FreeRTOS-Kernel V10.0.1, the oldest the port supports, V11.1.0, that of
-FreeRTOS LTS 202406, and V11.3.3, the latest, `EBISU_TEST_KERNEL`, as CI does.
+against FreeRTOS-Kernel V8.1.2, the oldest the port supports, V9.0.0, V10.0.1,
+V11.1.0, that of FreeRTOS LTS 202406, and V11.3.3, the latest,
+`EBISU_TEST_KERNEL`, as CI does.
 
 With CMake, the Arm GNU toolchain, newlib and QEMU (on Ubuntu, `cmake
 gcc-arm-none-eabi libnewlib-arm-none-eabi qemu-system-arm`), from the
