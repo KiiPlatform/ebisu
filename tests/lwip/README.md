@@ -1,8 +1,9 @@
-# The lwIP socket's tests
+# The lwIP port's tests
 
 A program for the host that tests
-[`ebisu_lwip.h`](../../platform/lwip/include/ebisu_lwip.h)'s
-`ebisu_lwip_tcp_socket_t` on lwIP, which runs in the program itself, on a
+[`ebisu_lwip.h`](../../platform/lwip/include/ebisu_lwip.h), its
+`ebisu_lwip_tcp_socket_t` and `ebisu_lwip_dns()`, on lwIP, which runs in the
+program itself, on a
 port of the tests' own to POSIX threads, [port](port). lwIP's sockets reach no
 host from there but itself, so the servers the socket connects to are the
 test's own, on lwIP's sockets too, on its loopback interface. An interface of
@@ -32,6 +33,20 @@ builds them. CTest runs the program.
   until then, as `lwip_getsockopt()` reads them, with lwIP's interval and
   count, or without `LWIP_TCP_KEEPALIVE`, a warning; the timeouts, as lwIP
   takes them.
+- **Name servers**: those lwIP's DNS client asks, as `dns_setserver()` sets
+  them, in order, on port 53, as many as there is room for, none without the
+  first, and, in configuration b, an IPv6 one. A query is asked over a UDP
+  socket of lwIP's, against a name server of the test's own on its loopback
+  interface: its answer is taken, past a datagram that isn't it, but not from
+  another port; one that never answers, or where nothing listens, which lwIP
+  doesn't tell, is given the time given and no longer, a datagram that isn't
+  the answer, just before that runs out, included; and a family lwIP is built
+  without fails.
+- **The DNS probe** over them: a server that answers, the next past one that
+  doesn't, none that does, in the time given each, and none set; and the
+  probing socket over the lwIP socket, which fails a connect in about a
+  second when two servers don't answer, where lwIP's DNS client would take
+  14, and connects when one does.
 
 The program is built two ways, `EBISU_TEST_CONFIG`, as
 [port/lwipopts.h](port/lwipopts.h) has them:

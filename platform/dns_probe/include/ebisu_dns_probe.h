@@ -75,9 +75,10 @@ typedef struct ebisu_dns_server_t {
  * lookups ask them: a server repeated takes a place, but is asked once. Each is
  * asked with dns's ask. platform's ports have the system's: ebisu_posix_dns(),
  * the servers of /etc/resolv.conf over BSD sockets, as the C libraries read
- * it, ebisu_win32_dns(), those of the network adapters over Winsock 2, and
+ * it, ebisu_win32_dns(), those of the network adapters over Winsock 2,
  * ebisu_freertos_tcp_dns(), those of FreeRTOS-Plus-TCP's end-points, as its
- * DNS client asks them.
+ * DNS client asks them, and ebisu_lwip_dns(), those lwIP's DNS client asks,
+ * over lwIP's sockets.
  *
  * A name a lookup gets from elsewhere, such as /etc/hosts, still needs the
  * servers to answer: the probe tells only whether they do.
@@ -178,8 +179,8 @@ typedef struct ebisu_dns_probe_socket_t {
  * \param [in] inner The socket that connects, initialized, whose operations
  * sock takes: it has to outlive sock.
  * \param [in] dns The system's name servers, and how one is asked, as
- * ebisu_posix_dns(), ebisu_win32_dns() or ebisu_freertos_tcp_dns() gives
- * them, which have to outlive sock.
+ * ebisu_posix_dns(), ebisu_win32_dns(), ebisu_freertos_tcp_dns() or
+ * ebisu_lwip_dns() gives them, which have to outlive sock.
  * \param [in] timeout_ms How long each server has to answer, in milliseconds.
  */
 void ebisu_dns_probe_socket_init(
