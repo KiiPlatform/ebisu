@@ -898,8 +898,8 @@ jobs:
 
   # The lwIP socket's tests, on the runner, with lwIP in the test's own process
   # and servers of the test's own on its loopback interface, configured two
-  # ways, against the oldest lwIP the socket supports, 2.0.2, 2.1.3, and the
-  # latest, plain and under valgrind. See tests/lwip/README.md.
+  # ways, against the oldest lwIP the socket supports, 1.4.1, 2.0.2, 2.1.3, and
+  # the latest, plain and under valgrind. See tests/lwip/README.md.
   lwip:
     name: lwip socket (lwIP ${{ matrix.lwip }})
     runs-on: ubuntu-latest
@@ -910,7 +910,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        lwip: [2.0.2, 2.1.3, 2.2.1]
+        lwip: [1.4.1, 2.0.2, 2.1.3, 2.2.1]
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -922,9 +922,9 @@ jobs:
         with:
           packages: cmake g++ valgrind
           options: --no-install-recommends
-      - name: timeouts of struct timeval, select, keepalive's options, IPv4 (a)
+      - name: keepalive's options, IPv4, timeouts of struct timeval from 2.0 on (a)
         run: tests/lwip/run.sh ${{ matrix.lwip }} a
-      - name: timeouts of int ms, poll, no keepalive options, IPv6 (b)
+      - name: no keepalive options, timeouts of int ms, poll from 2.1 on, IPv6 from 2.0 on (b)
         if: success() || failure()
         run: tests/lwip/run.sh ${{ matrix.lwip }} b
       - name: a, under valgrind

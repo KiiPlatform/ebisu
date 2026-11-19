@@ -9,7 +9,12 @@ namespace {
 
 struct netif silent_netif;
 
+#if LWIP_VERSION_MAJOR < 2
+// lwIP 1.4's output takes the address as non-const.
+err_t drop(struct netif* netif, struct pbuf* p, ip4_addr_t* addr)
+#else
 err_t drop(struct netif* netif, struct pbuf* p, const ip4_addr_t* addr)
+#endif
 {
     (void)netif;
     (void)p;

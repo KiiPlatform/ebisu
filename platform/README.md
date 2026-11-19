@@ -147,8 +147,9 @@ of the application's own, as the
   stream and one that resets it a failure, but for lwIP 2.0, whose receive
   takes a reset for the end of the stream too. It waits for a connection and
   for `recv_wait` with `lwip_select()`, or `lwip_poll()` where lwIP 2.1 or
-  later is built without select, and sets its timeouts as
-  `LWIP_SO_SNDRCVTIMEO_NONSTANDARD` says lwIP takes them. Keepalive and
+  later is built without select, and sets its timeouts as lwIP takes them:
+  an int of milliseconds in lwIP 1.4, and as `LWIP_SO_SNDRCVTIMEO_NONSTANDARD`
+  says from 2.0 on. Keepalive and
   `TCP_NODELAY` are as the POSIX socket's, below. Its `last_error` says why an
   operation failed, with lwIP's errno, or `lwip_getaddrinfo()`'s error for a
   lookup, which also goes to the logger set with
@@ -158,14 +159,16 @@ of the application's own, as the
   lwIP's core target, `lwipcore`, as including lwIP's `src/Filelists.cmake`
   makes it from 2.1 on, with lwIP's include directories and definitions in
   `LWIP_INCLUDE_DIRS` and `LWIP_DEFINITIONS`, as lwIP's CMake takes them, and
-  not installed. A build without CMake, as many vendors' SDKs are, compiles
-  `ebisu_lwip_tcp.c` with lwIP's headers and the application's `lwipopts.h`.
-  Needs lwIP 2.0.2 or later, with an OS, `NO_SYS` at 0, `LWIP_SOCKET`,
-  `LWIP_TCP`, `LWIP_DNS`, `LWIP_SO_RCVTIMEO` and `LWIP_SO_SNDTIMEO`, and an
-  `errno` of each task's own where more than one task uses sockets, as
-  newlib's is with FreeRTOS's `configUSE_NEWLIB_REENTRANT`, but for lwIP 2.0
-  built with `LWIP_SOCKET_SET_ERRNO` at 0, which sets no `errno`: there the
-  socket reads each socket's own error, with `SO_ERROR`.
+  not installed: lwIP 1.4's include directories are its `src/include` and
+  `src/include/ipv4`. A build without CMake, as many vendors' SDKs are,
+  compiles `ebisu_lwip_tcp.c` with lwIP's headers and the application's
+  `lwipopts.h`. Needs lwIP 1.4.1 or later, with an OS, `NO_SYS` at 0,
+  `LWIP_SOCKET`, `LWIP_TCP`, `LWIP_DNS`, `LWIP_SO_RCVTIMEO` and
+  `LWIP_SO_SNDTIMEO`, and an `errno` of each task's own where more than one
+  task uses sockets, as newlib's is with FreeRTOS's
+  `configUSE_NEWLIB_REENTRANT`, but for lwIP 1.4 built without `ERRNO` and
+  lwIP 2.0 built with `LWIP_SOCKET_SET_ERRNO` at 0, which set no `errno`: there
+  the socket reads each socket's own error, with `SO_ERROR`.
 
 - **mbedTLS** (`ebisu_mbedtls.h`, library `ebisu_mbedtls`):
   `ebisu_mbedtls_socket_t`, TLS 1.2 or later, 1.3 where mbedTLS has it, with

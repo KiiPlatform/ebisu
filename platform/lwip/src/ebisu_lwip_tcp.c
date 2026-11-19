@@ -7,7 +7,6 @@
 
 #include <lwip/opt.h>
 #include <lwip/init.h>
-#include <lwip/errno.h>
 #include <lwip/netdb.h>
 #include <lwip/sockets.h>
 
@@ -47,11 +46,11 @@ static ebisu_sock_code_t fail_with(ebisu_lwip_tcp_socket_t* sock, ebisu_sock_err
 }
 
 /* Sets a socket's receive or send timeout, in seconds, 0 for none, as lwIP
-   takes it: an int of milliseconds with LWIP_SO_SNDRCVTIMEO_NONSTANDARD, a
-   struct timeval otherwise. */
+   takes it: an int of milliseconds in lwIP 1.4, and with
+   LWIP_SO_SNDRCVTIMEO_NONSTANDARD, a struct timeval otherwise. */
 static void set_timeout(int s, int option, unsigned int seconds)
 {
-#if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+#if EBISU_LWIP_TIMEOUT_MS
     int ms = seconds > (unsigned int)INT_MAX / 1000u ? INT_MAX : (int)(seconds * 1000u);
     (void)lwip_setsockopt(s, SOL_SOCKET, option, &ms, sizeof(ms));
 #else
@@ -143,6 +142,17 @@ static int connect_to(ebisu_lwip_tcp_socket_t* sock, const struct addrinfo* addr
                 if (lwip_getsockopt(s, SOL_SOCKET, SO_ERROR, &err, &len) != 0) {
                     err = ebisu_lwip_error(s);
                 }
+#if LWIP_VERSION_MAJOR < 2
+                /* lwIP 1.4's netconn_connect() records ERR_INPROGRESS once the
+                   connect it started has gone on in lwIP's thread: a
+                   connection made before that, as over the loopback, is left
+                   with it, which SO_ERROR gives. A failure is not, as nothing
+                   overwrites one, and the socket is writable only once
+                   connected or failed. */
+                if (err == EINPROGRESS) {
+                    err = 0;
+                }
+#endif
             }
         }
     }

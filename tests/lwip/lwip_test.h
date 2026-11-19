@@ -9,25 +9,53 @@
 #include <ebisu_lwip.h>
 
 #include "lwip/opt.h"
-/* Before lwip/dns.h, which lwIP 2.0 has use err_t without it. */
+/* Before lwip/dns.h, which lwIP 2.0 has use err_t without it, and lwIP 1.4
+   ip_addr_t too. */
 #include "lwip/err.h"
+#include "lwip/ip_addr.h"
 #include "lwip/dns.h"
 #include "lwip/inet.h"
-#include "lwip/errno.h"
 #include "lwip/init.h"
 #include "lwip/netdb.h"
 #include "lwip/netif.h"
-/* For TCP_KEEPINTVL_DEFAULT and TCP_KEEPCNT_DEFAULT. */
-#include "lwip/priv/tcp_priv.h"
 #include "lwip/sockets.h"
 #include "lwip/tcpip.h"
+#if LWIP_VERSION_MAJOR < 2
+/* For TCP_KEEPINTVL_DEFAULT and TCP_KEEPCNT_DEFAULT, and the connections'
+   pcbs. lwIP 1.4 has errno's names in lwip/arch.h, which lwip/sockets.h
+   includes. */
+#include "lwip/tcp_impl.h"
+#else
+#include "lwip/errno.h"
+/* For TCP_KEEPINTVL_DEFAULT and TCP_KEEPCNT_DEFAULT. */
+#include "lwip/priv/tcp_priv.h"
+#endif
 
+#if LWIP_VERSION_MAJOR < 2
+/* lwIP 1.4 has IPv4 alone, whose addresses are ip_addr_t: by 2.0's names. */
+typedef ip_addr_t ip4_addr_t;
+inline int ip4addr_aton(const char* text, ip4_addr_t* addr)
+{
+    return ipaddr_aton(text, addr);
+}
+#endif
+
+/* Whether SO_RCVTIMEO and SO_SNDTIMEO take an int of milliseconds, as lwIP
+   1.4's always do, rather than a struct timeval. */
+#if LWIP_VERSION_MAJOR < 2 || LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+#define TEST_TIMEOUT_MS 1
+#else
+#define TEST_TIMEOUT_MS 0
+#endif
+
+#include <atomic>
 #include <chrono>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -149,7 +177,7 @@ struct Server {
     // Takes the connection the socket made, which the backlog kept, within 5
     // seconds: lwIP's accept waits for the listener's receive timeout.
     void accept_one() {
-#if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+#if TEST_TIMEOUT_MS
         int timeout = 5000;
 #else
         timeval timeout = { 5, 0 };
@@ -187,7 +215,8 @@ struct Server {
     // Waits for the connection to have something to read, with select, or
     // poll where lwIP is built without select, as the socket waits.
     void wait_readable() {
-#if (LWIP_VERSION_MAJOR == 2 && LWIP_VERSION_MINOR == 0) || LWIP_SOCKET_SELECT
+#if LWIP_VERSION_MAJOR < 2 || (LWIP_VERSION_MAJOR == 2 && LWIP_VERSION_MINOR == 0) || \
+    LWIP_SOCKET_SELECT
         fd_set readable;
         FD_ZERO(&readable);
         FD_SET(peer, &readable);
@@ -204,12 +233,29 @@ struct Server {
 
     // A reset, of a connection the socket has sent something on: closed with
     // SO_LINGER's timeout at 0, which lwIP has abort the connection, with RST.
+    // lwIP 1.4 has no SO_LINGER, and its close sends FIN whatever was left
+    // unread: the connection's pcb on this side, at the server's port, is
+    // aborted in lwIP's core instead, which sends the RST.
     void reset_peer() {
         wait_readable();
+#if LWIP_VERSION_MAJOR < 2
+        bool aborted = false;
+        LOCK_TCPIP_CORE();
+        for (tcp_pcb* pcb = tcp_active_pcbs; pcb != nullptr; pcb = pcb->next) {
+            if (pcb->local_port == port) {
+                tcp_abort(pcb);
+                aborted = true;
+                break;
+            }
+        }
+        UNLOCK_TCPIP_CORE();
+        REQUIRE( aborted );
+#else
         linger off;
         off.l_onoff = 1;
         off.l_linger = 0;
         REQUIRE( lwip_setsockopt(peer, SOL_SOCKET, SO_LINGER, &off, sizeof(off)) == 0 );
+#endif
         close_peer();
     }
 };
@@ -220,6 +266,120 @@ inline uint16_t closed_port()
     Server server;
     return server.port;
 }
+
+// lwIP's DNS client's servers, set for a test, and none again after it, as the
+// other tests have them: a name not in the local host list then fails at
+// once, but in lwIP 1.4, whose client asserts that it has one.
+struct Servers {
+    explicit Servers(const char* first, const char* second = nullptr) {
+        set(0, first);
+        set(1, second);
+    }
+    ~Servers() {
+        set(0, nullptr);
+        set(1, nullptr);
+    }
+    static void set(u8_t index, const char* address) {
+        ip_addr_t addr;
+        if (address != nullptr) {
+            REQUIRE( ipaddr_aton(address, &addr) == 1 );
+        }
+        LOCK_TCPIP_CORE();
+        dns_setserver(index, address != nullptr ? &addr : nullptr);
+        UNLOCK_TCPIP_CORE();
+    }
+};
+
+// What a name server answers: the query, as a response, with the name not
+// found, which the probe counts as an answer.
+std::string response_to(const std::string& query)
+{
+    std::string response = query;
+    if (response.size() >= 4) {
+        response[2] = (char)(response[2] | 0x80);
+        response[3] = (char)((response[3] & 0xf0) | 3);
+    }
+    return response;
+}
+
+// A name server on 127.0.0.1 of lwIP's, at the port given, 0 for one of its
+// own: each query it gets, it answers as told.
+struct Responder {
+    enum Mode {
+        ANSWER,            // the response
+        NOISE_FIRST,       // a datagram that isn't it, then the response
+        FROM_ELSEWHERE,    // the response, from another port
+        LATE_NOISE         // a datagram that isn't it, 900 ms after, and nothing else
+    };
+    int sock;
+    int other;
+    uint16_t port;
+    Mode mode;
+    std::atomic<bool> stop;
+    std::atomic<int> queries;
+    std::thread thread;
+
+    explicit Responder(uint16_t at = 0, Mode m = ANSWER)
+        : sock(-1), other(-1), port(0), mode(m), stop(false), queries(0) {
+        sock = bound(at);
+        other = bound(0);
+        sockaddr_in addr;
+        socklen_t len = sizeof(addr);
+        REQUIRE( lwip_getsockname(sock, (sockaddr*)&addr, &len) == 0 );
+        port = lwip_ntohs(addr.sin_port);
+#if TEST_TIMEOUT_MS
+        int timeout = 100;
+#else
+        timeval timeout = { 0, 100000 };
+#endif
+        REQUIRE( lwip_setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == 0 );
+        thread = std::thread([this] { serve(); });
+    }
+
+    ~Responder() {
+        stop = true;
+        thread.join();
+        lwip_close(other);
+        lwip_close(sock);
+    }
+
+    static int bound(uint16_t at) {
+        int s = lwip_socket(AF_INET, SOCK_DGRAM, 0);
+        REQUIRE( s >= 0 );
+        sockaddr_in addr;
+        memset(&addr, 0, sizeof(addr));
+        addr.sin_len = sizeof(addr);
+        addr.sin_family = AF_INET;
+        addr.sin_port = lwip_htons(at);
+        addr.sin_addr.s_addr = lwip_htonl(0x7f000001u);
+        REQUIRE( lwip_bind(s, (sockaddr*)&addr, sizeof(addr)) == 0 );
+        return s;
+    }
+
+    void serve() {
+        while (!stop) {
+            char buffer[512];
+            sockaddr_in from;
+            socklen_t len = sizeof(from);
+            int got = (int)lwip_recvfrom(sock, buffer, sizeof(buffer), 0, (sockaddr*)&from, &len);
+            if (got <= 0) {
+                continue;
+            }
+            ++queries;
+            if (mode == LATE_NOISE) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(900));
+                lwip_sendto(sock, "noise", 5, 0, (sockaddr*)&from, len);
+                continue;
+            }
+            std::string response = response_to(std::string(buffer, (size_t)got));
+            if (mode == NOISE_FIRST) {
+                lwip_sendto(sock, "noise", 5, 0, (sockaddr*)&from, len);
+            }
+            lwip_sendto(mode == FROM_ELSEWHERE ? other : sock, response.data(), response.size(), 0,
+                    (sockaddr*)&from, len);
+        }
+    }
+};
 
 }
 
