@@ -78,6 +78,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Data Structures</a> &#124;
+<a href="#define-members">Macros</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">ebisu_mbedtls.h File Reference</div></div>
@@ -92,8 +93,6 @@ $(function() {
 <code>#include &lt;mbedtls/ssl.h&gt;</code><br />
 <code>#include &lt;mbedtls/x509_crt.h&gt;</code><br />
 <code>#include &lt;mbedtls/version.h&gt;</code><br />
-<code>#include &lt;mbedtls/ctr_drbg.h&gt;</code><br />
-<code>#include &lt;mbedtls/entropy.h&gt;</code><br />
 <code>#include &lt;stdbool.h&gt;</code><br />
 <code>#include &lt;stddef.h&gt;</code><br />
 </div>
@@ -105,6 +104,12 @@ Data Structures</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The TLS configuration connections share.  <a href="structebisu__mbedtls__tls__t.html#details">More...</a><br /></td></tr>
 <tr class="memitem:ebisu_5Fmbedtls_5Fsocket_5Ft" id="r_ebisu_5Fmbedtls_5Fsocket_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A TLS connection with mbedTLS, over another socket of the system's.  <a href="structebisu__mbedtls__socket__t.html#details">More...</a><br /></td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-define-members" class="groupheader"><a id="define-members" name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:ab9f3e76d7e9c40331d2c88e9ab8c933e" id="r_ab9f3e76d7e9c40331d2c88e9ab8c933e"><td class="memItemLeft" align="right" valign="top"><a id="ab9f3e76d7e9c40331d2c88e9ab8c933e" name="ab9f3e76d7e9c40331d2c88e9ab8c933e"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>EBISU_MBEDTLS_SETS_RNG</b>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:ab9f3e76d7e9c40331d2c88e9ab8c933e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether <a class="el" href="#af86d53b56ce8eaf362a6f4617b495920" title="Sets up a TLS configuration, with the CA certificates the server&#39;s has to chain to.">ebisu_mbedtls_tls_init()</a> sets the configuration's random generator: 1, but for mbedTLS 2 built without MBEDTLS_CTR_DRBG_C or MBEDTLS_ENTROPY_C, where it is 0, and the application sets one. <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-typedef-members" class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -173,7 +178,7 @@ Functions</h2></td></tr>
 
 <p>The TLS configuration connections share. </p>
 <p>TLS 1.2 or later, 1.3 where mbedTLS is built with it, with mbedTLS's default cipher suites. The server's certificate has to chain to one of the configuration's CA certificates, and be issued for the host connected to, unless <a class="el" href="#a96a7bd80131796ffeca813304b294907" title="Sets how the configuration&#39;s connections check the server&#39;s certificate.">ebisu_mbedtls_tls_set_verify()</a> says otherwise.</p>
-<p>Random numbers come from PSA's generator, which <a class="el" href="#af86d53b56ce8eaf362a6f4617b495920" title="Sets up a TLS configuration, with the CA certificates the server&#39;s has to chain to.">ebisu_mbedtls_tls_init()</a> starts with psa_crypto_init(), from mbedTLS's entropy sources: on a device, the hardware's, as mbedTLS is configured to take them, with MBEDTLS_ENTROPY_HARDWARE_ALT in mbedTLS 3.6, or MBEDTLS_PSA_DRIVER_GET_ENTROPY in 4.x. With mbedTLS 2, they come from a CTR_DRBG of the configuration's own, which <a class="el" href="#af86d53b56ce8eaf362a6f4617b495920" title="Sets up a TLS configuration, with the CA certificates the server&#39;s has to chain to.">ebisu_mbedtls_tls_init()</a> seeds from mbedTLS's entropy sources, the hardware's with MBEDTLS_ENTROPY_HARDWARE_ALT. Connections share the generator: on more than one task at once, mbedTLS has to be built with MBEDTLS_THREADING_C, with MBEDTLS_THREADING_PTHREAD on POSIX, or MBEDTLS_THREADING_ALT and functions of the system's.</p>
+<p>Random numbers come from PSA's generator, which <a class="el" href="#af86d53b56ce8eaf362a6f4617b495920" title="Sets up a TLS configuration, with the CA certificates the server&#39;s has to chain to.">ebisu_mbedtls_tls_init()</a> starts with psa_crypto_init(), from mbedTLS's entropy sources: on a device, the hardware's, as mbedTLS is configured to take them, with MBEDTLS_ENTROPY_HARDWARE_ALT in mbedTLS 3.6, or MBEDTLS_PSA_DRIVER_GET_ENTROPY in 4.x. With mbedTLS 2, they come from a CTR_DRBG of the configuration's own, which <a class="el" href="#af86d53b56ce8eaf362a6f4617b495920" title="Sets up a TLS configuration, with the CA certificates the server&#39;s has to chain to.">ebisu_mbedtls_tls_init()</a> seeds from mbedTLS's entropy sources, the hardware's with MBEDTLS_ENTROPY_HARDWARE_ALT. mbedTLS 2 built without MBEDTLS_CTR_DRBG_C or MBEDTLS_ENTROPY_C, as some of vendors' SDKs configure it, has neither, and EBISU_MBEDTLS_SETS_RNG is 0: the application sets the generator, one of the hardware's or the SDK's, with mbedtls_ssl_conf_rng() on <a class="el" href="#a9bc64be69d423f56fc0fef57934cba8e" title="mbedTLS&#39;s configuration, for settings of the application&#39;s.">ebisu_mbedtls_tls_config()</a>, before the first connection, which fails without one. Connections share the generator: on more than one task at once, mbedTLS has to be built with MBEDTLS_THREADING_C, with MBEDTLS_THREADING_PTHREAD on POSIX, or MBEDTLS_THREADING_ALT and functions of the system's, or the application's generator has to take calls from more than one task at once.</p>
 <p>mbedTLS 3.6 and 4.x, and mbedTLS 2 from 2.4, as vendors' SDKs ship it, which has TLS 1.2 at the most. mbedTLS 2 is past its end of life: its last release, 2.28.10, came in March 2025, and an earlier 2 lacks the fixes since it, 2.4.0, of 2016, those of most of a decade. Initialize with <a class="el" href="#af86d53b56ce8eaf362a6f4617b495920" title="Sets up a TLS configuration, with the CA certificates the server&#39;s has to chain to.">ebisu_mbedtls_tls_init()</a>, before the connections, and free with <a class="el" href="#ab86dbd0f0ac75ceb587fd8b19128aaa0" title="Frees a TLS configuration, which no connection may use any more.">ebisu_mbedtls_tls_free()</a> once none is open. </p>
 
 </div>
@@ -348,7 +353,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>mbedTLS's configuration, for settings of the application's. </p>
-<p>Such as the cipher suites, mbedtls_ssl_conf_ciphersuites(), or the lowest version, mbedtls_ssl_conf_min_tls_version(), mbedtls_ssl_conf_min_version() in mbedTLS 2. Or, for an mbedTLS built with a record smaller than the 16 KB a server may send, MBEDTLS_SSL_IN_CONTENT_LEN or, before 2.12, MBEDTLS_SSL_MAX_CONTENT_LEN, the maximum fragment length to ask the server for, mbedtls_ssl_conf_max_frag_len(), which a server that doesn't take the extension ignores. Changed after <a class="el" href="#af86d53b56ce8eaf362a6f4617b495920" title="Sets up a TLS configuration, with the CA certificates the server&#39;s has to chain to.">ebisu_mbedtls_tls_init()</a>, before the first connection. What <a class="el" href="#af86d53b56ce8eaf362a6f4617b495920" title="Sets up a TLS configuration, with the CA certificates the server&#39;s has to chain to.">ebisu_mbedtls_tls_init()</a> set, the verification, the CA certificates and the random generator, are the socket's to keep.</p>
+<p>Such as the cipher suites, mbedtls_ssl_conf_ciphersuites(), or the lowest version, mbedtls_ssl_conf_min_tls_version(), mbedtls_ssl_conf_min_version() in mbedTLS 2. Or, for an mbedTLS built with a record smaller than the 16 KB a server may send, MBEDTLS_SSL_IN_CONTENT_LEN or, before 2.12, MBEDTLS_SSL_MAX_CONTENT_LEN, the maximum fragment length to ask the server for, mbedtls_ssl_conf_max_frag_len(), which a server that doesn't take the extension ignores. Changed after <a class="el" href="#af86d53b56ce8eaf362a6f4617b495920" title="Sets up a TLS configuration, with the CA certificates the server&#39;s has to chain to.">ebisu_mbedtls_tls_init()</a>, before the first connection. What <a class="el" href="#af86d53b56ce8eaf362a6f4617b495920" title="Sets up a TLS configuration, with the CA certificates the server&#39;s has to chain to.">ebisu_mbedtls_tls_init()</a> set, the verification, the CA certificates and the random generator, are the socket's to keep, but for the random generator where EBISU_MBEDTLS_SETS_RNG is 0, which the application sets here, with mbedtls_ssl_conf_rng().</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">tls</td><td>The configuration. </td></tr>
@@ -409,7 +414,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Sets up a TLS configuration, with the CA certificates the server's has to chain to. </p>
-<p>With mbedTLS 3.6 or 4.x, calls psa_crypto_init(), which may have been called already, and doesn't call mbedtls_psa_crypto_free(), which the application may, once it no longer uses PSA. With mbedTLS 2, seeds the configuration's CTR_DRBG, which fails without an entropy source mbedTLS takes for a strong one.</p>
+<p>With mbedTLS 3.6 or 4.x, calls psa_crypto_init(), which may have been called already, and doesn't call mbedtls_psa_crypto_free(), which the application may, once it no longer uses PSA. With mbedTLS 2, seeds the configuration's CTR_DRBG, which fails without an entropy source mbedTLS takes for a strong one, but where EBISU_MBEDTLS_SETS_RNG is 0: there it sets no random generator, which the application sets.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">tls</td><td>The configuration. </td></tr>

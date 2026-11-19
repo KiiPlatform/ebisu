@@ -246,6 +246,13 @@
     <filename>ebisu__mbedtls_8h.html</filename>
     <class kind="struct">ebisu_mbedtls_tls_t</class>
     <class kind="struct">ebisu_mbedtls_socket_t</class>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_MBEDTLS_SETS_RNG</name>
+      <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
+      <anchor>ab9f3e76d7e9c40331d2c88e9ab8c933e</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="typedef">
       <type>struct ebisu_mbedtls_tls_t</type>
       <name>ebisu_mbedtls_tls_t</name>
