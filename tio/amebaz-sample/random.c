@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include <FreeRTOS.h>
-#include <semphr.h>
 
 /* The SDK's configuration of mbedTLS, and CTR_DRBG on top of it, in this file
    alone: its context is the sample's, and nothing else of mbedTLS changes. */
@@ -15,12 +14,14 @@
 #define MBEDTLS_CTR_DRBG_C
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
+#include <mbedtls/platform.h>
 #include <mbedtls/sha256.h>
 /* mbedTLS's own, from the SDK's sources, which build.sh puts on the include
    path. */
 #include "ctr_drbg.c"
 
 #include <ameba_soc.h>
+#include <device_lock.h>
 #include <system_8195a.h>
 
 /* Bytes of the ADC's noise for each byte of the seed: 8 of its bits for each
@@ -28,7 +29,21 @@
 #define NOISE_PER_BYTE 8
 
 static mbedtls_ctr_drbg_context drbg;
-static SemaphoreHandle_t drbg_lock;
+
+/* mbedTLS's allocations, as the SDK builds it with MBEDTLS_PLATFORM_MEMORY
+   and no allocator of its own: from FreeRTOS's heap. */
+static void* heap_calloc(size_t count, size_t size)
+{
+    void* p;
+    if (size != 0 && count > (size_t)-1 / size) {
+        return NULL;
+    }
+    p = pvPortMalloc(count * size);
+    if (p != NULL) {
+        memset(p, 0, count * size);
+    }
+    return p;
+}
 
 /* As CTR_DRBG asks for its entropy: length bytes, each from SHA-256 over 8
    times as many of the ADC's noise, a 32-bit word of it from each
@@ -66,8 +81,14 @@ int random_init(void)
     if (SYSCFG0_BDOption() == SYSCFG_BD_QFN48_MCM_8MBFlash) {
         return MBEDTLS_ERR_ENTROPY_SOURCE_FAILED;
     }
-    drbg_lock = xSemaphoreCreateMutex();
-    if (drbg_lock == NULL) {
+    /* mbedTLS's allocator. The SDK builds mbedTLS's AES for the chip's
+       crypto engine alone, without SUPPORT_HW_SW_CRYPTO, and its
+       mbedtls_platform_set_calloc_free() switches AES to the engine: set
+       before the generator is seeded, which it is with AES. The SDK starts
+       the engine as it sets each connection up: here, it starts it for the
+       generator, before any connection. */
+    mbedtls_platform_set_calloc_free(heap_calloc, vPortFree);
+    if (rtl_cryptoEngine_init() != 0) {
         return -1;
     }
     mbedtls_ctr_drbg_init(&drbg);
@@ -88,10 +109,13 @@ int sample_random(void* unused, unsigned char* output, size_t length)
     int ret;
     (void)unused;
     /* The tasks' connections share the generator, and mbedTLS is built
-       without MBEDTLS_THREADING_C. */
-    xSemaphoreTake(drbg_lock, portMAX_DELAY);
+       without MBEDTLS_THREADING_C; and its AES runs in the chip's crypto
+       engine, as theirs does: under the SDK's lock of the engine, which
+       mbedTLS's ciphers take as they run in it, and which is never held
+       while mbedTLS asks for random numbers. */
+    device_mutex_lock(RT_DEV_LOCK_CRYPTO);
     ret = mbedtls_ctr_drbg_random(&drbg, output, length);
-    xSemaphoreGive(drbg_lock);
+    device_mutex_unlock(RT_DEV_LOCK_CRYPTO);
     return ret;
 }
 

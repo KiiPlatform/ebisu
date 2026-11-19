@@ -15,7 +15,6 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-#include <mbedtls/platform.h>
 #include <mbedtls/ssl.h>
 
 #include "main.h"
@@ -238,29 +237,14 @@ static void init_updater(void)
     tio_updater_set_interval(&updater, EBISU_SAMPLE_UPDATE_PERIOD);
 }
 
-/* mbedTLS's allocations, as the SDK builds it with MBEDTLS_PLATFORM_MEMORY
-   and no allocator of its own: from FreeRTOS's heap. */
-static void* tls_calloc(size_t count, size_t size)
-{
-    void* p;
-    if (size != 0 && count > (size_t)-1 / size) {
-        return NULL;
-    }
-    p = pvPortMalloc(count * size);
-    if (p != NULL) {
-        memset(p, 0, count * size);
-    }
-    return p;
-}
-
 /* The connections' TLS configuration: the CA certificates, a random
-   generator, and records no larger than mbedTLS takes. */
+   generator, and records no larger than mbedTLS takes. mbedTLS's allocator
+   is random_init()'s. */
 static void init_tls(void)
 {
     mbedtls_ssl_config* conf;
     int ret;
 
-    mbedtls_platform_set_calloc_free(tls_calloc, vPortFree);
     ret = ebisu_mbedtls_tls_init(&tls_config, (const unsigned char*)ca_pem, ca_pem_size);
     if (ret != 0) {
         sample_fatal("failed to set up TLS: -0x%04x", (unsigned int)-ret);
