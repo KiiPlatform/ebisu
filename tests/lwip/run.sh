@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds the lwIP socket's tests for an lwIP and a configuration, and runs
+# Builds the lwIP port's tests for an lwIP and a configuration, and runs
 # them, with CTest's JUnit report in test-results/junit, as CI does.
 #
 # Usage: tests/lwip/run.sh <lwip> <configuration> [memcheck]
@@ -17,7 +17,7 @@ mkdir -p "$root/test-results/junit"
 if [ "${3:-}" = memcheck ]; then
     # As ebisu's own CTest runs valgrind: a definite leak or an error fails.
     valgrind --leak-check=full --errors-for-leak-kinds=definite --error-exitcode=1 \
-        "$build/lwip_tcp_test" -r junit -o "$root/test-results/junit/lwip-$lwip-$config-memcheck.xml"
+        "$build/lwip_test" -r junit -o "$root/test-results/junit/lwip-$lwip-$config-memcheck.xml"
 else
     ctest --test-dir "$build" --output-on-failure \
         --output-junit "$root/test-results/junit/lwip-$lwip-$config.xml"

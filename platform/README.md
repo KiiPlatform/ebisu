@@ -152,9 +152,10 @@ of the application's own, as the
   operation failed, with lwIP's errno, or `lwip_getaddrinfo()`'s error for a
   lookup, which also goes to the logger set with
   `ebisu_lwip_tcp_socket_set_logger()`, if any, unless it is built with
-  `-DEBISU_LOG=OFF`. Built where the application's build has lwIP's core
-  target, `lwipcore`, as including lwIP's `src/Filelists.cmake` makes it from
-  2.1 on, with lwIP's include directories and definitions in
+  `-DEBISU_LOG=OFF`. `ebisu_lwip_dns()` has the name servers lwIP's DNS client
+  asks, for the DNS probe, below. Built where the application's build has
+  lwIP's core target, `lwipcore`, as including lwIP's `src/Filelists.cmake`
+  makes it from 2.1 on, with lwIP's include directories and definitions in
   `LWIP_INCLUDE_DIRS` and `LWIP_DEFINITIONS`, as lwIP's CMake takes them, and
   not installed. A build without CMake, as many vendors' SDKs are, compiles
   `ebisu_lwip_tcp.c` with lwIP's headers and the application's `lwipopts.h`.
@@ -492,8 +493,8 @@ keeps asking them again, and so does the task that looked up: how long is
 below.
 
 The probe needs nothing of the system's itself: it asks the name servers an
-`ebisu_dns_t` of core's lists, as that has them asked. The POSIX, Win32 and
-FreeRTOS-Plus-TCP ports have the system's:
+`ebisu_dns_t` of core's lists, as that has them asked. The POSIX, Win32,
+FreeRTOS-Plus-TCP and lwIP ports have the system's:
 
 - `ebisu_posix_dns()`: the servers of `/etc/resolv.conf`, as the C libraries
   read it, or 127.0.0.1 without one, asked over BSD sockets;
@@ -507,9 +508,14 @@ FreeRTOS-Plus-TCP ports have the system's:
   application set them, asked over a UDP socket of FreeRTOS-Plus-TCP's. ICMP's
   port unreachable doesn't reach that socket, so a server nothing listens on
   doesn't answer in time, rather than refuse.
+- `ebisu_lwip_dns()`: those lwIP's DNS client asks, in the order it asks them:
+  the first of `dns_getserver()`'s, and each next while it is set, as DHCP, RA
+  or `dns_setserver()` set them, asked over a UDP socket of lwIP's. lwIP tells
+  that socket nothing of ICMP's port unreachable, so a server nothing listens
+  on doesn't answer in time, rather than refuse.
 
-An application on another system, such as one with lwIP, implements the two
-operations that matter, `servers` and `ask`, and the probe works there too.
+An application on another system implements the two operations that matter,
+`servers` and `ask`, and the probe works there too.
 
 `ebisu_dns_probe()` sends one query for the host to each of the first 3
 servers in turn, until one answers, giving each the time it is given.
@@ -520,8 +526,8 @@ answers. A host that needs no server, an address or localhost, needs no probe.
 `ebisu_dns_probe_socket_t` probes before another socket connects, and fails the
 connect if no server answers, with `EBISU_SOCK_ERROR_DNS`, rather than have
 the other socket look the host up. The rest is the other socket's, which may be
-any: the OpenSSL, Schannel or mbedTLS port's, or the POSIX, Win32 or
-FreeRTOS-Plus-TCP port's of plain TCP.
+any: the OpenSSL, Schannel or mbedTLS port's, or the POSIX, Win32,
+FreeRTOS-Plus-TCP or lwIP port's of plain TCP.
 
 ```c
 #include <ebisu_dns_probe.h>
@@ -589,3 +595,17 @@ defaults and a server that never answered, a lookup ended after 25 seconds.
 It fails with `pdFREERTOS_ERRNO_ENOENT`, as for a name that doesn't exist.
 With `ipconfigUSE_IPv6`, the plain socket looks a name up for IPv6 too, after
 IPv4: twice that. Its connect timeout doesn't cut a lookup short.
+
+lwIP's DNS client asks one server at a time: `DNS_MAX_RETRIES` queries, 4 by
+default, at once and then 1, 2 and 4 seconds in, as `DNS_TMR_INTERVAL`'s
+second counts, and gives up on it 3 seconds after the last, 7 seconds in all.
+It then goes on to the next of `DNS_MAX_SERVERS`, 2 by default, while it is
+set. Each lookup starts again
+from the first, so one that doesn't answer costs every lookup its time. On
+the host, with servers that never answered, a lookup ended after 7 seconds for
+one and 14 for two, with lwIP 2.0.2 to 2.2.1 alike, and failed with
+`EAI_FAIL`. A lower `DNS_MAX_RETRIES` in `lwipopts.h` shortens it, for every
+lookup: at 2, a server has 2 seconds, with one query sent again. lwIP's cache
+answers a name it has kept, for as long as its answer's TTL, up to a week, with
+no server at all. The lwIP socket's connect timeout doesn't cut a lookup
+short.

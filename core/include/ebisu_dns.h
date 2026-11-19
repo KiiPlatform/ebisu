@@ -69,9 +69,10 @@ typedef struct ebisu_dns_t ebisu_dns_t;
 
 /** \brief What the system's name servers are, and how one is asked.
  *
- * Ports implement these for their kind of system, as platform's POSIX, Win32
- * and FreeRTOS-Plus-TCP ports do with ebisu_posix_dns(), ebisu_win32_dns() and
- * ebisu_freertos_tcp_dns(), and an application for a system of its own. See ebisu_object.h for how self leads
+ * Ports implement these for their kind of system, as platform's POSIX, Win32,
+ * FreeRTOS-Plus-TCP and lwIP ports do with ebisu_posix_dns(),
+ * ebisu_win32_dns(), ebisu_freertos_tcp_dns() and ebisu_lwip_dns(), and an
+ * application for a system of its own. See ebisu_object.h for how self leads
  * to its state, if it has any.
  */
 typedef struct ebisu_dns_ops_t {

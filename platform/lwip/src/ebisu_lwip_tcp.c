@@ -11,6 +11,8 @@
 #include <lwip/netdb.h>
 #include <lwip/sockets.h>
 
+#include "ebisu_lwip_wait.h"
+
 #if NO_SYS
 #error "ebisu_lwip_tcp_socket_t is over lwIP's sockets, which need an OS: set NO_SYS to 0."
 #endif
@@ -25,16 +27,6 @@
 #endif
 #if !LWIP_SO_RCVTIMEO || !LWIP_SO_SNDTIMEO
 #error "ebisu_lwip_tcp_socket_t has timeouts: set LWIP_SO_RCVTIMEO and LWIP_SO_SNDTIMEO to 1."
-#endif
-
-/* lwIP 2.0 has select alone, whatever LWIP_SOCKET_SELECT says; 2.1 on can
-   leave select or poll out. */
-#if (LWIP_VERSION_MAJOR == 2 && LWIP_VERSION_MINOR == 0) || LWIP_SOCKET_SELECT
-#define WAIT_WITH_SELECT 1
-#elif LWIP_SOCKET_POLL
-#define WAIT_WITH_SELECT 0
-#else
-#error "ebisu_lwip_tcp_socket_t waits for its socket: set LWIP_SOCKET_SELECT or LWIP_SOCKET_POLL to 1."
 #endif
 
 #ifdef EBISU_NO_LOG
@@ -68,33 +60,6 @@ static void set_timeout(int s, int option, unsigned int seconds)
     tv.tv_usec = 0;
     (void)lwip_setsockopt(s, SOL_SOCKET, option, &tv, sizeof(tv));
 #endif
-}
-
-/* Waits up to timeout_ms, or for ever with a negative one, for the socket to
-   be readable, or writable, as for a connect that finished, either way.
-   Whether it was: 1, 0 for not in time, or -1 for a failure, with errno. */
-static int wait_for(int s, bool for_write, long timeout_ms)
-{
-#if WAIT_WITH_SELECT
-    fd_set set;
-    fd_set failed;
-    struct timeval tv;
-    FD_ZERO(&set);
-    FD_ZERO(&failed);
-    FD_SET(s, &set);
-    FD_SET(s, &failed);
-    tv.tv_sec = timeout_ms / 1000;
-    tv.tv_usec = (timeout_ms % 1000) * 1000;
-    int ret = lwip_select(s + 1, for_write ? NULL : &set, for_write ? &set : NULL, &failed,
-            timeout_ms < 0 ? NULL : &tv);
-#else
-    struct pollfd p;
-    p.fd = s;
-    p.events = for_write ? POLLOUT : POLLIN;
-    p.revents = 0;
-    int ret = lwip_poll(&p, 1, timeout_ms > INT_MAX ? INT_MAX : (int)timeout_ms);
-#endif
-    return ret > 0 ? 1 : ret;
 }
 
 static void set_non_blocking(int s, bool non_blocking)
@@ -166,7 +131,7 @@ static int connect_to(ebisu_lwip_tcp_socket_t* sock, const struct addrinfo* addr
     if (lwip_connect(s, address->ai_addr, address->ai_addrlen) != 0) {
         err = errno;
         if (err == EINPROGRESS) {
-            int ready = wait_for(s, true,
+            int ready = ebisu_lwip_wait(s, true,
                     sock->_to_connect == 0 ? -1 : (long)sock->_to_connect * 1000);
             if (ready == 0) {
                 err = ETIMEDOUT;
@@ -319,7 +284,7 @@ static ebisu_sock_error_t tcp_last_error(ebisu_socket_t* self, long* out_detail)
 static bool tcp_recv_wait(ebisu_socket_t* self, uint32_t timeout_ms)
 {
     ebisu_lwip_tcp_socket_t* sock = EBISU_CONTAINER_OF(self, ebisu_lwip_tcp_socket_t, base);
-    return wait_for(sock->_socket, false, (long)(timeout_ms > 0x7fffffffu ? 0x7fffffffu :
+    return ebisu_lwip_wait(sock->_socket, false, (long)(timeout_ms > 0x7fffffffu ? 0x7fffffffu :
                 timeout_ms)) != 0;
 }
 

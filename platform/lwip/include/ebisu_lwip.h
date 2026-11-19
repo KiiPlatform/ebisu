@@ -1,10 +1,11 @@
 /**
  * @file ebisu_lwip.h
- * @brief A socket of plain TCP over lwIP's sockets.
+ * @brief A socket of plain TCP over lwIP's sockets, and its name servers.
  */
 #ifndef _EBISU_LWIP
 #define _EBISU_LWIP
 
+#include <ebisu_dns.h>
 #include <ebisu_log.h>
 #include <ebisu_socket.h>
 
@@ -158,6 +159,40 @@ void ebisu_lwip_tcp_socket_set_keepalive(ebisu_lwip_tcp_socket_t* sock,
  * \param [in] nodelay true to send at once.
  */
 void ebisu_lwip_tcp_socket_set_nodelay(ebisu_lwip_tcp_socket_t* sock, bool nodelay);
+
+/**
+ * \brief The name servers on lwIP, for platform's DNS probe.
+ *
+ * lwIP's DNS client does the lookups, which ebisu_lwip_tcp_socket_t asks it
+ * for: this is only what the probe needs to ask whether its servers answer
+ * first. A lookup can't be given a timeout: the client sends each server 4
+ * queries, at once and then 1, 2 and 4 seconds in, as DNS_MAX_RETRIES and
+ * DNS_TMR_INTERVAL have it, and gives up on it 3 seconds after the last, 7
+ * seconds in all, before the next, and the task that looks up waits all the
+ * while.
+ *
+ * The servers are those the client asks, in the order it asks them, on port
+ * 53: the first of dns_getserver()'s, and each next while it is set, as DHCP,
+ * DHCPv6, RA or dns_setserver() set them. Each lookup starts again from the
+ * first. With none set, there are none. An IPv6 server has its zone as its
+ * scope, the interface's index lwIP gives it, from lwIP 2.1 on.
+ *
+ * A server is asked over a UDP socket of lwIP's. lwIP tells such a socket
+ * nothing of ICMP's port unreachable, so a server nothing listens on doesn't
+ * answer in time, rather than refuse, and no server answering is EAI_FAIL, as
+ * for lwip_getaddrinfo(), and as ebisu_lwip_tcp_socket_t's last_error has it.
+ *
+ * A name in lwIP's local host list, DNS_LOCAL_HOSTLIST, or in its cache of
+ * answers, the client doesn't ask the servers for: the probe asks them all the
+ * same.
+ *
+ * They have no state, so this serves everything, from any task but lwIP's
+ * own, as reading the servers takes lwIP's core lock with
+ * LWIP_TCPIP_CORE_LOCKING. Needs LWIP_DNS, LWIP_UDP and LWIP_SOCKET.
+ *
+ * \return The name servers.
+ */
+ebisu_dns_t* ebisu_lwip_dns(void);
 
 #ifdef __cplusplus
 }

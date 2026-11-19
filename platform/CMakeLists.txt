@@ -139,7 +139,7 @@ endif()
 # lwipopts.h, and its port's arch/cc.h, among them. Not installed, as lwIP
 # isn't.
 if(TARGET lwipcore)
-    add_library(ebisu_lwip STATIC lwip/src/ebisu_lwip_tcp.c)
+    add_library(ebisu_lwip STATIC lwip/src/ebisu_lwip_tcp.c lwip/src/ebisu_lwip_dns.c)
     target_include_directories(ebisu_lwip
         PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lwip/include>)
