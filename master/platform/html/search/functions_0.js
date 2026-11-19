@@ -7,7 +7,7 @@ var searchData=
   ['ebisu_5fdns_5fprobe_5fsocket_5fset_5fservers_4',['ebisu_dns_probe_socket_set_servers',['../ebisu__dns__probe_8h.html#a0bdb2f4e19c931056900ef54071f5ab3',1,'ebisu_dns_probe.h']]],
   ['ebisu_5ffreertos_5flock_5fdestroy_5',['ebisu_freertos_lock_destroy',['../ebisu__freertos_8h.html#ac3b0ccbdcbdeb00894abd9cdea75a8a1',1,'ebisu_freertos.h']]],
   ['ebisu_5ffreertos_5flock_5finit_6',['ebisu_freertos_lock_init',['../ebisu__freertos_8h.html#a08120ee945a8e4de0160b0a869bbc575',1,'ebisu_freertos.h']]],
-  ['ebisu_5ffreertos_5fsystem_5finit_7',['ebisu_freertos_system_init',['../ebisu__freertos_8h.html#a31721b1ab26bec50b321fac698b0dd0f',1,'ebisu_freertos.h']]],
+  ['ebisu_5ffreertos_5fsystem_5finit_7',['ebisu_freertos_system_init',['../ebisu__freertos_8h.html#aa4076c8635747b8cdcb3aafa1cef6c72',1,'ebisu_freertos.h']]],
   ['ebisu_5ffreertos_5fsystem_5fset_5fclock_8',['ebisu_freertos_system_set_clock',['../ebisu__freertos_8h.html#adef96b9854e888bc6d50d6c060f89426',1,'ebisu_freertos.h']]],
   ['ebisu_5ffreertos_5ftcp_5fdns_9',['ebisu_freertos_tcp_dns',['../ebisu__freertos__tcp_8h.html#ae91093d17312ea40d2d99195fd7ec1ab',1,'ebisu_freertos_tcp.h']]],
   ['ebisu_5ffreertos_5ftcp_5fsocket_5finit_10',['ebisu_freertos_tcp_socket_init',['../ebisu__freertos__tcp_8h.html#a1b74656a70bd4b1cc01b3f576dac6b5d',1,'ebisu_freertos_tcp.h']]],

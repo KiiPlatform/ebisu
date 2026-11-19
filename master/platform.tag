@@ -101,6 +101,27 @@
     <filename>ebisu__freertos_8h.html</filename>
     <class kind="struct">ebisu_freertos_system_t</class>
     <class kind="struct">ebisu_freertos_lock_t</class>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_FREERTOS_STACK_DEPTH_TYPE</name>
+      <anchorfile>ebisu__freertos_8h.html</anchorfile>
+      <anchor>ac2696f0e6a7946ae76f9dcf23d0b7006</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_FREERTOS_DYNAMIC_ALLOCATION</name>
+      <anchorfile>ebisu__freertos_8h.html</anchorfile>
+      <anchor>a9f82b2fbbe5beede03ceaedafcbf098e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_FREERTOS_STATIC_ALLOCATION</name>
+      <anchorfile>ebisu__freertos_8h.html</anchorfile>
+      <anchor>ae8bdb5968e2eef74b2fc3b63d38887e0</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="typedef">
       <type>struct ebisu_freertos_system_t</type>
       <name>ebisu_freertos_system_t</name>
@@ -119,8 +140,8 @@
       <type>void</type>
       <name>ebisu_freertos_system_init</name>
       <anchorfile>ebisu__freertos_8h.html</anchorfile>
-      <anchor>a31721b1ab26bec50b321fac698b0dd0f</anchor>
-      <arglist>(ebisu_freertos_system_t *system, configSTACK_DEPTH_TYPE stack_depth, UBaseType_t priority)</arglist>
+      <anchor>aa4076c8635747b8cdcb3aafa1cef6c72</anchor>
+      <arglist>(ebisu_freertos_system_t *system, EBISU_FREERTOS_STACK_DEPTH_TYPE stack_depth, UBaseType_t priority)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
