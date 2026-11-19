@@ -458,6 +458,104 @@
     </member>
   </compound>
   <compound kind="file">
+    <name>ebisu_polarssl.h</name>
+    <path>polarssl/include/</path>
+    <filename>ebisu__polarssl_8h.html</filename>
+    <class kind="struct">ebisu_polarssl_tls_t</class>
+    <class kind="struct">ebisu_polarssl_socket_t</class>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_POLARSSL_SETS_RNG</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>a21a3da78345972d22e0aadf2a967558d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>void(*</type>
+      <name>EBISU_POLARSSL_SETUP</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>a8e4860952758bb38add9a8d7d4736f65</anchor>
+      <arglist>)(ssl_context *ssl, void *userdata)</arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_polarssl_tls_t</type>
+      <name>ebisu_polarssl_tls_t</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>a5dfaf40d68da7d0245c0eb28fcb6da36</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_polarssl_socket_t</type>
+      <name>ebisu_polarssl_socket_t</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>a7bd1a0da6a5c47c1fcf380dc6e1aabdd</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>ebisu_polarssl_tls_init</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>a6139bcc58fe73d1bf98ddcd6af33b409</anchor>
+      <arglist>(ebisu_polarssl_tls_t *tls, const unsigned char *ca, size_t ca_size)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_polarssl_tls_set_setup</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>a0c8da8ed8e71435451d22193b1067210</anchor>
+      <arglist>(ebisu_polarssl_tls_t *tls, EBISU_POLARSSL_SETUP setup, void *userdata)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_polarssl_tls_set_verify</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>a9aeb54f74814f195bcc405c2346054d2</anchor>
+      <arglist>(ebisu_polarssl_tls_t *tls, ebisu_tls_verify_t verify, const unsigned char *pin)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_polarssl_tls_free</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>a167fef53860214d88e5fb1c6f38ef8da</anchor>
+      <arglist>(ebisu_polarssl_tls_t *tls)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_polarssl_socket_init</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>a13867e35e860bf56706c27594da78317</anchor>
+      <arglist>(ebisu_polarssl_socket_t *sock, ebisu_socket_t *transport, ebisu_polarssl_tls_t *tls)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_polarssl_socket_set_clock</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>a963745e6b5b75159dc93e5e12f1f67fe</anchor>
+      <arglist>(ebisu_polarssl_socket_t *sock, ebisu_clock_t *clock)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_polarssl_socket_set_logger</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>abc4c2117dd37bc0a6119d8a75c5a5a43</anchor>
+      <arglist>(ebisu_polarssl_socket_t *sock, ebisu_logger_t *logger)</arglist>
+    </member>
+    <member kind="function">
+      <type>const char *</type>
+      <name>ebisu_polarssl_socket_get_protocol</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>aae89766d14d11fba1e697a4ef5b28faf</anchor>
+      <arglist>(const ebisu_polarssl_socket_t *sock)</arglist>
+    </member>
+    <member kind="function">
+      <type>const char *</type>
+      <name>ebisu_polarssl_socket_get_cipher</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>a993fafb9dd6b345685d679d3d144997e</anchor>
+      <arglist>(const ebisu_polarssl_socket_t *sock)</arglist>
+    </member>
+  </compound>
+  <compound kind="file">
     <name>ebisu_posix.h</name>
     <path>posix/include/</path>
     <filename>ebisu__posix_8h.html</filename>
@@ -796,6 +894,21 @@
   <compound kind="struct">
     <name>ebisu_openssl_tls_t</name>
     <filename>structebisu__openssl__tls__t.html</filename>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_polarssl_socket_t</name>
+    <filename>structebisu__polarssl__socket__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_socket_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__polarssl__socket__t.html</anchorfile>
+      <anchor>aca14780d140bf3f0c349b2414f5f728f</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_polarssl_tls_t</name>
+    <filename>structebisu__polarssl__tls__t.html</filename>
   </compound>
   <compound kind="struct">
     <name>ebisu_posix_lock_t</name>
