@@ -61,14 +61,17 @@ extern "C" {
  * from mbedTLS's entropy sources, the hardware's with
  * MBEDTLS_ENTROPY_HARDWARE_ALT. mbedTLS 2 built without MBEDTLS_CTR_DRBG_C or
  * MBEDTLS_ENTROPY_C, as some of vendors' SDKs configure it, has neither, and
- * EBISU_MBEDTLS_SETS_RNG is 0: the application sets the generator, one of the
- * hardware's or the SDK's, with mbedtls_ssl_conf_rng() on
- * ebisu_mbedtls_tls_config(), before the first connection, which fails
- * without one. Connections share the generator: on more than one task at
- * once, mbedTLS has to be built with MBEDTLS_THREADING_C, with
- * MBEDTLS_THREADING_PTHREAD on POSIX, or MBEDTLS_THREADING_ALT and functions
- * of the system's, or the application's generator has to take calls from
- * more than one task at once.
+ * EBISU_MBEDTLS_SETS_RNG is 0: the application sets the generator, with
+ * mbedtls_ssl_conf_rng() on ebisu_mbedtls_tls_config(), before the first
+ * connection, which fails without one. TLS's keys are made from these
+ * numbers, whichever gives them: the entropy sources have to give true
+ * randomness, and the application's generator has to be cryptographically
+ * secure, a hardware random number generator's, or a DRBG seeded from one.
+ * Connections share the generator: on more than one task at once, mbedTLS has
+ * to be built with MBEDTLS_THREADING_C, with MBEDTLS_THREADING_PTHREAD on
+ * POSIX, or MBEDTLS_THREADING_ALT and functions of the system's, or the
+ * application's generator has to take calls from more than one task at
+ * once.
  *
  * mbedTLS 3.6 and 4.x, and mbedTLS 2 from 2.4, as vendors' SDKs ship it,
  * which has TLS 1.2 at the most. mbedTLS 2 is past its end of life: its last
