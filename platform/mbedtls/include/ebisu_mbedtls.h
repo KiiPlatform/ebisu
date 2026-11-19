@@ -11,6 +11,14 @@
 
 #include <mbedtls/ssl.h>
 #include <mbedtls/x509_crt.h>
+/* The version, which mbedTLS 2 has in a header of its own. */
+#if !defined(MBEDTLS_VERSION_NUMBER)
+#include <mbedtls/version.h>
+#endif
+#if MBEDTLS_VERSION_MAJOR < 3
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/entropy.h>
+#endif
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -37,28 +45,41 @@ extern "C" {
  * starts with psa_crypto_init(), from mbedTLS's entropy sources: on a device,
  * the hardware's, as mbedTLS is configured to take them, with
  * MBEDTLS_ENTROPY_HARDWARE_ALT in mbedTLS 3.6, or
- * MBEDTLS_PSA_DRIVER_GET_ENTROPY in 4.x. Connections share the generator: on
- * more than one task at once, mbedTLS has to be built with
- * MBEDTLS_THREADING_C, with MBEDTLS_THREADING_PTHREAD on POSIX, or
- * MBEDTLS_THREADING_ALT and functions of the system's.
+ * MBEDTLS_PSA_DRIVER_GET_ENTROPY in 4.x. With mbedTLS 2, they come from a
+ * CTR_DRBG of the configuration's own, which ebisu_mbedtls_tls_init() seeds
+ * from mbedTLS's entropy sources, the hardware's with
+ * MBEDTLS_ENTROPY_HARDWARE_ALT. Connections share the generator: on more than
+ * one task at once, mbedTLS has to be built with MBEDTLS_THREADING_C, with
+ * MBEDTLS_THREADING_PTHREAD on POSIX, or MBEDTLS_THREADING_ALT and functions
+ * of the system's.
  *
- * mbedTLS 3.6 and 4.x. Initialize with ebisu_mbedtls_tls_init(), before the
- * connections, and free with ebisu_mbedtls_tls_free() once none is open.
+ * mbedTLS 3.6 and 4.x, and mbedTLS 2 from 2.4, as vendors' SDKs ship it,
+ * which has TLS 1.2 at the most. mbedTLS 2 is past its end of life: its last
+ * release, 2.28.10, came in March 2025, and an earlier 2 lacks the fixes
+ * since it, 2.4.0, of 2016, those of most of a decade. Initialize with
+ * ebisu_mbedtls_tls_init(), before the connections, and free with
+ * ebisu_mbedtls_tls_free() once none is open.
  */
 typedef struct ebisu_mbedtls_tls_t {
     mbedtls_ssl_config _config; /**< \private */
     mbedtls_x509_crt _ca; /**< \private */
     ebisu_tls_verify_t _verify; /**< \private */
     unsigned char _pin[EBISU_TLS_PIN_SIZE]; /**< \private */
+#if MBEDTLS_VERSION_MAJOR < 3
+    mbedtls_entropy_context _entropy; /**< \private */
+    mbedtls_ctr_drbg_context _drbg; /**< \private */
+#endif
 } ebisu_mbedtls_tls_t;
 
 /**
  * \brief Sets up a TLS configuration, with the CA certificates the server's
  * has to chain to.
  *
- * Calls psa_crypto_init(), which may have been called already, and doesn't
- * call mbedtls_psa_crypto_free(), which the application may, once it no
- * longer uses PSA.
+ * With mbedTLS 3.6 or 4.x, calls psa_crypto_init(), which may have been
+ * called already, and doesn't call mbedtls_psa_crypto_free(), which the
+ * application may, once it no longer uses PSA. With mbedTLS 2, seeds the
+ * configuration's CTR_DRBG, which fails without an entropy source mbedTLS
+ * takes for a strong one.
  *
  * \param [out] tls The configuration.
  * \param [in] ca The CA certificates: PEM, one or more, with the terminating
@@ -75,10 +96,14 @@ int ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, si
  * \brief mbedTLS's configuration, for settings of the application's.
  *
  * Such as the cipher suites, mbedtls_ssl_conf_ciphersuites(), or the lowest
- * version, mbedtls_ssl_conf_min_tls_version(). Changed after
- * ebisu_mbedtls_tls_init(), before the first connection. What
- * ebisu_mbedtls_tls_init() set, the verification, the CA certificates and the
- * random generator, are the socket's to keep.
+ * version, mbedtls_ssl_conf_min_tls_version(), mbedtls_ssl_conf_min_version()
+ * in mbedTLS 2. Or, for an mbedTLS built with a record smaller than the 16 KB
+ * a server may send, MBEDTLS_SSL_IN_CONTENT_LEN or, before 2.12,
+ * MBEDTLS_SSL_MAX_CONTENT_LEN, the maximum fragment length to ask the server
+ * for, mbedtls_ssl_conf_max_frag_len(), which a server that doesn't take the
+ * extension ignores. Changed after ebisu_mbedtls_tls_init(), before the first
+ * connection. What ebisu_mbedtls_tls_init() set, the verification, the CA
+ * certificates and the random generator, are the socket's to keep.
  *
  * \param [in] tls The configuration.
  * \return mbedTLS's configuration.
@@ -96,7 +121,9 @@ mbedtls_ssl_config* ebisu_mbedtls_tls_config(ebisu_mbedtls_tls_t* tls);
  * aren't, the configuration's CA certificates aren't used, and a socket
  * without a clock connects without the system's time too. A pin is the
  * SHA-256 of the server's certificate in DER, or of its public key's
- * SubjectPublicKeyInfo in DER. Set it before the first connection.
+ * SubjectPublicKeyInfo in DER, which mbedTLS before 2.17 doesn't keep, and is
+ * written again with MBEDTLS_PK_WRITE_C, or else not taken. Set it before the
+ * first connection.
  *
  * \param [in,out] tls The configuration.
  * \param [in] verify How servers' certificates are checked.
@@ -135,6 +162,10 @@ void ebisu_mbedtls_tls_free(ebisu_mbedtls_tls_t* tls);
  * of the stream. A TLS 1.3 server's session tickets are taken and dropped.
  * recv_wait, when the socket under it has one, counts what mbedTLS has
  * received and not yet returned.
+ *
+ * With mbedTLS before 2.18, which sets a verify callback for a configuration
+ * only, the socket has a copy of the configuration's of its own, taken at each
+ * connect, with its own callback.
  *
  * Why an operation failed, its last_error says: what the socket under it said,
  * for what failed there, as a host that didn't resolve or an address that
@@ -179,6 +210,13 @@ typedef struct ebisu_mbedtls_socket_t {
      * for last_error, and more of it. */
     ebisu_sock_error_t _error;
     long _error_detail; /**< \private */
+#if MBEDTLS_VERSION_NUMBER < 0x02120000
+    /** \private The configuration's, copied at connect, with a verify
+     * callback of the socket's, which mbedTLS before 2.18 sets for a
+     * configuration only. Not freed: what it points to is the
+     * configuration's. */
+    mbedtls_ssl_config _config;
+#endif
 } ebisu_mbedtls_socket_t;
 
 /**

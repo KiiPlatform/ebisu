@@ -8,8 +8,14 @@
 #include <ebisu_mbedtls.h>
 #include <ebisu_posix.h>
 
-#include <mbedtls/build_info.h>
+#include <mbedtls/ssl.h>
 #include <mbedtls/x509.h>
+#if !defined(MBEDTLS_VERSION_NUMBER)
+#include <mbedtls/version.h>
+#endif
+#if MBEDTLS_VERSION_MAJOR < 3 && !defined(MBEDTLS_ERR_SSL_BAD_PROTOCOL_VERSION)
+#define MBEDTLS_ERR_SSL_BAD_PROTOCOL_VERSION MBEDTLS_ERR_SSL_BAD_HS_PROTOCOL_VERSION
+#endif
 
 #include <openssl/err.h>
 #include <openssl/evp.h>

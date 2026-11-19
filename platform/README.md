@@ -166,8 +166,9 @@ of the application's own, as the
 
 - **mbedTLS** (`ebisu_mbedtls.h`, library `ebisu_mbedtls`):
   `ebisu_mbedtls_socket_t`, TLS 1.2 or later, 1.3 where mbedTLS has it, with
-  mbedTLS 3.6 or 4.x, over another socket of the system's, of plain TCP, which
-  connects, sends and receives the records, and whose timeouts are the
+  mbedTLS 3.6 or 4.x, or mbedTLS 2 from 2.4, as vendors' SDKs ship it, with
+  TLS 1.2 at the most, over another socket of the system's, of plain TCP,
+  which connects, sends and receives the records, and whose timeouts are the
   connection's: the POSIX port's `ebisu_posix_tcp_socket_t`, the Win32 port's,
   or one over a microcontroller's TCP/IP stack. Its connections share an
   `ebisu_mbedtls_tls_t`: the CA certificates the server's has to chain to, PEM
@@ -179,7 +180,8 @@ of the application's own, as the
   mbedTLS has it with `MBEDTLS_HAVE_TIME_DATE`: a device without a real-time
   clock connects with the clock alone. Random numbers come from PSA's
   generator, which `ebisu_mbedtls_tls_init()` starts, from mbedTLS's entropy
-  sources. A receive that times out leaves the connection as it was, and
+  sources, or with mbedTLS 2 from a CTR_DRBG of the configuration's, seeded
+  from them. A receive that times out leaves the connection as it was, and
   `recv_wait` counts what mbedTLS has and hasn't returned. Its `last_error`
   says why an operation failed: what the socket under it said, for what failed
   there, a certificate refused, with mbedTLS's verify flags, or another TLS
@@ -187,10 +189,18 @@ of the application's own, as the
   `ebisu_mbedtls_socket_set_logger()`, if any, unless it is built with
   `-DEBISU_LOG=OFF`. `ebisu_mbedtls_socket_get_protocol()` and
   `ebisu_mbedtls_socket_get_cipher()` give the TLS version and cipher suite a
-  connection negotiated, as mbedTLS names them. Built where CMake finds mbedTLS: the application's,
-  added before ebisu's, or one installed, as its CMake package has it, both
-  `MbedTLS::mbedtls`. Sockets of a configuration on more than one task at once
-  need mbedTLS built with `MBEDTLS_THREADING_C`.
+  connection negotiated, as mbedTLS names them. Built where CMake finds
+  mbedTLS: the application's, added before ebisu's, or one installed, as its
+  CMake package has it, both `MbedTLS::mbedtls`, which an application with
+  mbedTLS 2, which has no CMake package, names its libraries itself. Sockets
+  of a configuration on more than one task at once need mbedTLS built with
+  `MBEDTLS_THREADING_C`. mbedTLS 2 is past its end of life: its last release,
+  2.28.10, came in March 2025, and an earlier one lacks the fixes since it.
+  The port takes the one an SDK ships all the same. An application whose
+  mbedTLS is built with a record smaller than the 16 KB a server may send asks
+  the server for less with `mbedtls_ssl_conf_max_frag_len()`, through
+  `ebisu_mbedtls_tls_config()`, which a server that doesn't take the extension
+  ignores.
 
 The Linux sample uses the POSIX and OpenSSL ports, the Windows sample the Win32
 and Schannel ones, and the FreeRTOS sample the FreeRTOS, FreeRTOS-Plus-TCP and

@@ -347,9 +347,11 @@ jobs:
         run: tests/fuzz/run.sh 60
 
   # The mbedTLS port's small tests, under valgrind, against the oldest mbedTLS
-  # it supports, 3.6.7, and the latest, 4.2.0, each built from its release with
-  # threads, as tests/mbedtls/install_mbedtls.sh does. The build job runs them
-  # against Ubuntu's.
+  # it supports, 2.4.0, as vendors' SDKs still ship it, the last releases of
+  # mbedTLS 2's two LTS lines, 2.16.12 and 2.28.10, 3's LTS, 3.6.7, and the
+  # latest, 4.2.0, each built from its release with threads, as
+  # tests/mbedtls/install_mbedtls.sh does. The build job runs them against
+  # Ubuntu's.
   mbedtls-port:
     name: mbedtls port (${{ matrix.mbedtls }}, valgrind)
     runs-on: ubuntu-latest
@@ -360,7 +362,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mbedtls: [3.6.7, 4.2.0]
+        mbedtls: [2.4.0, 2.16.12, 2.28.10, 3.6.7, 4.2.0]
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -369,7 +371,7 @@ jobs:
       - name: Setup build env
         uses: ./.github/actions/apt-install
         with:
-          packages: g++ cmake libssl-dev valgrind python3 bzip2 curl
+          packages: g++ cmake libssl-dev valgrind python3 perl bzip2 curl
           options: --no-install-recommends
       - name: mbedTLS ${{ matrix.mbedtls }}
         run: tests/mbedtls/install_mbedtls.sh ${{ matrix.mbedtls }} "$RUNNER_TEMP/mbedtls"

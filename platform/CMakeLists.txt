@@ -153,7 +153,10 @@ endif()
 
 # mbedTLS, 3.6 or 4.x: the application's, added before ebisu's, or one
 # installed, as its CMake package finds it. Each names its library
-# MbedTLS::mbedtls. Not installed, as the application's isn't.
+# MbedTLS::mbedtls. mbedTLS 2, from 2.4, has no CMake package: the
+# application's build names its libraries MbedTLS::mbedtls, as
+# tests/mbedtls/install_mbedtls.sh writes a package that does. Not installed,
+# as the application's isn't.
 if(NOT TARGET MbedTLS::mbedtls)
     find_package(MbedTLS CONFIG QUIET)
 endif()
