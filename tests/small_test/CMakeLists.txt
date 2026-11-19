@@ -241,6 +241,19 @@ if(TARGET ebisu_mbedtls AND TARGET ebisu_posix)
     endif()
 endif()
 
+# platform's PolarSSL port, as the mbedTLS port's: experimental.
+if(TARGET ebisu_polarssl AND TARGET ebisu_posix)
+    find_package(OpenSSL)
+    if(OPENSSL_FOUND)
+        ebisu_add_test_suite(small_test_polarssl
+            LABEL small
+            WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR}
+            SOURCES polarssl/polarssl_socket_test.cpp
+            LINK ebisu_polarssl ebisu_posix ebisu_core_objs OpenSSL::SSL OpenSSL::Crypto
+                Threads::Threads)
+    endif()
+endif()
+
 # platform's POSIX port, which needs threads and nothing else. Linux only, as
 # the test reads a thread's attributes with pthread_getattr_np().
 if(TARGET ebisu_posix AND CMAKE_SYSTEM_NAME STREQUAL "Linux")

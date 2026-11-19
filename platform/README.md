@@ -214,6 +214,33 @@ of the application's own, as the
   the server for less with `mbedtls_ssl_conf_max_frag_len()`, through
   `ebisu_mbedtls_tls_config()`, which a server that doesn't take the extension
   ignores.
+- **PolarSSL**, experimental (`ebisu_polarssl.h`, library `ebisu_polarssl`):
+  `ebisu_polarssl_socket_t`, the mbedTLS port's socket for PolarSSL 1.3, from
+  1.3.8, and mbedTLS 1.3, to its last release, 1.3.22, which kept PolarSSL's
+  API: for vendors' SDKs that ship it, some with its cryptography in their
+  chips' ROM. TLS 1.2, over another socket of the system's, as the mbedTLS
+  port's, with the same checks of the server's certificate, the clock's dates
+  among them, or the system's with `POLARSSL_HAVE_TIME`, the same
+  `last_error`, logger and `recv_wait`. PolarSSL 1.3 has no configuration
+  connections share: the `ebisu_polarssl_tls_t` keeps the CA certificates,
+  the verification and a CTR_DRBG of its own, seeded from PolarSSL's entropy
+  sources, and sets each connection's context from them as it connects, then
+  calls the application's setup, set with `ebisu_polarssl_tls_set_setup()`,
+  for settings of its own, such as the cipher suites or the maximum fragment
+  length, and the random generator, a cryptographically secure one, where
+  PolarSSL is built without `POLARSSL_CTR_DRBG_C` or `POLARSSL_ENTROPY_C` and
+  `EBISU_POLARSSL_SETS_RNG` is 0. Built where CMake finds PolarSSL as
+  `PolarSSL::polarssl`, which an application names its library, as
+  [tests/polarssl/install_polarssl.sh](https://github.com/KiiPlatform/ebisu/blob/master/tests/polarssl/install_polarssl.sh)
+  writes a package that does. Sockets of a configuration on more than one task
+  at once need PolarSSL built with `POLARSSL_THREADING_C`, which the port locks
+  its CTR_DRBG with, as PolarSSL's has no lock of its own. Experimental: its
+  API may change. PolarSSL 1.3 is past its end of life: its last release,
+  1.3.22, came in February 2018, and 1.3.8, of July 2014, lacks the security
+  fixes of each of the 14 since, among them that of 1.3.21 for an
+  authentication bypass with optional verification, which the port, which
+  requires it, doesn't take the path of. Use the mbedTLS port where mbedTLS
+  2.4 or later can be had.
 
 The Linux sample uses the POSIX and OpenSSL ports, the Windows sample the Win32
 and Schannel ones, and the FreeRTOS sample the FreeRTOS, FreeRTOS-Plus-TCP and
