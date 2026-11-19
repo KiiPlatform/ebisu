@@ -28,9 +28,9 @@
 #define configSUPPORT_STATIC_ALLOCATION 0
 #define configTOTAL_HEAP_SIZE 0
 
-/* Each task its own newlib state, errno among it: jkii checks errno after
-   strtoll(), and the handler's and the updater's tasks parse JSON at the same
-   time. */
+/* Each task its own newlib state, which newlib's strtod(), as jkii reads
+   doubles with it, works in: the handler's and the updater's tasks parse JSON
+   at the same time. */
 #define configUSE_NEWLIB_REENTRANT 1
 
 #define configUSE_IDLE_HOOK 0

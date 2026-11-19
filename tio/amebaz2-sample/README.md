@@ -89,12 +89,9 @@ commands `ATW0=<ssid>`, `ATW1=<passphrase>` and `ATWC`.
 - **lwIP's errors.** The SDK's lwIP 2.0 is built with `LWIP_SOCKET_SET_ERRNO`
   at 0: its sockets set no `errno`, and ebisu's socket reads why a call
   failed from each socket's `SO_ERROR`.
-- **`errno.h`.** The SDK's include path has lwIP's `errno.h` in place of the
-  C library's. Its `errno` is a variable, newlib's global one, which newlib's
-  own functions, `strtod()` among them, don't set: they set each task's.
-  jkii takes `strtod()`'s `ERANGE` from `errno`, so `build.sh` builds jkii
-  with its own number parser, `EBISU_NO_STRTOD`, which takes nothing from
-  `errno`.
+- **`strtod()`.** The SDK links `strtod()`, as it does the C library's other
+  string functions, to the ROM's, with `-Wl,-wrap`. `build.sh` builds jkii
+  with its own number parser, `EBISU_NO_STRTOD`, which CI tests, in its place.
 - **mbedTLS's allocator.** The SDK builds mbedTLS with
   `MBEDTLS_PLATFORM_MEMORY` and no allocator: main.c gives it FreeRTOS's heap.
 - **The console.** The SDK's `printf` family is its own, which writes nothing

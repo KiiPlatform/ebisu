@@ -2,22 +2,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <limits.h>
-#include <errno.h>
 #include <float.h>
 #include <stdbool.h>
 #ifndef EBISU_NO_STRTOD
 #include <locale.h>
-#endif
-
-/* Some vendor libcs have an errno.h that declares neither errno nor the codes
- * jkii checks. Defined here, once, for the file that uses them: in a public
- * header every file including it defined errno again, and got EINVAL and
- * ERANGE whether it wanted them or not. */
-#ifdef ERRNO_HACK_NEEDED
-int errno;
-#ifndef ERANGE
-#define ERANGE 34
-#endif
 #endif
 
 /* If your environment does not have assert, you must set JKII_NOASSERT define. */
@@ -481,6 +469,7 @@ static jkii_primitive_err_t _jkii_to_double(
     char* endptr = NULL;
     size_t buf_len = 0;
     double value = 0;
+    size_t i = 0;
 
     M_JKII_ASSERT(buf != NULL);
     M_JKII_ASSERT(out_double != NULL);
@@ -496,24 +485,30 @@ static jkii_primitive_err_t _jkii_to_double(
         return JKII_PRIMITIVE_ERR_INVALID;
     }
 
-    errno = 0;
     value = strtod(buf, &endptr);
     if (endptr == buf || *endptr != '\0') {
         /* Nothing converted, or not all of it: strtod reads "1e" as 1 and
          * stops at the "e". */
         return JKII_PRIMITIVE_ERR_INVALID;
-    } else if (errno == ERANGE) {
-        if (value == 0) {
-            *out_double = 0;
-            return JKII_PRIMITIVE_ERR_UNDERFLOW;
-        } else if (value > 1 || value < -1) {
-            /* Plus or minus HUGE_VAL. */
-            *out_double = value;
-            return JKII_PRIMITIVE_ERR_OVERFLOW;
+    }
+    /* Out of a double's range, told from what strtod() gives rather than from
+     * errno: where errno.h isn't the C library's own, its errno need not be
+     * the one strtod() sets. JSON writes no infinity, so an infinity is
+     * strtod()'s HUGE_VAL for a magnitude too large; and 0 from digits that
+     * aren't all 0, one too small. A number below the smallest normal double
+     * but not 0 is a double all the same, though strtod() may say ERANGE for
+     * it, as glibc's and the UCRT's do. */
+    if (value > DBL_MAX || value < -DBL_MAX) {
+        *out_double = value;
+        return JKII_PRIMITIVE_ERR_OVERFLOW;
+    }
+    if (value == 0) {
+        for (i = 0; i < target_size && target[i] != 'e' && target[i] != 'E'; ++i) {
+            if ('1' <= target[i] && target[i] <= '9') {
+                *out_double = 0;
+                return JKII_PRIMITIVE_ERR_UNDERFLOW;
+            }
         }
-        /* Below the smallest normal double, but not 0: strtod() may say
-         * ERANGE for it, as glibc's and the UCRT's do, though it is a double
-         * all the same. */
     }
 
     *out_double = value;

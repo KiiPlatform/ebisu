@@ -49,7 +49,10 @@ typedef struct jkii_primitive_t {
 /** Parse a JSON primitive: a number, true, false or null.
  *
  * A number with a fraction or an exponent is read with strtod(), whatever the
- * locale's decimal point. Built with EBISU_NO_STRTOD, as -DEBISU_STRTOD=OFF
+ * locale's decimal point. One beyond a double's range is
+ * JKII_PRIMITIVE_ERR_OVERFLOW, and one too small for any double but 0
+ * JKII_PRIMITIVE_ERR_UNDERFLOW, told from the value strtod() gives, without
+ * errno. Built with EBISU_NO_STRTOD, as -DEBISU_STRTOD=OFF
  * builds jkii, it is read without: exactly as strtod() reads it if it has up to
  * 15 digits and a power of ten within 10^22, and otherwise to within a few
  * units in the last place, so that one that close to the largest double can be
