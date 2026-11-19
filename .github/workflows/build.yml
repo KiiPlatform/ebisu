@@ -822,6 +822,39 @@ jobs:
           DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
         run: python3 ../../tests/samples/qemu_sample.py freertos live build-live/ebisu_freertos_sample.elf "$RUNNER_TEMP/live.json"
 
+  # The AmebaZ2 sample, built into a firmware image with Realtek's AmebaZ2 SDK,
+  # at a commit of its own, as the SDK builds its example: with its toolchain,
+  # FreeRTOS, lwIP and mbedTLS, which ebisu's ports take as the SDK configures
+  # them. Nothing emulates the chip, so the image is built only. See
+  # tio/amebaz2-sample/README.md.
+  amebaz2:
+    name: amebaz2 sample (Realtek SDK, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # https://github.com/Ameba-AIoT/ameba-rtos-z2, as of 2026-10-23.
+      SDK_COMMIT: 1e5a4adcc8bcbb22984d53269d77ed2fd7a9810b
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # For git describe, which ebisu_version.h takes the version from.
+          fetch-depth: 0
+      - name: Setup build env
+        uses: ./.github/actions/apt-install
+        with:
+          # python-is-python3 for the SDK's scripts, which run python.
+          packages: make bc python3 python-is-python3 bzip2 file
+          options: --no-install-recommends
+      - name: Realtek's AmebaZ2 SDK
+        run: |
+          git init -q "$RUNNER_TEMP/amebaz2"
+          git -C "$RUNNER_TEMP/amebaz2" fetch -q --depth 1 \
+              https://github.com/Ameba-AIoT/ameba-rtos-z2 "$SDK_COMMIT"
+          git -C "$RUNNER_TEMP/amebaz2" checkout -q FETCH_HEAD
+      - name: build
+        run: tio/amebaz2-sample/build.sh "$RUNNER_TEMP/amebaz2"
+
   # The FreeRTOS port's tests: a firmware for the same board, run in QEMU by
   # CTest, with FreeRTOS configured three ways, against the oldest kernel the
   # port supports, V10.0.1, FreeRTOS LTS 202406's, V11.1.0, and the latest.
