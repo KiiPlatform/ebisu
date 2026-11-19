@@ -48,9 +48,22 @@ deb http://archive.debian.org/debian stretch main
 deb http://archive.debian.org/debian-security stretch/updates main
 SOURCES
 echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99archive
-apt-get update -qq > /dev/null
-DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
-    crossbuild-essential-armhf qemu-user git make perl file > /dev/null
+# As openssl_ports.sh does: the archive has been unreachable for minutes at a
+# time, leaving apt-get update without lists and install failing.
+apt=(apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30)
+for attempt in 1 2 3 4 5; do
+    if "${apt[@]}" update -qq > /dev/null &&
+            DEBIAN_FRONTEND=noninteractive "${apt[@]}" install -y -qq --no-install-recommends \
+                crossbuild-essential-armhf qemu-user git make perl file > /dev/null; then
+        break
+    fi
+    if [ "$attempt" = 5 ]; then
+        echo "apt-get failed $attempt times" >&2
+        exit 1
+    fi
+    echo "apt-get failed, trying again in 30 seconds" >&2
+    sleep 30
+done
 arm-linux-gnueabihf-gcc --version | sed -n 1p
 ldd --version | sed -n 1p
 
