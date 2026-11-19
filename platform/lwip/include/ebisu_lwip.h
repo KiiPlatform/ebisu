@@ -1,0 +1,167 @@
+/**
+ * @file ebisu_lwip.h
+ * @brief A socket of plain TCP over lwIP's sockets.
+ */
+#ifndef _EBISU_LWIP
+#define _EBISU_LWIP
+
+#include <ebisu_log.h>
+#include <ebisu_socket.h>
+
+#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * \brief A TCP connection over lwIP's sockets, without TLS.
+ *
+ * For TLS over it, with ebisu_mbedtls_socket_t, whose records it sends and
+ * receives, or for a server that takes plain TCP, such as the MQTT broker's
+ * port without TLS, which kii_enable_insecure_mqtt() connects to. Nothing it
+ * sends or receives itself is encrypted or authenticated.
+ *
+ * It looks the host up with lwip_getaddrinfo(), which takes an address as
+ * written as it is, and gives a name's first address only, of the family
+ * LWIP_DNS_ADDRTYPE_DEFAULT puts first: that one address is what it connects
+ * to. A lookup takes as long as lwIP's DNS client does, as DNS_MAX_RETRIES
+ * and DNS_TMR_INTERVAL have it. Connecting takes the connect timeout at the
+ * most: see ebisu_lwip_tcp_socket_set_connect_timeout(). It connects without
+ * blocking, and waits for the connection with lwip_select(), or lwip_poll()
+ * where lwIP is built without select.
+ *
+ * Its receive and send timeouts are SO_RCVTIMEO and SO_SNDTIMEO. A receive
+ * that times out is EBISU_SOCK_FAIL, which recv_timed_out tells from a lost
+ * connection, and leaves the connection as it was. A peer that closes the
+ * connection is the end of the stream, and one that resets it a failure, as
+ * a send to a peer that has gone is: but for lwIP 2.0's receive, which takes
+ * a reset for the end of the stream too, and leaves a send after it to fail.
+ * recv_wait waits with lwip_select() or lwip_poll().
+ *
+ * Why an operation failed, its last_error says: a host that didn't resolve,
+ * with lwip_getaddrinfo()'s EAI_ error, an address that refused, a timeout, a
+ * peer that has gone, or another failure, each with lwIP's errno. It also
+ * goes to the logger set by ebisu_lwip_tcp_socket_set_logger(), if any.
+ *
+ * One serves one connection at a time, from one task at a time, and is used
+ * again for the next once closed. Needs lwIP 2.0.2 or later, with an OS,
+ * NO_SYS 0, and LWIP_SOCKET, LWIP_TCP, LWIP_DNS, LWIP_SO_RCVTIMEO and
+ * LWIP_SO_SNDTIMEO. lwIP's sockets say why a call failed in errno, which has
+ * to be each task's own where more than one task makes them, as newlib's is
+ * with FreeRTOS's configUSE_NEWLIB_REENTRANT. Initialize with
+ * ebisu_lwip_tcp_socket_init().
+ */
+typedef struct ebisu_lwip_tcp_socket_t {
+    ebisu_socket_t base; /**< \brief What ebisu is given. */
+    int _socket; /**< \private The lwIP socket, or -1. */
+    unsigned int _to_recv; /**< \private */
+    unsigned int _to_send; /**< \private */
+    unsigned int _to_connect; /**< \private */
+    /** \private Whether the last receive failed for its timeout. */
+    bool _recv_timed_out;
+    /** \private Where diagnostics go, or NULL for nowhere. */
+    ebisu_logger_t* _logger;
+    /** \private Why the last operation that returned EBISU_SOCK_FAIL failed,
+     * for last_error, and more of it. */
+    ebisu_sock_error_t _error;
+    long _error_detail; /**< \private */
+    /** \private What ebisu_lwip_tcp_socket_set_keepalive() sets: the idle
+     * time, 0 for no keepalive, the interval and the count. */
+    unsigned int _keepalive_idle;
+    unsigned int _keepalive_interval; /**< \private */
+    unsigned int _keepalive_count; /**< \private */
+    /** \private What ebisu_lwip_tcp_socket_set_nodelay() sets. */
+    bool _nodelay;
+} ebisu_lwip_tcp_socket_t;
+
+/**
+ * \brief Clears the socket, with its timeouts, and makes base a socket of it.
+ *
+ * \param [out] sock The socket.
+ * \param [in] to_recv Receive timeout in seconds, 0 for none. For MQTT, the
+ * one given to kii_set_mqtt_to_sock_recv().
+ * \param [in] to_send Send timeout in seconds, 0 for none. It bounds
+ * connecting too, unless ebisu_lwip_tcp_socket_set_connect_timeout() sets
+ * another.
+ */
+void ebisu_lwip_tcp_socket_init(
+        ebisu_lwip_tcp_socket_t* sock,
+        unsigned int to_recv,
+        unsigned int to_send);
+
+/**
+ * \brief Sets how long connecting to the host's address may take.
+ *
+ * Not the lookup, which lwIP's own settings bound.
+ *
+ * \param [out] sock The socket.
+ * \param [in] seconds 0 for no bound, which waits for as long as lwIP tries,
+ * as TCP_SYNMAXRTX has it.
+ */
+void ebisu_lwip_tcp_socket_set_connect_timeout(ebisu_lwip_tcp_socket_t* sock,
+        unsigned int seconds);
+
+/**
+ * \brief Sets where the socket's diagnostics go.
+ *
+ * Why an operation failed, at EBISU_LOG_ERROR: a host that didn't resolve or
+ * connect, a send or a receive that failed. A receive that times out isn't
+ * one. An option lwIP refuses, at EBISU_LOG_WARNING.
+ *
+ * Built with EBISU_NO_LOG, as -DEBISU_LOG=OFF builds it, the socket logs
+ * nothing.
+ *
+ * \param [out] sock The socket.
+ * \param [in] logger The logger, which has to outlive the socket, or NULL, as
+ * the socket starts, for the diagnostics to go nowhere.
+ */
+void ebisu_lwip_tcp_socket_set_logger(ebisu_lwip_tcp_socket_t* sock,
+        ebisu_logger_t* logger);
+
+/**
+ * \brief Sets whether TCP checks an idle connection is still there.
+ *
+ * With keepalive, TCP probes a connection that has been idle for idle_s
+ * seconds, and gives the connection up when count probes, interval_s seconds
+ * apart, go unanswered: a send or a receive on it then fails, rather than
+ * the next request finding out. So a peer that lost power, or a NAT that
+ * dropped the connection's entry, is noticed within about
+ * idle_s + interval_s * count seconds of the connection going idle.
+ *
+ * It applies from the next connect: SO_KEEPALIVE, and TCP_KEEPIDLE,
+ * TCP_KEEPINTVL and TCP_KEEPCNT where lwIP is built with LWIP_TCP_KEEPALIVE.
+ * Without it, lwIP probes after TCP_KEEPIDLE_DEFAULT, every
+ * TCP_KEEPINTVL_DEFAULT, TCP_KEEPCNT_DEFAULT times, 2 hours, 75 seconds and 9
+ * by default, and the socket says at EBISU_LOG_WARNING that it can't set
+ * them. So does it of a value lwIP refuses, and connects without it.
+ *
+ * \param [out] sock The socket.
+ * \param [in] idle_s Seconds idle before the first probe, or 0 for no
+ * keepalive, as the socket starts.
+ * \param [in] interval_s Seconds between probes, or 0 for lwIP's.
+ * \param [in] count Probes unanswered before the connection is given up, or
+ * 0 for lwIP's.
+ */
+void ebisu_lwip_tcp_socket_set_keepalive(ebisu_lwip_tcp_socket_t* sock,
+        unsigned int idle_s, unsigned int interval_s, unsigned int count);
+
+/**
+ * \brief Sets whether what is sent goes at once, with TCP_NODELAY.
+ *
+ * Without it, as the socket starts, Nagle's algorithm holds a small segment
+ * back while an earlier one is unacknowledged: a request sent in two pieces
+ * can wait for the first's ACK, which a peer may delay. It applies from the
+ * next connect.
+ *
+ * \param [out] sock The socket.
+ * \param [in] nodelay true to send at once.
+ */
+void ebisu_lwip_tcp_socket_set_nodelay(ebisu_lwip_tcp_socket_t* sock, bool nodelay);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _EBISU_LWIP */
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
