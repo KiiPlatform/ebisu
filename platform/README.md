@@ -16,8 +16,8 @@ where what it needs is found, which links `libebisu_core`. Link one with
 Each system also makes locks of its port's kind, for
 `ebisu_system_lock_create()`, so code given only the system can have one. The
 POSIX and Win32 systems take them from the heap, with `malloc()`. The FreeRTOS
-one takes them from FreeRTOS's heap with `configSUPPORT_DYNAMIC_ALLOCATION`,
-and makes none without it.
+one takes them from FreeRTOS's heap, with `configSUPPORT_DYNAMIC_ALLOCATION`
+from V9 on, and makes none without it.
 
 The POSIX and Win32 systems give the time of day as a clock too, for
 `ebisu_system_clock()`, the same one each time: the time the system has, which
@@ -105,13 +105,15 @@ of the application's own, as the
   application's CMake build has FreeRTOS-Kernel's own target,
   `freertos_kernel`, which adding the kernel's directory before ebisu's makes,
   with the application's `FreeRTOSConfig.h`, and not installed, as the kernel
-  isn't. A kernel without a CMake build of its own, as V10.0.1 is, is a
+  isn't. A kernel before V11, which has no CMake build of its own, is a
   library of its sources the application's build names `freertos_kernel`, as
   [tests/freertos](https://github.com/KiiPlatform/ebisu/blob/master/tests/freertos/CMakeLists.txt)
   makes one, or a build without CMake compiles `ebisu_freertos.c` with the
-  kernel. Needs FreeRTOS-Kernel V10.0.1 or later, `configUSE_MUTEXES` and
-  `INCLUDE_vTaskDelay`, and for tasks `configSUPPORT_DYNAMIC_ALLOCATION` and
-  `INCLUDE_vTaskDelete`, without which the system has none to make. With
+  kernel. Needs FreeRTOS-Kernel V8.1.2 or later, `configUSE_MUTEXES` and
+  `INCLUDE_vTaskDelay`, and for tasks `INCLUDE_vTaskDelete` and the heap,
+  which a kernel before V9 makes everything from and V9 on with
+  `configSUPPORT_DYNAMIC_ALLOCATION`, without which the system has none to
+  make. With
   newlib, it needs `configUSE_NEWLIB_REENTRANT` too, but for jkii built with
   `EBISU_NO_STRTOD`: newlib's `strtod()`, which jkii reads doubles with, works
   in the calling task's newlib state, and the handler's and the updater's tasks

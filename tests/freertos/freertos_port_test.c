@@ -15,6 +15,11 @@
 
 #include "board.h"
 
+/* The name of a task is V9's pcTaskGetName(), and V8's pcTaskGetTaskName(). */
+#if tskKERNEL_VERSION_MAJOR < 9
+#define pcTaskGetName pcTaskGetTaskName
+#endif
+
 /* Above the runner's, so that a task the system makes runs as it is made. */
 #define SYSTEM_PRIORITY (tskIDLE_PRIORITY + 2)
 #define RUNNER_PRIORITY (tskIDLE_PRIORITY + 1)
@@ -84,7 +89,7 @@ static void delay(uint32_t msec)
 }
 
 /* Tasks of the tests' own, which delete themselves when they're done. */
-#if configSUPPORT_STATIC_ALLOCATION == 1
+#if EBISU_FREERTOS_STATIC_ALLOCATION
 #define HELPERS 8
 static StaticTask_t helper_tasks[HELPERS];
 static StackType_t helper_stacks[HELPERS][HELPER_STACK];
@@ -93,7 +98,7 @@ static int helpers_made;
 
 static void start_helper(TaskFunction_t code, const char* name, UBaseType_t priority)
 {
-#if configSUPPORT_STATIC_ALLOCATION == 1
+#if EBISU_FREERTOS_STATIC_ALLOCATION
     if (helpers_made == HELPERS) {
         board_fatal("more helper tasks than %d", HELPERS);
     }
@@ -150,7 +155,7 @@ static void catch_up(uint32_t ticks)
     }
 }
 
-#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+#if EBISU_FREERTOS_DYNAMIC_ALLOCATION
 /* What the heap has free once the idle task has freed the tasks deleted. */
 static size_t heap_free(void)
 {
@@ -235,7 +240,7 @@ static void test_monotonic_overflow(void)
 
 /* Tasks. */
 
-#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+#if EBISU_FREERTOS_DYNAMIC_ALLOCATION
 static struct {
     volatile bool ran;
     void* param;
@@ -259,7 +264,7 @@ static void* record(void* param)
 
 static void test_task_create(void)
 {
-#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+#if EBISU_FREERTOS_DYNAMIC_ALLOCATION
     int marker = 0;
     const size_t heap = heap_free();
     CHECK(test_system.base.ops->task_create(&test_system.base, "ebisu task", record, &marker) ==
@@ -282,11 +287,11 @@ static void test_task_create(void)
 
 static void test_task_create_fails(void)
 {
-#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+#if EBISU_FREERTOS_DYNAMIC_ALLOCATION
     /* A stack the heap can't hold. */
     ebisu_freertos_system_t greedy;
     ebisu_freertos_system_init(&greedy,
-            (configSTACK_DEPTH_TYPE)(configTOTAL_HEAP_SIZE / sizeof(StackType_t)),
+            (EBISU_FREERTOS_STACK_DEPTH_TYPE)(configTOTAL_HEAP_SIZE / sizeof(StackType_t)),
             SYSTEM_PRIORITY);
     seen.ran = false;
     const size_t heap = heap_free();
@@ -430,15 +435,18 @@ static void test_lock_waits(void)
 
 static void test_lock_memory(void)
 {
-#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+#if EBISU_FREERTOS_DYNAMIC_ALLOCATION
     ebisu_freertos_lock_t lock;
     const size_t heap = heap_free();
     CHECK(ebisu_freertos_lock_init(&lock));
-#if configSUPPORT_STATIC_ALLOCATION == 1
+#if EBISU_FREERTOS_STATIC_ALLOCATION
     /* In the lock itself. */
     CHECK_EQ(xPortGetFreeHeapSize(), heap);
-#else
+#elif tskKERNEL_VERSION_MAJOR >= 9
     CHECK_LE(xPortGetFreeHeapSize() + sizeof(StaticSemaphore_t), heap);
+#else
+    /* V8 has no StaticSemaphore_t to tell a mutex's size by. */
+    CHECK(xPortGetFreeHeapSize() < heap);
 #endif
     ebisu_freertos_lock_destroy(&lock);
     CHECK_EQ(heap_free(), heap);
@@ -448,7 +456,7 @@ static void test_lock_memory(void)
 /* A lock the system makes, from the heap, and gives back. */
 static void test_lock_create(void)
 {
-#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+#if EBISU_FREERTOS_DYNAMIC_ALLOCATION
     const size_t heap = heap_free();
     ebisu_lock_t* lock = ebisu_system_lock_create(&test_system.base);
     CHECK(lock != NULL);
@@ -539,8 +547,12 @@ static void runner(void* arg)
             "static allocation %d, dynamic %d, INCLUDE_vTaskSuspend %d",
             tskKERNEL_VERSION_NUMBER, TEST_TICK_BITS, TEST_TICK_RATE_HZ, TEST_STATIC,
             TEST_DYNAMIC, TEST_SUSPEND);
+    /* The port takes FreeRTOS to allocate as the configuration has it: V8,
+       which has no setting for it, from the heap alone. */
+    CHECK_EQ(EBISU_FREERTOS_DYNAMIC_ALLOCATION, TEST_DYNAMIC);
+    CHECK_EQ(EBISU_FREERTOS_STATIC_ALLOCATION, TEST_STATIC);
     ebisu_freertos_system_init(&test_system, SYSTEM_STACK, SYSTEM_PRIORITY);
-#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+#if EBISU_FREERTOS_DYNAMIC_ALLOCATION
     /* heap_4 sets itself up on its first allocation, and has nothing free
        until then. */
     vPortFree(pvPortMalloc(sizeof(int)));
@@ -564,7 +576,7 @@ static void runner(void* arg)
     board_exit(failures == 0 ? 0 : 1);
 }
 
-#if configSUPPORT_STATIC_ALLOCATION == 1
+#if EBISU_FREERTOS_STATIC_ALLOCATION
 static StaticTask_t runner_task;
 static StackType_t runner_stack[RUNNER_STACK];
 #endif
@@ -572,7 +584,7 @@ static StackType_t runner_stack[RUNNER_STACK];
 int main(void)
 {
     board_init();
-#if configSUPPORT_STATIC_ALLOCATION == 1
+#if EBISU_FREERTOS_STATIC_ALLOCATION
     (void)xTaskCreateStatic(runner, "runner", RUNNER_STACK, NULL, RUNNER_PRIORITY, runner_stack,
             &runner_task);
 #else
@@ -584,7 +596,7 @@ int main(void)
     board_fatal("failed to start the scheduler");
 }
 
-#if configSUPPORT_STATIC_ALLOCATION == 1 && \
+#if EBISU_FREERTOS_STATIC_ALLOCATION && \
     (tskKERNEL_VERSION_MAJOR < 11 || (tskKERNEL_VERSION_MAJOR == 11 && tskKERNEL_VERSION_MINOR < 1))
 /* The idle task's memory, which a kernel before V11.1 asks the application
    for, and later ones give with configKERNEL_PROVIDED_STATIC_MEMORY. */

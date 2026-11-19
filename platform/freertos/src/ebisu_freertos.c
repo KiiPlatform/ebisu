@@ -14,11 +14,11 @@
 #if INCLUDE_vTaskDelay != 1
 #error "The system's delays are vTaskDelay(): set INCLUDE_vTaskDelay to 1."
 #endif
-#if configSUPPORT_DYNAMIC_ALLOCATION == 1 && INCLUDE_vTaskDelete != 1
+#if EBISU_FREERTOS_DYNAMIC_ALLOCATION && INCLUDE_vTaskDelete != 1
 #error "The system's tasks delete themselves when they end: set INCLUDE_vTaskDelete to 1."
 #endif
 
-#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+#if EBISU_FREERTOS_DYNAMIC_ALLOCATION
 
 /* What a task runs, for task_main(): a FreeRTOS task returns nothing, and is
    deleted rather than return. */
@@ -56,7 +56,7 @@ static ebisu_task_code_t task_create(
     return EBISU_TASKC_OK;
 }
 
-#endif /* configSUPPORT_DYNAMIC_ALLOCATION == 1 */
+#endif /* EBISU_FREERTOS_DYNAMIC_ALLOCATION */
 
 static void delay_ms(ebisu_system_t* self, uint32_t msec)
 {
@@ -87,8 +87,17 @@ static uint64_t monotonic_ms(ebisu_system_t* self)
     /* The tick count and the times it has overflowed, read together, as
        FreeRTOS reads them for its own timeouts. The count of overflows is a
        BaseType_t: on a port whose BaseType_t is 16 bits, with ticks of 16 too,
-       the clock wraps after 2^32 ticks. */
+       the clock wraps after 2^32 ticks. Before V10, vTaskSetTimeOutState()
+       reads them without a critical section of its own, and the tick count
+       could overflow in between: the clock would go back by as many ticks as
+       it holds. */
+#if tskKERNEL_VERSION_MAJOR < 10
+    taskENTER_CRITICAL();
     vTaskSetTimeOutState(&now);
+    taskEXIT_CRITICAL();
+#else
+    vTaskSetTimeOutState(&now);
+#endif
     /* Ticks of 64 bits are V11's, which configTICK_TYPE_WIDTH_IN_BITS, of V11
        too, says. A kernel before has neither, whose undefined names would
        compare equal. */
@@ -102,7 +111,7 @@ static uint64_t monotonic_ms(ebisu_system_t* self)
     return ticks * 1000u / configTICK_RATE_HZ;
 }
 
-#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+#if EBISU_FREERTOS_DYNAMIC_ALLOCATION
 static ebisu_lock_t* lock_create(ebisu_system_t* self);
 static void lock_destroy(ebisu_system_t* self, ebisu_lock_t* lock);
 #endif
@@ -114,14 +123,14 @@ static ebisu_clock_t* system_clock(ebisu_system_t* self)
 }
 
 static const ebisu_system_ops_t system_ops = {
-#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+#if EBISU_FREERTOS_DYNAMIC_ALLOCATION
     task_create,
 #else
     NULL,
 #endif
     delay_ms,
     monotonic_ms,
-#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+#if EBISU_FREERTOS_DYNAMIC_ALLOCATION
     lock_create,
     lock_destroy,
 #else
@@ -133,7 +142,7 @@ static const ebisu_system_ops_t system_ops = {
 
 void ebisu_freertos_system_init(
         ebisu_freertos_system_t* system,
-        configSTACK_DEPTH_TYPE stack_depth,
+        EBISU_FREERTOS_STACK_DEPTH_TYPE stack_depth,
         UBaseType_t priority)
 {
     system->base.ops = &system_ops;
@@ -170,7 +179,7 @@ static const ebisu_lock_ops_t lock_ops = {
 bool ebisu_freertos_lock_init(ebisu_freertos_lock_t* lock)
 {
     lock->base.ops = &lock_ops;
-#if configSUPPORT_STATIC_ALLOCATION == 1
+#if EBISU_FREERTOS_STATIC_ALLOCATION
     lock->_mutex = xSemaphoreCreateMutexStatic(&lock->_storage);
 #else
     lock->_mutex = xSemaphoreCreateMutex();
@@ -184,10 +193,10 @@ void ebisu_freertos_lock_destroy(ebisu_freertos_lock_t* lock)
     lock->_mutex = NULL;
 }
 
-#if configSUPPORT_DYNAMIC_ALLOCATION == 1
+#if EBISU_FREERTOS_DYNAMIC_ALLOCATION
 
 /* An ebisu_freertos_lock_t of its own, from FreeRTOS's heap, with its mutex in
-   it too with configSUPPORT_STATIC_ALLOCATION. */
+   it too with EBISU_FREERTOS_STATIC_ALLOCATION. */
 static ebisu_lock_t* lock_create(ebisu_system_t* self)
 {
     ebisu_freertos_lock_t* lock = (ebisu_freertos_lock_t*)pvPortMalloc(sizeof(*lock));
@@ -210,6 +219,6 @@ static void lock_destroy(ebisu_system_t* self, ebisu_lock_t* lock)
     vPortFree(freertos_lock);
 }
 
-#endif /* configSUPPORT_DYNAMIC_ALLOCATION == 1 */
+#endif /* EBISU_FREERTOS_DYNAMIC_ALLOCATION */
 
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
