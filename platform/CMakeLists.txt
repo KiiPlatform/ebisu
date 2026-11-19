@@ -169,6 +169,22 @@ if(TARGET MbedTLS::mbedtls)
     ebisu_configure_target(ebisu_mbedtls)
 endif()
 
+# PolarSSL 1.3, or mbedTLS 1.3, of its API: experimental. The application's,
+# named PolarSSL::polarssl by its build, or one installed by
+# tests/polarssl/install_polarssl.sh, which writes a CMake package that names
+# it so, as PolarSSL has none. Not installed, as the application's isn't.
+if(NOT TARGET PolarSSL::polarssl)
+    find_package(PolarSSL CONFIG QUIET)
+endif()
+if(TARGET PolarSSL::polarssl)
+    add_library(ebisu_polarssl STATIC polarssl/src/ebisu_polarssl.c)
+    target_include_directories(ebisu_polarssl
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/polarssl/include>)
+    target_link_libraries(ebisu_polarssl PUBLIC ebisu_core PolarSSL::polarssl)
+    ebisu_configure_target(ebisu_polarssl)
+endif()
+
 if(UNIX OR WIN32)
     set(loggers_srcs
         loggers/src/ebisu_loggers_format.c
