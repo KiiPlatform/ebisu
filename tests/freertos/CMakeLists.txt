@@ -15,11 +15,13 @@ endif()
 project(ebisu_freertos_test C)
 
 set(EBISU_TEST_KERNEL V11.3.3 CACHE STRING
-    "The FreeRTOS kernel: V11.1.0, FreeRTOS LTS 202406's, the oldest the port supports, or V11.3.3, the latest")
+    "The FreeRTOS kernel: V10.0.1, the oldest the port supports, V11.1.0, FreeRTOS LTS 202406's, or V11.3.3, the latest")
 set(EBISU_TEST_CONFIG a CACHE STRING
     "What FreeRTOS is configured with: a, b or c, below")
 
-# The kernels' releases, checked against their hashes.
+# The kernels' releases, checked against their hashes. V10.0.1 came before
+# the kernel had a repository and releases of its own: its tag's archive.
+set(kernel_sha256_V10.0.1 2022cc66442ea1d4f0fd5037f3ccdaf03c12a64607dd317c207b6515bc2c461b)
 set(kernel_sha256_V11.1.0 eebd58aa71a623c9381f25f77b708c0ed14ef995a8913e2460fe9f286bb271eb)
 set(kernel_sha256_V11.3.3 dd728be9ecfdcea4121b89ed015dff77eb0d3fa8ce2bff4b660da748b298990f)
 if(NOT DEFINED kernel_sha256_${EBISU_TEST_KERNEL})
@@ -39,10 +41,17 @@ elseif(EBISU_TEST_CONFIG STREQUAL "c")
 else()
     message(FATAL_ERROR "No such configuration: ${EBISU_TEST_CONFIG}")
 endif()
+if(EBISU_TEST_KERNEL MATCHES "^V10\\.")
+    list(APPEND config TEST_KERNEL_10=1)
+    set(kernel_url https://github.com/FreeRTOS/FreeRTOS-Kernel/archive/refs/tags/${EBISU_TEST_KERNEL}.tar.gz)
+else()
+    list(APPEND config TEST_KERNEL_10=0)
+    set(kernel_url https://github.com/FreeRTOS/FreeRTOS-Kernel/releases/download/${EBISU_TEST_KERNEL}/FreeRTOS-Kernel${EBISU_TEST_KERNEL}.zip)
+endif()
 
 include(FetchContent)
 FetchContent_Declare(freertos_kernel
-    URL https://github.com/FreeRTOS/FreeRTOS-Kernel/releases/download/${EBISU_TEST_KERNEL}/FreeRTOS-Kernel${EBISU_TEST_KERNEL}.zip
+    URL ${kernel_url}
     URL_HASH SHA256=${kernel_sha256_${EBISU_TEST_KERNEL}}
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
 
@@ -56,6 +65,39 @@ if("TEST_DYNAMIC=1" IN_LIST config)
     set(FREERTOS_HEAP 4)
 endif()
 FetchContent_MakeAvailable(freertos_kernel)
+
+# A V10 kernel has no CMake of its own, its tag only the sources: built here
+# as an application's own build builds them, into a target of the name ebisu's
+# CMake looks for. V10.0.1's vTaskStartScheduler() sets the tick count to 0,
+# not to configINITIAL_TICK_COUNT, as V10.1.0 does: its tasks.c with that line
+# as V10.1.0 has it, for the tests to start 3 seconds before the tick count
+# overflows, as with the other kernels.
+if("TEST_KERNEL_10=1" IN_LIST config)
+    set(kernel ${freertos_kernel_SOURCE_DIR}/FreeRTOS/Source)
+    file(READ ${kernel}/tasks.c tasks_c)
+    string(FIND "${tasks_c}" "xTickCount = ( TickType_t ) 0U;" at)
+    if(at EQUAL -1)
+        message(FATAL_ERROR "${kernel}/tasks.c doesn't set the tick count to 0 as V10.0.1's does")
+    endif()
+    string(REPLACE "xTickCount = ( TickType_t ) 0U;"
+        "xTickCount = ( TickType_t ) configINITIAL_TICK_COUNT;" tasks_c "${tasks_c}")
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/kernel/tasks.c "${tasks_c}")
+    add_library(freertos_kernel STATIC
+        ${CMAKE_CURRENT_BINARY_DIR}/kernel/tasks.c
+        ${kernel}/queue.c
+        ${kernel}/list.c
+        ${kernel}/timers.c
+        ${kernel}/event_groups.c
+        ${kernel}/stream_buffer.c
+        ${kernel}/portable/GCC/ARM_CM3/port.c)
+    if(FREERTOS_HEAP)
+        target_sources(freertos_kernel PRIVATE ${kernel}/portable/MemMang/heap_${FREERTOS_HEAP}.c)
+    endif()
+    target_include_directories(freertos_kernel SYSTEM PUBLIC
+        ${kernel}/include
+        ${kernel}/portable/GCC/ARM_CM3)
+    target_link_libraries(freertos_kernel PUBLIC freertos_config)
+endif()
 
 # ebisu, with its port to FreeRTOS, which its CMake builds as the kernel's
 # target is there.

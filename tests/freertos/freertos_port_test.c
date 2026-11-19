@@ -117,6 +117,12 @@ static bool wait_for(volatile bool* flag, uint32_t msec)
     return *flag;
 }
 
+#if tskKERNEL_VERSION_MAJOR > 10 || (tskKERNEL_VERSION_MAJOR == 10 && tskKERNEL_VERSION_MINOR >= 3)
+#define HAVE_CATCH_UP 1
+#else
+#define HAVE_CATCH_UP 0
+#endif
+
 /* Moves the tick count on, as if that time had passed, in turns of 1000
    ticks, which the tasks it wakes run between: a task woken in a turn runs up
    to 1000 ticks late. */
@@ -124,7 +130,21 @@ static void catch_up(uint32_t ticks)
 {
     while (ticks > 0) {
         TickType_t turn = ticks > 1000 ? 1000 : (TickType_t)ticks;
+#if HAVE_CATCH_UP
         (void)xTaskCatchUpTicks(turn);
+#else
+        /* Before V10.3, as xTaskCatchUpTicks() has done since: a tick counted
+           while the scheduler is suspended is pended, and resuming it counts
+           the pended ticks. In a critical section, as the tick interrupt
+           counts them too. */
+        vTaskSuspendAll();
+        for (TickType_t i = 0; i < turn; ++i) {
+            taskENTER_CRITICAL();
+            (void)xTaskIncrementTick();
+            taskEXIT_CRITICAL();
+        }
+        (void)xTaskResumeAll();
+#endif
         ticks -= turn;
         vTaskDelay(1);
     }
@@ -563,6 +583,20 @@ int main(void)
     vTaskStartScheduler();
     board_fatal("failed to start the scheduler");
 }
+
+#if configSUPPORT_STATIC_ALLOCATION == 1 && \
+    (tskKERNEL_VERSION_MAJOR < 11 || (tskKERNEL_VERSION_MAJOR == 11 && tskKERNEL_VERSION_MINOR < 1))
+/* The idle task's memory, which a kernel before V11.1 asks the application
+   for, and later ones give with configKERNEL_PROVIDED_STATIC_MEMORY. */
+void vApplicationGetIdleTaskMemory(StaticTask_t** task, StackType_t** stack, uint32_t* depth)
+{
+    static StaticTask_t idle_task;
+    static StackType_t idle_stack[configMINIMAL_STACK_SIZE];
+    *task = &idle_task;
+    *stack = idle_stack;
+    *depth = configMINIMAL_STACK_SIZE;
+}
+#endif
 
 void vApplicationStackOverflowHook(TaskHandle_t task, char* name)
 {
