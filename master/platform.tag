@@ -232,6 +232,13 @@
       <anchor>a3b9b93e378f56f8839f48a3564741d2d</anchor>
       <arglist>(ebisu_lwip_tcp_socket_t *sock, bool nodelay)</arglist>
     </member>
+    <member kind="function">
+      <type>ebisu_dns_t *</type>
+      <name>ebisu_lwip_dns</name>
+      <anchorfile>ebisu__lwip_8h.html</anchorfile>
+      <anchor>a94ece5e80fe5e8f6986dc96e8748fbdd</anchor>
+      <arglist>(void)</arglist>
+    </member>
   </compound>
   <compound kind="file">
     <name>ebisu_mbedtls.h</name>
