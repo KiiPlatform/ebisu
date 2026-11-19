@@ -855,6 +855,41 @@ jobs:
       - name: build
         run: tio/amebaz2-sample/build.sh "$RUNNER_TEMP/amebaz2"
 
+  # The AmebaZ sample, built into the firmware's images with Realtek's SDK for
+  # AmebaZ, at a commit of its own, as the SDK builds its example: with its
+  # toolchain, FreeRTOS, lwIP and mbedTLS, which ebisu's ports take as the SDK
+  # configures them. Nothing emulates the chip, so the images are built only.
+  # See tio/amebaz-sample/README.md.
+  amebaz:
+    name: amebaz sample (Realtek SDK, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # https://github.com/Ameba-AIoT/ameba-rtos-1, as of 2022-11-23.
+      SDK_COMMIT: 63d54848534113c50e4e78d0ba45359be9ef7e0f
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # For git describe, which ebisu_version.h takes the version from.
+          fetch-depth: 0
+      # The SDK's toolchain is a 32-bit build.
+      - name: The 32-bit packages
+        run: sudo dpkg --add-architecture i386
+      - name: Setup build env
+        uses: ./.github/actions/apt-install
+        with:
+          packages: make gawk bzip2 python3 libc6:i386
+          options: --no-install-recommends
+      - name: Realtek's AmebaZ SDK
+        run: |
+          git init -q "$RUNNER_TEMP/amebaz"
+          git -C "$RUNNER_TEMP/amebaz" fetch -q --depth 1 \
+              https://github.com/Ameba-AIoT/ameba-rtos-1 "$SDK_COMMIT"
+          git -C "$RUNNER_TEMP/amebaz" checkout -q FETCH_HEAD
+      - name: build
+        run: tio/amebaz-sample/build.sh "$RUNNER_TEMP/amebaz"
+
   # The FreeRTOS port's tests: a firmware for the same board, run in QEMU by
   # CTest, with FreeRTOS configured four ways, against the oldest kernel the
   # port supports, V8.1.2, which has no static allocation, V9.0.0, V10.0.1,
