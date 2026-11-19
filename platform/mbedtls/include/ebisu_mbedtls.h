@@ -15,7 +15,18 @@
 #if !defined(MBEDTLS_VERSION_NUMBER)
 #include <mbedtls/version.h>
 #endif
-#if MBEDTLS_VERSION_MAJOR < 3
+
+/**
+ * \brief Whether ebisu_mbedtls_tls_init() sets the configuration's random
+ * generator: 1, but for mbedTLS 2 built without MBEDTLS_CTR_DRBG_C or
+ * MBEDTLS_ENTROPY_C, where it is 0, and the application sets one.
+ */
+#if MBEDTLS_VERSION_MAJOR >= 3 || (defined(MBEDTLS_CTR_DRBG_C) && defined(MBEDTLS_ENTROPY_C))
+#define EBISU_MBEDTLS_SETS_RNG 1
+#else
+#define EBISU_MBEDTLS_SETS_RNG 0
+#endif
+#if MBEDTLS_VERSION_MAJOR < 3 && EBISU_MBEDTLS_SETS_RNG
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
 #endif
@@ -48,10 +59,16 @@ extern "C" {
  * MBEDTLS_PSA_DRIVER_GET_ENTROPY in 4.x. With mbedTLS 2, they come from a
  * CTR_DRBG of the configuration's own, which ebisu_mbedtls_tls_init() seeds
  * from mbedTLS's entropy sources, the hardware's with
- * MBEDTLS_ENTROPY_HARDWARE_ALT. Connections share the generator: on more than
- * one task at once, mbedTLS has to be built with MBEDTLS_THREADING_C, with
+ * MBEDTLS_ENTROPY_HARDWARE_ALT. mbedTLS 2 built without MBEDTLS_CTR_DRBG_C or
+ * MBEDTLS_ENTROPY_C, as some of vendors' SDKs configure it, has neither, and
+ * EBISU_MBEDTLS_SETS_RNG is 0: the application sets the generator, one of the
+ * hardware's or the SDK's, with mbedtls_ssl_conf_rng() on
+ * ebisu_mbedtls_tls_config(), before the first connection, which fails
+ * without one. Connections share the generator: on more than one task at
+ * once, mbedTLS has to be built with MBEDTLS_THREADING_C, with
  * MBEDTLS_THREADING_PTHREAD on POSIX, or MBEDTLS_THREADING_ALT and functions
- * of the system's.
+ * of the system's, or the application's generator has to take calls from
+ * more than one task at once.
  *
  * mbedTLS 3.6 and 4.x, and mbedTLS 2 from 2.4, as vendors' SDKs ship it,
  * which has TLS 1.2 at the most. mbedTLS 2 is past its end of life: its last
@@ -65,7 +82,7 @@ typedef struct ebisu_mbedtls_tls_t {
     mbedtls_x509_crt _ca; /**< \private */
     ebisu_tls_verify_t _verify; /**< \private */
     unsigned char _pin[EBISU_TLS_PIN_SIZE]; /**< \private */
-#if MBEDTLS_VERSION_MAJOR < 3
+#if MBEDTLS_VERSION_MAJOR < 3 && EBISU_MBEDTLS_SETS_RNG
     mbedtls_entropy_context _entropy; /**< \private */
     mbedtls_ctr_drbg_context _drbg; /**< \private */
 #endif
@@ -79,7 +96,8 @@ typedef struct ebisu_mbedtls_tls_t {
  * called already, and doesn't call mbedtls_psa_crypto_free(), which the
  * application may, once it no longer uses PSA. With mbedTLS 2, seeds the
  * configuration's CTR_DRBG, which fails without an entropy source mbedTLS
- * takes for a strong one.
+ * takes for a strong one, but where EBISU_MBEDTLS_SETS_RNG is 0: there it sets
+ * no random generator, which the application sets.
  *
  * \param [out] tls The configuration.
  * \param [in] ca The CA certificates: PEM, one or more, with the terminating
@@ -103,7 +121,9 @@ int ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, si
  * for, mbedtls_ssl_conf_max_frag_len(), which a server that doesn't take the
  * extension ignores. Changed after ebisu_mbedtls_tls_init(), before the first
  * connection. What ebisu_mbedtls_tls_init() set, the verification, the CA
- * certificates and the random generator, are the socket's to keep.
+ * certificates and the random generator, are the socket's to keep, but for
+ * the random generator where EBISU_MBEDTLS_SETS_RNG is 0, which the
+ * application sets here, with mbedtls_ssl_conf_rng().
  *
  * \param [in] tls The configuration.
  * \return mbedTLS's configuration.

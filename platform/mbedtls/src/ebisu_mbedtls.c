@@ -17,8 +17,10 @@
 #include <mbedtls/psa_util.h>
 #endif
 #else
+#if EBISU_MBEDTLS_SETS_RNG
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
+#endif
 #include <mbedtls/pk.h>
 #include <mbedtls/sha256.h>
 #endif
@@ -92,6 +94,9 @@ int ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, si
 #if MBEDTLS_VERSION_MAJOR >= 3
     /* Before parsing a certificate, which needs PSA in mbedTLS 4. */
     ret = (int)psa_crypto_init();
+#elif !EBISU_MBEDTLS_SETS_RNG
+    /* The application's, which it sets. */
+    ret = 0;
 #else
     mbedtls_entropy_init(&tls->_entropy);
     mbedtls_ctr_drbg_init(&tls->_drbg);
@@ -130,7 +135,7 @@ int ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, si
 #if MBEDTLS_VERSION_MAJOR == 3
     /* PSA's, as mbedTLS 4 always takes. */
     mbedtls_ssl_conf_rng(&tls->_config, mbedtls_psa_get_random, MBEDTLS_PSA_RANDOM_STATE);
-#elif MBEDTLS_VERSION_MAJOR < 3
+#elif MBEDTLS_VERSION_MAJOR < 3 && EBISU_MBEDTLS_SETS_RNG
     mbedtls_ssl_conf_rng(&tls->_config, mbedtls_ctr_drbg_random, &tls->_drbg);
 #endif
     return 0;
@@ -171,7 +176,7 @@ void ebisu_mbedtls_tls_free(ebisu_mbedtls_tls_t* tls)
 {
     mbedtls_ssl_config_free(&tls->_config);
     mbedtls_x509_crt_free(&tls->_ca);
-#if MBEDTLS_VERSION_MAJOR < 3
+#if MBEDTLS_VERSION_MAJOR < 3 && EBISU_MBEDTLS_SETS_RNG
     mbedtls_ctr_drbg_free(&tls->_drbg);
     mbedtls_entropy_free(&tls->_entropy);
 #endif
@@ -447,6 +452,17 @@ static ebisu_sock_code_t mbedtls_connect(ebisu_socket_t* self, const char* host,
                 "no clock to check the certificate of %s at, and no time of the system's",
                 host);
         set_error(sock, EBISU_SOCK_ERROR_TLS, 0);
+        return EBISU_SOCK_FAIL;
+    }
+#endif
+#if !EBISU_MBEDTLS_SETS_RNG
+    if (sock->_tls->_config.f_rng == NULL) {
+        /* mbedTLS's handshake would fail as it starts. */
+        log_to(sock->_logger, EBISU_LOG_ERROR,
+                "no random generator for TLS with %s: mbedTLS is built without "
+                "MBEDTLS_CTR_DRBG_C or MBEDTLS_ENTROPY_C, and the application set none "
+                "with mbedtls_ssl_conf_rng()", host);
+        set_error(sock, EBISU_SOCK_ERROR_TLS, MBEDTLS_ERR_SSL_NO_RNG);
         return EBISU_SOCK_FAIL;
     }
 #endif

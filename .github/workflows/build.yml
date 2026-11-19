@@ -350,10 +350,11 @@ jobs:
   # it supports, 2.4.0, as vendors' SDKs still ship it, the last releases of
   # mbedTLS 2's two LTS lines, 2.16.12 and 2.28.10, 3's LTS, 3.6.7, and the
   # latest, 4.2.0, each built from its release with threads, as
-  # tests/mbedtls/install_mbedtls.sh does. The build job runs them against
-  # Ubuntu's.
+  # tests/mbedtls/install_mbedtls.sh does, and 2.4.0 again without CTR_DRBG and
+  # entropy, as some of vendors' SDKs configure it, where the tests give TLS
+  # its random generator. The build job runs them against Ubuntu's.
   mbedtls-port:
-    name: mbedtls port (${{ matrix.mbedtls }}, valgrind)
+    name: mbedtls port (${{ matrix.mbedtls }}${{ matrix.variant && format(', {0}', matrix.variant) || '' }}, valgrind)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -363,6 +364,10 @@ jobs:
       fail-fast: false
       matrix:
         mbedtls: [2.4.0, 2.16.12, 2.28.10, 3.6.7, 4.2.0]
+        variant: ['']
+        include:
+          - mbedtls: 2.4.0
+            variant: no-drbg
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -373,8 +378,8 @@ jobs:
         with:
           packages: g++ cmake libssl-dev valgrind python3 perl bzip2 curl
           options: --no-install-recommends
-      - name: mbedTLS ${{ matrix.mbedtls }}
-        run: tests/mbedtls/install_mbedtls.sh ${{ matrix.mbedtls }} "$RUNNER_TEMP/mbedtls"
+      - name: mbedTLS ${{ matrix.mbedtls }} ${{ matrix.variant }}
+        run: tests/mbedtls/install_mbedtls.sh ${{ matrix.mbedtls }} "$RUNNER_TEMP/mbedtls" ${{ matrix.variant }}
       - name: configure
         run: cmake --preset debug -DEBISU_TEST_JUNIT=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/mbedtls"
       - name: build
@@ -387,7 +392,7 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
-          check_name: JUnit Test Report (mbedtls port, ${{ matrix.mbedtls }})
+          check_name: JUnit Test Report (mbedtls port, ${{ matrix.mbedtls }}${{ matrix.variant && format(', {0}', matrix.variant) || '' }})
 
   # Two static analyzers, each following paths through the C of the libraries
   # and the Linux sample for what no test happens to take: leaks, double frees,

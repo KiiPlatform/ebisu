@@ -183,11 +183,15 @@ of the application's own, as the
   clock connects with the clock alone. Random numbers come from PSA's
   generator, which `ebisu_mbedtls_tls_init()` starts, from mbedTLS's entropy
   sources, or with mbedTLS 2 from a CTR_DRBG of the configuration's, seeded
-  from them. A receive that times out leaves the connection as it was, and
-  `recv_wait` counts what mbedTLS has and hasn't returned. Its `last_error`
-  says why an operation failed: what the socket under it said, for what failed
-  there, a certificate refused, with mbedTLS's verify flags, or another TLS
-  failure, with mbedTLS's error, which also goes to the logger set with
+  from them, but for an mbedTLS 2 built without `MBEDTLS_CTR_DRBG_C` or
+  `MBEDTLS_ENTROPY_C`, as some of vendors' SDKs configure it, where
+  `EBISU_MBEDTLS_SETS_RNG` is 0 and the application sets the generator, with
+  `mbedtls_ssl_conf_rng()` on `ebisu_mbedtls_tls_config()`. A receive that
+  times out leaves the connection as it was, and `recv_wait` counts what
+  mbedTLS has and hasn't returned. Its `last_error` says why an operation
+  failed: what the socket under it said, for what failed there, a certificate
+  refused, with mbedTLS's verify flags, or another TLS failure, with mbedTLS's
+  error, which also goes to the logger set with
   `ebisu_mbedtls_socket_set_logger()`, if any, unless it is built with
   `-DEBISU_LOG=OFF`. `ebisu_mbedtls_socket_get_protocol()` and
   `ebisu_mbedtls_socket_get_cipher()` give the TLS version and cipher suite a

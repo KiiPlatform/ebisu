@@ -20,6 +20,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#include <openssl/rand.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -152,13 +153,38 @@ Pki& pki()
     return instance;
 }
 
-// A configuration with the test's CA.
+#if !EBISU_MBEDTLS_SETS_RNG
+// The application's random generator, which mbedTLS 2 without a CTR_DRBG of
+// its own takes: OpenSSL's, which takes calls from more than one thread at
+// once.
+int application_rng(void*, unsigned char* output, size_t length)
+{
+    return RAND_bytes(output, (int)length) == 1 ? 0 : -1;
+}
+#endif
+
+// Gives the configuration the application's random generator, where it has
+// none of its own.
+void give_rng(ebisu_mbedtls_tls_t* tls)
+{
+#if !EBISU_MBEDTLS_SETS_RNG
+    mbedtls_ssl_conf_rng(ebisu_mbedtls_tls_config(tls), application_rng, nullptr);
+#else
+    (void)tls;
+#endif
+}
+
+// A configuration with the test's CA, and a random generator, unless told
+// not to give it one it hasn't of its own.
 struct Config {
     ebisu_mbedtls_tls_t tls;
-    Config() {
+    explicit Config(bool rng = true) {
         std::string pem = to_pem(pki().ca);
         REQUIRE( ebisu_mbedtls_tls_init(&tls, (const unsigned char*)pem.c_str(),
                     pem.size() + 1) == 0 );
+        if (rng) {
+            give_rng(&tls);
+        }
     }
     ~Config() {
         ebisu_mbedtls_tls_free(&tls);
@@ -425,6 +451,7 @@ struct NoCaConfig {
     ebisu_mbedtls_tls_t tls;
     NoCaConfig() {
         REQUIRE( ebisu_mbedtls_tls_init(&tls, nullptr, 0) == 0 );
+        give_rng(&tls);
     }
     ~NoCaConfig() {
         ebisu_mbedtls_tls_free(&tls);
@@ -654,6 +681,20 @@ TEST_CASE( "The mbedTLS socket without a clock or the system's time doesn't conn
     Client client(&config.tls);
     REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
     CHECK( client.error() == EBISU_SOCK_ERROR_TLS );
+    CHECK( server.handshakes == 0 );
+}
+#endif
+
+#if !EBISU_MBEDTLS_SETS_RNG
+TEST_CASE( "The mbedTLS socket without a random generator doesn't connect, and says why" ) {
+    Config config(false);
+    TlsServer server(pki().server(), nothing);
+    Client client(&config.tls);
+    REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+    long detail = 0;
+    CHECK( client.error(&detail) == EBISU_SOCK_ERROR_TLS );
+    CHECK( detail == MBEDTLS_ERR_SSL_NO_RNG );
+    CHECK( client.logger.has("no random generator for TLS with localhost") );
     CHECK( server.handshakes == 0 );
 }
 #endif

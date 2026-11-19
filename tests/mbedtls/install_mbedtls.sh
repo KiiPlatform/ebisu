@@ -3,8 +3,11 @@
 # installs it into a prefix, with threads, as the mbedTLS port's sockets of a
 # configuration need when they are used on more than one task at once.
 #
-# Usage: tests/mbedtls/install_mbedtls.sh <version> <prefix>
+# Usage: tests/mbedtls/install_mbedtls.sh <version> <prefix> [no-drbg]
 #   version: 2.4.0, 2.16.12, 2.28.10, 3.6.7 or 4.2.0
+#   no-drbg: for mbedTLS 2, built without MBEDTLS_CTR_DRBG_C and
+#     MBEDTLS_ENTROPY_C, as some of vendors' SDKs configure it, where the
+#     application gives TLS its random generator.
 #
 # mbedTLS 2 installs no CMake package, which ebisu's CMake finds mbedTLS by:
 # this writes one, of the libraries it installs, as an application would name
@@ -12,6 +15,17 @@
 set -eu
 version=$1
 prefix=$2
+variant=${3:-}
+case "$variant" in
+    '') ;;
+    no-drbg)
+        case "$version" in
+            2.*) ;;
+            *) echo "no-drbg is for mbedTLS 2" >&2; exit 2 ;;
+        esac
+        ;;
+    *) echo "no variant $variant" >&2; exit 2 ;;
+esac
 case "$version" in
     # The tags' archives: mbedTLS 2's releases before 2.28 have no archives of
     # their own on GitHub.
@@ -51,6 +65,13 @@ case "$version" in
 esac
 set_option MBEDTLS_THREADING_C
 set_option MBEDTLS_THREADING_PTHREAD
+if [ "$variant" = no-drbg ]; then
+    # And PSA's, from 2.16, which needs them, and what needs it.
+    for option in MBEDTLS_CTR_DRBG_C MBEDTLS_ENTROPY_C MBEDTLS_PSA_CRYPTO_C \
+            MBEDTLS_PSA_CRYPTO_STORAGE_C MBEDTLS_PSA_ITS_FILE_C; do
+        perl "$src/scripts/config.pl" -f "$src/include/mbedtls/config.h" unset "$option"
+    done
+fi
 # mbedTLS 2's CMakeLists.txt asks for CMake 2.6 or 2.8, which CMake 4 takes
 # only with a policy version it can still keep to.
 cmake -S "$src" -B "$work/build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" \
@@ -87,4 +108,4 @@ set_target_properties(MbedTLS::mbedtls PROPERTIES INTERFACE_LINK_LIBRARIES MbedT
 CONFIG
         ;;
 esac
-echo "mbedTLS $version in $prefix"
+echo "mbedTLS $version${variant:+ ($variant)} in $prefix"
