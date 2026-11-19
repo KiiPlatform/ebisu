@@ -1,6 +1,6 @@
-/* Random numbers for TLS: mbedTLS's CTR_DRBG, which the SDK's configuration
-   of mbedTLS leaves out, built here for the sample alone, and seeded from the
-   noise of the chip's ADC. See random.h and README.md. */
+/* Random numbers for TLS, with mbedTLS: its CTR_DRBG, which the SDK's
+   configuration of mbedTLS leaves out, built here for the sample alone, and
+   seeded from the noise of the chip's ADC. See random.h and README.md. */
 #include "random.h"
 
 #include <limits.h>
