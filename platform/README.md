@@ -130,6 +130,34 @@ of the application's own, as the
   kernel's, with its `FreeRTOSIPConfig.h`, and not installed. Needs
   FreeRTOS-Plus-TCP V4.2 or later, that of FreeRTOS LTS 202406,
   `ipconfigUSE_TCP` and `ipconfigUSE_DNS`.
+- **lwIP** (`ebisu_lwip.h`, library `ebisu_lwip`): `ebisu_lwip_tcp_socket_t`,
+  plain TCP over lwIP's sockets, the TCP/IP stack of many vendors' SDKs, for
+  TLS over it with the mbedTLS port's socket, or for a server without TLS.
+  Nothing it sends itself is encrypted. It looks the host up with
+  `lwip_getaddrinfo()`, which takes an address as written as it is, and gives
+  a name's first address only, of the family `LWIP_DNS_ADDRTYPE_DEFAULT` puts
+  first, which it connects to without blocking, within its connect timeout:
+  the lookup takes as long as lwIP's DNS client does. A receive that times out
+  leaves the connection as it was, a peer that closes it is the end of the
+  stream and one that resets it a failure, but for lwIP 2.0, whose receive
+  takes a reset for the end of the stream too. It waits for a connection and
+  for `recv_wait` with `lwip_select()`, or `lwip_poll()` where lwIP 2.1 or
+  later is built without select, and sets its timeouts as
+  `LWIP_SO_SNDRCVTIMEO_NONSTANDARD` says lwIP takes them. Keepalive and
+  `TCP_NODELAY` are as the POSIX socket's, below. Its `last_error` says why an
+  operation failed, with lwIP's errno, or `lwip_getaddrinfo()`'s error for a
+  lookup, which also goes to the logger set with
+  `ebisu_lwip_tcp_socket_set_logger()`, if any, unless it is built with
+  `-DEBISU_LOG=OFF`. Built where the application's build has lwIP's core
+  target, `lwipcore`, as including lwIP's `src/Filelists.cmake` makes it from
+  2.1 on, with lwIP's include directories and definitions in
+  `LWIP_INCLUDE_DIRS` and `LWIP_DEFINITIONS`, as lwIP's CMake takes them, and
+  not installed. A build without CMake, as many vendors' SDKs are, compiles
+  `ebisu_lwip_tcp.c` with lwIP's headers and the application's `lwipopts.h`.
+  Needs lwIP 2.0.2 or later, with an OS, `NO_SYS` at 0, `LWIP_SOCKET`,
+  `LWIP_TCP`, `LWIP_DNS`, `LWIP_SO_RCVTIMEO` and `LWIP_SO_SNDTIMEO`, and an
+  `errno` of each task's own where more than one task uses sockets, as
+  newlib's is with FreeRTOS's `configUSE_NEWLIB_REENTRANT`.
 
 - **mbedTLS** (`ebisu_mbedtls.h`, library `ebisu_mbedtls`):
   `ebisu_mbedtls_socket_t`, TLS 1.2 or later, 1.3 where mbedTLS has it, with
@@ -208,6 +236,27 @@ too, each suite in a FreeRTOS task on the same board, with newlib:
 and the large ones, against the live application, over the mbedTLS port and
 the FreeRTOS-Plus-TCP socket:
 [tests/freertos_large](https://github.com/KiiPlatform/ebisu/blob/master/tests/freertos_large/README.md).
+
+With lwIP, in the application's `CMakeLists.txt`, from lwIP 2.1 on, before
+ebisu's:
+
+```cmake
+# lwIP's CMake asks for these: where it is, and its include directories:
+# lwipopts.h's, and those of its port to the system, whose arch/ headers and
+# sys_arch.c the application has, with the system's own headers.
+set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lwip)
+set(LWIP_INCLUDE_DIRS ${LWIP_DIR}/src/include ${CMAKE_CURRENT_SOURCE_DIR}/config
+    ${CMAKE_CURRENT_SOURCE_DIR}/lwip-port)
+include(${LWIP_DIR}/src/Filelists.cmake)
+# ebisu after: its CMake builds ebisu_lwip as lwipcore is there.
+add_subdirectory(ebisu)
+target_link_libraries(app PRIVATE ebisu_lwip ebisu_mbedtls tio)
+```
+
+CI runs the lwIP socket's tests,
+[tests/lwip](https://github.com/KiiPlatform/ebisu/blob/master/tests/lwip/README.md),
+on Linux, with lwIP in the test's own process, against lwIP 2.0.2, the oldest
+the socket supports, 2.1.3 and 2.2.1, the latest, each configured two ways.
 
 With mbedTLS over the POSIX port's socket, and the CA certificates of the
 application's:
@@ -300,6 +349,7 @@ neither of which it has unless asked. Both apply from the next connect:
 | `ebisu_openssl_socket_t` | `ebisu_openssl_socket_set_keepalive()` | `ebisu_openssl_socket_set_nodelay()` |
 | `ebisu_win32_tcp_socket_t` | `ebisu_win32_tcp_socket_set_keepalive()` | `ebisu_win32_tcp_socket_set_nodelay()` |
 | `ebisu_schannel_socket_t` | `ebisu_schannel_socket_set_keepalive()` | `ebisu_schannel_socket_set_nodelay()` |
+| `ebisu_lwip_tcp_socket_t` | `ebisu_lwip_tcp_socket_set_keepalive()` | `ebisu_lwip_tcp_socket_set_nodelay()` |
 
 Keepalive takes the seconds idle before the first probe, the seconds between
 probes and the count of probes unanswered before the connection is given up,
@@ -309,7 +359,9 @@ them from Windows 10, version 1709. A peer that has gone is noticed within
 about idle + interval × count seconds of the connection going idle: a send or
 a receive then fails. An option the system can't set, or a value it refuses, is
 said at `EBISU_LOG_WARNING` to the socket's logger, and the connection made
-without it.
+without it. lwIP takes the idle time, interval and count with
+`LWIP_TCP_KEEPALIVE`; without it, it probes after its defaults, 2 hours, then
+every 75 seconds, 9 times, which the socket says.
 
 ```c
     ebisu_openssl_socket_init(&sock, 15, 15);

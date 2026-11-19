@@ -132,6 +132,25 @@ if(TARGET freertos_kernel AND TARGET freertos_plus_tcp)
     ebisu_configure_target(ebisu_freertos_tcp)
 endif()
 
+# lwIP's sockets, in an application's build that has lwIP's core target,
+# lwipcore, as including lwIP's src/Filelists.cmake makes it from 2.1 on, with
+# the include directories and definitions lwIP is built with, LWIP_INCLUDE_DIRS
+# and LWIP_DEFINITIONS, as lwIP's own CMake takes them: the application's
+# lwipopts.h, and its port's arch/cc.h, among them. Not installed, as lwIP
+# isn't.
+if(TARGET lwipcore)
+    add_library(ebisu_lwip STATIC lwip/src/ebisu_lwip_tcp.c)
+    target_include_directories(ebisu_lwip
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lwip/include>)
+    # lwIP's headers, as its targets take them, privately: ebisu_lwip.h has
+    # none of them.
+    target_include_directories(ebisu_lwip SYSTEM PRIVATE ${LWIP_INCLUDE_DIRS})
+    target_compile_definitions(ebisu_lwip PRIVATE ${LWIP_DEFINITIONS})
+    target_link_libraries(ebisu_lwip PUBLIC ebisu_core lwipcore)
+    ebisu_configure_target(ebisu_lwip)
+endif()
+
 # mbedTLS, 3.6 or 4.x: the application's, added before ebisu's, or one
 # installed, as its CMake package finds it. Each names its library
 # MbedTLS::mbedtls. Not installed, as the application's isn't.
