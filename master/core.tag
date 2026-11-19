@@ -4,13 +4,20 @@
     <name>ebisu_clock.h</name>
     <path>include/</path>
     <filename>ebisu__clock_8h.html</filename>
-    <includes id="ebisu__system_8h" name="ebisu_system.h" local="yes" import="no" module="no" objc="no">ebisu_system.h</includes>
+    <class kind="struct">ebisu_clock_ops_t</class>
     <class kind="struct">ebisu_clock_t</class>
     <member kind="typedef">
       <type>struct ebisu_clock_t</type>
       <name>ebisu_clock_t</name>
       <anchorfile>ebisu__clock_8h.html</anchorfile>
       <anchor>a01e37dc83e0abae84e96c4912fa1f687</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_clock_ops_t</type>
+      <name>ebisu_clock_ops_t</name>
+      <anchorfile>ebisu__clock_8h.html</anchorfile>
+      <anchor>a452b1eaed035b624851dc7aa341bc367</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
@@ -46,41 +53,6 @@
       <arglist></arglist>
     </member>
     <member kind="function">
-      <type>void</type>
-      <name>ebisu_clock_init</name>
-      <anchorfile>ebisu__clock_8h.html</anchorfile>
-      <anchor>a4c85dfcb6d4b520957c2bf1ee26f5414</anchor>
-      <arglist>(ebisu_clock_t *clock, ebisu_system_t *system)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>ebisu_clock_set_lock</name>
-      <anchorfile>ebisu__clock_8h.html</anchorfile>
-      <anchor>a3c26369c70ce325e9d32dfa68122a9cb</anchor>
-      <arglist>(ebisu_clock_t *clock, ebisu_lock_t *lock)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>ebisu_clock_set_floor</name>
-      <anchorfile>ebisu__clock_8h.html</anchorfile>
-      <anchor>a0cf4c12578e20cf46a64aa39871145c1</anchor>
-      <arglist>(ebisu_clock_t *clock, int64_t floor)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>ebisu_clock_set_exact_for</name>
-      <anchorfile>ebisu__clock_8h.html</anchorfile>
-      <anchor>a7b8c62d02d3b1f1d10b33f6c9a31d5f2</anchor>
-      <arglist>(ebisu_clock_t *clock, uint32_t seconds)</arglist>
-    </member>
-    <member kind="function">
-      <type>bool</type>
-      <name>ebisu_clock_set_time</name>
-      <anchorfile>ebisu__clock_8h.html</anchorfile>
-      <anchor>ad62b4e4b23622cb75c18ee859ccd565f</anchor>
-      <arglist>(ebisu_clock_t *clock, int64_t now)</arglist>
-    </member>
-    <member kind="function">
       <type>bool</type>
       <name>ebisu_clock_get_time</name>
       <anchorfile>ebisu__clock_8h.html</anchorfile>
@@ -100,6 +72,13 @@
       <anchorfile>ebisu__clock_8h.html</anchorfile>
       <anchor>a5a05722564b0b889afc6c506ecc73435</anchor>
       <arglist>(ebisu_clock_t *clock, int64_t not_before, int64_t not_after)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_clock_from_system_time</name>
+      <anchorfile>ebisu__clock_8h.html</anchorfile>
+      <anchor>a7d254302e4d26bb3afd519d210bb23a7</anchor>
+      <arglist>(int64_t seconds, int64_t *out_now)</arglist>
     </member>
   </compound>
   <compound kind="file">
@@ -381,6 +360,63 @@
       <anchorfile>ebisu__object_8h.html</anchorfile>
       <anchor>a5e7fdb772cc16ee485b366e1618a7136</anchor>
       <arglist>(ptr, type, member)</arglist>
+    </member>
+  </compound>
+  <compound kind="file">
+    <name>ebisu_server_clock.h</name>
+    <path>include/</path>
+    <filename>ebisu__server__clock_8h.html</filename>
+    <includes id="ebisu__clock_8h" name="ebisu_clock.h" local="yes" import="no" module="no" objc="no">ebisu_clock.h</includes>
+    <includes id="ebisu__system_8h" name="ebisu_system.h" local="yes" import="no" module="no" objc="no">ebisu_system.h</includes>
+    <class kind="struct">ebisu_server_clock_t</class>
+    <member kind="typedef">
+      <type>struct ebisu_server_clock_t</type>
+      <name>ebisu_server_clock_t</name>
+      <anchorfile>ebisu__server__clock_8h.html</anchorfile>
+      <anchor>a8db4c298b31d3be1aaf831726950c5c9</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_server_clock_init</name>
+      <anchorfile>ebisu__server__clock_8h.html</anchorfile>
+      <anchor>aa287984b59fee9ac0cc46e7574b2acca</anchor>
+      <arglist>(ebisu_server_clock_t *clock, ebisu_system_t *system)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_server_clock_set_lock</name>
+      <anchorfile>ebisu__server__clock_8h.html</anchorfile>
+      <anchor>a5505c829296480a5169e4407dc140afb</anchor>
+      <arglist>(ebisu_server_clock_t *clock, ebisu_lock_t *lock)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_server_clock_set_floor</name>
+      <anchorfile>ebisu__server__clock_8h.html</anchorfile>
+      <anchor>ab3cebbcf44b065d040573e112741d0fd</anchor>
+      <arglist>(ebisu_server_clock_t *clock, int64_t floor)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_server_clock_set_exact_for</name>
+      <anchorfile>ebisu__server__clock_8h.html</anchorfile>
+      <anchor>a6f638b441f2807465f011d84903daa57</anchor>
+      <arglist>(ebisu_server_clock_t *clock, uint32_t seconds)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_server_clock_set_time</name>
+      <anchorfile>ebisu__server__clock_8h.html</anchorfile>
+      <anchor>aababfc05d7f0de3e9e719912c855cd37</anchor>
+      <arglist>(ebisu_server_clock_t *clock, int64_t now)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_server_clock_override_time</name>
+      <anchorfile>ebisu__server__clock_8h.html</anchorfile>
+      <anchor>a010a4e3ea096d23d06d20f88a50df172</anchor>
+      <arglist>(ebisu_server_clock_t *clock, int64_t now)</arglist>
     </member>
   </compound>
   <compound kind="file">
@@ -828,6 +864,7 @@
     <name>ebisu_system.h</name>
     <path>include/</path>
     <filename>ebisu__system_8h.html</filename>
+    <includes id="ebisu__clock_8h" name="ebisu_clock.h" local="yes" import="no" module="no" objc="no">ebisu_clock.h</includes>
     <includes id="ebisu__object_8h" name="ebisu_object.h" local="yes" import="no" module="no" objc="no">ebisu_object.h</includes>
     <class kind="struct">ebisu_system_ops_t</class>
     <class kind="struct">ebisu_system_t</class>
@@ -1004,8 +1041,40 @@
     </member>
   </compound>
   <compound kind="struct">
+    <name>ebisu_clock_ops_t</name>
+    <filename>structebisu__clock__ops__t.html</filename>
+    <member kind="variable">
+      <type>bool(*</type>
+      <name>now</name>
+      <anchorfile>structebisu__clock__ops__t.html</anchorfile>
+      <anchor>ad78d3b9f6b3e9d1df58c9f1d21d969f1</anchor>
+      <arglist>)(ebisu_clock_t *self, int64_t *out_now)</arglist>
+    </member>
+    <member kind="variable">
+      <type>void(*</type>
+      <name>stated</name>
+      <anchorfile>structebisu__clock__ops__t.html</anchorfile>
+      <anchor>a7289e21f23a698efc050eedccc0d107c</anchor>
+      <arglist>)(ebisu_clock_t *self, int64_t seconds)</arglist>
+    </member>
+    <member kind="variable">
+      <type>void(*</type>
+      <name>doubt</name>
+      <anchorfile>structebisu__clock__ops__t.html</anchorfile>
+      <anchor>a9a72cfea02e2a7a5a2753c902fedfd35</anchor>
+      <arglist>)(ebisu_clock_t *self)</arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
     <name>ebisu_clock_t</name>
     <filename>structebisu__clock__t.html</filename>
+    <member kind="variable">
+      <type>const ebisu_clock_ops_t *</type>
+      <name>ops</name>
+      <anchorfile>structebisu__clock__t.html</anchorfile>
+      <anchor>a4090303610a4ca5836da3b0538f85e02</anchor>
+      <arglist></arglist>
+    </member>
   </compound>
   <compound kind="struct">
     <name>ebisu_dns_addr_t</name>
@@ -1174,6 +1243,17 @@
     </member>
   </compound>
   <compound kind="struct">
+    <name>ebisu_server_clock_t</name>
+    <filename>structebisu__server__clock__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_clock_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__server__clock__t.html</anchorfile>
+      <anchor>a12a3e719ad2b71eea0934f1d309304f4</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
     <name>ebisu_socket_ops_t</name>
     <filename>structebisu__socket__ops__t.html</filename>
     <member kind="variable">
@@ -1324,6 +1404,13 @@
       <anchorfile>structebisu__system__ops__t.html</anchorfile>
       <anchor>a1e28958beee31fa3491dd625d3a2f3cc</anchor>
       <arglist>)(ebisu_system_t *self, ebisu_lock_t *lock)</arglist>
+    </member>
+    <member kind="variable">
+      <type>ebisu_clock_t *(*</type>
+      <name>clock</name>
+      <anchorfile>structebisu__system__ops__t.html</anchorfile>
+      <anchor>ad813b06ac9cd4cb07ea051160cd83ae6</anchor>
+      <arglist>)(ebisu_system_t *self)</arglist>
     </member>
   </compound>
   <compound kind="struct">

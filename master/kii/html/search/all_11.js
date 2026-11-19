@@ -12,7 +12,8 @@ var searchData=
   ['set_20up_20a_20kii_5ft_9',['Set up a &lt;span class=&quot;tt&quot;&gt;kii_t&lt;/span&gt;',['../index.html#autotoc_md0',1,'']]],
   ['size_10',['size',['../../../core/html/structebisu__strbuf__t.html#a0f33a1d98be1357c1aa03020b0d2fdad',1,'ebisu_strbuf_t']]],
   ['start_11',['start',['../../../jkii/html/structjkii__field__t.html#a01a5294845f38f7c7567059894426ab4',1,'jkii_field_t']]],
-  ['status_12',['status',['../structkii__server__code__result__t.html#afc2a8d6194533fa59e09589cade43d52',1,'kii_server_code_result_t']]],
-  ['step_5fcount_13',['step_count',['../structkii__server__code__result__t.html#adeb316d8c264394a396d993282d8aef1',1,'kii_server_code_result_t']]],
-  ['string_14',['string',['../../../jkii/html/structjkii__field__t.html#a819930194ef418853ab716ad36cc01e6',1,'jkii_field_t']]]
+  ['stated_12',['stated',['../../../core/html/structebisu__clock__ops__t.html#a7289e21f23a698efc050eedccc0d107c',1,'ebisu_clock_ops_t']]],
+  ['status_13',['status',['../structkii__server__code__result__t.html#afc2a8d6194533fa59e09589cade43d52',1,'kii_server_code_result_t']]],
+  ['step_5fcount_14',['step_count',['../structkii__server__code__result__t.html#adeb316d8c264394a396d993282d8aef1',1,'kii_server_code_result_t']]],
+  ['string_15',['string',['../../../jkii/html/structjkii__field__t.html#a819930194ef418853ab716ad36cc01e6',1,'jkii_field_t']]]
 ];

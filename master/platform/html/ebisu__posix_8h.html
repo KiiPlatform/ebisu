@@ -84,7 +84,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>The system, a lock, a socket of plain TCP and the name servers on POSIX.  
+<p>The system, its clock, a lock, a socket of plain TCP and the name servers on POSIX.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;<a class="elRef" href="../../core/html/ebisu__dns_8h.html">ebisu_dns.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a>&gt;</code><br />
@@ -131,7 +131,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:a936dbbfb8728fa54cca04689019fd52e"><td class="mdescLeft">&#160;</td><td class="mdescRight">The name servers on POSIX, for platform's DNS probe.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>The system, a lock, a socket of plain TCP and the name servers on POSIX. </p>
+<div class="textblock"><p>The system, its clock, a lock, a socket of plain TCP and the name servers on POSIX. </p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Typedef Documentation</h2>
 <a id="a1941abd23c970fe42f21d3f35f74c27c" name="a1941abd23c970fe42f21d3f35f74c27c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1941abd23c970fe42f21d3f35f74c27c">&#9670;&#160;</a></span>ebisu_posix_tcp_socket_t</h2>
@@ -242,7 +242,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>The system on POSIX. </p>
-<p>Each task is a detached thread, which goes by itself when it ends. A delay is nanosleep(), resumed through signals until the whole time has passed. The monotonic clock is CLOCK_MONOTONIC. Its locks, from ebisu_system_lock_create(), are <a class="el" href="structebisu__posix__lock__t.html" title="A lock that is a pthread mutex.">ebisu_posix_lock_t</a>'s from the heap. The system has no state, so this one serves everything.</p>
+<p>Each task is a detached thread, which goes by itself when it ends. A delay is nanosleep(), resumed through signals until the whole time has passed. The monotonic clock is CLOCK_MONOTONIC. Its locks, from ebisu_system_lock_create(), are <a class="el" href="structebisu__posix__lock__t.html" title="A lock that is a pthread mutex.">ebisu_posix_lock_t</a>'s from the heap. Its clock, from ebisu_system_clock(), is the time of day, CLOCK_REALTIME, as <a class="elRef" href="../../core/html/ebisu__clock_8h.html#a7d254302e4d26bb3afd519d210bb23a7">ebisu_clock_from_system_time()</a> takes it: earlier than the library's source, a time the system has not set, it is a lower bound. It takes no time from servers, and has nothing to doubt: the time is what sets the system's, NTP for instance, keeps. The system has no state, so this one serves everything.</p>
 <dl class="section return"><dt>Returns</dt><dd>The system. </dd></dl>
 
 </div>

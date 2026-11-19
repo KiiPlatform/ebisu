@@ -6,5 +6,6 @@ var searchData=
   ['second_3',['second',['../../../core/html/structebisu__civil__time__t.html#a93d3b2af6194e4a47b6ff8800d0e1f89',1,'ebisu_civil_time_t']]],
   ['send_4',['send',['../../../core/html/structebisu__socket__ops__t.html#adb543d912cc7f9758ed4713cfeed4666',1,'ebisu_socket_ops_t']]],
   ['servers_5',['servers',['../../../core/html/structebisu__dns__ops__t.html#a434b4ee4ff7734efe57464b7dd42a6cc',1,'ebisu_dns_ops_t']]],
-  ['size_6',['size',['../../../core/html/structebisu__strbuf__t.html#a0f33a1d98be1357c1aa03020b0d2fdad',1,'ebisu_strbuf_t']]]
+  ['size_6',['size',['../../../core/html/structebisu__strbuf__t.html#a0f33a1d98be1357c1aa03020b0d2fdad',1,'ebisu_strbuf_t']]],
+  ['stated_7',['stated',['../../../core/html/structebisu__clock__ops__t.html#a7289e21f23a698efc050eedccc0d107c',1,'ebisu_clock_ops_t']]]
 ];

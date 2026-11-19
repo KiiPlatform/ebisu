@@ -84,7 +84,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>The system, a lock, a socket of plain TCP and the name servers on Windows.  
+<p>The system, its clock, a lock, a socket of plain TCP and the name servers on Windows.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;<a class="elRef" href="../../core/html/ebisu__dns_8h.html">ebisu_dns.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a>&gt;</code><br />
@@ -131,7 +131,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:afcf3ca4aa921959ba600bb9d9337d6b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">The name servers on Windows, for platform's DNS probe.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>The system, a lock, a socket of plain TCP and the name servers on Windows. </p>
+<div class="textblock"><p>The system, its clock, a lock, a socket of plain TCP and the name servers on Windows. </p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Typedef Documentation</h2>
 <a id="a45476d26cf5d65bd97298f9b64d660c6" name="a45476d26cf5d65bd97298f9b64d660c6"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a45476d26cf5d65bd97298f9b64d660c6">&#9670;&#160;</a></span>ebisu_win32_tcp_socket_t</h2>
@@ -217,7 +217,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>The system on Windows. </p>
-<p>Each task runs on a thread of its own, made with _beginthreadex(), which nothing waits for. A delay is Sleep(). The monotonic clock is GetTickCount64(), which doesn't jump when the wall clock is set. Its locks, from ebisu_system_lock_create(), are <a class="el" href="structebisu__win32__lock__t.html" title="A lock that is an SRWLOCK, which needs no destroying.">ebisu_win32_lock_t</a>'s from the heap. The system has no state, so this one serves everything.</p>
+<p>Each task runs on a thread of its own, made with _beginthreadex(), which nothing waits for. A delay is Sleep(). The monotonic clock is GetTickCount64(), which doesn't jump when the wall clock is set. Its locks, from ebisu_system_lock_create(), are <a class="el" href="structebisu__win32__lock__t.html" title="A lock that is an SRWLOCK, which needs no destroying.">ebisu_win32_lock_t</a>'s from the heap. Its clock, from ebisu_system_clock(), is the time of day, GetSystemTimeAsFileTime(), as <a class="elRef" href="../../core/html/ebisu__clock_8h.html#a7d254302e4d26bb3afd519d210bb23a7">ebisu_clock_from_system_time()</a> takes it. It takes no time from servers, and has nothing to doubt: the time is what Windows Time keeps. The system has no state, so this one serves everything.</p>
 <dl class="section return"><dt>Returns</dt><dd>The system. </dd></dl>
 
 </div>

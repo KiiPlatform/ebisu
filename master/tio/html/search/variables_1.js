@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['base_0',['base',['../../../core/html/structebisu__log__fanout__t.html#ac8ac9936c9fe790257ec129b4cb5d635',1,'ebisu_log_fanout_t::base'],['../../../core/html/structebisu__log__level__filter__t.html#a310479de70149a5fdd142958b3cc31bd',1,'ebisu_log_level_filter_t::base'],['../../../core/html/structebisu__log__slot__t.html#ae8aeae760e5f6a9d987c5fadae59a295',1,'ebisu_log_slot_t::base']]],
+  ['base_0',['base',['../../../core/html/structebisu__server__clock__t.html#a12a3e719ad2b71eea0934f1d309304f4',1,'ebisu_server_clock_t::base'],['../../../core/html/structebisu__log__fanout__t.html#ac8ac9936c9fe790257ec129b4cb5d635',1,'ebisu_log_fanout_t::base'],['../../../core/html/structebisu__log__level__filter__t.html#a310479de70149a5fdd142958b3cc31bd',1,'ebisu_log_level_filter_t::base'],['../../../core/html/structebisu__log__slot__t.html#ae8aeae760e5f6a9d987c5fadae59a295',1,'ebisu_log_slot_t::base']]],
   ['body_1',['body',['../../../kii/html/structkii__server__code__result__t.html#a4f02fbc79a670afb79d532a7eeafdd0d',1,'kii_server_code_result_t']]],
   ['body_5flength_2',['body_length',['../../../kii/html/structkii__server__code__result__t.html#a0f8573695c54befbfa76fc86687ac91d',1,'kii_server_code_result_t']]],
   ['bool_5fvalue_3',['bool_value',['../structtio__action__value__t.html#a3e8117ff74584f831d8b289fc2f04f05',1,'tio_action_value_t']]],

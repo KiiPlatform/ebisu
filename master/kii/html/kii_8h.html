@@ -3008,7 +3008,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 </div><div class="memdoc">
 
 <p>Give a clock the time each response states. </p>
-<p>After each request, the date of its response, as <a class="el" href="#ab36c0a18982d688d8a5c5307f1307ebc" title="Get the server&#39;s time, from the Date header of the last response.">kii_get_resp_date()</a> gives it, is given to the clock, which counts on from it. Every <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> of a device may share one clock, <a class="elRef" href="../../core/html/ebisu__clock_8h.html#a3c26369c70ce325e9d32dfa68122a9cb">ebisu_clock_set_lock()</a> permitting.</p>
+<p>After each request, the date of its response, as <a class="el" href="#ab36c0a18982d688d8a5c5307f1307ebc" title="Get the server&#39;s time, from the Date header of the last response.">kii_get_resp_date()</a> gives it, is given to the clock's stated: an <a class="elRef" href="../../core/html/structebisu__server__clock__t.html">ebisu_server_clock_t</a> counts on from it. Every <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> of a device may share one clock, <a class="elRef" href="../../core/html/ebisu__server__clock_8h.html#a5505c829296480a5169e4407dc140afb">ebisu_server_clock_set_lock()</a> permitting. A clock that keeps the time itself, the system's, has no stated, and is given nothing.</p>
 <p>The time is only as good as the connection it came through. So a <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> with <a class="el" href="#a92b01e1888f561c5a91776818d32f726" title="Enable insecure HTTP connection.">kii_enable_insecure_http()</a> gives the clock none, and one whose socket does not check the server's certificate should not be given the clock.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -3017,7 +3017,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>KII_ERR_FAIL if the clock has no monotonic clock. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>KII_ERR_FAIL if the clock has no now. </dd></dl>
 
 </div>
 </div>

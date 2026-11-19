@@ -71,7 +71,8 @@ var menudata={children:[
 {text:"e",url:"globals.html#index_e"}]},
 {text:"Functions",url:"globals_func.html",children:[
 {text:"e",url:"globals_func.html#index_e"}]},
-{text:"Typedefs",url:"globals_type.html"},
+{text:"Typedefs",url:"globals_type.html",children:[
+{text:"e",url:"globals_type.html#index_e"}]},
 {text:"Enumerations",url:"globals_enum.html"},
 {text:"Enumerator",url:"globals_eval.html",children:[
 {text:"e",url:"globals_eval.html#index_e"}]},

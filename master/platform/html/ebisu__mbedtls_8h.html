@@ -285,7 +285,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Sets the clock the server's certificate is checked at the time of. </p>
-<p>While the clock has only its floor, a certificate that expired before it is refused, and one not valid yet is not, as it may have been issued since. A certificate not valid yet at a time the clock had is refused, and the clock's time forgotten, so that the next connection is checked at its floor and its response gives the clock the time again: more likely than a certificate from the future, the time fell behind. See <a class="elRef" href="../../core/html/ebisu__clock_8h.html#aa00ab1f7611766edb574494ca947f07d">ebisu_clock_forget_time()</a>.</p>
+<p>While the clock has only a lower bound of the time, a certificate that expired before it is refused, and one not valid yet is not, as it may have been issued since. A certificate not valid yet at a time the clock had is refused, and the clock's time forgotten, so that the next connection is checked at a lower bound and its response gives the clock the time again: more likely than a certificate from the future, the time fell behind. See <a class="elRef" href="../../core/html/ebisu__clock_8h.html#aa00ab1f7611766edb574494ca947f07d">ebisu_clock_forget_time()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>

@@ -123,6 +123,13 @@
       <arglist>(ebisu_freertos_system_t *system, configSTACK_DEPTH_TYPE stack_depth, UBaseType_t priority)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>ebisu_freertos_system_set_clock</name>
+      <anchorfile>ebisu__freertos_8h.html</anchorfile>
+      <anchor>adef96b9854e888bc6d50d6c060f89426</anchor>
+      <arglist>(ebisu_freertos_system_t *system, ebisu_clock_t *clock)</arglist>
+    </member>
+    <member kind="function">
       <type>bool</type>
       <name>ebisu_freertos_lock_init</name>
       <anchorfile>ebisu__freertos_8h.html</anchorfile>
