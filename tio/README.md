@@ -505,11 +505,13 @@ void author_updated_callback(const kii_author_t* author, void* userdata)
 ## Keep the time
 
 A device without a real-time clock needs the time to check the server's
-certificate in its socket callbacks. The handler and the updater give a
-`ebisu_clock_t` the time each response states, with `tio_handler_set_clock()` and
-`tio_updater_set_clock()`. They run in tasks of their own, so a clock they share
-needs a lock, set by `ebisu_clock_set_lock()`. That has to be a lock of its own,
-not the session's. The [kii README](https://github.com/KiiPlatform/ebisu/blob/master/kii/README.md#the-time) describes the
+certificate in its socket callbacks. The handler and the updater give an
+`ebisu_server_clock_t` the time each response states, with
+`tio_handler_set_clock()` and `tio_updater_set_clock()`. They run in tasks of
+their own, so a clock they share needs a lock, set by
+`ebisu_server_clock_set_lock()`. That has to be a lock of its own, not the
+session's. A device whose system keeps the time sets `ebisu_system_clock()` on
+its sockets instead, and needs neither. The [kii README](https://github.com/KiiPlatform/ebisu/blob/master/kii/README.md#the-time) describes the
 clock and how the socket callbacks use it.
 
 <a name="execute-onboarding"></a>

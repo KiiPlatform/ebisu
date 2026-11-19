@@ -50,10 +50,11 @@ The server's certificate has to chain to one of the CA certificates in
 be issued for the host. mbedTLS checks all of that, but not the validity
 periods: it would do so at the system's time, which the board does not have.
 ebisu's mbedTLS port checks them in mbedTLS's verify callback instead, during
-the handshake, at the time an `ebisu_clock_t` keeps, which the device learns from
-the server. Until the first response, the clock has only a floor, a time it is
-known not to be earlier than, and only a certificate that expired before it can
-be told. The [kii README](../../kii/README.md#the-time) describes the clock.
+the handshake, at the time an `ebisu_server_clock_t` keeps, which the device
+learns from the server, and which the sample sets on its system as the system's
+clock. Until the first response, the clock has only a floor, a time it is known
+not to be earlier than, and only a certificate that expired before it can be
+told. The [kii README](../../kii/README.md#the-time) describes the clock.
 
 ## Randomness
 

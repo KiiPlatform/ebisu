@@ -37,6 +37,28 @@ static uint64_t monotonic_ms(ebisu_system_t* self)
     return (uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000;
 }
 
+/* The time of day, CLOCK_REALTIME, unless it is one not set. */
+static bool clock_now(ebisu_clock_t* self, int64_t* out_now)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return ebisu_clock_from_system_time((int64_t)ts.tv_sec, out_now);
+}
+
+/* The system keeps the time: none from servers, and nothing to doubt. */
+static const ebisu_clock_ops_t posix_clock_ops = {
+    clock_now,
+    NULL,
+    NULL
+};
+
+static ebisu_clock_t posix_clock = { &posix_clock_ops };
+
+static ebisu_clock_t* system_clock(ebisu_system_t* self)
+{
+    return &posix_clock;
+}
+
 static ebisu_lock_t* lock_create(ebisu_system_t* self);
 static void lock_destroy(ebisu_system_t* self, ebisu_lock_t* lock);
 
@@ -45,7 +67,8 @@ static const ebisu_system_ops_t posix_system_ops = {
     delay_ms,
     monotonic_ms,
     lock_create,
-    lock_destroy
+    lock_destroy,
+    system_clock
 };
 
 static ebisu_system_t posix_system = { &posix_system_ops };

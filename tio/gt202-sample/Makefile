@@ -1,6 +1,7 @@
 all:
 	mkdir -p custom/tio
 	cp ../../core/src/*.c custom/tio
+	cp ../../core/src/*.h custom/tio
 	cp ../../core/include/*.h custom/tio
 	cp ../../jkii/src/*.c custom/tio
 	cp ../../jkii/src/*.h custom/tio

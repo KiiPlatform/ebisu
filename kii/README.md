@@ -519,50 +519,125 @@ the server's certificate in the socket callbacks.
 
 ## The time
 
-A device without a real-time clock needs the time to check the validity period
-of the server's certificate in its socket callbacks. An `ebisu_clock_t` keeps it.
-Until a server states its time, it has a floor: a time it is known not to be
-earlier than. From the first response on, it has the time the response states,
-counted on with the monotonic clock.
+The socket callbacks need the time to check the validity period of the
+server's certificate. They take it from a clock, an `ebisu_clock_t`, which
+gives the time, or a lower bound of it when it doesn't have it: a time it is
+known not to be earlier than. Where the time comes from is the clock's:
 
-As tlsdate does, kii takes the time only from a connection the server is
-authenticated on, and only within a range: never from plain HTTP,
-`kii_enable_insecure_http()`, where anyone on the way could write it, and never
-from a date earlier than the library's source or later than
-`EBISU_DATE_CEILING_YEARS`, 15 unless the build sets another, after it, which
-khc refuses (see the [khc README](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#results)).
+- A system that keeps the time of day gives it as `ebisu_system_clock()`: on
+  POSIX and Windows, the time the system has, or, if the system has one earlier
+  than the library's source, as a device without a real-time clock has until
+  NTP sets it, a lower bound. It takes no time from servers, so a `kii_t` needs
+  none of it. FreeRTOS keeps no time of day, and its system gives the clock the
+  application sets on it with `ebisu_freertos_system_set_clock()`, one of those
+  below.
+- A device without a real-time clock has an `ebisu_server_clock_t`. Until a
+  server states its time, it has a floor: a time it is known not to be earlier
+  than. From the first response to a `kii_t` it is set on, it has the time the
+  response states, counted on with the monotonic clock.
+- A board with a real-time clock has a clock of its own, implementing
+  `ebisu_clock_ops_t` over it; `ebisu_clock_from_system_time()` tells a time it
+  has not been set to, as after it lost its battery.
+
+As tlsdate does, kii gives a clock set with `kii_set_clock()` the time only
+from a connection the server is authenticated on, and only within a range:
+never from plain HTTP, `kii_enable_insecure_http()`, where anyone on the way
+could write it, and never a date earlier than the library's source or later
+than `EBISU_DATE_CEILING_YEARS`, 15 unless the build sets another, after it,
+which khc refuses (see the [khc README](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#results)).
 A `kii_t` whose socket doesn't check the server's certificate should not be
 given the clock either.
 
 ```c
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, &system);
+    ebisu_server_clock_t clock;
+    ebisu_server_clock_init(&clock, &system);
     // Needed when kii_t of more than one task share the clock. Not the
     // session's lock: the socket callbacks may use the clock while kii holds
     // that one.
-    ebisu_clock_set_lock(&clock, &clock_lock.base);
+    ebisu_server_clock_set_lock(&clock, &clock_lock.base);
     // A time the device saved before, if any. Without one, the floor is
     // shortly before the library's source was built.
-    ebisu_clock_set_floor(&clock, saved_time);
-    kii_set_clock(&kii, &clock);
+    ebisu_server_clock_set_floor(&clock, saved_time);
+    kii_set_clock(&kii, &clock.base);
 ```
 
-The socket callbacks then check the server's certificate against it:
+A time from a source of the application's own, an NTP client for instance,
+`ebisu_server_clock_set_time()` takes as a server's: not if it is earlier than
+the floor. It is worth as much as the source. An NTP client that authenticates
+its servers, with NTS (RFC 8915) or a symmetric key (RFC 8573), as coreSNTP's
+authentication interface lets one do, gives a time as good as a server's over
+TLS; plain NTP and SNTP are not authenticated, and anyone on the way to their
+server can answer with any time. A clock set on a `kii_t` too takes the time
+from both, whichever was given last. A time the application knows to be right,
+from an operator or a source it trusts, `ebisu_server_clock_override_time()`
+takes whatever the clock had, lowering the floor to it if it has to.
 
-- `ebisu_clock_check_validity()` checks a validity period. With the floor only, a
-  certificate that ended before it has expired, but one that starts later
-  cannot be told from one that is valid now, so only the end is checked.
+To take the time from its source alone, or to hear when a socket doubts it, a
+clock of the application's implements `ebisu_clock_ops_t` and keeps the time in
+a server clock it holds:
+
+```c
+typedef struct {
+    ebisu_clock_t base;
+    ebisu_server_clock_t kept;
+} ntp_clock_t;
+
+static bool ntp_clock_now(ebisu_clock_t* self, int64_t* out_now)
+{
+    ntp_clock_t* clock = EBISU_CONTAINER_OF(self, ntp_clock_t, base);
+    return ebisu_clock_get_time(&clock->kept.base, out_now);
+}
+
+static void ntp_clock_doubt(ebisu_clock_t* self)
+{
+    ntp_clock_t* clock = EBISU_CONTAINER_OF(self, ntp_clock_t, base);
+    ebisu_clock_forget_time(&clock->kept.base);
+    // A certificate not valid yet at the time: ask the NTP client for the time
+    // now, rather than at its next poll.
+    ntp_client_sync_soon();
+}
+
+// No stated: the time is the NTP client's alone, and a kii_t gives the clock
+// nothing. One that calls ebisu_server_clock_set_time() takes servers' too.
+static const ebisu_clock_ops_t ntp_clock_ops = { ntp_clock_now, NULL, ntp_clock_doubt };
+
+static ntp_clock_t device_clock;
+
+// What the NTP client calls with the time it has: from coreSNTP's
+// SntpSetTime_t, for instance, after Sntp_ConvertToUnixTime().
+void ntp_client_got_time(int64_t seconds)
+{
+    ebisu_server_clock_set_time(&device_clock.kept, seconds);
+}
+```
+
+```c
+    device_clock.base.ops = &ntp_clock_ops;
+    ebisu_server_clock_init(&device_clock.kept, &system.base);
+    ebisu_server_clock_set_lock(&device_clock.kept, &clock_lock.base);
+    // Its sockets check the server's certificate at it, and on FreeRTOS, code
+    // given the system finds it there.
+    ebisu_mbedtls_socket_set_clock(&sock, &device_clock.base);
+    ebisu_freertos_system_set_clock(&system, &device_clock.base);
+```
+
+The socket callbacks then check the server's certificate against the clock:
+
+- `ebisu_clock_check_validity()` checks a validity period. With a lower bound
+  only, a certificate that ended before it has expired, but one that starts
+  later cannot be told from one that is valid now, so only the end is checked.
   `ebisu_time_from_civil()` converts the dates a TLS stack gives.
-- `ebisu_clock_get_time()` gives the time, and whether it is the time or only the
-  floor, for a TLS stack that checks validity itself: give it the time, and
-  while it is only the floor, ignore a certificate not being valid yet.
+- `ebisu_clock_get_time()` gives the time, and whether it is the time or a lower
+  bound, for a TLS stack that checks validity itself: give it the time, and
+  while it is a lower bound, ignore a certificate not being valid yet.
 - `ebisu_clock_forget_time()`, when the server's certificate is refused as not
   valid yet while the clock had the time. That suggests the time fell behind,
-  the monotonic clock having stopped while the device slept and the server
-  having renewed its certificate meanwhile. Forgotten, the time becomes a lower
-  bound, the next connection goes through, and its response gives the clock the
-  time again. Without it, the connection that would bring the time is refused,
-  again and again.
+  an `ebisu_server_clock_t`'s monotonic clock having stopped while the device
+  slept and the server having renewed its certificate meanwhile. Forgotten, the
+  time becomes a lower bound, the next connection goes through, and its
+  response gives the clock the time again. Without it, the connection that
+  would bring the time is refused, again and again. A clock that keeps the time
+  itself, the system's, is left as it is.
 
 The chain and the host name are checked in full either way: the clock only
 decides the validity period.
@@ -576,14 +651,15 @@ handshake, in mbedTLS's verify callback, and the ESP32 one after it.
 
 A device that runs for a long time has the time again with every HTTP response.
 One that makes none for a while, only MQTT ones, has its time turn into a lower
-bound 24 hours after the last (`ebisu_clock_set_exact_for()` changes that), and a
-monotonic clock that goes back turns it into the floor: a monotonic clock
-drifts, and one cannot count on from a time when it goes back. A stale clock
-therefore never refuses a certificate as not yet valid, which could keep the
-device from connecting at all. The monotonic clock has to keep counting while
-the device sleeps, or the time falls behind while it still counts as exact.
-Saving the time now and then, and setting it with `ebisu_clock_set_floor()` after
-a restart, keeps the floor close to the time.
+bound 24 hours after the last (`ebisu_server_clock_set_exact_for()` changes
+that), and a monotonic clock that goes back turns it into the floor: a
+monotonic clock drifts, and one cannot count on from a time when it goes back.
+A stale clock therefore never refuses a certificate as not yet valid, which
+could keep the device from connecting at all. The monotonic clock has to keep
+counting while the device sleeps, or the time falls behind while it still
+counts as exact. Saving the time now and then, and setting it with
+`ebisu_server_clock_set_floor()` after a restart, keeps the floor close to the
+time.
 
 ## Building
 

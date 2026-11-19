@@ -914,8 +914,10 @@ kii_code_t kii_set_session(kii_t* kii, kii_session_t* session);
  * \brief Give a clock the time each response states.
  *
  * After each request, the date of its response, as kii_get_resp_date() gives
- * it, is given to the clock, which counts on from it. Every kii_t of a device
- * may share one clock, ebisu_clock_set_lock() permitting.
+ * it, is given to the clock's stated: an ebisu_server_clock_t counts on from
+ * it. Every kii_t of a device may share one clock,
+ * ebisu_server_clock_set_lock() permitting. A clock that keeps the time itself,
+ * the system's, has no stated, and is given nothing.
  *
  * The time is only as good as the connection it came through. So a kii_t with
  * kii_enable_insecure_http() gives the clock none, and one whose socket does
@@ -923,7 +925,7 @@ kii_code_t kii_set_session(kii_t* kii, kii_session_t* session);
  *
  * \param [out] kii kii_t instance.
  * \param [in] clock Clock to set, or NULL.
- * \return KII_ERR_FAIL if the clock has no monotonic clock.
+ * \return KII_ERR_FAIL if the clock has no now.
  */
 kii_code_t kii_set_clock(kii_t* kii, ebisu_clock_t* clock);
 

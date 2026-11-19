@@ -161,8 +161,8 @@ typedef struct ebisu_mbedtls_socket_t {
     /** \private Whether mbedTLS ended the connection with an error, after
      * which it sends no close_notify. */
     bool _failed;
-    /** \private Whether the clock had the time, rather than its floor only,
-     * when the connection was made. */
+    /** \private Whether the clock had the time, rather than a lower bound
+     * only, when the connection was made. */
     bool _time_exact;
     /** \private Whether the socket under it timed out in the last operation,
      * which mbedTLS was told is wanting to read or write. */
@@ -199,12 +199,12 @@ void ebisu_mbedtls_socket_init(
 /**
  * \brief Sets the clock the server's certificate is checked at the time of.
  *
- * While the clock has only its floor, a certificate that expired before it is
- * refused, and one not valid yet is not, as it may have been issued since. A
- * certificate not valid yet at a time the clock had is refused, and the
- * clock's time forgotten, so that the next connection is checked at its floor
- * and its response gives the clock the time again: more likely than a
- * certificate from the future, the time fell behind. See
+ * While the clock has only a lower bound of the time, a certificate that
+ * expired before it is refused, and one not valid yet is not, as it may have
+ * been issued since. A certificate not valid yet at a time the clock had is
+ * refused, and the clock's time forgotten, so that the next connection is
+ * checked at a lower bound and its response gives the clock the time again:
+ * more likely than a certificate from the future, the time fell behind. See
  * ebisu_clock_forget_time().
  *
  * \param [out] sock The socket.

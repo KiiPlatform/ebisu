@@ -127,6 +127,7 @@ ebisu_add_test_suite(small_test_core
     LABEL small
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core
     SOURCES
+        core/clock_test.cpp
         core/log_test.cpp
         core/mem_test.cpp
         core/str_test.cpp

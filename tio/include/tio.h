@@ -771,11 +771,11 @@ tio_code_t tio_handler_set_session(tio_handler_t* handler, kii_session_t* sessio
  * \brief Give a clock the time each of the handler's responses states.
  *
  * See kii_set_clock(). The handler and the updater may share one clock, with a
- * lock set by ebisu_clock_set_lock(): they run in tasks of their own.
+ * lock set by ebisu_server_clock_set_lock(): they run in tasks of their own.
  *
  * \param [out] handler tio_handler_t instance.
  * \param [in] clock Clock to set, or NULL.
- * \return TIO_ERR_FAIL if the clock has no monotonic clock.
+ * \return TIO_ERR_FAIL if the clock has no now.
  */
 tio_code_t tio_handler_set_clock(tio_handler_t* handler, ebisu_clock_t* clock);
 
@@ -1225,7 +1225,7 @@ tio_code_t tio_updater_set_session(tio_updater_t* updater, kii_session_t* sessio
  *
  * \param [out] updater tio_updater_t instance.
  * \param [in] clock Clock to set, or NULL.
- * \return TIO_ERR_FAIL if the clock has no monotonic clock.
+ * \return TIO_ERR_FAIL if the clock has no now.
  */
 tio_code_t tio_updater_set_clock(tio_updater_t* updater, ebisu_clock_t* clock);
 

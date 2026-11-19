@@ -4,7 +4,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include <ebisu_clock.h>
+#include <ebisu_server_clock.h>
 #include <ebisu_mbedtls.h>
 #include <ebisu_posix.h>
 
@@ -551,60 +551,72 @@ TEST_CASE( "A TLS configuration refuses a mode it can't take, as it was" ) {
 TEST_CASE( "The mbedTLS socket checks the certificates' dates at the clock's time" ) {
     Config config;
     const time_t now = pki().now;
-    ebisu_clock_t clock;
-    ebisu_clock_init(&clock, ebisu_posix_system());
+    ebisu_server_clock_t clock;
+    REQUIRE( ebisu_server_clock_init(&clock, ebisu_posix_system()) );
     auto expired = [now] { return pki().server("localhost", now - 60 * DAY, now - 30 * DAY); };
     auto not_yet = [now] { return pki().server("localhost", now + 30 * DAY, now + 60 * DAY); };
 
     SECTION("an expired one, at a time the clock has, is refused") {
-        REQUIRE( ebisu_clock_set_time(&clock, now) );
+        REQUIRE( ebisu_server_clock_set_time(&clock, now) );
         TlsServer server(expired(), nothing);
         Client client(&config.tls);
-        ebisu_mbedtls_socket_set_clock(&client.tls, &clock);
+        ebisu_mbedtls_socket_set_clock(&client.tls, &clock.base);
         REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
         long detail = 0;
         CHECK( client.error(&detail) == EBISU_SOCK_ERROR_VERIFY );
         CHECK( (detail & MBEDTLS_X509_BADCERT_EXPIRED) != 0 );
     }
     SECTION("an expired one, before the clock's floor, is refused") {
-        ebisu_clock_set_floor(&clock, now);
+        ebisu_server_clock_set_floor(&clock, now);
         TlsServer server(expired(), nothing);
         Client client(&config.tls);
-        ebisu_mbedtls_socket_set_clock(&client.tls, &clock);
+        ebisu_mbedtls_socket_set_clock(&client.tls, &clock.base);
         REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
         long detail = 0;
         CHECK( client.error(&detail) == EBISU_SOCK_ERROR_VERIFY );
         CHECK( (detail & MBEDTLS_X509_BADCERT_EXPIRED) != 0 );
     }
     SECTION("one not valid yet, at a time the clock has, is refused, and the time forgotten") {
-        REQUIRE( ebisu_clock_set_time(&clock, now) );
+        REQUIRE( ebisu_server_clock_set_time(&clock, now) );
         TlsServer server(not_yet(), nothing);
         Client client(&config.tls);
-        ebisu_mbedtls_socket_set_clock(&client.tls, &clock);
+        ebisu_mbedtls_socket_set_clock(&client.tls, &clock.base);
         REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
         long detail = 0;
         CHECK( client.error(&detail) == EBISU_SOCK_ERROR_VERIFY );
         CHECK( (detail & MBEDTLS_X509_BADCERT_FUTURE) != 0 );
         int64_t time_now = 0;
-        CHECK_FALSE( ebisu_clock_get_time(&clock, &time_now) );
+        CHECK_FALSE( ebisu_clock_get_time(&clock.base, &time_now) );
     }
     SECTION("one not valid yet, with only the clock's floor, which it may have been issued since, is taken") {
-        ebisu_clock_set_floor(&clock, now);
+        ebisu_server_clock_set_floor(&clock, now);
         TlsServer server(not_yet(), echo);
         Client client(&config.tls);
-        ebisu_mbedtls_socket_set_clock(&client.tls, &clock);
+        ebisu_mbedtls_socket_set_clock(&client.tls, &clock.base);
         REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
         client.send("floor");
         CHECK( client.recv(64) == "floor" );
     }
     SECTION("one not valid yet at the system's time, valid at the clock's, is taken") {
-        REQUIRE( ebisu_clock_set_time(&clock, now + 45 * DAY) );
+        REQUIRE( ebisu_server_clock_set_time(&clock, now + 45 * DAY) );
         TlsServer server(not_yet(), echo);
         Client client(&config.tls);
-        ebisu_mbedtls_socket_set_clock(&client.tls, &clock);
+        ebisu_mbedtls_socket_set_clock(&client.tls, &clock.base);
         REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
         client.send("clock");
         CHECK( client.recv(64) == "clock" );
+    }
+    SECTION("one not valid yet, at the system's clock's time, is refused, and the clock keeps it") {
+        ebisu_clock_t* system_clock = ebisu_system_clock(ebisu_posix_system());
+        TlsServer server(not_yet(), nothing);
+        Client client(&config.tls);
+        ebisu_mbedtls_socket_set_clock(&client.tls, system_clock);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        long detail = 0;
+        CHECK( client.error(&detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( (detail & MBEDTLS_X509_BADCERT_FUTURE) != 0 );
+        int64_t time_now = 0;
+        CHECK( ebisu_clock_get_time(system_clock, &time_now) );
     }
 }
 

@@ -64,6 +64,26 @@ const ebisu_system_ops_t with_locks = {
 // The operations of a system written before lock_create, positionally.
 const ebisu_system_ops_t without_locks = { nullptr, test_delay_ms, test_monotonic_ms };
 
+bool test_clock_now(ebisu_clock_t*, int64_t* out_now)
+{
+    *out_now = 0;
+    return false;
+}
+
+const ebisu_clock_ops_t test_clock_ops = { test_clock_now, nullptr, nullptr };
+
+ebisu_clock_t test_clock = { &test_clock_ops };
+
+ebisu_clock_t* test_system_clock(ebisu_system_t*)
+{
+    calls.push_back("clock");
+    return &test_clock;
+}
+
+const ebisu_system_ops_t with_clock = {
+    nullptr, test_delay_ms, test_monotonic_ms, nullptr, nullptr, test_system_clock
+};
+
 }
 
 TEST_CASE( "ebisu_lock_acquire() and ebisu_lock_release() call the lock, and do nothing without one" ) {
@@ -114,5 +134,20 @@ TEST_CASE( "A system without lock_create makes no lock" ) {
     ebisu_lock_acquire(lock);
     ebisu_lock_release(lock);
     ebisu_system_lock_destroy(&sys.base, lock);
+    CHECK( calls.empty() );
+}
+
+TEST_CASE( "ebisu_system_clock() gives the system's clock, and NULL for a system without one" ) {
+    calls.clear();
+    TestSystem sys = {};
+    sys.base.ops = &with_clock;
+    CHECK( ebisu_system_clock(&sys.base) == &test_clock );
+    CHECK( calls == std::vector<std::string>({ "clock" }) );
+
+    // The operations of a system written before clock, positionally.
+    calls.clear();
+    sys.base.ops = &with_locks;
+    CHECK( with_locks.clock == nullptr );
+    CHECK( ebisu_system_clock(&sys.base) == nullptr );
     CHECK( calls.empty() );
 }

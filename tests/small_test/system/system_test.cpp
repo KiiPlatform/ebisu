@@ -116,3 +116,28 @@ TEST_CASE( "The port's system delays at least as long as asked, short delays too
     // No wait at all, which ends.
     ebisu_system_delay_ms(sys, 0);
 }
+
+TEST_CASE( "The port's system gives the time of day as its clock, the same one each time" ) {
+    ebisu_system_t* sys = port_system();
+    ebisu_clock_t* clock = ebisu_system_clock(sys);
+    REQUIRE( clock != nullptr );
+    CHECK( ebisu_system_clock(sys) == clock );
+
+    auto seconds = [] {
+        return (int64_t)std::chrono::duration_cast<std::chrono::seconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+    };
+    const int64_t before = seconds();
+    int64_t now = 0;
+    CHECK( ebisu_clock_get_time(clock, &now) );
+    const int64_t after = seconds();
+    // Read a little apart, and maybe rounded otherwise.
+    CHECK( now >= before - 1 );
+    CHECK( now <= after + 1 );
+
+    // The system keeps the time: none from servers, and nothing to doubt.
+    CHECK( clock->ops->stated == nullptr );
+    CHECK( clock->ops->doubt == nullptr );
+    ebisu_clock_forget_time(clock);
+    CHECK( ebisu_clock_get_time(clock, &now) );
+}

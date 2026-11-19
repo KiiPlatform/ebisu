@@ -29,15 +29,17 @@ set on.
   [Writing callbacks](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks)
   says what they have to do.
 - **The system and locks** (`ebisu_system.h`): `ebisu_system_t` creates
-  tasks, delays them, reads a monotonic clock, and may make locks, and
-  `ebisu_lock_t` is a lock. Inline calls such as `ebisu_system_delay_ms()`,
-  `ebisu_system_lock_create()` and `ebisu_lock_acquire()` call their
-  operations, and the lock calls do nothing with no lock, for code that runs in
-  one task.
-- **The clock** (`ebisu_clock.h`): `ebisu_clock_t` keeps the time of day on a
-  device without a real-time clock, for a TLS stack to check a certificate's
-  validity period against. Socket callbacks use it directly, and `kii` and `tio`
-  feed it with the time each response states.
+  tasks, delays them, reads a monotonic clock, may make locks, and may give the
+  time of day as a clock, and `ebisu_lock_t` is a lock. Inline calls such as
+  `ebisu_system_delay_ms()`, `ebisu_system_lock_create()`,
+  `ebisu_system_clock()` and `ebisu_lock_acquire()` call their operations, and
+  the lock calls do nothing with no lock, for code that runs in one task.
+- **The clock** (`ebisu_clock.h`, `ebisu_server_clock.h`): `ebisu_clock_t` gives
+  the time of day, or a lower bound of it, for a TLS stack to check a
+  certificate's validity period against; socket callbacks use it directly. The
+  system's clock is one, and `ebisu_server_clock_t` is another, for a device
+  without a real-time clock, which `kii` and `tio` feed with the time each
+  response states, as a time source of the application's can.
 - **Strings and numbers** (`ebisu_str.h`): bounded copies, a string builder
   over a fixed buffer that fails instead of cutting a string short, and that a
   function of the caller's, such as an escaper or an encoder, can write into,

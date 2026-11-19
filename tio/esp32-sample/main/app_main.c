@@ -3,6 +3,7 @@
 
 #include <tio.h>
 #include <jkii.h>
+#include <ebisu_server_clock.h>
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -45,7 +46,7 @@ static header_pool_t updater_headers;
 static tio_handler_t handler;
 static tio_updater_t updater;
 static kii_session_t session;
-static ebisu_clock_t device_clock;
+static ebisu_server_clock_t device_clock;
 static esp32_lock_t clock_lock;
 static esp32_lock_t session_lock;
 static socket_context_t handler_http_ctx;
@@ -58,7 +59,7 @@ static size_t state_read;
 static void log_time(void)
 {
     int64_t now = 0;
-    bool exact = ebisu_clock_get_time(&device_clock, &now);
+    bool exact = ebisu_clock_get_time(&device_clock.base, &now);
     ESP_LOGI(TAG, "the time: %lld, %s", (long long)now, exact ? "exact" : "a lower bound");
 }
 
@@ -211,16 +212,16 @@ void app_main(void)
        earlier than. The clock has a lock of its own: the socket callbacks use
        it while kii may hold the session's. */
     esp32_lock_init(&clock_lock);
-    ebisu_clock_init(&device_clock, esp32_system());
-    ebisu_clock_set_lock(&device_clock, &clock_lock.base);
+    ebisu_server_clock_init(&device_clock, esp32_system());
+    ebisu_server_clock_set_lock(&device_clock, &clock_lock.base);
     if (CONFIG_EBISU_SAMPLE_CLOCK_FLOOR > 0) {
-        ebisu_clock_set_floor(&device_clock, CONFIG_EBISU_SAMPLE_CLOCK_FLOOR);
+        ebisu_server_clock_set_floor(&device_clock, CONFIG_EBISU_SAMPLE_CLOCK_FLOOR);
     }
     log_time();
 
-    sock_cb_init_context(&handler_http_ctx, TO_RECV_SEC, TO_SEND_SEC, &device_clock);
-    sock_cb_init_context(&handler_mqtt_ctx, TO_RECV_SEC, TO_SEND_SEC, &device_clock);
-    sock_cb_init_context(&updater_http_ctx, TO_RECV_SEC, TO_SEND_SEC, &device_clock);
+    sock_cb_init_context(&handler_http_ctx, TO_RECV_SEC, TO_SEND_SEC, &device_clock.base);
+    sock_cb_init_context(&handler_mqtt_ctx, TO_RECV_SEC, TO_SEND_SEC, &device_clock.base);
+    sock_cb_init_context(&updater_http_ctx, TO_RECV_SEC, TO_SEND_SEC, &device_clock.base);
 
     init_handler();
     init_updater();
@@ -235,8 +236,8 @@ void app_main(void)
     kii_session_set_cb_author_updated(&session, author_updated, NULL);
     if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK ||
             tio_updater_set_session(&updater, &session) != TIO_ERR_OK ||
-            tio_handler_set_clock(&handler, &device_clock) != TIO_ERR_OK ||
-            tio_updater_set_clock(&updater, &device_clock) != TIO_ERR_OK) {
+            tio_handler_set_clock(&handler, &device_clock.base) != TIO_ERR_OK ||
+            tio_updater_set_clock(&updater, &device_clock.base) != TIO_ERR_OK) {
         ESP_LOGE(TAG, "failed to set the session and the clock");
         return;
     }

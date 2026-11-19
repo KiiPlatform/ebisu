@@ -7,6 +7,7 @@
 #include <ebisu_freertos.h>
 #include <ebisu_freertos_tcp.h>
 #include <ebisu_mbedtls.h>
+#include <ebisu_server_clock.h>
 
 #include <FreeRTOS.h>
 #include <task.h>
@@ -56,7 +57,7 @@ static tio_handler_t handler;
 static tio_updater_t updater;
 static kii_session_t session;
 static ebisu_freertos_system_t sample_system;
-static ebisu_clock_t device_clock;
+static ebisu_server_clock_t device_clock;
 static ebisu_freertos_lock_t clock_lock;
 static ebisu_freertos_lock_t session_lock;
 /* Each connection: TLS with ebisu's mbedTLS port, over TCP with its
@@ -77,7 +78,7 @@ static size_t state_read;
 static void log_time(void)
 {
     int64_t now = 0;
-    bool exact = ebisu_clock_get_time(&device_clock, &now);
+    bool exact = ebisu_clock_get_time(&device_clock.base, &now);
     sample_log("the time: %lld, %s", (long long)now, exact ? "exact" : "a lower bound");
 }
 
@@ -223,7 +224,8 @@ static void init_socket(sample_socket_t* sock)
     ebisu_freertos_tcp_socket_init(&sock->tcp, TO_RECV_SEC, TO_SEND_SEC);
     ebisu_freertos_tcp_socket_set_logger(&sock->tcp, sample_logger());
     ebisu_mbedtls_socket_init(&sock->tls, &sock->tcp.base, &tls_config);
-    ebisu_mbedtls_socket_set_clock(&sock->tls, &device_clock);
+    /* The system's clock: the server clock app_task() sets on it. */
+    ebisu_mbedtls_socket_set_clock(&sock->tls, ebisu_system_clock(&sample_system.base));
     ebisu_mbedtls_socket_set_logger(&sock->tls, sample_logger());
 }
 
@@ -240,15 +242,17 @@ static void app_task(void* arg)
        from the server, the board having no real-time clock: until the first
        response, the clock has only a floor, a time it is known not to be
        earlier than. The clock has a lock of its own: the sockets use it while
-       kii may hold the session's. */
+       kii may hold the session's. FreeRTOS keeps no time of day, so the system
+       gives this one as its clock. */
     if (!ebisu_freertos_lock_init(&clock_lock)) {
         board_fatal("failed to create the clock's lock");
     }
-    ebisu_clock_init(&device_clock, &sample_system.base);
-    ebisu_clock_set_lock(&device_clock, &clock_lock.base);
+    ebisu_server_clock_init(&device_clock, &sample_system.base);
+    ebisu_server_clock_set_lock(&device_clock, &clock_lock.base);
     if (EBISU_SAMPLE_CLOCK_FLOOR > 0) {
-        ebisu_clock_set_floor(&device_clock, EBISU_SAMPLE_CLOCK_FLOOR);
+        ebisu_server_clock_set_floor(&device_clock, EBISU_SAMPLE_CLOCK_FLOOR);
     }
+    ebisu_freertos_system_set_clock(&sample_system, &device_clock.base);
     log_time();
 
     init_socket(&handler_http_socket);
@@ -270,8 +274,8 @@ static void app_task(void* arg)
     kii_session_set_cb_author_updated(&session, author_updated, NULL);
     if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK ||
             tio_updater_set_session(&updater, &session) != TIO_ERR_OK ||
-            tio_handler_set_clock(&handler, &device_clock) != TIO_ERR_OK ||
-            tio_updater_set_clock(&updater, &device_clock) != TIO_ERR_OK) {
+            tio_handler_set_clock(&handler, &device_clock.base) != TIO_ERR_OK ||
+            tio_updater_set_clock(&updater, &device_clock.base) != TIO_ERR_OK) {
         board_fatal("failed to set the session and the clock");
     }
 

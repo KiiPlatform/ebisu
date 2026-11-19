@@ -1,6 +1,7 @@
 #ifndef __KHC_CORE_SOCKET
 #define __KHC_CORE_SOCKET
 
+#include <ebisu_server_clock.h>
 #include <ebisu_socket.h>
 #include "kii.h"
 #include "ltest_platform.h"
@@ -76,14 +77,14 @@ inline ebisu_clock_t* test_clock()
     struct Clock {
         ThreadSystem system;
         MutexLock lock;
-        ebisu_clock_t clock;
+        ebisu_server_clock_t clock;
         Clock() {
-            ebisu_clock_init(&clock, system.get());
-            ebisu_clock_set_lock(&clock, lock.get());
+            ebisu_server_clock_init(&clock, system.get());
+            ebisu_server_clock_set_lock(&clock, lock.get());
         }
     };
     static Clock c;
-    return &c.clock;
+    return &c.clock.base;
 }
 
 namespace ssl {

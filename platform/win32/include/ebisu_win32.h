@@ -1,7 +1,7 @@
 /**
  * @file ebisu_win32.h
- * @brief The system, a lock, a socket of plain TCP and the name servers on
- * Windows.
+ * @brief The system, its clock, a lock, a socket of plain TCP and the name
+ * servers on Windows.
  */
 #ifndef _EBISU_WIN32
 #define _EBISU_WIN32
@@ -32,8 +32,11 @@ extern "C" {
  * Each task runs on a thread of its own, made with _beginthreadex(), which
  * nothing waits for. A delay is Sleep(). The monotonic clock is
  * GetTickCount64(), which doesn't jump when the wall clock is set. Its locks,
- * from ebisu_system_lock_create(), are ebisu_win32_lock_t's from the heap. The
- * system has no state, so this one serves everything.
+ * from ebisu_system_lock_create(), are ebisu_win32_lock_t's from the heap. Its
+ * clock, from ebisu_system_clock(), is the time of day,
+ * GetSystemTimeAsFileTime(), as ebisu_clock_from_system_time() takes it. It
+ * takes no time from servers, and has nothing to doubt: the time is what
+ * Windows Time keeps. The system has no state, so this one serves everything.
  *
  * \return The system.
  */
