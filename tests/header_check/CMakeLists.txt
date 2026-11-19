@@ -33,6 +33,11 @@ endfunction()
 
 # What each library installs.
 ebisu_check_headers(ebisu_core ebisu_object.h ebisu_socket.h ebisu_system.h ebisu_clock.h ebisu_server_clock.h ebisu_log.h ebisu_str.h ebisu_mem.h ebisu_time.h ebisu_dns.h)
+# The headers with format attributes, with printf defined as a macro, as an
+# SDK that wraps printf has it.
+add_library(ebisu_header_check_printf_macro OBJECT printf_macro.c)
+target_link_libraries(ebisu_header_check_printf_macro PRIVATE ebisu_core)
+ebisu_configure_target(ebisu_header_check_printf_macro)
 ebisu_check_headers(khc khc.h)
 ebisu_check_headers(jkii jkii.h jkii_utils.h jkii_writer.h jkii_lines.h)
 ebisu_check_headers(kii kii.h kii_task_callback.h)

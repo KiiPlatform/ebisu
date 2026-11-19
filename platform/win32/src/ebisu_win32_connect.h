@@ -31,7 +31,7 @@
 #else
 #if defined(__GNUC__) || defined(__clang__)
 static void log_code_at(ebisu_logger_t* logger, ebisu_log_level_t level, unsigned long code,
-        const char* fmt, ...) __attribute__((format(printf, 4, 5)));
+        const char* fmt, ...) __attribute__((format(__printf__, 4, 5)));
 #endif
 
 /* Logs, at level, what failed with a Winsock, Win32, SSPI or certificate error
