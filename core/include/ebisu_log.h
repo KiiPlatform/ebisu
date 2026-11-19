@@ -75,7 +75,9 @@ struct ebisu_logger_t {
  */
 void ebisu_log(ebisu_logger_t* logger, ebisu_log_level_t level, const char* fmt, ...)
 #if defined(__GNUC__) || defined(__clang__)
-    __attribute__((format(printf, 3, 4)))
+    /* __printf__, which a C library or an SDK that defines printf as a macro,
+       one that wraps it, leaves as it is. */
+    __attribute__((format(__printf__, 3, 4)))
 #endif
     ;
 
