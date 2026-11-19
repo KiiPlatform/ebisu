@@ -145,8 +145,8 @@ includes=(
 )
 # The lwIP port's send timeout, which the SDK's lwIP is built without: lwIP is
 # compiled from its sources, and the SDK's libraries call only its sockets'
-# functions. jkii's own number parser, in place of strtod(): the SDK's errno.h
-# is lwIP's, whose errno is not the one newlib's strtod() sets.
+# functions. jkii's own number parser, which CI tests, in place of the SDK's
+# strtod(), the ROM's.
 defines=(-DLWIP_SO_SNDTIMEO=1 -DEBISU_NO_STRTOD)
 
 python3 -I - "$project/GCC-RELEASE/application.is.mk" "${#sources[@]}" "${sources[@]}" \

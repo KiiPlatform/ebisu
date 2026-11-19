@@ -111,10 +111,11 @@ of the application's own, as the
   makes one, or a build without CMake compiles `ebisu_freertos.c` with the
   kernel. Needs FreeRTOS-Kernel V10.0.1 or later, `configUSE_MUTEXES` and
   `INCLUDE_vTaskDelay`, and for tasks `configSUPPORT_DYNAMIC_ALLOCATION` and
-  `INCLUDE_vTaskDelete`, without which the system has none to make. jkii reads
-  `errno` after `strtoll()`, and the handler's and the updater's tasks parse
-  JSON at once, so each task needs its own: with newlib,
-  `configUSE_NEWLIB_REENTRANT`.
+  `INCLUDE_vTaskDelete`, without which the system has none to make. With
+  newlib, it needs `configUSE_NEWLIB_REENTRANT` too, but for jkii built with
+  `EBISU_NO_STRTOD`: newlib's `strtod()`, which jkii reads doubles with, works
+  in the calling task's newlib state, and the handler's and the updater's tasks
+  parse JSON at once.
 - **FreeRTOS-Plus-TCP** (`ebisu_freertos_tcp.h`, library `ebisu_freertos_tcp`):
   `ebisu_freertos_tcp_socket_t`, plain TCP over FreeRTOS-Plus-TCP, for TLS over
   it with the mbedTLS port's socket, or for a server without TLS. Nothing it

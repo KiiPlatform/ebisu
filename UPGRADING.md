@@ -238,6 +238,9 @@ Without CMake, as a vendor's build usually does:
   Makefiles of the embedded samples do.
 - `tio/wiced-sample` is gone. It was only a sample, and nothing in the libraries
   depends on it.
+- `ERRNO_HACK_NEEDED` does nothing. With it, 2.0's jkii defined `errno`, for a
+  C library whose `errno.h` declares none; jkii no longer reads `errno`, and
+  defines it no more.
 
 With CMake:
 

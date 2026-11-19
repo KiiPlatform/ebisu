@@ -123,6 +123,29 @@ ebisu_add_test_suite(small_test_jkii_no_strtod
     INCLUDES ${PROJECT_SOURCE_DIR}/jkii/libs/coreJSON
     DEFINES EBISU_NO_STRTOD)
 
+# jkii again, with jkii.c compiled with a strtod() that sets no errno, for the
+# double tests: a double out of range is told from what strtod() gives.
+if(EBISU_STRTOD)
+    get_target_property(jkii_other_sources ebisu_jkii_objs SOURCES)
+    list(FILTER jkii_other_sources EXCLUDE REGEX "(^|/)jkii\\.c$")
+    add_library(ebisu_jkii_strtod_without_errno_objs OBJECT
+        jkii/strtod_without_errno.c ${jkii_other_sources})
+    target_include_directories(ebisu_jkii_strtod_without_errno_objs
+        PRIVATE $<TARGET_PROPERTY:ebisu_jkii_objs,INCLUDE_DIRECTORIES>
+            ${PROJECT_SOURCE_DIR}/jkii/src
+        INTERFACE $<TARGET_PROPERTY:ebisu_jkii_objs,INTERFACE_INCLUDE_DIRECTORIES>)
+    target_compile_definitions(ebisu_jkii_strtod_without_errno_objs
+        PRIVATE $<TARGET_PROPERTY:ebisu_jkii_objs,COMPILE_DEFINITIONS>)
+    target_link_libraries(ebisu_jkii_strtod_without_errno_objs PUBLIC ebisu_core_objs)
+    ebisu_configure_target(ebisu_jkii_strtod_without_errno_objs)
+
+    ebisu_add_test_suite(small_test_jkii_strtod_without_errno
+        LABEL small
+        WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jkii
+        SOURCES jkii/strtod_without_errno_test.cpp jkii/src/jkii_double_test.cpp
+        LINK ebisu_jkii_strtod_without_errno_objs ebisu_core_objs)
+endif()
+
 ebisu_add_test_suite(small_test_core
     LABEL small
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core
