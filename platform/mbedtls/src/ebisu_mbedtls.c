@@ -3,22 +3,49 @@
 #include <ebisu_object.h>
 #include <ebisu_time.h>
 
-#include <mbedtls/build_info.h>
+#include <mbedtls/ssl.h>
+#if !defined(MBEDTLS_VERSION_NUMBER)
+#include <mbedtls/version.h>
+#endif
 #include <mbedtls/error.h>
 #include <mbedtls/net_sockets.h>
-#include <mbedtls/ssl.h>
 #include <mbedtls/x509.h>
 #include <mbedtls/x509_crt.h>
+#if MBEDTLS_VERSION_MAJOR >= 3
 #include <psa/crypto.h>
 #if MBEDTLS_VERSION_MAJOR < 4
 #include <mbedtls/psa_util.h>
 #endif
+#else
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/entropy.h>
+#include <mbedtls/pk.h>
+#include <mbedtls/sha256.h>
+#endif
 
 #include <string.h>
 
-#if MBEDTLS_VERSION_MAJOR < 3 || (MBEDTLS_VERSION_MAJOR == 3 && MBEDTLS_VERSION_MINOR < 6)
-#error "ebisu_mbedtls needs mbedTLS 3.6 or later."
+#if MBEDTLS_VERSION_NUMBER < 0x02040000 || \
+    (MBEDTLS_VERSION_MAJOR == 3 && MBEDTLS_VERSION_MINOR < 6)
+#error "ebisu_mbedtls needs mbedTLS 2.4 to 2.28, 3.6, or 4.x."
 #endif
+
+/* What mbedTLS 2 has otherwise, or not yet. */
+#if MBEDTLS_VERSION_MAJOR < 3
+/* Its structures' members are public. */
+#if !defined(MBEDTLS_PRIVATE)
+#define MBEDTLS_PRIVATE(member) member
+#endif
+#if !defined(MBEDTLS_ERR_SSL_BAD_PROTOCOL_VERSION)
+#define MBEDTLS_ERR_SSL_BAD_PROTOCOL_VERSION MBEDTLS_ERR_SSL_BAD_HS_PROTOCOL_VERSION
+#endif
+#endif
+/* A verify callback of each connection's, from 2.18. */
+#define HAVE_SSL_SET_VERIFY (MBEDTLS_VERSION_NUMBER >= 0x02120000)
+/* A certificate's SubjectPublicKeyInfo as it came, from 2.17. */
+#define HAVE_PK_RAW (MBEDTLS_VERSION_NUMBER >= 0x02110000)
+/* mbedtls_ssl_check_pending(), from 2.9. */
+#define HAVE_CHECK_PENDING (MBEDTLS_VERSION_NUMBER >= 0x02090000)
 
 #ifdef EBISU_NO_LOG
 /* Built without logging, a diagnostic is left out, its message too, and its
@@ -62,8 +89,18 @@ int ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, si
     mbedtls_x509_crt_init(&tls->_ca);
     tls->_verify = EBISU_TLS_VERIFY_FULL;
     memset(tls->_pin, 0, sizeof(tls->_pin));
+#if MBEDTLS_VERSION_MAJOR >= 3
     /* Before parsing a certificate, which needs PSA in mbedTLS 4. */
     ret = (int)psa_crypto_init();
+#else
+    mbedtls_entropy_init(&tls->_entropy);
+    mbedtls_ctr_drbg_init(&tls->_drbg);
+    {
+        static const unsigned char personal[] = "ebisu_mbedtls";
+        ret = mbedtls_ctr_drbg_seed(&tls->_drbg, mbedtls_entropy_func, &tls->_entropy,
+                personal, sizeof(personal) - 1);
+    }
+#endif
     if (ret != 0) {
         goto fail;
     }
@@ -82,12 +119,19 @@ int ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, si
     if (ret != 0) {
         goto fail;
     }
+#if MBEDTLS_VERSION_MAJOR >= 3
     mbedtls_ssl_conf_min_tls_version(&tls->_config, MBEDTLS_SSL_VERSION_TLS1_2);
+#else
+    mbedtls_ssl_conf_min_version(&tls->_config, MBEDTLS_SSL_MAJOR_VERSION_3,
+            MBEDTLS_SSL_MINOR_VERSION_3);
+#endif
     mbedtls_ssl_conf_authmode(&tls->_config, MBEDTLS_SSL_VERIFY_REQUIRED);
     mbedtls_ssl_conf_ca_chain(&tls->_config, &tls->_ca, NULL);
-#if MBEDTLS_VERSION_MAJOR < 4
+#if MBEDTLS_VERSION_MAJOR == 3
     /* PSA's, as mbedTLS 4 always takes. */
     mbedtls_ssl_conf_rng(&tls->_config, mbedtls_psa_get_random, MBEDTLS_PSA_RANDOM_STATE);
+#elif MBEDTLS_VERSION_MAJOR < 3
+    mbedtls_ssl_conf_rng(&tls->_config, mbedtls_ctr_drbg_random, &tls->_drbg);
 #endif
     return 0;
 
@@ -127,6 +171,10 @@ void ebisu_mbedtls_tls_free(ebisu_mbedtls_tls_t* tls)
 {
     mbedtls_ssl_config_free(&tls->_config);
     mbedtls_x509_crt_free(&tls->_ca);
+#if MBEDTLS_VERSION_MAJOR < 3
+    mbedtls_ctr_drbg_free(&tls->_drbg);
+    mbedtls_entropy_free(&tls->_entropy);
+#endif
 }
 
 static void set_error(ebisu_mbedtls_socket_t* sock, ebisu_sock_error_t error, long detail)
@@ -222,21 +270,51 @@ static ebisu_validity_t check_dates(ebisu_clock_t* clock, const mbedtls_x509_crt
     return ebisu_clock_check_validity(clock, not_before, not_after);
 }
 
-/* Whether the SHA-256 of what der holds is pin. */
-static bool hashes_to(const mbedtls_x509_buf* der, const unsigned char* pin)
+/* Whether the SHA-256 of length bytes at p is pin. */
+static bool hashes_to(const unsigned char* p, size_t length, const unsigned char* pin)
 {
-    unsigned char hash[PSA_HASH_LENGTH(PSA_ALG_SHA_256)];
-    size_t hash_length = 0;
+    unsigned char hash[32];
     unsigned char differ = 0;
-    if (der->p == NULL || psa_hash_compute(PSA_ALG_SHA_256, der->p, der->len, hash,
-                sizeof(hash), &hash_length) != PSA_SUCCESS ||
-            hash_length != EBISU_TLS_PIN_SIZE) {
+    if (p == NULL) {
         return false;
     }
+#if MBEDTLS_VERSION_MAJOR >= 3
+    {
+        size_t hash_length = 0;
+        if (psa_hash_compute(PSA_ALG_SHA_256, p, length, hash, sizeof(hash),
+                    &hash_length) != PSA_SUCCESS || hash_length != EBISU_TLS_PIN_SIZE) {
+            return false;
+        }
+    }
+#elif MBEDTLS_VERSION_NUMBER >= 0x02070000
+    if (mbedtls_sha256_ret(p, length, hash, 0) != 0) {
+        return false;
+    }
+#else
+    mbedtls_sha256(p, length, hash, 0);
+#endif
     for (size_t i = 0; i < EBISU_TLS_PIN_SIZE; ++i) {
         differ |= (unsigned char)(hash[i] ^ pin[i]);
     }
     return differ == 0;
+}
+
+/* Whether the SHA-256 of the certificate's SubjectPublicKeyInfo is pin: as it
+   came, from 2.17, or written again before, where mbedTLS can write it. */
+static bool public_key_hashes_to(const mbedtls_x509_crt* crt, const unsigned char* pin)
+{
+#if HAVE_PK_RAW
+    return hashes_to(crt->pk_raw.p, crt->pk_raw.len, pin);
+#elif defined(MBEDTLS_PK_WRITE_C)
+    /* Room for an RSA key of 8192 bits'. Written from its end. */
+    unsigned char der[1100];
+    int length = mbedtls_pk_write_pubkey_der((mbedtls_pk_context*)&crt->pk, der, sizeof(der));
+    return length > 0 && hashes_to(der + sizeof(der) - (size_t)length, (size_t)length, pin);
+#else
+    (void)crt;
+    (void)pin;
+    return false;
+#endif
 }
 
 /* mbedTLS calls this for each certificate of the chain it built, from the CA's
@@ -255,8 +333,8 @@ static int verify(void* arg, mbedtls_x509_crt* crt, int depth, uint32_t* flags)
             return 0;
         case EBISU_TLS_VERIFY_PIN:
             /* The certificate, or its SubjectPublicKeyInfo. */
-            *flags = depth != 0 || hashes_to(&crt->raw, tls->_pin) ||
-                hashes_to(&crt->pk_raw, tls->_pin) ? 0 : MBEDTLS_X509_BADCERT_OTHER;
+            *flags = depth != 0 || hashes_to(crt->raw.p, crt->raw.len, tls->_pin) ||
+                public_key_hashes_to(crt, tls->_pin) ? 0 : MBEDTLS_X509_BADCERT_OTHER;
             return 0;
         case EBISU_TLS_VERIFY_CHAIN:
             if (depth == 0) {
@@ -381,7 +459,15 @@ static ebisu_sock_code_t mbedtls_connect(ebisu_socket_t* self, const char* host,
 
     mbedtls_ssl_init(&sock->_ssl);
     sock->_open = true;
+#if HAVE_SSL_SET_VERIFY
     ret = mbedtls_ssl_setup(&sock->_ssl, &sock->_tls->_config);
+#else
+    /* The configuration's, as it is now, with a verify callback of this
+       socket's: what it points to stays the configuration's. */
+    sock->_config = sock->_tls->_config;
+    mbedtls_ssl_conf_verify(&sock->_config, verify, sock);
+    ret = mbedtls_ssl_setup(&sock->_ssl, &sock->_config);
+#endif
     if (ret == 0) {
         ret = mbedtls_ssl_set_hostname(&sock->_ssl, host);
     }
@@ -394,7 +480,9 @@ static ebisu_sock_code_t mbedtls_connect(ebisu_socket_t* self, const char* host,
         int64_t now = 0;
         sock->_time_exact = ebisu_clock_get_time(sock->_clock, &now);
     }
+#if HAVE_SSL_SET_VERIFY
     mbedtls_ssl_set_verify(&sock->_ssl, verify, sock);
+#endif
     mbedtls_ssl_set_bio(&sock->_ssl, sock, bio_send, bio_recv, NULL);
 
     for (;;) {
@@ -555,12 +643,26 @@ static ebisu_sock_error_t mbedtls_last_error(ebisu_socket_t* self, long* out_det
     return sock->_error;
 }
 
+/* Whether mbedTLS holds what a read can go on with, beyond the application
+   data mbedtls_ssl_get_bytes_avail() counts: a record held back, or more
+   handshake messages in the one it read. Before 2.9, which hasn't
+   mbedtls_ssl_check_pending(), the second as it checks for it: mbedTLS holds
+   no record back yet. */
+static bool has_pending(const mbedtls_ssl_context* ssl)
+{
+#if HAVE_CHECK_PENDING
+    return mbedtls_ssl_check_pending(ssl) != 0;
+#else
+    return ssl->in_hslen > 0 && ssl->in_hslen < ssl->in_msglen;
+#endif
+}
+
 /* What mbedTLS has decrypted and recv hasn't returned, or has of a record, is
    for recv to return without waiting. */
 static bool mbedtls_recv_wait(ebisu_socket_t* self, uint32_t timeout_ms)
 {
     ebisu_mbedtls_socket_t* sock = EBISU_CONTAINER_OF(self, ebisu_mbedtls_socket_t, base);
-    if (mbedtls_ssl_get_bytes_avail(&sock->_ssl) > 0 || mbedtls_ssl_check_pending(&sock->_ssl)) {
+    if (mbedtls_ssl_get_bytes_avail(&sock->_ssl) > 0 || has_pending(&sock->_ssl)) {
         return true;
     }
     return sock->_transport->ops->recv_wait(sock->_transport, timeout_ms);
