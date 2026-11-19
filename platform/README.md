@@ -162,7 +162,9 @@ of the application's own, as the
   Needs lwIP 2.0.2 or later, with an OS, `NO_SYS` at 0, `LWIP_SOCKET`,
   `LWIP_TCP`, `LWIP_DNS`, `LWIP_SO_RCVTIMEO` and `LWIP_SO_SNDTIMEO`, and an
   `errno` of each task's own where more than one task uses sockets, as
-  newlib's is with FreeRTOS's `configUSE_NEWLIB_REENTRANT`.
+  newlib's is with FreeRTOS's `configUSE_NEWLIB_REENTRANT`, but for lwIP 2.0
+  built with `LWIP_SOCKET_SET_ERRNO` at 0, which sets no `errno`: there the
+  socket reads each socket's own error, with `SO_ERROR`.
 
 - **mbedTLS** (`ebisu_mbedtls.h`, library `ebisu_mbedtls`):
   `ebisu_mbedtls_socket_t`, TLS 1.2 or later, 1.3 where mbedTLS has it, with

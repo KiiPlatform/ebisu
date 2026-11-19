@@ -50,7 +50,9 @@ extern "C" {
  * NO_SYS 0, and LWIP_SOCKET, LWIP_TCP, LWIP_DNS, LWIP_SO_RCVTIMEO and
  * LWIP_SO_SNDTIMEO. lwIP's sockets say why a call failed in errno, which has
  * to be each task's own where more than one task makes them, as newlib's is
- * with FreeRTOS's configUSE_NEWLIB_REENTRANT. Initialize with
+ * with FreeRTOS's configUSE_NEWLIB_REENTRANT; or, in lwIP 2.0 built with
+ * LWIP_SOCKET_SET_ERRNO at 0, which then sets none, in each socket's own
+ * error, which the socket reads with SO_ERROR. Initialize with
  * ebisu_lwip_tcp_socket_init().
  */
 typedef struct ebisu_lwip_tcp_socket_t {

@@ -56,6 +56,8 @@ The program is built two ways, `EBISU_TEST_CONFIG`, as
 | `a` | `struct timeval` | select | yes | no |
 | `b` | `int` milliseconds, `LWIP_SO_SNDRCVTIMEO_NONSTANDARD` | poll, but select in 2.0, which has no poll | no | yes |
 
+In configuration b, lwIP 2.0's sockets set no `errno` either, `LWIP_SOCKET_SET_ERRNO` at 0, which 2.1 on don't have: the port reads each socket's own error with `SO_ERROR` there.
+
 against lwIP 2.0.2, the oldest the socket supports, 2.1.3 and 2.2.1, the
 latest, `EBISU_TEST_LWIP`, as CI does, which runs each under valgrind too.
 
