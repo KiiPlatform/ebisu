@@ -37,8 +37,23 @@ if [ "${OPENSSL_PORTS_INSIDE:-}" != 1 ]; then
     exit
 fi
 
-apt-get update -qq >/dev/null
-apt-get install -y -qq --no-install-recommends build-essential perl wget ca-certificates >/dev/null
+# The archive has been unreachable from the runners for minutes at a time:
+# apt-get update then goes on without the lists it couldn't fetch, and install
+# fails. Both again, after a while, before giving up.
+apt=(apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30)
+for attempt in 1 2 3 4 5; do
+    if "${apt[@]}" update -qq >/dev/null &&
+            "${apt[@]}" install -y -qq --no-install-recommends \
+                build-essential perl wget ca-certificates >/dev/null; then
+        break
+    fi
+    if [ "$attempt" = 5 ]; then
+        echo "apt-get failed $attempt times" >&2
+        exit 1
+    fi
+    echo "apt-get failed, trying again in 30 seconds" >&2
+    sleep 30
+done
 
 series=${version%[a-z]}
 cd /tmp
