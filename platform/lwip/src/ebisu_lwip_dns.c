@@ -7,11 +7,11 @@
 #include <string.h>
 
 #include <lwip/opt.h>
-/* Before lwip/dns.h, which lwIP 2.0 has use err_t without it. */
+/* Before lwip/dns.h, which lwIP 2.0 has use err_t without it, and lwIP 1.4
+   ip_addr_t too. */
 #include <lwip/err.h>
-#include <lwip/dns.h>
-#include <lwip/errno.h>
 #include <lwip/ip_addr.h>
+#include <lwip/dns.h>
 #include <lwip/netdb.h>
 #include <lwip/sockets.h>
 #include <lwip/sys.h>
@@ -32,6 +32,18 @@
 /* The port name servers listen on, as lwIP's DNS client asks them. */
 #define DNS_PORT 53
 
+/* A socket's address, of a family lwIP is built with: lwIP 1.4 has no struct
+   sockaddr_storage. */
+typedef union lwip_sockaddr_t {
+    struct sockaddr sa;
+#if EBISU_LWIP_IPV4
+    struct sockaddr_in in;
+#endif
+#if EBISU_LWIP_IPV6
+    struct sockaddr_in6 in6;
+#endif
+} lwip_sockaddr_t;
+
 /* One of lwIP's servers as an ebisu_dns_addr_t. Whether it is one: not
    IP_ADDR_ANY, which the client takes for none set. */
 static bool to_addr(const ip_addr_t* server, ebisu_dns_addr_t* out)
@@ -41,7 +53,7 @@ static bool to_addr(const ip_addr_t* server, ebisu_dns_addr_t* out)
     }
     memset(out, 0, sizeof(*out));
     out->port = DNS_PORT;
-#if LWIP_IPV6
+#if EBISU_LWIP_IPV6
     if (IP_IS_V6(server)) {
         out->family = EBISU_DNS_IPV6;
         /* Its words in network order, as lwIP keeps them. */
@@ -52,9 +64,14 @@ static bool to_addr(const ip_addr_t* server, ebisu_dns_addr_t* out)
         return true;
     }
 #endif
-#if LWIP_IPV4
+#if EBISU_LWIP_IPV4
     out->family = EBISU_DNS_IPV4;
+    /* In network order, as lwIP keeps it; lwIP 1.4's ip_addr_t is IPv4's. */
+#if LWIP_VERSION_MAJOR < 2
+    memcpy(out->bytes, &server->addr, 4);
+#else
     memcpy(out->bytes, &ip_2_ip4(server)->addr, 4);
+#endif
     return true;
 #else
     return false;
@@ -74,9 +91,17 @@ static size_t lwip_dns_servers(ebisu_dns_t* self, ebisu_dns_addr_t* out, size_t 
     LOCK_TCPIP_CORE();
 #endif
     for (i = 0; i < DNS_MAX_SERVERS && count < max; ++i) {
+#if LWIP_VERSION_MAJOR < 2
+        /* A copy in lwIP 1.4. */
+        ip_addr_t server = dns_getserver(i);
+        if (!to_addr(&server, &out[count])) {
+            break;
+        }
+#else
         if (!to_addr(dns_getserver(i), &out[count])) {
             break;
         }
+#endif
         ++count;
     }
 #if LWIP_TCPIP_CORE_LOCKING
@@ -87,12 +112,12 @@ static size_t lwip_dns_servers(ebisu_dns_t* self, ebisu_dns_addr_t* out, size_t 
 
 /* The server as a socket's address, with its port. Its length, or 0 if lwIP
    is built without its family. */
-static socklen_t to_sockaddr(const ebisu_dns_addr_t* server, struct sockaddr_storage* out)
+static socklen_t to_sockaddr(const ebisu_dns_addr_t* server, lwip_sockaddr_t* out)
 {
     memset(out, 0, sizeof(*out));
-#if LWIP_IPV6
+#if EBISU_LWIP_IPV6
     if (server->family == EBISU_DNS_IPV6) {
-        struct sockaddr_in6* in6 = (struct sockaddr_in6*)out;
+        struct sockaddr_in6* in6 = &out->in6;
         in6->sin6_len = (u8_t)sizeof(*in6);
         in6->sin6_family = AF_INET6;
         in6->sin6_port = lwip_htons(server->port);
@@ -101,9 +126,9 @@ static socklen_t to_sockaddr(const ebisu_dns_addr_t* server, struct sockaddr_sto
         return (socklen_t)sizeof(*in6);
     }
 #endif
-#if LWIP_IPV4
+#if EBISU_LWIP_IPV4
     if (server->family == EBISU_DNS_IPV4) {
-        struct sockaddr_in* in = (struct sockaddr_in*)out;
+        struct sockaddr_in* in = &out->in;
         in->sin_len = (u8_t)sizeof(*in);
         in->sin_family = AF_INET;
         in->sin_port = lwip_htons(server->port);
@@ -115,21 +140,21 @@ static socklen_t to_sockaddr(const ebisu_dns_addr_t* server, struct sockaddr_sto
 }
 
 /* Whether a datagram came from the server: its family, address and port. */
-static bool from_server(const struct sockaddr_storage* from, const struct sockaddr_storage* to)
+static bool from_server(const lwip_sockaddr_t* from, const lwip_sockaddr_t* to)
 {
-#if LWIP_IPV6
-    if (to->ss_family == AF_INET6) {
-        const struct sockaddr_in6* f = (const struct sockaddr_in6*)from;
-        const struct sockaddr_in6* t = (const struct sockaddr_in6*)to;
-        return from->ss_family == AF_INET6 && f->sin6_port == t->sin6_port &&
+#if EBISU_LWIP_IPV6
+    if (to->sa.sa_family == AF_INET6) {
+        const struct sockaddr_in6* f = &from->in6;
+        const struct sockaddr_in6* t = &to->in6;
+        return from->sa.sa_family == AF_INET6 && f->sin6_port == t->sin6_port &&
             memcmp(&f->sin6_addr, &t->sin6_addr, 16) == 0;
     }
 #endif
-#if LWIP_IPV4
-    if (to->ss_family == AF_INET) {
-        const struct sockaddr_in* f = (const struct sockaddr_in*)from;
-        const struct sockaddr_in* t = (const struct sockaddr_in*)to;
-        return from->ss_family == AF_INET && f->sin_port == t->sin_port &&
+#if EBISU_LWIP_IPV4
+    if (to->sa.sa_family == AF_INET) {
+        const struct sockaddr_in* f = &from->in;
+        const struct sockaddr_in* t = &to->in;
+        return from->sa.sa_family == AF_INET && f->sin_port == t->sin_port &&
             f->sin_addr.s_addr == t->sin_addr.s_addr;
     }
 #endif
@@ -146,7 +171,7 @@ static ebisu_dns_asked_t lwip_dns_ask(ebisu_dns_t* self, const ebisu_dns_addr_t*
         const unsigned char* query, size_t length, uint32_t timeout_ms,
         ebisu_dns_is_answer_t is_answer, void* userdata, char* why, size_t why_size)
 {
-    struct sockaddr_storage to;
+    lwip_sockaddr_t to;
     ebisu_dns_asked_t asked = EBISU_DNS_ASKED_TIMEOUT;
     socklen_t to_length = to_sockaddr(server, &to);
     u32_t start;
@@ -158,12 +183,12 @@ static ebisu_dns_asked_t lwip_dns_ask(ebisu_dns_t* self, const ebisu_dns_addr_t*
                 server->family == EBISU_DNS_IPV6 ? 6 : 4);
         return EBISU_DNS_ASKED_FAILED;
     }
-    s = lwip_socket(to.ss_family, SOCK_DGRAM, IPPROTO_UDP);
+    s = lwip_socket(to.sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
     if (s < 0) {
         return fail("lwIP gave no socket", ebisu_lwip_error(-1), why, why_size);
     }
     /* From a port of its own, which lwIP picks. */
-    if (lwip_sendto(s, query, length, 0, (const struct sockaddr*)&to, to_length) < 0) {
+    if (lwip_sendto(s, query, length, 0, &to.sa, to_length) < 0) {
         int err = ebisu_lwip_error(s);
         (void)lwip_close(s);
         return fail("failed to send", err, why, why_size);
@@ -175,7 +200,7 @@ static ebisu_dns_asked_t lwip_dns_ask(ebisu_dns_t* self, const ebisu_dns_addr_t*
     start = sys_now();
     for (;;) {
         unsigned char datagram[512];
-        struct sockaddr_storage from;
+        lwip_sockaddr_t from;
         socklen_t from_length = sizeof(from);
         u32_t passed = sys_now() - start;
         long received;
@@ -193,7 +218,7 @@ static ebisu_dns_asked_t lwip_dns_ask(ebisu_dns_t* self, const ebisu_dns_addr_t*
         }
         memset(&from, 0, sizeof(from));
         received = (long)lwip_recvfrom(s, datagram, sizeof(datagram), 0,
-                (struct sockaddr*)&from, &from_length);
+                &from.sa, &from_length);
         if (received < 0) {
             asked = fail("failed to receive", ebisu_lwip_error(s), why, why_size);
             break;

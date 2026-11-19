@@ -1,7 +1,7 @@
-/* What the lwIP port's socket and name servers share: waiting for one of
-   lwIP's sockets, with lwip_select(), or lwip_poll() where lwIP 2.1 or later is
-   built without select, and why a call of its sockets failed. Private to the
-   port. */
+/* What the lwIP port's socket and name servers share: what lwIP 1.4 has
+   otherwise than 2.0 on, waiting for one of lwIP's sockets, with
+   lwip_select(), or lwip_poll() where lwIP 2.1 or later is built without
+   select, and why a call of its sockets failed. Private to the port. */
 #ifndef _EBISU_LWIP_IMPL
 #define _EBISU_LWIP_IMPL
 
@@ -10,12 +10,37 @@
 
 #include <lwip/opt.h>
 #include <lwip/init.h>
+/* errno's names: lwIP 2's lwip/errno.h has them, and lwIP 1.4's lwip/arch.h,
+   which lwip/sockets.h includes, the C library's, or its own with
+   LWIP_PROVIDE_ERRNO. */
+#if LWIP_VERSION_MAJOR >= 2
 #include <lwip/errno.h>
+#endif
 #include <lwip/sockets.h>
 
-/* lwIP 2.0 has select alone, whatever LWIP_SOCKET_SELECT says; 2.1 on can
-   leave select or poll out. */
-#if (LWIP_VERSION_MAJOR == 2 && LWIP_VERSION_MINOR == 0) || LWIP_SOCKET_SELECT
+/* The families lwIP is built with. lwIP 1.4 has IPv4 alone, and neither of
+   2.0's LWIP_IPV4 and LWIP_IPV6. */
+#if LWIP_VERSION_MAJOR < 2
+#define EBISU_LWIP_IPV4 1
+#define EBISU_LWIP_IPV6 0
+#else
+#define EBISU_LWIP_IPV4 LWIP_IPV4
+#define EBISU_LWIP_IPV6 LWIP_IPV6
+#endif
+
+/* Whether SO_RCVTIMEO and SO_SNDTIMEO take an int of milliseconds, as lwIP
+   1.4's always do, and 2.0's on with LWIP_SO_SNDRCVTIMEO_NONSTANDARD, rather
+   than a struct timeval. */
+#if LWIP_VERSION_MAJOR < 2 || LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+#define EBISU_LWIP_TIMEOUT_MS 1
+#else
+#define EBISU_LWIP_TIMEOUT_MS 0
+#endif
+
+/* lwIP 1.4 and 2.0 have select alone, and neither LWIP_SOCKET_SELECT nor
+   LWIP_SOCKET_POLL; 2.1 on can leave select or poll out. */
+#if LWIP_VERSION_MAJOR < 2 || (LWIP_VERSION_MAJOR == 2 && LWIP_VERSION_MINOR == 0) || \
+    LWIP_SOCKET_SELECT
 #define EBISU_LWIP_WAIT_WITH_SELECT 1
 #elif LWIP_SOCKET_POLL
 #define EBISU_LWIP_WAIT_WITH_SELECT 0
@@ -52,10 +77,17 @@ static int ebisu_lwip_wait(int s, bool for_write, long timeout_ms)
     return ret > 0 ? 1 : ret;
 }
 
-/* lwIP 2.0 has its sockets set no errno with LWIP_SOCKET_SET_ERRNO at 0,
-   which 2.1 on haven't, and keeps each socket's last error of its own all the
-   same, which SO_ERROR gives, and clears. */
-#if LWIP_VERSION_MAJOR == 2 && LWIP_VERSION_MINOR == 0 && defined(LWIP_SOCKET_SET_ERRNO) && \
+/* lwIP 1.4 has its sockets set errno only with ERRNO defined, and 2.0 none
+   with LWIP_SOCKET_SET_ERRNO at 0, which 2.1 on haven't. Either keeps each
+   socket's last error of its own all the same, which SO_ERROR gives, and
+   clears. */
+#if LWIP_VERSION_MAJOR < 2
+#ifdef ERRNO
+#define EBISU_LWIP_ERRNO_OF_SOCKET 0
+#else
+#define EBISU_LWIP_ERRNO_OF_SOCKET 1
+#endif
+#elif LWIP_VERSION_MAJOR == 2 && LWIP_VERSION_MINOR == 0 && defined(LWIP_SOCKET_SET_ERRNO) && \
     !LWIP_SOCKET_SET_ERRNO
 #define EBISU_LWIP_ERRNO_OF_SOCKET 1
 #else

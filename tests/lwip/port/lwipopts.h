@@ -8,6 +8,8 @@
      TCP options, LWIP_TCP_KEEPALIVE, IPv6 as well as IPv4, and, in lwIP 2.0,
      sockets that set no errno, LWIP_SOCKET_SET_ERRNO at 0, which 2.1 on
      haven't.
+   lwIP 1.4, TEST_LWIP_1, has neither IPv6, poll nor a struct timeval for its
+   timeouts, whose sockets set errno only with ERRNO: a sets it, and b not.
    See lwIP's src/include/lwip/opt.h for each setting. */
 #ifndef LWIP_LWIPOPTS_H
 #define LWIP_LWIPOPTS_H
@@ -35,11 +37,22 @@
    server: a name not among them fails at once. */
 #define DNS_LOCAL_HOSTLIST 1
 #define DNS_LOCAL_HOSTLIST_IS_DYNAMIC 1
+#if TEST_LWIP_1
+/* No server until a test sets one, where lwIP 1.4 has one of its own, and 2.0
+   on none without this. */
+#define DNS_SERVER_ADDRESS(ipaddr) ip_addr_set_any(ipaddr)
+#endif
 #define LWIP_HAVE_LOOPIF 1
 #define LWIP_NETIF_LOOPBACK 1
 #define LWIP_NETIF_API 1
 
-#if TEST_CONFIG_B
+#if TEST_LWIP_1 && !TEST_CONFIG_B
+#define ERRNO 1
+#endif
+
+#if TEST_CONFIG_B && TEST_LWIP_1
+#define LWIP_TCP_KEEPALIVE 0
+#elif TEST_CONFIG_B
 #define LWIP_SOCKET_SET_ERRNO 0
 #define LWIP_SO_SNDRCVTIMEO_NONSTANDARD 1
 #define LWIP_SOCKET_SELECT 0

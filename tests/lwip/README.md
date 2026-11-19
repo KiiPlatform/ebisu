@@ -58,8 +58,25 @@ The program is built two ways, `EBISU_TEST_CONFIG`, as
 
 In configuration b, lwIP 2.0's sockets set no `errno` either, `LWIP_SOCKET_SET_ERRNO` at 0, which 2.1 on don't have: the port reads each socket's own error with `SO_ERROR` there.
 
-against lwIP 2.0.2, the oldest the socket supports, 2.1.3 and 2.2.1, the
-latest, `EBISU_TEST_LWIP`, as CI does, which runs each under valgrind too.
+lwIP 1.4 has neither IPv6 nor poll, and takes its timeouts as an `int` of
+milliseconds whatever it is built with. Its sockets set `errno` only with
+`ERRNO` defined, which configuration a defines, and b doesn't, for the port to
+read `SO_ERROR` there too. The test builds it as it does 2.0, from a list of
+its sources, with its IPv4 headers' directory, `src/include/ipv4`, and the
+integer types and packing macros 1.4 takes from the port's `arch/cc.h`. Three
+things of 1.4's the tests work around, as an application wouldn't have to:
+
+- its `dns_setserver()` ignores NULL, so that a server once set stays: the
+  tests build its `dns.c` with 2.0's, which takes NULL for none, as they
+  leave none between their sections;
+- its DNS client, asked a name with no server set, asserts that there is one:
+  a lookup that fails asks a name server of the test's own, which says there
+  is no such name, whatever the version;
+- it has no `SO_LINGER`, and its close sends FIN whatever was left unread: a
+  reset is the connection's pcb aborted, with `tcp_abort()`, in lwIP's core.
+
+against lwIP 1.4.1, the oldest the socket supports, 2.0.2, 2.1.3 and 2.2.1,
+the latest, `EBISU_TEST_LWIP`, as CI does, which runs each under valgrind too.
 
 With CMake and a C and C++ compiler, from the repository's root:
 

@@ -25,20 +25,23 @@ extern "C" {
  *
  * It looks the host up with lwip_getaddrinfo(), which takes an address as
  * written as it is, and gives a name's first address only, of the family
- * LWIP_DNS_ADDRTYPE_DEFAULT puts first: that one address is what it connects
- * to. A lookup takes as long as lwIP's DNS client does, as DNS_MAX_RETRIES
- * and DNS_TMR_INTERVAL have it. Connecting takes the connect timeout at the
- * most: see ebisu_lwip_tcp_socket_set_connect_timeout(). It connects without
- * blocking, and waits for the connection with lwip_select(), or lwip_poll()
- * where lwIP is built without select.
+ * LWIP_DNS_ADDRTYPE_DEFAULT puts first, IPv4 in lwIP 1.4, which has no other:
+ * that one address is what it connects to. A lookup takes as long as lwIP's DNS
+ * client does, as DNS_MAX_RETRIES and DNS_TMR_INTERVAL have it. Connecting
+ * takes the connect timeout at the most: see
+ * ebisu_lwip_tcp_socket_set_connect_timeout(). It connects without blocking,
+ * and waits for the connection with lwip_select(), or lwip_poll() where lwIP is
+ * built without select.
  *
- * Its receive and send timeouts are SO_RCVTIMEO and SO_SNDTIMEO. A receive
- * that times out is EBISU_SOCK_FAIL, which recv_timed_out tells from a lost
- * connection, and leaves the connection as it was. A peer that closes the
- * connection is the end of the stream, and one that resets it a failure, as
- * a send to a peer that has gone is: but for lwIP 2.0's receive, which takes
- * a reset for the end of the stream too, and leaves a send after it to fail.
- * recv_wait waits with lwip_select() or lwip_poll().
+ * Its receive and send timeouts are SO_RCVTIMEO and SO_SNDTIMEO, which it sets
+ * as lwIP takes them: an int of milliseconds in lwIP 1.4, and as
+ * LWIP_SO_SNDRCVTIMEO_NONSTANDARD says from 2.0 on. A receive that times out is
+ * EBISU_SOCK_FAIL, which recv_timed_out tells from a lost connection, and
+ * leaves the connection as it was. A peer that closes the connection is the end
+ * of the stream, and one that resets it a failure, as a send to a peer that has
+ * gone is: but for lwIP 2.0's receive, which takes a reset for the end of the
+ * stream too, and leaves a send after it to fail. recv_wait waits with
+ * lwip_select() or lwip_poll().
  *
  * Why an operation failed, its last_error says: a host that didn't resolve,
  * with lwip_getaddrinfo()'s EAI_ error, an address that refused, a timeout, a
@@ -46,14 +49,14 @@ extern "C" {
  * goes to the logger set by ebisu_lwip_tcp_socket_set_logger(), if any.
  *
  * One serves one connection at a time, from one task at a time, and is used
- * again for the next once closed. Needs lwIP 2.0.2 or later, with an OS,
+ * again for the next once closed. Needs lwIP 1.4.1 or later, with an OS,
  * NO_SYS 0, and LWIP_SOCKET, LWIP_TCP, LWIP_DNS, LWIP_SO_RCVTIMEO and
  * LWIP_SO_SNDTIMEO. lwIP's sockets say why a call failed in errno, which has
  * to be each task's own where more than one task makes them, as newlib's is
- * with FreeRTOS's configUSE_NEWLIB_REENTRANT; or, in lwIP 2.0 built with
- * LWIP_SOCKET_SET_ERRNO at 0, which then sets none, in each socket's own
- * error, which the socket reads with SO_ERROR. Initialize with
- * ebisu_lwip_tcp_socket_init().
+ * with FreeRTOS's configUSE_NEWLIB_REENTRANT; or, in lwIP 1.4 built without
+ * ERRNO, and in lwIP 2.0 built with LWIP_SOCKET_SET_ERRNO at 0, which then set
+ * none, in each socket's own error, which the socket reads with SO_ERROR.
+ * Initialize with ebisu_lwip_tcp_socket_init().
  */
 typedef struct ebisu_lwip_tcp_socket_t {
     ebisu_socket_t base; /**< \brief What ebisu is given. */

@@ -223,6 +223,9 @@ TEST_CASE( "The lwIP socket says why it failed to connect" ) {
     long detail = -1;
 
     SECTION("a host that doesn't resolve, with lwip_getaddrinfo()'s error") {
+        // As a name server says, which lwIP 1.4's DNS client needs.
+        Responder responder(53);
+        Servers servers("127.0.0.1");
         for (unsigned int timeout : { 5u, 0u }) {
             INFO( "connect timeout " << timeout );
             ebisu_lwip_tcp_socket_set_connect_timeout(&sock, timeout);
@@ -261,6 +264,8 @@ TEST_CASE( "The lwIP socket says why it failed to its logger" ) {
     const ebisu_socket_ops_t* ops = sock.base.ops;
 
     SECTION("a host that doesn't resolve") {
+        Responder responder(53);
+        Servers servers("127.0.0.1");
         REQUIRE( ops->connect(&sock.base, "missing.test", 1883) == EBISU_SOCK_FAIL );
 #ifdef EBISU_NO_LOG
         CHECK( logs.lines.empty() );
@@ -373,8 +378,9 @@ TEST_CASE( "The lwIP socket checks an idle connection, and sends at once, when a
     ops->close(&sock.base);
 }
 
-// A receive timeout as lwIP is built to take it: an int of milliseconds with
-// LWIP_SO_SNDRCVTIMEO_NONSTANDARD, a struct timeval otherwise.
+// A receive timeout as lwIP is built to take it: an int of milliseconds in
+// lwIP 1.4, and with LWIP_SO_SNDRCVTIMEO_NONSTANDARD, a struct timeval
+// otherwise.
 TEST_CASE( "The lwIP socket sets its timeouts as lwIP takes them" ) {
     Server server;
     ebisu_lwip_tcp_socket_t sock;
@@ -382,7 +388,7 @@ TEST_CASE( "The lwIP socket sets its timeouts as lwIP takes them" ) {
     const ebisu_socket_ops_t* ops = sock.base.ops;
     REQUIRE( ops->connect(&sock.base, "127.0.0.1", server.port) == EBISU_SOCK_OK );
     server.accept_one();
-#if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+#if TEST_TIMEOUT_MS
     int recv_ms = 0;
     int send_ms = 0;
     socklen_t len = sizeof(int);
