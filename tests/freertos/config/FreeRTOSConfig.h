@@ -4,18 +4,26 @@
 /* FreeRTOS for the port's tests, on the MPS2 AN385 board QEMU emulates. What
    the configurations differ in, CMakeLists.txt defines: TEST_TICK_BITS, 16 or
    32, TEST_TICK_RATE_HZ, and TEST_STATIC, TEST_DYNAMIC and TEST_SUSPEND, 0 or
-   1. See https://www.freertos.org/a00110.html for each setting. */
+   1, and TEST_KERNEL_10, 1 for a V10 kernel. See
+   https://www.freertos.org/a00110.html for each setting. */
 
 /* The board's Cortex-M3 runs at 25 MHz, which the port sets SysTick from. */
 #define configCPU_CLOCK_HZ 25000000
 #define configTICK_RATE_HZ TEST_TICK_RATE_HZ
+/* The ticks' width: V10 has no configTICK_TYPE_WIDTH_IN_BITS, and V11 takes
+   only one of the two. */
+#if TEST_KERNEL_10
+#define configUSE_16_BIT_TICKS (TEST_TICK_BITS == 16)
+#elif TEST_TICK_BITS == 16
+#define configTICK_TYPE_WIDTH_IN_BITS TICK_TYPE_WIDTH_16_BITS
+#else
+#define configTICK_TYPE_WIDTH_IN_BITS TICK_TYPE_WIDTH_32_BITS
+#endif
 /* Started 3 seconds before the tick count overflows, for the tests to see the
    monotonic clock go on past it. */
 #if TEST_TICK_BITS == 16
-#define configTICK_TYPE_WIDTH_IN_BITS TICK_TYPE_WIDTH_16_BITS
 #define configINITIAL_TICK_COUNT (0xffffu - 3u * TEST_TICK_RATE_HZ)
 #else
-#define configTICK_TYPE_WIDTH_IN_BITS TICK_TYPE_WIDTH_32_BITS
 #define configINITIAL_TICK_COUNT (0xffffffffu - 3u * TEST_TICK_RATE_HZ)
 #endif
 
@@ -32,7 +40,8 @@
 
 #define configSUPPORT_STATIC_ALLOCATION TEST_STATIC
 #define configSUPPORT_DYNAMIC_ALLOCATION TEST_DYNAMIC
-/* The idle task's memory, without the heap. */
+/* The idle task's memory, without the heap, from V11.1 on. Before, the test
+   gives it. */
 #define configKERNEL_PROVIDED_STATIC_MEMORY 1
 /* heap_4, whose free size tells what the port leaves allocated. */
 #define configTOTAL_HEAP_SIZE (64 * 1024)

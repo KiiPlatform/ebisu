@@ -817,8 +817,8 @@ jobs:
 
   # The FreeRTOS port's tests: a firmware for the same board, run in QEMU by
   # CTest, with FreeRTOS configured three ways, against the oldest kernel the
-  # port supports, FreeRTOS LTS 202406's, and the latest. See
-  # tests/freertos/README.md.
+  # port supports, V10.0.1, FreeRTOS LTS 202406's, V11.1.0, and the latest.
+  # See tests/freertos/README.md.
   freertos-port:
     name: freertos port (${{ matrix.kernel }}, Cortex-M3, QEMU)
     runs-on: ubuntu-latest
@@ -829,7 +829,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        kernel: [V11.1.0, V11.3.3]
+        kernel: [V10.0.1, V11.1.0, V11.3.3]
     steps:
       - name: Checkout
         uses: actions/checkout@v7

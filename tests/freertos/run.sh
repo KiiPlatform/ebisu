@@ -3,7 +3,7 @@
 # them in QEMU, with CTest's JUnit report in test-results/junit, as CI does.
 #
 # Usage: tests/freertos/run.sh <kernel> <configuration>
-#   kernel: V11.1.0 or V11.3.3; configuration: a, b or c (see README.md)
+#   kernel: V10.0.1, V11.1.0 or V11.3.3; configuration: a, b or c (see README.md)
 set -eu
 root=$(cd "$(dirname "$0")/../.." && pwd)
 kernel=$1

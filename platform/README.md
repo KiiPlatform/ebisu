@@ -105,12 +105,16 @@ of the application's own, as the
   application's CMake build has FreeRTOS-Kernel's own target,
   `freertos_kernel`, which adding the kernel's directory before ebisu's makes,
   with the application's `FreeRTOSConfig.h`, and not installed, as the kernel
-  isn't. Needs FreeRTOS-Kernel V11.1 or later, that of FreeRTOS LTS 202406,
-  `configUSE_MUTEXES` and `INCLUDE_vTaskDelay`, and for tasks
-  `configSUPPORT_DYNAMIC_ALLOCATION` and `INCLUDE_vTaskDelete`, without which
-  the system has none to make. jkii reads `errno` after `strtoll()`, and the
-  handler's and the updater's tasks parse JSON at once, so each task needs its
-  own: with newlib, `configUSE_NEWLIB_REENTRANT`.
+  isn't. A kernel without a CMake build of its own, as V10.0.1 is, is a
+  library of its sources the application's build names `freertos_kernel`, as
+  [tests/freertos](https://github.com/KiiPlatform/ebisu/blob/master/tests/freertos/CMakeLists.txt)
+  makes one, or a build without CMake compiles `ebisu_freertos.c` with the
+  kernel. Needs FreeRTOS-Kernel V10.0.1 or later, `configUSE_MUTEXES` and
+  `INCLUDE_vTaskDelay`, and for tasks `configSUPPORT_DYNAMIC_ALLOCATION` and
+  `INCLUDE_vTaskDelete`, without which the system has none to make. jkii reads
+  `errno` after `strtoll()`, and the handler's and the updater's tasks parse
+  JSON at once, so each task needs its own: with newlib,
+  `configUSE_NEWLIB_REENTRANT`.
 - **FreeRTOS-Plus-TCP** (`ebisu_freertos_tcp.h`, library `ebisu_freertos_tcp`):
   `ebisu_freertos_tcp_socket_t`, plain TCP over FreeRTOS-Plus-TCP, for TLS over
   it with the mbedTLS port's socket, or for a server without TLS. Nothing it

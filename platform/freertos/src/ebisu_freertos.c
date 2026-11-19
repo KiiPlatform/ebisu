@@ -89,7 +89,11 @@ static uint64_t monotonic_ms(ebisu_system_t* self)
        BaseType_t: on a port whose BaseType_t is 16 bits, with ticks of 16 too,
        the clock wraps after 2^32 ticks. */
     vTaskSetTimeOutState(&now);
-#if configTICK_TYPE_WIDTH_IN_BITS == TICK_TYPE_WIDTH_64_BITS
+    /* Ticks of 64 bits are V11's, which configTICK_TYPE_WIDTH_IN_BITS, of V11
+       too, says. A kernel before has neither, whose undefined names would
+       compare equal. */
+#if defined(configTICK_TYPE_WIDTH_IN_BITS) && defined(TICK_TYPE_WIDTH_64_BITS) && \
+    configTICK_TYPE_WIDTH_IN_BITS == TICK_TYPE_WIDTH_64_BITS
     ticks = (uint64_t)now.xTimeOnEntering;
 #else
     ticks = ((uint64_t)(UBaseType_t)now.xOverflowCount << (sizeof(TickType_t) * CHAR_BIT)) +

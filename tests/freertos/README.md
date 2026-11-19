@@ -5,7 +5,13 @@ A firmware for the MPS2 AN385 board QEMU emulates, a Cortex-M3, that tests
 kernel: each check that fails prints a line on the console, and QEMU exits with
 1 if any did. CTest runs it in QEMU. FreeRTOS-Kernel is built with its own CMake
 and ebisu with its own, as an application builds them, and the board's support
-is the [FreeRTOS sample's](../../tio/freertos-sample/board/board.h).
+is the [FreeRTOS sample's](../../tio/freertos-sample/board/board.h). V10.0.1
+has no CMake build: [CMakeLists.txt](CMakeLists.txt) makes a library of its
+sources, of the name ebisu's CMake looks for, as an application's build would,
+and the test gives its idle task's memory, which V11.1 on gives with
+`configKERNEL_PROVIDED_STATIC_MEMORY`. Its `vTaskStartScheduler()` sets the tick
+count to 0 rather than `configINITIAL_TICK_COUNT`, which V10.1.0 fixed: the
+tests build its `tasks.c` with that line as V10.1.0 has it.
 
 - **The system's tasks**: the entry runs with its parameter, in a task of its
   own, of the name, stack depth and priority given; the task's memory, and what
@@ -28,7 +34,9 @@ is the [FreeRTOS sample's](../../tio/freertos-sample/board/board.h).
   counts on from it with the tick count, 5 seconds of ticks moved on later.
 
 `xTaskCatchUpTicks()` moves the tick count on for what would take minutes, in
-turns of 1000 ticks.
+turns of 1000 ticks. A kernel before V10.3, which hasn't it, counts the ticks
+as it does: with the scheduler suspended, `xTaskIncrementTick()` pends each,
+and resuming it counts them.
 
 Each test is built three ways, `EBISU_TEST_CONFIG`:
 
@@ -38,8 +46,8 @@ Each test is built three ways, `EBISU_TEST_CONFIG`:
 | `b` | 16 bits | 250 Hz | no | heap_4 | no |
 | `c` | 32 bits | 100 Hz | yes | none | yes |
 
-against FreeRTOS-Kernel V11.1.0, that of FreeRTOS LTS 202406, the oldest the
-port supports, and V11.3.3, the latest, `EBISU_TEST_KERNEL`, as CI does.
+against FreeRTOS-Kernel V10.0.1, the oldest the port supports, V11.1.0, that of
+FreeRTOS LTS 202406, and V11.3.3, the latest, `EBISU_TEST_KERNEL`, as CI does.
 
 With CMake, the Arm GNU toolchain, newlib and QEMU (on Ubuntu, `cmake
 gcc-arm-none-eabi libnewlib-arm-none-eabi qemu-system-arm`), from the
