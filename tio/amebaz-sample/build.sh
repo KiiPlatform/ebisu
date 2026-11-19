@@ -1,9 +1,10 @@
 #!/bin/bash
 # Builds the sample into a firmware image with Realtek's AmebaZ SDK: the SDK's
 # example project, copied next to it as ebisu_amebaz_sample, with the sample's
-# main.c in place of the example's, mbedTLS in place of PolarSSL, and ebisu's
-# sources and the sample's compiled into it, with the SDK's toolchain, as the
-# SDK builds its own.
+# main.c in place of the example's, the TLS library EBISU_SAMPLE_TLS names,
+# mbedTLS in place of PolarSSL, or PolarSSL, the example's, and ebisu's sources
+# and the sample's compiled into it, with the SDK's toolchain, as the SDK
+# builds its own.
 #
 # Usage: tio/amebaz-sample/build.sh <sdk>
 #   sdk: a checkout of https://github.com/Ameba-AIoT/ameba-rtos-1
@@ -42,6 +43,13 @@ default_state='{"AirconAlias":{"PresetTemperature":20,"RoomTemperature":24}}'
 : "${EBISU_SAMPLE_CA_FILE:=$here/ca.pem}"
 : "${EBISU_SAMPLE_WIFI_SSID:=}"
 : "${EBISU_SAMPLE_WIFI_PASSWORD:=}"
+# mbedtls, with ebisu's mbedTLS port, or polarssl, with its PolarSSL port,
+# experimental.
+: "${EBISU_SAMPLE_TLS:=mbedtls}"
+case "$EBISU_SAMPLE_TLS" in
+    mbedtls|polarssl) tls=$EBISU_SAMPLE_TLS ;;
+    *) echo "EBISU_SAMPLE_TLS is mbedtls or polarssl, not $EBISU_SAMPLE_TLS" >&2; exit 2 ;;
+esac
 export EBISU_SAMPLE_APP_ID EBISU_SAMPLE_APP_HOST EBISU_SAMPLE_VENDOR_THING_ID \
     EBISU_SAMPLE_THING_PASSWORD EBISU_SAMPLE_THING_TYPE EBISU_SAMPLE_FIRMWARE_VERSION \
     EBISU_SAMPLE_STATE EBISU_SAMPLE_UPDATE_PERIOD EBISU_SAMPLE_CLOCK_FLOOR \
@@ -72,19 +80,21 @@ for region, origin in (('XIP1', '0x0800B000'), ('XIP2', '0x08100000')):
 open(path, 'w', newline='').write(text)
 LAYOUT
 done
-# The SDK's TLS, for its own users of it too, with mbedTLS, which ebisu's port
-# is for, in place of PolarSSL, as its platform_opts.h chooses. Without its OTA
+# The SDK's TLS, for its own users of it too, as its platform_opts.h chooses:
+# mbedTLS in place of PolarSSL, or PolarSSL, the example's. Without its OTA
 # update, which takes OTA2 to be at 0x80000, in OTA1 here, unless the system
 # data says otherwise. And the settings the SDK keeps in the flash, past the
 # images.
-python3 -I - "$project/inc/platform_opts.h" <<'OPTS'
+python3 -I - "$project/inc/platform_opts.h" "$tls" <<'OPTS'
 import re, sys
 
-path = sys.argv[1]
+path, tls = sys.argv[1:]
 text = open(path, newline='').read()
+mbedtls = tls == 'mbedtls'
 # The first of each is the setting: the second, which sets PolarSSL if both or
 # neither are set, or OTA for the AT commands' examples, doesn't apply then.
-for name, value in (('CONFIG_USE_POLARSSL', '0'), ('CONFIG_USE_MBEDTLS', '1'),
+for name, value in (('CONFIG_USE_POLARSSL', '0' if mbedtls else '1'),
+                    ('CONFIG_USE_MBEDTLS', '1' if mbedtls else '0'),
                     ('CONFIG_OTA_UPDATE', '0')):
     pattern = re.compile(r'^(#define[ \t]+%s[ \t]+)[01]' % name, re.M)
     text, count = pattern.subn(lambda m: m.group(1) + value, text, count=1)
@@ -154,21 +164,29 @@ with open(os.path.join(gen, 'ca_pem.c'), 'w') as f:
 PY
 
 # What the firmware compiles of ebisu: its libraries, and the FreeRTOS, lwIP
-# and mbedTLS ports, as the SDK has those; and the sample. Copied into the
+# and mbedTLS or PolarSSL ports, as the SDK has those; and the sample, with the
+# TLS library's files of it, of their names, and not the other's. Copied into the
 # project, as the SDK's makefile writes each object next to its source, and
 # afresh, without what an earlier build copied.
 src=$gen/src
 rm -rf -- "$src"
 mkdir -p "$src"
 for dir in core jkii khc kii/include tio/include platform/freertos platform/lwip \
-        platform/mbedtls; do
+        "platform/$tls"; do
     mkdir -p "$src/$dir"
     cp -R "$ebisu/$dir/." "$src/$dir/"
 done
 cp "$ebisu"/kii/*.c "$ebisu"/kii/*.h "$src/kii/"
 cp "$ebisu"/tio/*.c "$ebisu"/tio/*.h "$src/tio/"
 mkdir -p "$src/sample"
-cp "$here"/*.c "$here"/*.h "$src/sample/"
+cp "$here"/*.h "$src/sample/"
+for file in "$here"/*.c; do
+    case "$(basename "$file")" in
+        *_mbedtls.c|*_polarssl.c) ;;
+        *) cp "$file" "$src/sample/" ;;
+    esac
+done
+cp "$here"/*_"$tls".c "$src/sample/"
 sources=(
     "$src"/core/src/*.c
     "$src"/jkii/src/*.c
@@ -177,7 +195,7 @@ sources=(
     "$src"/tio/*.c
     "$src/platform/freertos/src/ebisu_freertos.c"
     "$src/platform/lwip/src/ebisu_lwip_tcp.c"
-    "$src/platform/mbedtls/src/ebisu_mbedtls.c"
+    "$src/platform/$tls/src/ebisu_$tls.c"
     "$src"/sample/*.c
     "$gen/ca_pem.c"
 )
@@ -188,19 +206,23 @@ includes=(
     "$src/kii/include" "$src/kii"
     "$src/tio/include" "$src/tio"
     "$src/platform/freertos/include" "$src/platform/lwip/include"
-    "$src/platform/mbedtls/include"
+    "$src/platform/$tls/include"
     "$src/sample" "$gen"
 )
 # mbedTLS, all of its library, which the SDK's makefile lists none of, as it
-# builds PolarSSL; and its library's directory, for random.c, which compiles
-# its CTR_DRBG.
-mbedtls=$sdk/component/common/network/ssl/mbedtls-2.4.0
-if [ ! -f "$mbedtls/library/ctr_drbg.c" ]; then
-    echo "$sdk has no mbedTLS 2.4.0" >&2
-    exit 2
+# builds PolarSSL; and its library's directory, for random_mbedtls.c, which
+# compiles its CTR_DRBG. PolarSSL as the SDK's makefile has it, but for
+# the sample's files of it.
+mbedtls_sources=()
+if [ "$tls" = mbedtls ]; then
+    mbedtls=$sdk/component/common/network/ssl/mbedtls-2.4.0
+    if [ ! -f "$mbedtls/library/ctr_drbg.c" ]; then
+        echo "$sdk has no mbedTLS 2.4.0" >&2
+        exit 2
+    fi
+    mbedtls_sources=("$mbedtls"/library/*.c)
+    includes+=("$mbedtls/library")
 fi
-mbedtls_sources=("$mbedtls"/library/*.c)
-includes+=("$mbedtls/library")
 # The lwIP port's send timeout, which the SDK's lwIP is built without but for
 # its UART adapter and AT commands: lwIP is compiled from its sources, and the
 # SDK's libraries call only its sockets' functions. jkii's own number parser,
@@ -208,13 +230,16 @@ includes+=("$mbedtls/library")
 # task's newlib state, where the SDK's FreeRTOS is configured without
 # configUSE_NEWLIB_REENTRANT.
 defines=(-DLWIP_SO_SNDTIMEO=1 -DEBISU_NO_STRTOD)
+if [ "$tls" = polarssl ]; then
+    defines+=(-DEBISU_SAMPLE_POLARSSL)
+fi
 
-python3 -I - "$project/GCC-RELEASE/application.mk" "${#sources[@]}" "${sources[@]}" \
+python3 -I - "$project/GCC-RELEASE/application.mk" "$tls" "${#sources[@]}" "${sources[@]}" \
         "${#mbedtls_sources[@]}" "${mbedtls_sources[@]}" \
         "${#includes[@]}" "${includes[@]}" "${defines[@]}" <<'PY'
 import os, re, sys
 
-mk, args = sys.argv[1], sys.argv[2:]
+mk, tls, args = sys.argv[1], sys.argv[2], sys.argv[3:]
 n = int(args[0]); sources = args[1:1 + n]; args = args[1 + n:]
 n = int(args[0]); mbedtls_sources = args[1:1 + n]; args = args[1 + n:]
 n = int(args[0]); includes = args[1:1 + n]; defines = args[1 + n:]
@@ -226,8 +251,9 @@ if text.count(main) != 1:
 # PolarSSL's library, which mbedTLS's takes the place of, file names and all.
 polarssl = re.compile(r'^SRC_C \+= \S*/polarssl-1\.3\.8/library/\S+\.c\n', re.M)
 if not polarssl.findall(text):
-    sys.exit('%s: no PolarSSL to put mbedTLS in place of' % mk)
-text = polarssl.sub('', text)
+    sys.exit('%s: no PolarSSL library' % mk)
+if tls == 'mbedtls':
+    text = polarssl.sub('', text)
 # Every source's object is named by its file name alone, in one directory.
 listed = re.findall(r'^\s*(?:SRC_C|DRAM_C)\s*\+?=\s*(\S+)', text, re.M)
 names = {}
@@ -239,7 +265,7 @@ if clashes:
         print('sources named %s: %s' % (name, ' '.join(paths)), file=sys.stderr)
     sys.exit(1)
 
-block = '# ebisu, its sample and mbedTLS, from tio/amebaz-sample/build.sh.\n'
+block = '# ebisu, its sample and its TLS, from tio/amebaz-sample/build.sh.\n'
 block += ''.join('SRC_C += %s\n' % path for path in sources + mbedtls_sources)
 block += ''.join('INCLUDES += -I%s\n' % path for path in includes)
 text = text.replace(main, block)
@@ -247,7 +273,8 @@ text = text.replace(main, block)
 text += '\n# From tio/amebaz-sample/build.sh.\nCFLAGS += %s\n' % ' '.join(defines)
 # The SDK builds with -w, which leaves out every warning, and without -Wall:
 # ebisu's sources and the sample's, with -Wall, and without -w, as they are
-# what build.sh checks. The SDK's, mbedTLS's among them, as the SDK has them.
+# what build.sh checks. The SDK's, mbedTLS's or PolarSSL's among them, as the
+# SDK has them.
 text += 'EBISU_SAMPLE_O = %s\n' % ' '.join(os.path.splitext(s)[0] + '.o' for s in sources)
 text += '$(EBISU_SAMPLE_O): CFLAGS := $(filter-out -w,$(CFLAGS)) -Wall\n'
 # OTA2 where the layout has it, for the OTA tool, which a build of OTA2's

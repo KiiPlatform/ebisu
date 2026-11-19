@@ -1,6 +1,6 @@
 /* The Wi-Fi station, with an address from DHCP, through the SDK's Wi-Fi and
    lwIP glue. */
-#include "net.h"
+#include "sample_net.h"
 
 #include <stdbool.h>
 #include <string.h>

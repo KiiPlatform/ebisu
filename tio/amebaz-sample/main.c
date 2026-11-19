@@ -1,7 +1,7 @@
-/* tio on Realtek's AmebaZ, with the SDK's FreeRTOS, lwIP and mbedTLS: the
-   firmware joins the Wi-Fi network, onboards, uploads its state periodically,
-   and logs the commands it receives. In place of the SDK's example's main.c,
-   which build.sh compiles it instead of. */
+/* tio on Realtek's AmebaZ, with the SDK's FreeRTOS, lwIP, and mbedTLS or
+   PolarSSL: the firmware joins the Wi-Fi network, onboards, uploads its state
+   periodically, and logs the commands it receives. In place of the SDK's
+   example's main.c, which build.sh compiles it instead of. */
 #include <string.h>
 
 #include <ebisu_version.h>
@@ -9,21 +9,19 @@
 
 #include <ebisu_freertos.h>
 #include <ebisu_lwip.h>
-#include <ebisu_mbedtls.h>
 #include <ebisu_server_clock.h>
 
 #include <FreeRTOS.h>
 #include <task.h>
 
-#include <mbedtls/ssl.h>
-
 #include "main.h"
 
 #include "header_pool.h"
 #include "log.h"
-#include "net.h"
+#include "sample_net.h"
 #include "random.h"
 #include "sample_config.h"
+#include "sample_tls.h"
 
 #define HANDLER_HTTP_BUFF_SIZE 4096
 #define HANDLER_MQTT_BUFF_SIZE 2048
@@ -69,13 +67,12 @@ static ebisu_freertos_system_t sample_system;
 static ebisu_server_clock_t device_clock;
 static ebisu_freertos_lock_t clock_lock;
 static ebisu_freertos_lock_t session_lock;
-/* Each connection: TLS with ebisu's mbedTLS port, over TCP with its lwIP
-   port. The connections share a TLS configuration, of the CA certificates. */
+/* Each connection: TLS, of sample_tls.h, over TCP with ebisu's lwIP port.
+   The connections share a TLS configuration, of the CA certificates. */
 typedef struct {
     ebisu_lwip_tcp_socket_t tcp;
-    ebisu_mbedtls_socket_t tls;
+    sample_tls_socket_t tls;
 } sample_socket_t;
-static ebisu_mbedtls_tls_t tls_config;
 static sample_socket_t handler_http_socket;
 static sample_socket_t handler_mqtt_socket;
 static sample_socket_t updater_http_socket;
@@ -237,62 +234,22 @@ static void init_updater(void)
     tio_updater_set_interval(&updater, EBISU_SAMPLE_UPDATE_PERIOD);
 }
 
-/* The connections' TLS configuration: the CA certificates, a random
-   generator, and records no larger than mbedTLS takes. mbedTLS's allocator
-   is random_init()'s. */
-static void init_tls(void)
-{
-    mbedtls_ssl_config* conf;
-    int ret;
-
-    ret = ebisu_mbedtls_tls_init(&tls_config, (const unsigned char*)ca_pem, ca_pem_size);
-    if (ret != 0) {
-        sample_fatal("failed to set up TLS: -0x%04x", (unsigned int)-ret);
-    }
-    conf = ebisu_mbedtls_tls_config(&tls_config);
-#if !EBISU_MBEDTLS_SETS_RNG
-    /* The SDK builds mbedTLS without a CTR_DRBG: see random.h. */
-    mbedtls_ssl_conf_rng(conf, sample_random, NULL);
-#endif
-#if defined(MBEDTLS_SSL_MAX_FRAGMENT_LENGTH) && defined(MBEDTLS_SSL_MAX_CONTENT_LEN) && \
-    MBEDTLS_SSL_MAX_CONTENT_LEN < 16384
-    /* The SDK's mbedTLS takes records of MBEDTLS_SSL_MAX_CONTENT_LEN, 4096
-       bytes, where a server may send 16384: the server is asked for records
-       no larger, which one that doesn't take the extension ignores. */
-#if MBEDTLS_SSL_MAX_CONTENT_LEN >= 4096
-    ret = mbedtls_ssl_conf_max_frag_len(conf, MBEDTLS_SSL_MAX_FRAG_LEN_4096);
-#elif MBEDTLS_SSL_MAX_CONTENT_LEN >= 2048
-    ret = mbedtls_ssl_conf_max_frag_len(conf, MBEDTLS_SSL_MAX_FRAG_LEN_2048);
-#elif MBEDTLS_SSL_MAX_CONTENT_LEN >= 1024
-    ret = mbedtls_ssl_conf_max_frag_len(conf, MBEDTLS_SSL_MAX_FRAG_LEN_1024);
-#else
-    ret = mbedtls_ssl_conf_max_frag_len(conf, MBEDTLS_SSL_MAX_FRAG_LEN_512);
-#endif
-    if (ret != 0) {
-        sample_fatal("failed to set the record size: -0x%04x", (unsigned int)-ret);
-    }
-#else
-    (void)conf;
-#endif
-}
-
 /* TCP with its timeouts, and TLS over it, whose certificates are checked at
    the clock's time, each logging why it fails. */
 static void init_socket(sample_socket_t* sock)
 {
     ebisu_lwip_tcp_socket_init(&sock->tcp, TO_RECV_SEC, TO_SEND_SEC);
     ebisu_lwip_tcp_socket_set_logger(&sock->tcp, sample_logger());
-    ebisu_mbedtls_socket_init(&sock->tls, &sock->tcp.base, &tls_config);
     /* The system's clock: the server clock app_task() sets on it. */
-    ebisu_mbedtls_socket_set_clock(&sock->tls, ebisu_system_clock(&sample_system.base));
-    ebisu_mbedtls_socket_set_logger(&sock->tls, sample_logger());
+    sample_tls_socket_init(&sock->tls, &sock->tcp.base,
+            ebisu_system_clock(&sample_system.base), sample_logger());
 }
 
 static void app_task(void* arg)
 {
     (void)arg;
     net_wait_until_up();
-    init_tls();
+    sample_tls_init(ca_pem, ca_pem_size);
 
     /* The time the server's certificate is checked at, which this sample takes
        from the server, the chip having no clock that keeps the time across a

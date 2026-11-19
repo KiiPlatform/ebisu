@@ -901,13 +901,20 @@ jobs:
 
   # The AmebaZ sample, built into the firmware's images with Realtek's SDK for
   # AmebaZ, at a commit of its own, as the SDK builds its example: with its
-  # toolchain, FreeRTOS, lwIP and mbedTLS, which ebisu's ports take as the SDK
-  # configures them. Nothing emulates the chip, so the images are built only.
+  # toolchain, FreeRTOS, lwIP, and mbedTLS or PolarSSL, which ebisu's ports
+  # take as the SDK configures them. Nothing emulates the chip, so the images
+  # are built only.
   # See tio/amebaz-sample/README.md.
   amebaz:
-    name: amebaz sample (Realtek SDK, build)
+    name: amebaz sample (Realtek SDK, ${{ matrix.tls }}, build)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # The SDK's mbedTLS 2.4.0, and its PolarSSL 1.3.8, with ebisu's
+        # PolarSSL port, experimental.
+        tls: [mbedtls, polarssl]
     env:
       # https://github.com/Ameba-AIoT/ameba-rtos-1, as of 2022-11-23.
       SDK_COMMIT: 63d54848534113c50e4e78d0ba45359be9ef7e0f
@@ -932,6 +939,8 @@ jobs:
               https://github.com/Ameba-AIoT/ameba-rtos-1 "$SDK_COMMIT"
           git -C "$RUNNER_TEMP/amebaz" checkout -q FETCH_HEAD
       - name: build
+        env:
+          EBISU_SAMPLE_TLS: ${{ matrix.tls }}
         run: tio/amebaz-sample/build.sh "$RUNNER_TEMP/amebaz"
 
   # The FreeRTOS port's tests: a firmware for the same board, run in QEMU by
