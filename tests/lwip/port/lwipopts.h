@@ -5,7 +5,9 @@
    - a: timeouts of struct timeval, select, keepalive's TCP options, IPv4;
    - b: timeouts of int milliseconds, LWIP_SO_SNDRCVTIMEO_NONSTANDARD, poll
      without select from lwIP 2.1 on, which 2.0 hasn't, keepalive without its
-     TCP options, LWIP_TCP_KEEPALIVE, and IPv6 as well as IPv4.
+     TCP options, LWIP_TCP_KEEPALIVE, IPv6 as well as IPv4, and, in lwIP 2.0,
+     sockets that set no errno, LWIP_SOCKET_SET_ERRNO at 0, which 2.1 on
+     haven't.
    See lwIP's src/include/lwip/opt.h for each setting. */
 #ifndef LWIP_LWIPOPTS_H
 #define LWIP_LWIPOPTS_H
@@ -38,6 +40,7 @@
 #define LWIP_NETIF_API 1
 
 #if TEST_CONFIG_B
+#define LWIP_SOCKET_SET_ERRNO 0
 #define LWIP_SO_SNDRCVTIMEO_NONSTANDARD 1
 #define LWIP_SOCKET_SELECT 0
 #define LWIP_SOCKET_POLL 1

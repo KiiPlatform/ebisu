@@ -11,7 +11,7 @@
 #include <lwip/netdb.h>
 #include <lwip/sockets.h>
 
-#include "ebisu_lwip_wait.h"
+#include "ebisu_lwip_impl.h"
 
 #if NO_SYS
 #error "ebisu_lwip_tcp_socket_t is over lwIP's sockets, which need an OS: set NO_SYS to 0."
@@ -71,20 +71,21 @@ static void set_non_blocking(int s, bool non_blocking)
     (void)lwip_fcntl(s, F_SETFL, non_blocking ? (flags | O_NONBLOCK) : (flags & ~O_NONBLOCK));
 }
 
-static void warn_refused(ebisu_logger_t* logger, const char* name, int value)
+static void warn_refused(ebisu_logger_t* logger, const char* name, int value, int err)
 {
     (void)logger;
     (void)name;
     (void)value;
+    (void)err;
     log_to(logger, EBISU_LOG_WARNING, "%s %d refused: errno=%d; connecting without it", name,
-            value, errno);
+            value, err);
 }
 
 static void set_int_option(int s, int level, int option, const char* name, int value,
         ebisu_logger_t* logger)
 {
     if (lwip_setsockopt(s, level, option, &value, sizeof(value)) != 0) {
-        warn_refused(logger, name, value);
+        warn_refused(logger, name, value, ebisu_lwip_error(s));
     }
 }
 
@@ -123,24 +124,24 @@ static int connect_to(ebisu_lwip_tcp_socket_t* sock, const struct addrinfo* addr
 {
     int s = lwip_socket(address->ai_family, SOCK_STREAM, IPPROTO_TCP);
     if (s < 0) {
-        fail_with(sock, EBISU_SOCK_ERROR_OTHER, errno);
+        fail_with(sock, EBISU_SOCK_ERROR_OTHER, ebisu_lwip_error(-1));
         return -1;
     }
     set_non_blocking(s, true);
     int err = 0;
     if (lwip_connect(s, address->ai_addr, address->ai_addrlen) != 0) {
-        err = errno;
+        err = ebisu_lwip_error(s);
         if (err == EINPROGRESS) {
             int ready = ebisu_lwip_wait(s, true,
                     sock->_to_connect == 0 ? -1 : (long)sock->_to_connect * 1000);
             if (ready == 0) {
                 err = ETIMEDOUT;
             } else if (ready < 0) {
-                err = errno;
+                err = ebisu_lwip_error(s);
             } else {
                 socklen_t len = sizeof(err);
                 if (lwip_getsockopt(s, SOL_SOCKET, SO_ERROR, &err, &len) != 0) {
-                    err = errno;
+                    err = ebisu_lwip_error(s);
                 }
             }
         }
@@ -227,7 +228,7 @@ static ebisu_sock_code_t tcp_send(ebisu_socket_t* self, const char* buffer, size
         *out_sent_length = (size_t)sent;
         return EBISU_SOCK_OK;
     }
-    int err = errno;
+    int err = ebisu_lwip_error(sock->_socket);
     log_to(sock->_logger, EBISU_LOG_ERROR, "failed to send: errno=%d", err);
     return fail_with(sock, io_error(err), err);
 }
@@ -244,7 +245,7 @@ static ebisu_sock_code_t tcp_recv(ebisu_socket_t* self, char* buffer, size_t len
         *out_actual_length = (size_t)received;
         return EBISU_SOCK_OK;
     }
-    int err = errno;
+    int err = ebisu_lwip_error(sock->_socket);
     if (err == EAGAIN || err == EWOULDBLOCK) {
         /* The receive timeout: routine on an idle connection, which goes on
            as it was. Not logged. */

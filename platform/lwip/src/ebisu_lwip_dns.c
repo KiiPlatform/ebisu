@@ -17,7 +17,7 @@
 #include <lwip/sys.h>
 #include <lwip/tcpip.h>
 
-#include "ebisu_lwip_wait.h"
+#include "ebisu_lwip_impl.h"
 
 #if NO_SYS
 #error "ebisu_lwip_dns() asks over lwIP's sockets, which need an OS: set NO_SYS to 0."
@@ -160,11 +160,11 @@ static ebisu_dns_asked_t lwip_dns_ask(ebisu_dns_t* self, const ebisu_dns_addr_t*
     }
     s = lwip_socket(to.ss_family, SOCK_DGRAM, IPPROTO_UDP);
     if (s < 0) {
-        return fail("lwIP gave no socket", errno, why, why_size);
+        return fail("lwIP gave no socket", ebisu_lwip_error(-1), why, why_size);
     }
     /* From a port of its own, which lwIP picks. */
     if (lwip_sendto(s, query, length, 0, (const struct sockaddr*)&to, to_length) < 0) {
-        int err = errno;
+        int err = ebisu_lwip_error(s);
         (void)lwip_close(s);
         return fail("failed to send", err, why, why_size);
     }
@@ -188,14 +188,14 @@ static ebisu_dns_asked_t lwip_dns_ask(ebisu_dns_t* self, const ebisu_dns_addr_t*
             break;
         }
         if (ready < 0) {
-            asked = fail("failed to wait for the answer", errno, why, why_size);
+            asked = fail("failed to wait for the answer", ebisu_lwip_error(s), why, why_size);
             break;
         }
         memset(&from, 0, sizeof(from));
         received = (long)lwip_recvfrom(s, datagram, sizeof(datagram), 0,
                 (struct sockaddr*)&from, &from_length);
         if (received < 0) {
-            asked = fail("failed to receive", errno, why, why_size);
+            asked = fail("failed to receive", ebisu_lwip_error(s), why, why_size);
             break;
         }
         if (from_server(&from, &to) && is_answer(datagram, (size_t)received, userdata)) {
