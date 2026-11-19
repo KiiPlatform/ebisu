@@ -6,13 +6,14 @@ var searchData=
   ['ebisu_5ffreertos_5flock_5ft_3',['ebisu_freertos_lock_t',['../ebisu__freertos_8h.html#a170cb77d0d6ef3f250c4bc3b29ad34ec',1,'ebisu_freertos.h']]],
   ['ebisu_5ffreertos_5fsystem_5ft_4',['ebisu_freertos_system_t',['../ebisu__freertos_8h.html#a35bfb21cbea1c9141c665e33fd0e4c75',1,'ebisu_freertos.h']]],
   ['ebisu_5ffreertos_5ftcp_5fsocket_5ft_5',['ebisu_freertos_tcp_socket_t',['../ebisu__freertos__tcp_8h.html#ac76e3f5add9f8ab619cd5e9130a8e420',1,'ebisu_freertos_tcp.h']]],
-  ['ebisu_5fmbedtls_5fsocket_5ft_6',['ebisu_mbedtls_socket_t',['../ebisu__mbedtls_8h.html#ad23c56f0dfcb307ef1af753279523f9e',1,'ebisu_mbedtls.h']]],
-  ['ebisu_5fmbedtls_5ftls_5ft_7',['ebisu_mbedtls_tls_t',['../ebisu__mbedtls_8h.html#aae2211f4880481ca89ebeda2c81f08f0',1,'ebisu_mbedtls.h']]],
-  ['ebisu_5fopenssl_5fsocket_5ft_8',['ebisu_openssl_socket_t',['../ebisu__openssl_8h.html#a4dc56053c784610a590ee3fceb160913',1,'ebisu_openssl.h']]],
-  ['ebisu_5fopenssl_5ftls_5ft_9',['ebisu_openssl_tls_t',['../ebisu__openssl_8h.html#a0b259235952ff790e57847975a85bf3f',1,'ebisu_openssl.h']]],
-  ['ebisu_5fposix_5flock_5ft_10',['ebisu_posix_lock_t',['../ebisu__posix_8h.html#a22d27d681115334fe2e1410cbb2b9226',1,'ebisu_posix.h']]],
-  ['ebisu_5fposix_5ftcp_5fsocket_5ft_11',['ebisu_posix_tcp_socket_t',['../ebisu__posix_8h.html#a1941abd23c970fe42f21d3f35f74c27c',1,'ebisu_posix.h']]],
-  ['ebisu_5fschannel_5fsocket_5ft_12',['ebisu_schannel_socket_t',['../ebisu__schannel_8h.html#a843245dd145c7210d297a099d38cdb59',1,'ebisu_schannel.h']]],
-  ['ebisu_5fwin32_5flock_5ft_13',['ebisu_win32_lock_t',['../ebisu__win32_8h.html#a7c637645697f264f1b8c632579c1267b',1,'ebisu_win32.h']]],
-  ['ebisu_5fwin32_5ftcp_5fsocket_5ft_14',['ebisu_win32_tcp_socket_t',['../ebisu__win32_8h.html#a45476d26cf5d65bd97298f9b64d660c6',1,'ebisu_win32.h']]]
+  ['ebisu_5flwip_5ftcp_5fsocket_5ft_6',['ebisu_lwip_tcp_socket_t',['../ebisu__lwip_8h.html#ab3bd5a78381e0827f205ae764c8fcc4e',1,'ebisu_lwip.h']]],
+  ['ebisu_5fmbedtls_5fsocket_5ft_7',['ebisu_mbedtls_socket_t',['../ebisu__mbedtls_8h.html#ad23c56f0dfcb307ef1af753279523f9e',1,'ebisu_mbedtls.h']]],
+  ['ebisu_5fmbedtls_5ftls_5ft_8',['ebisu_mbedtls_tls_t',['../ebisu__mbedtls_8h.html#aae2211f4880481ca89ebeda2c81f08f0',1,'ebisu_mbedtls.h']]],
+  ['ebisu_5fopenssl_5fsocket_5ft_9',['ebisu_openssl_socket_t',['../ebisu__openssl_8h.html#a4dc56053c784610a590ee3fceb160913',1,'ebisu_openssl.h']]],
+  ['ebisu_5fopenssl_5ftls_5ft_10',['ebisu_openssl_tls_t',['../ebisu__openssl_8h.html#a0b259235952ff790e57847975a85bf3f',1,'ebisu_openssl.h']]],
+  ['ebisu_5fposix_5flock_5ft_11',['ebisu_posix_lock_t',['../ebisu__posix_8h.html#a22d27d681115334fe2e1410cbb2b9226',1,'ebisu_posix.h']]],
+  ['ebisu_5fposix_5ftcp_5fsocket_5ft_12',['ebisu_posix_tcp_socket_t',['../ebisu__posix_8h.html#a1941abd23c970fe42f21d3f35f74c27c',1,'ebisu_posix.h']]],
+  ['ebisu_5fschannel_5fsocket_5ft_13',['ebisu_schannel_socket_t',['../ebisu__schannel_8h.html#a843245dd145c7210d297a099d38cdb59',1,'ebisu_schannel.h']]],
+  ['ebisu_5fwin32_5flock_5ft_14',['ebisu_win32_lock_t',['../ebisu__win32_8h.html#a7c637645697f264f1b8c632579c1267b',1,'ebisu_win32.h']]],
+  ['ebisu_5fwin32_5ftcp_5fsocket_5ft_15',['ebisu_win32_tcp_socket_t',['../ebisu__win32_8h.html#a45476d26cf5d65bd97298f9b64d660c6',1,'ebisu_win32.h']]]
 ];

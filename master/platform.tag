@@ -186,6 +186,54 @@
     </member>
   </compound>
   <compound kind="file">
+    <name>ebisu_lwip.h</name>
+    <path>lwip/include/</path>
+    <filename>ebisu__lwip_8h.html</filename>
+    <class kind="struct">ebisu_lwip_tcp_socket_t</class>
+    <member kind="typedef">
+      <type>struct ebisu_lwip_tcp_socket_t</type>
+      <name>ebisu_lwip_tcp_socket_t</name>
+      <anchorfile>ebisu__lwip_8h.html</anchorfile>
+      <anchor>ab3bd5a78381e0827f205ae764c8fcc4e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_lwip_tcp_socket_init</name>
+      <anchorfile>ebisu__lwip_8h.html</anchorfile>
+      <anchor>ae9fb34462eccc07146fc2c9db2fef48f</anchor>
+      <arglist>(ebisu_lwip_tcp_socket_t *sock, unsigned int to_recv, unsigned int to_send)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_lwip_tcp_socket_set_connect_timeout</name>
+      <anchorfile>ebisu__lwip_8h.html</anchorfile>
+      <anchor>a81fa1fe1889a741851597d7d15cc27d1</anchor>
+      <arglist>(ebisu_lwip_tcp_socket_t *sock, unsigned int seconds)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_lwip_tcp_socket_set_logger</name>
+      <anchorfile>ebisu__lwip_8h.html</anchorfile>
+      <anchor>a0a23477cca116d58834dbf6e4e5b10a4</anchor>
+      <arglist>(ebisu_lwip_tcp_socket_t *sock, ebisu_logger_t *logger)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_lwip_tcp_socket_set_keepalive</name>
+      <anchorfile>ebisu__lwip_8h.html</anchorfile>
+      <anchor>a9ad37c9e16728839d8efa0c3bb812120</anchor>
+      <arglist>(ebisu_lwip_tcp_socket_t *sock, unsigned int idle_s, unsigned int interval_s, unsigned int count)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_lwip_tcp_socket_set_nodelay</name>
+      <anchorfile>ebisu__lwip_8h.html</anchorfile>
+      <anchor>a3b9b93e378f56f8839f48a3564741d2d</anchor>
+      <arglist>(ebisu_lwip_tcp_socket_t *sock, bool nodelay)</arglist>
+    </member>
+  </compound>
+  <compound kind="file">
     <name>ebisu_mbedtls.h</name>
     <path>mbedtls/include/</path>
     <filename>ebisu__mbedtls_8h.html</filename>
@@ -670,6 +718,17 @@
       <name>base</name>
       <anchorfile>structebisu__freertos__tcp__socket__t.html</anchorfile>
       <anchor>a3c948e20eaab88948cdf3ac22741fe33</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_lwip_tcp_socket_t</name>
+    <filename>structebisu__lwip__tcp__socket__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_socket_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__lwip__tcp__socket__t.html</anchorfile>
+      <anchor>a7b7178e74cb5cb16b1cb130ac840dbc5</anchor>
       <arglist></arglist>
     </member>
   </compound>
