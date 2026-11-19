@@ -16,7 +16,7 @@ them, and no device runs them either: they are built, not tested.
   does, with the settings `build.sh` is given.
 - [net.c](net.c): joins the Wi-Fi network, and waits for an address from DHCP.
 - [random.c](random.c): random numbers for TLS, from a CTR_DRBG of the
-  sample's own: see [Randomness](#randomness).
+  sample's own, and mbedTLS's allocator: see [Randomness](#randomness).
 - [header_pool.c](header_pool.c): a pool for the request headers, which with
   the buffers main.c gives tio leaves ebisu nothing to take from the heap.
 - [log.c](log.c): the SDK's console, as the sample writes to it, and a logger
@@ -122,7 +122,10 @@ first, `0x08100000` as the chip maps the flash, with the SDK's
   `CONFIG_USE_POLARSSL`, and compiles mbedTLS's library in place of
   PolarSSL's, which ebisu's port is for.
 - **mbedTLS's allocator.** The SDK builds mbedTLS with
-  `MBEDTLS_PLATFORM_MEMORY` and no allocator: main.c gives it FreeRTOS's heap.
+  `MBEDTLS_PLATFORM_MEMORY` and no allocator: random.c gives it FreeRTOS's
+  heap. The SDK's `mbedtls_platform_set_calloc_free()` also switches mbedTLS's
+  AES to the chip's crypto engine, the one AES the SDK builds mbedTLS with:
+  without `SUPPORT_HW_SW_CRYPTO`, it has none in software.
 - **The C library.** The SDK's `platform_stdlib.h` has the files that include
   it, mbedTLS's configuration among them, call the ROM's `printf`,
   `snprintf`, `vsnprintf` and string functions; and the SDK links newlib's
@@ -140,8 +143,17 @@ send 16384. The sample asks the server for records no larger, with the maximum
 fragment length extension, which a server that doesn't take it ignores: a
 record larger than mbedTLS takes fails the connection. mbedTLS is built without
 `MBEDTLS_THREADING_C`: the tasks' connections share the TLS configuration,
-which none changes, and the sample's random generator, which has a lock of its
-own.
+which none changes, and the sample's random generator, which takes the SDK's
+lock of the crypto engine.
+
+The SDK's mbedTLS starts the crypto engine again, with
+`rtl_cryptoEngine_init()`, in each connection's `mbedtls_ssl_init()`, without
+the engine's lock: the handler's and the updater's tasks may start a
+connection while the other's is using the engine, and what starting it does to
+that use, the SDK doesn't say. The sample can't take the lock around it:
+ebisu's mbedTLS port calls `mbedtls_ssl_init()` as it connects, and the
+handshake that follows takes the lock itself. No device has run the sample to
+see.
 
 ### The server's certificate
 
@@ -169,8 +181,12 @@ entropy each has is not known, and has not been measured on a device. The
 sample seeds it once, before the Wi-Fi starts, as `Gen_RandomSeed()` sets the
 ADC up and stops it, which the SDK does only as it starts; and doesn't start
 on the one package the SDK doesn't sample the ADC on,
-`SYSCFG_BD_QFN48_MCM_8MBFlash`. The tasks' connections take from the one
-generator, under a lock of the sample's.
+`SYSCFG_BD_QFN48_MCM_8MBFlash`. The generator's AES is the chip's crypto
+engine, as the connections' is: the sample sets mbedTLS's allocator, which
+switches the SDK's mbedTLS to the engine, and starts the engine, before it
+seeds the generator. The tasks' connections take from the one generator under
+the SDK's lock of the engine, `RT_DEV_LOCK_CRYPTO`, which mbedTLS's ciphers
+take as they run in it too.
 
 The SDK's TLS examples give mbedTLS `rtw_get_random_bytes()` instead. Don't:
 give it a generator such as the sample's.

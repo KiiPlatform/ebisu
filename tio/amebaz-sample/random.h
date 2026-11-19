@@ -8,9 +8,12 @@
    noise of the chip's ADC, as the SDK's Gen_RandomSeed() samples it. Not
    rtw_get_random_bytes(), which the SDK's TLS examples take: see README.md.
 
-   Before the Wi-Fi and the scheduler start. 0, or mbedTLS's error, or
-   MBEDTLS_ERR_ENTROPY_SOURCE_FAILED where the chip's package is one the SDK
-   doesn't sample the ADC on, or -1 without the heap for its lock. */
+   Before the Wi-Fi and the scheduler start, and before anything else of
+   mbedTLS: it sets mbedTLS's allocator, FreeRTOS's heap, which switches
+   mbedTLS's AES to the chip's crypto engine, and starts the engine. 0, or
+   mbedTLS's error, or MBEDTLS_ERR_ENTROPY_SOURCE_FAILED where the chip's
+   package is one the SDK doesn't sample the ADC on, or -1 if the engine
+   doesn't start. */
 int random_init(void);
 
 /* As mbedTLS's f_rng: length bytes into output. 0, or mbedTLS's error. From
