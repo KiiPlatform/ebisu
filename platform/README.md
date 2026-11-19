@@ -185,8 +185,9 @@ of the application's own, as the
   sources, or with mbedTLS 2 from a CTR_DRBG of the configuration's, seeded
   from them, but for an mbedTLS 2 built without `MBEDTLS_CTR_DRBG_C` or
   `MBEDTLS_ENTROPY_C`, as some of vendors' SDKs configure it, where
-  `EBISU_MBEDTLS_SETS_RNG` is 0 and the application sets the generator, with
-  `mbedtls_ssl_conf_rng()` on `ebisu_mbedtls_tls_config()`. A receive that
+  `EBISU_MBEDTLS_SETS_RNG` is 0 and the application sets the generator, a
+  cryptographically secure one, with `mbedtls_ssl_conf_rng()` on
+  `ebisu_mbedtls_tls_config()`: TLS's keys are made from it. A receive that
   times out leaves the connection as it was, and `recv_wait` counts what
   mbedTLS has and hasn't returned. Its `last_error` says why an operation
   failed: what the socket under it said, for what failed there, a certificate
