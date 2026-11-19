@@ -38,6 +38,17 @@ function(_ebisu_check_doc_inputs name)
                 "${name}/Doxyfile.in lists INPUT path '${path}', which does not exist")
         endif()
     endforeach()
+    # And the other way: the headers of a directory of the component's own,
+    # as platform's are, <port>/include, which INPUT doesn't list, are missing
+    # as silently. ebisu_loggers.h was, from when the loggers came in.
+    file(GLOB include_dirs LIST_DIRECTORIES true
+        RELATIVE ${PROJECT_SOURCE_DIR}/${name} ${PROJECT_SOURCE_DIR}/${name}/*/include)
+    foreach(dir IN LISTS include_dirs)
+        if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/${name}/${dir} AND NOT dir IN_LIST inputs)
+            message(FATAL_ERROR
+                "${name}/Doxyfile.in doesn't list ${dir} as an INPUT path")
+        endif()
+    endforeach()
 endfunction()
 
 add_custom_target(docs COMMENT "Generating API documentation")
