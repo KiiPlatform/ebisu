@@ -15,6 +15,9 @@ The module provides following functionalities
 
 For more details, please refer to [./tio/README.md](./tio/README.md)
 
+Its samples, on Linux, Windows, FreeRTOS in QEMU and several boards, are in
+[tio's README](./tio/README.md#samples).
+
 ## kii
 
 While `tio` covers basic functionality required by IoT devices, `kii` provides

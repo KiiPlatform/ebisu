@@ -25,6 +25,27 @@ The loop inside the module keeps asking for update by sensors periodically with 
 
 You can choose to run both `tio_handler_t` and `tio_updater_t` or either one.
 
+# Samples
+
+Each sample is a thing that onboards, uploads its state periodically and
+handles the commands it receives, with tio on one platform. Most give tio
+platform's ports for their system, sockets and TLS; the esp32, cc3200 and
+gt202 samples have callbacks of their own.
+
+| Sample | Target | Built with | System, sockets and TLS | What CI does |
+|---|---|---|---|---|
+| [linux](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/README.md) | Linux | CMake | platform's POSIX and OpenSSL ports | builds it for 32-bit ARM and on musl, and analyses it with clang-tidy and GCC's `-fanalyzer`; doesn't run it |
+| [win32](https://github.com/KiiPlatform/ebisu/blob/master/tio/win32-sample/README.md) | Windows | CMake, with mingw-w64 or MSVC | platform's Win32 and Schannel ports | builds it with mingw-w64 and with MSVC; doesn't run it |
+| [freertos](https://github.com/KiiPlatform/ebisu/blob/master/tio/freertos-sample/README.md) | the MPS2 AN385 board QEMU emulates, a Cortex-M3 | CMake, with the Arm GNU toolchain | platform's FreeRTOS, FreeRTOS-Plus-TCP and mbedTLS ports | runs it in QEMU: built with its clock's floor in 2040, it has to refuse the server's certificate as expired, and with the secrets it runs against Kii Cloud |
+| [esp32](https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/README.md) | ESP32, on a board over Wi-Fi, or in Espressif's QEMU | ESP-IDF v5.5 | its own, on FreeRTOS and ESP-IDF's esp-tls, mbedTLS over lwIP | builds it for both, and runs it in Espressif's QEMU, as for the freertos sample |
+| [amebaz2](https://github.com/KiiPlatform/ebisu/blob/master/tio/amebaz2-sample/README.md) | Realtek's AmebaZ2, the RTL8710C | its SDK, ameba-rtos-z2 | platform's FreeRTOS, lwIP and mbedTLS ports, over the SDK's FreeRTOS V10.0.1, lwIP 2.0.2 and mbedTLS 2.4.0 | builds the firmware image; nothing runs it |
+| [amebaz](https://github.com/KiiPlatform/ebisu/blob/master/tio/amebaz-sample/README.md) | Realtek's AmebaZ, the RTL8710B and RTL8711B | its SDK, ameba-rtos-1 | platform's FreeRTOS, lwIP, and mbedTLS or PolarSSL (experimental) ports, over the SDK's FreeRTOS V8.1.2, lwIP 1.4.1, and mbedTLS 2.4.0 or PolarSSL 1.3.8 | builds the firmware's images with each library; nothing runs them |
+| [cc3200](https://github.com/KiiPlatform/ebisu/blob/master/tio/cc3200-sample/README.md) | TI's CC3200, a Cortex-M4 | the CC3200 SDK and Code Composer Studio | its own, on FreeRTOS and SimpleLink's sockets, without TLS | builds ebisu's sources as the sample's Makefile copies them, for a Cortex-M4, but not the sample's own |
+| [gt202](https://github.com/KiiPlatform/ebisu/blob/master/tio/gt202-sample/README.md) | the GT202 Wi-Fi module, on a FRDM-K22F board, a Cortex-M4 | MQX 4.1 and IAR Embedded Workbench for ARM | its own, on MQX and the module's sockets, without TLS or with TLS that accepts any server | as for the cc3200 sample |
+
+The cc3200 and gt202 samples' socket callbacks are not for a product: their
+READMEs say why.
+
 # Use `tio_handler_t`
 
 ## Callback functions
