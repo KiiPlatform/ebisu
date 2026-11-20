@@ -206,7 +206,6 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     endif()
 endif()
 
-# After include(CTest): the win32 sample has a test of its own.
 option(EBISU_BUILD_SAMPLES "Build the sample application for the target platform" OFF)
 if(EBISU_BUILD_SAMPLES)
     # The linux sample needs OpenSSL and POSIX threads, and builds on macOS
