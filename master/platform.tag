@@ -207,6 +207,120 @@
     </member>
   </compound>
   <compound kind="file">
+    <name>ebisu_loggers.h</name>
+    <path>loggers/include/</path>
+    <filename>ebisu__loggers_8h.html</filename>
+    <class kind="struct">ebisu_stdio_logger_t</class>
+    <class kind="struct">ebisu_file_logger_t</class>
+    <class kind="struct">ebisu_syslog_logger_t</class>
+    <class kind="struct">ebisu_syslog_udp_logger_t</class>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_LOGGER_LINE_MAX</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>aaaba6b703a496d36011f3ed67f7a3c16</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_FILE_LOGGER_PATH_MAX</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>a8543d8ffa3a5d892e78ae76c3e2fed64</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_SYSLOG_APP_NAME_MAX</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>a91c53e44c6758709fe6c764aaed8bdb4</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_SYSLOG_HOSTNAME_MAX</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>aaf092499f0d496dfd986426cab270645</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_stdio_logger_t</type>
+      <name>ebisu_stdio_logger_t</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>af950fdb3bc5970c19df9a555b5c4a2d5</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_file_logger_t</type>
+      <name>ebisu_file_logger_t</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>acecd6878da9f2626e30da4c9074288d4</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_syslog_logger_t</type>
+      <name>ebisu_syslog_logger_t</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>a55fde67d4b86a9cff859e46a8efe7ef5</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_syslog_udp_logger_t</type>
+      <name>ebisu_syslog_udp_logger_t</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>a6a4e3d7e2e384662726b1bd3e1ec003a</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_stdio_logger_init</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>a55127ee3552c0955bacb707e171b5f44</anchor>
+      <arglist>(ebisu_stdio_logger_t *logger, FILE *file, ebisu_log_level_t level)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_file_logger_init</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>ae6b220b35699812d6d8796a6b986bb9b</anchor>
+      <arglist>(ebisu_file_logger_t *logger, const char *path, size_t max_bytes, ebisu_log_level_t level, ebisu_lock_t *lock)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_file_logger_set_timestamps</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>a64336f85d8e94c93dbdb0eded3c2944f</anchor>
+      <arglist>(ebisu_file_logger_t *logger, bool timestamps)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_file_logger_close</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>a4587548bb94ad17353dc244f0c6d1541</anchor>
+      <arglist>(ebisu_file_logger_t *logger)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_syslog_logger_init</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>a41d3ab3fbe1515afef8ffbc1867c39f0</anchor>
+      <arglist>(ebisu_syslog_logger_t *logger, int facility, ebisu_log_level_t level)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_syslog_udp_logger_init</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>ac5cf73166b0a15f592c7d9e22ba749b1</anchor>
+      <arglist>(ebisu_syslog_udp_logger_t *logger, const char *host, uint16_t port, const char *hostname, const char *app_name, int facility, ebisu_log_level_t level)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_syslog_udp_logger_close</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>a3aa22eaf0023ce6aaf7c44b769138a10</anchor>
+      <arglist>(ebisu_syslog_udp_logger_t *logger)</arglist>
+    </member>
+  </compound>
+  <compound kind="file">
     <name>ebisu_lwip.h</name>
     <path>lwip/include/</path>
     <filename>ebisu__lwip_8h.html</filename>
@@ -822,6 +936,17 @@
     </member>
   </compound>
   <compound kind="struct">
+    <name>ebisu_file_logger_t</name>
+    <filename>structebisu__file__logger__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_logger_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__file__logger__t.html</anchorfile>
+      <anchor>ac4fef781f3cc6e416b705b32f150368c</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
     <name>ebisu_freertos_lock_t</name>
     <filename>structebisu__freertos__lock__t.html</filename>
     <member kind="variable">
@@ -940,6 +1065,39 @@
       <name>base</name>
       <anchorfile>structebisu__schannel__socket__t.html</anchorfile>
       <anchor>a06ab23d1096e9ab16290eb3c5bafbe9e</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_stdio_logger_t</name>
+    <filename>structebisu__stdio__logger__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_logger_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__stdio__logger__t.html</anchorfile>
+      <anchor>ab53f7d6c3e80be9047ca8c127a68ec3d</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_syslog_logger_t</name>
+    <filename>structebisu__syslog__logger__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_logger_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__syslog__logger__t.html</anchorfile>
+      <anchor>afebe379049627544e5a07a6f997032ea</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_syslog_udp_logger_t</name>
+    <filename>structebisu__syslog__udp__logger__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_logger_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__syslog__udp__logger__t.html</anchorfile>
+      <anchor>af01cf9adb005c948bc875059ab9ea771</anchor>
       <arglist></arglist>
     </member>
   </compound>
