@@ -68,8 +68,9 @@ For more details, please refer to [./core/README.md](./core/README.md)
 `platform` holds the ports, which implement `core`'s interfaces for a kind of
 system each: POSIX threads and OpenSSL on Linux and macOS, the Win32 API and
 Schannel on Windows, FreeRTOS's tasks and mutexes, plain TCP over
-FreeRTOS-Plus-TCP or lwIP, and mbedTLS over another socket, as static
-libraries to link.
+FreeRTOS-Plus-TCP or lwIP, and mbedTLS, or PolarSSL, experimental, over
+another socket, as static libraries to link. It also has loggers, and a probe
+of the name servers.
 
 For more details, please refer to [./platform/README.md](./platform/README.md)
 
