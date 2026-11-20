@@ -114,8 +114,11 @@ random generator, which has a lock of its own.
 ### The server's certificate
 
 The server's certificate has to chain to one of the CA certificates in
-[ca.pem](ca.pem), Amazon Trust Services' roots, which Kii Cloud's chain to,
-and be issued for the host. The SDK builds mbedTLS without
+[ca.pem](ca.pem), Amazon Trust Services' RSA roots, which Kii Cloud's chain
+to, and be issued for the host. Not its ECC roots: the SDK builds mbedTLS
+without ECDSA, which can't read them, and ebisu's port fails to set up TLS,
+with `MBEDTLS_ERR_X509_CERT_UNKNOWN_FORMAT`, with CA certificates it can't
+read all of. The SDK builds mbedTLS without
 `MBEDTLS_HAVE_TIME_DATE`, and FreeRTOS keeps no time of day: ebisu's mbedTLS
 port checks the certificates' validity periods at the time an
 `ebisu_server_clock_t` keeps, which the device learns from the server. Until
