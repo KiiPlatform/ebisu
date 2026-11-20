@@ -289,9 +289,9 @@ kernel it supports and the latest. It runs the small tests of the libraries
 too, each suite in a FreeRTOS task on the same board, with newlib:
 [tests/freertos_small](https://github.com/KiiPlatform/ebisu/blob/master/tests/freertos_small/README.md),
 and the large ones, against the live application, over the mbedTLS port and
-the FreeRTOS-Plus-TCP socket, and over the lwIP socket, on the kernels, lwIP
-and mbedTLS 2.4.0 Realtek's SDKs for AmebaZ and AmebaZ2 ship, configured as
-they configure them:
+the FreeRTOS-Plus-TCP socket, and over the lwIP socket, on the kernels, lwIP,
+and mbedTLS 2.4.0 or PolarSSL 1.3.8, over the PolarSSL port, Realtek's SDKs
+for AmebaZ and AmebaZ2 ship, configured as they configure them:
 [tests/freertos_large](https://github.com/KiiPlatform/ebisu/blob/master/tests/freertos_large/README.md).
 
 With lwIP, in the application's `CMakeLists.txt`, from lwIP 2.1 on, before
