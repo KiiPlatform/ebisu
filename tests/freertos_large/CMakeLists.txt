@@ -2,9 +2,11 @@
 # firmware for the MPS2 AN385 board QEMU emulates, a Cortex-M3 with a LAN9118
 # Ethernet controller, which runs the suite in a FreeRTOS task against the live
 # Kii application, over platform's mbedTLS port and its FreeRTOS-Plus-TCP
-# socket. CTest runs each in QEMU, whose user-mode networking takes it to the
-# Internet. FreeRTOS, FreeRTOS-Plus-TCP and mbedTLS are built as the FreeRTOS
-# sample builds them, and ebisu with its own CMake. See README.md.
+# socket, or its lwIP socket. CTest runs each in QEMU, whose user-mode
+# networking takes it to the Internet. FreeRTOS, FreeRTOS-Plus-TCP and mbedTLS
+# are built as the FreeRTOS sample builds them; lwIP and mbedTLS 2.4.0 as
+# Realtek's SDKs for AmebaZ and AmebaZ2 configure them; and ebisu with its own
+# CMake. See README.md.
 cmake_minimum_required(VERSION 3.24)
 
 get_filename_component(ebisu_root ${CMAKE_CURRENT_LIST_DIR}/../.. ABSOLUTE)
@@ -34,63 +36,121 @@ if(NOT EBISU_APP_ID OR NOT EBISU_DEFAULT_SITE)
         "Set APP_ID and DEFAULT_SITE in the environment, or -DEBISU_APP_ID=... -DEBISU_DEFAULT_SITE=...")
 endif()
 
+# The kernel, and the network and TLS: FreeRTOS-Plus-TCP and mbedTLS 3.6.7, as
+# the FreeRTOS sample has them, on the latest kernel; or lwIP and mbedTLS
+# 2.4.0, as the SDKs configure them, on the kernel each ships: lwIP 1.4.1 on
+# V8.1.2, the AmebaZ's, and lwIP 2.0.2 on V10.0.1, the AmebaZ2's.
+set(EBISU_LTEST_KERNEL V11.3.3 CACHE STRING
+    "The FreeRTOS kernel: V11.3.3, or, with lwIP, V8.1.2 or V10.0.1")
+set(EBISU_LTEST_LWIP "" CACHE STRING
+    "lwIP, 1.4.1 or 2.0.2, with mbedTLS 2.4.0, or none, for FreeRTOS-Plus-TCP and mbedTLS 3.6.7")
+include(${ebisu_root}/tests/freertos/kernel.cmake)
+if(NOT DEFINED ebisu_kernel_sha256_${EBISU_LTEST_KERNEL})
+    message(FATAL_ERROR "No such kernel to test with: ${EBISU_LTEST_KERNEL}")
+endif()
+string(REGEX MATCH "^V([0-9]+)\\." major ${EBISU_LTEST_KERNEL})
+set(major ${CMAKE_MATCH_1})
+if(NOT EBISU_LTEST_LWIP AND major LESS 11)
+    message(FATAL_ERROR "FreeRTOS-Plus-TCP is tested with V11.3.3 alone")
+endif()
+
 # For --gc-sections, which leaves out what nothing uses.
 add_compile_options(-ffunction-sections -fdata-sections)
 
-# FreeRTOS, FreeRTOS-Plus-TCP and mbedTLS, the sample's releases, checked
-# against their hashes.
+# The kernel, from kernel.cmake, with heap_3: pvPortMalloc() is the C
+# library's malloc(), which mbedTLS and the tests' C++ allocate with too.
+add_library(freertos_config INTERFACE)
+target_include_directories(freertos_config SYSTEM INTERFACE config)
+target_compile_definitions(freertos_config INTERFACE TEST_KERNEL_MAJOR=${major})
+set(FREERTOS_HEAP 3)
+ebisu_test_freertos_kernel(${EBISU_LTEST_KERNEL})
+
 include(FetchContent)
-FetchContent_Declare(freertos_kernel
-    URL https://github.com/FreeRTOS/FreeRTOS-Kernel/releases/download/V11.3.3/FreeRTOS-KernelV11.3.3.zip
-    URL_HASH SHA256=dd728be9ecfdcea4121b89ed015dff77eb0d3fa8ce2bff4b660da748b298990f
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+# FreeRTOS-Plus-TCP, for its stack, or for the driver of the board's LAN9118
+# alone, which it ships, and mbedTLS: their releases, checked against their
+# hashes. mbedTLS 2's tag's archive, which came before its releases had
+# archives of their own.
 FetchContent_Declare(freertos_plus_tcp
     URL https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/releases/download/V4.4.2/FreeRTOS-Plus-TCP-V4.4.2.zip
     URL_HASH SHA256=bea95f97c6eecfc957e3fba411a21055ef9f26906b3268bee911a7d2756bf181
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     SOURCE_SUBDIR not-built)
-FetchContent_Declare(mbedtls
-    URL https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.7/mbedtls-3.6.7.tar.bz2
-    URL_HASH SHA256=a7e8bcbec0e6f761b4af24f25677626b35f762f68eef79c08677a363212d11f6
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    SOURCE_SUBDIR not-built)
-add_library(freertos_config INTERFACE)
-target_include_directories(freertos_config SYSTEM INTERFACE config)
-set(FREERTOS_PORT GCC_ARM_CM3)
-set(FREERTOS_HEAP 3)
-FetchContent_MakeAvailable(freertos_kernel freertos_plus_tcp mbedtls)
-
-# The TCP/IP stack, with the board's Ethernet driver.
+if(EBISU_LTEST_LWIP)
+    FetchContent_Declare(mbedtls
+        URL https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/mbedtls-2.4.0.tar.gz
+        URL_HASH SHA256=9a1730ce07848d61ba2c2739566a3f61941f648bf626391afa93d1cd659d491b
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        SOURCE_SUBDIR not-built)
+    set(mbedtls_config ${CMAKE_CURRENT_SOURCE_DIR}/lwip/mbedtls_config.h)
+else()
+    FetchContent_Declare(mbedtls
+        URL https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.7/mbedtls-3.6.7.tar.bz2
+        URL_HASH SHA256=a7e8bcbec0e6f761b4af24f25677626b35f762f68eef79c08677a363212d11f6
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        SOURCE_SUBDIR not-built)
+    set(mbedtls_config ${sample}/config/sample_mbedtls_config.h)
+endif()
+FetchContent_MakeAvailable(freertos_plus_tcp mbedtls)
 set(tcp ${freertos_plus_tcp_SOURCE_DIR}/source)
 set(tcp_driver ${tcp}/portable/NetworkInterface/MPS2_AN385)
-file(GLOB tcp_srcs ${tcp}/*.c)
-add_library(freertos_plus_tcp STATIC
-    ${tcp_srcs}
-    ${tcp}/portable/BufferManagement/BufferAllocation_2.c
-    ${tcp_driver}/NetworkInterface.c
-    ${tcp_driver}/ether_lan9118/smsc9220_eth_drv.c)
-target_include_directories(freertos_plus_tcp
-    SYSTEM PUBLIC ${tcp}/include ${tcp}/portable/Compiler/GCC
-    PRIVATE ${tcp_driver}/ether_lan9118)
-target_link_libraries(freertos_plus_tcp PUBLIC freertos_kernel)
 
-# mbedTLS with the sample's configuration, under the name ebisu's CMake builds
-# its mbedTLS port for.
+if(EBISU_LTEST_LWIP)
+    # lwIP, from lwip.cmake, with the tests' port to FreeRTOS and options,
+    # lwip/port/, and the board's interface over the driver.
+    include(${ebisu_root}/tests/lwip/lwip.cmake)
+    ebisu_test_lwip(${EBISU_LTEST_LWIP})
+    set(LWIP_INCLUDE_DIRS ${LWIP_DIR}/src/include ${CMAKE_CURRENT_SOURCE_DIR}/lwip/port)
+    if(ebisu_test_lwip_1)
+        list(APPEND LWIP_INCLUDE_DIRS ${LWIP_DIR}/src/include/ipv4)
+    endif()
+    set(LWIP_DEFINITIONS TEST_LWIP_1=${ebisu_test_lwip_1})
+    ebisu_test_lwipcore()
+    target_sources(lwipcore PRIVATE lwip/port/sys_arch.c)
+    target_link_libraries(lwipcore PUBLIC freertos_kernel)
+    add_library(lan9118 STATIC lwip/lan9118_netif.c ${tcp_driver}/ether_lan9118/smsc9220_eth_drv.c)
+    target_include_directories(lan9118 PRIVATE ${board} lwip)
+    target_include_directories(lan9118 SYSTEM PRIVATE ${LWIP_INCLUDE_DIRS} ${tcp_driver}/ether_lan9118)
+    target_compile_definitions(lan9118 PRIVATE ${LWIP_DEFINITIONS})
+    target_link_libraries(lan9118 PUBLIC lwipcore)
+    set(net_libs ebisu_lwip lan9118 lwipcore)
+else()
+    # The TCP/IP stack, with the board's Ethernet driver.
+    file(GLOB tcp_srcs ${tcp}/*.c)
+    add_library(freertos_plus_tcp STATIC
+        ${tcp_srcs}
+        ${tcp}/portable/BufferManagement/BufferAllocation_2.c
+        ${tcp_driver}/NetworkInterface.c
+        ${tcp_driver}/ether_lan9118/smsc9220_eth_drv.c)
+    target_include_directories(freertos_plus_tcp
+        SYSTEM PUBLIC ${tcp}/include ${tcp}/portable/Compiler/GCC
+        PRIVATE ${tcp_driver}/ether_lan9118)
+    target_link_libraries(freertos_plus_tcp PUBLIC freertos_kernel)
+    set(net_libs ebisu_freertos_tcp freertos_plus_tcp)
+endif()
+
+# mbedTLS with its configuration, under the name ebisu's CMake builds its
+# mbedTLS port for.
 set(mbedtls ${mbedtls_SOURCE_DIR})
 file(GLOB mbedtls_srcs ${mbedtls}/library/*.c)
 add_library(mbedtls STATIC ${mbedtls_srcs})
 target_include_directories(mbedtls
     SYSTEM PUBLIC ${mbedtls}/include config
     PRIVATE ${mbedtls}/library)
-target_compile_definitions(mbedtls PUBLIC
-    MBEDTLS_CONFIG_FILE="${sample}/config/sample_mbedtls_config.h")
+target_compile_definitions(mbedtls PUBLIC MBEDTLS_CONFIG_FILE="${mbedtls_config}")
 add_library(MbedTLS::mbedtls ALIAS mbedtls)
 
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(${ebisu_root} ebisu EXCLUDE_FROM_ALL)
 
-# The sample's CA certificates into ca_pem.c, as the sample has them.
-file(STRINGS ${sample}/ca.pem ca_lines)
+# The CA certificates into ca_pem.c, as the samples have them: the FreeRTOS
+# sample's, or, with lwIP, the AmebaZ samples', which their mbedTLS takes.
+if(EBISU_LTEST_LWIP)
+    set(ca_file ${ebisu_root}/tio/amebaz-sample/ca.pem)
+else()
+    set(ca_file ${sample}/ca.pem)
+endif()
+set(EBISU_LTEST_CA_FILE ${ca_file} CACHE FILEPATH "The CA certificates, PEM")
+file(STRINGS ${EBISU_LTEST_CA_FILE} ca_lines)
 set(CA_PEM_LINES "")
 foreach(line IN LISTS ca_lines)
     string(REPLACE "\\" "\\\\" line "${line}")
@@ -99,27 +159,38 @@ foreach(line IN LISTS ca_lines)
 endforeach()
 configure_file(${sample}/config/ca_pem.c.in ca_pem.c @ONLY)
 
-# What runs a suite: the board; the sample's network, random generator and
-# mbedTLS mutexes; the FreeRTOS task the suite runs in; and the C library's
-# calls, over semihosting, as the small tests' firmware has them.
+# What runs a suite: the board; the network and the random generator, the
+# sample's, with its mbedTLS mutexes, or lwip/'s; the FreeRTOS task the suite
+# runs in; and the C library's calls, over semihosting, as the small tests'
+# firmware has them.
 add_library(suite_runner OBJECT
     large_main.cpp
     ${ebisu_root}/tests/freertos_small/syscalls.c
     ${sample}/log.c
-    ${sample}/mbedtls_threading.c
-    ${sample}/net.c
-    ${sample}/random.c
     ${board}/board.c
     ${board}/startup.c
     ${CMAKE_CURRENT_BINARY_DIR}/ca_pem.c)
+if(EBISU_LTEST_LWIP)
+    target_sources(suite_runner PRIVATE lwip/net.c lwip/random.c)
+    # lwip/'s net.h and random.h before the sample's; lwIP's headers; and
+    # mbedTLS's ctr_drbg.c, which random.c builds.
+    target_include_directories(suite_runner BEFORE PRIVATE lwip)
+    target_include_directories(suite_runner SYSTEM PRIVATE ${LWIP_INCLUDE_DIRS} ${mbedtls}/library)
+    target_compile_definitions(suite_runner PRIVATE ${LWIP_DEFINITIONS})
+    set(board_defines EBISU_LTEST_BOARD EBISU_LTEST_LWIP)
+else()
+    target_sources(suite_runner PRIVATE
+        ${sample}/mbedtls_threading.c ${sample}/net.c ${sample}/random.c)
+    set(board_defines EBISU_LTEST_BOARD)
+endif()
 # The large tests' platform on the board, ltest_board.h, with the socket
 # callbacks, for tests/large_test/CMakeLists.txt to build each suite with.
-set(board_libs ebisu_mbedtls ebisu_freertos_tcp freertos_plus_tcp mbedtls freertos_kernel)
+set(board_libs ebisu_mbedtls ${net_libs} mbedtls freertos_kernel)
 add_library(ebisu_ltest_board INTERFACE)
 target_sources(ebisu_ltest_board INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_freertos.cpp)
 target_include_directories(ebisu_ltest_board INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(ebisu_ltest_board INTERFACE EBISU_LTEST_BOARD)
+target_compile_definitions(ebisu_ltest_board INTERFACE ${board_defines})
 target_link_libraries(ebisu_ltest_board INTERFACE ${board_libs})
 
 # As tests/CMakeLists.txt has them, for tests/large_test's suites.
@@ -130,7 +201,7 @@ target_include_directories(ebisu_catch INTERFACE ${ebisu_root}/tests)
 # callbacks, which each suite has.
 target_include_directories(suite_runner PRIVATE
     ${sample} ${board} ${CMAKE_CURRENT_SOURCE_DIR} ${ebisu_root}/tests/large_test)
-target_compile_definitions(suite_runner PRIVATE EBISU_LTEST_BOARD)
+target_compile_definitions(suite_runner PRIVATE ${board_defines})
 target_compile_options(suite_runner PRIVATE -Wall -Werror)
 target_link_libraries(suite_runner PUBLIC ${board_libs} ebisu_catch)
 if(EBISU_LTEST_ENV_FILE)

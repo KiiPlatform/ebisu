@@ -8,7 +8,10 @@ state periodically, and logs the commands it receives.
 
 CI builds the firmware image with the SDK, and fails on a warning in ebisu's
 sources or the sample's. Nothing emulates the chip, so CI doesn't run the
-image, and no device runs it either: it is built, not tested.
+image, and no device runs it either: it is built, not tested. CI runs ebisu's
+large tests on the SDK's FreeRTOS, lwIP and mbedTLS, configured as the SDK
+configures them, in QEMU, on another board, against Kii Cloud: see
+[tests/freertos_large](../../tests/freertos_large/README.md#on-lwip).
 
 - [main.c](main.c): in place of the SDK's example's: starts the SDK's console
   and Wi-Fi, then sets up tio as the [FreeRTOS

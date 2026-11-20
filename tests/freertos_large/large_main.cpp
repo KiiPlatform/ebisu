@@ -2,7 +2,9 @@
    with the arguments QEMU has for it, and ends the program with its status.
    The network and TLS are the FreeRTOS sample's: FreeRTOS-Plus-TCP on the
    board's Ethernet controller, with DHCP, and mbedTLS with the CA certificates
-   of its ca.pem. */
+   of its ca.pem. Or, with EBISU_LTEST_LWIP, lwIP on the same controller, and
+   mbedTLS 2.4.0, as Realtek's SDKs for AmebaZ and AmebaZ2 configure them, with
+   the CA certificates of the AmebaZ samples' ca.pem: see lwip/. */
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -17,7 +19,9 @@
 extern "C" {
 #include "board.h"
 #include "log.h"
+#ifndef EBISU_LTEST_LWIP
 #include "mbedtls_threading.h"
+#endif
 #include "net.h"
 #include "random.h"
 /* librdimon's: stdin, stdout and stderr, over semihosting. */
@@ -31,8 +35,12 @@ extern const size_t ca_pem_size;
 int ebisu_test_main(int argc, char* argv[]);
 
 /* 256 KB, in words of StackType_t: Catch's frames and the tests', some with
-   buffers of 16 KB. */
+   buffers of 16 KB. A word less before V10, whose stack depth has 16 bits. */
+#if tskKERNEL_VERSION_MAJOR < 10
+#define SUITE_STACK 0xffffu
+#else
 #define SUITE_STACK (256 * 1024 / sizeof(StackType_t))
+#endif
 /* Below FreeRTOS-Plus-TCP's task, as the sample's tasks are; the tasks the
    tests start take this one's. */
 #define SUITE_PRIORITY (tskIDLE_PRIORITY + 2)
@@ -113,6 +121,17 @@ static void run_suite(void* parameter)
     if (ret != 0) {
         board_fatal("failed to set up TLS: -0x%04x", (unsigned int)-ret);
     }
+#ifdef EBISU_LTEST_LWIP
+    /* As the AmebaZ and AmebaZ2 samples set them up: random.c's generator,
+       as mbedTLS is built without one, and records no larger than mbedTLS
+       takes, which the server may not honor. */
+    mbedtls_ssl_conf_rng(ebisu_mbedtls_tls_config(&tls), random_tls, NULL);
+    ret = mbedtls_ssl_conf_max_frag_len(ebisu_mbedtls_tls_config(&tls),
+            MBEDTLS_SSL_MAX_FRAG_LEN_4096);
+    if (ret != 0) {
+        board_fatal("failed to ask for records of 4096 bytes: -0x%04x", (unsigned int)-ret);
+    }
+#endif
 
     /* Catch passes a run without a test, as a suite would be whose
        constructors didn't register any. */
@@ -132,6 +151,12 @@ int main()
     board_init();
     initialise_monitor_handles();
     log_init();
+#ifdef EBISU_LTEST_LWIP
+    int ret = random_init();
+    if (ret != 0) {
+        board_fatal("failed to seed the random generator: -0x%04x", (unsigned int)-ret);
+    }
+#else
     /* mbedTLS's mutexes, before PSA's random generator, which TLS and
        FreeRTOS-Plus-TCP take random numbers from, is started. */
     mbedtls_threading_init_freertos();
@@ -139,6 +164,7 @@ int main()
     if (ret != 0) {
         board_fatal("failed to start PSA's random generator: %d", ret);
     }
+#endif
     if (net_init() != pdPASS) {
         board_fatal("failed to start the network");
     }

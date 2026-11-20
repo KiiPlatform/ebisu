@@ -10,7 +10,14 @@
 /* The board's Cortex-M3 runs at 25 MHz, which the port sets SysTick from. */
 #define configCPU_CLOCK_HZ 25000000
 #define configTICK_RATE_HZ 1000
+/* Ticks of 32 bits: V8 and V10 have no configTICK_TYPE_WIDTH_IN_BITS, which
+   V11 has in place of configUSE_16_BIT_TICKS. CMakeLists.txt defines
+   TEST_KERNEL_MAJOR, the kernel's major version. */
+#if TEST_KERNEL_MAJOR < 11
+#define configUSE_16_BIT_TICKS 0
+#else
 #define configTICK_TYPE_WIDTH_IN_BITS TICK_TYPE_WIDTH_32_BITS
+#endif
 
 #define configUSE_PREEMPTION 1
 #define configUSE_TIME_SLICING 1
@@ -60,5 +67,9 @@ void board_assert_failed(const char* file, int line);
 #define INCLUDE_xTaskGetSchedulerState 1
 #define INCLUDE_uxTaskGetStackHighWaterMark 1
 #define INCLUDE_uxTaskPriorityGet 1
+/* Off, as later kernels default them, which V8 has to be told. */
+#define configUSE_CO_ROUTINES 0
+#define INCLUDE_vTaskPrioritySet 0
+#define INCLUDE_vTaskDelayUntil 0
 
 #endif /* FREERTOS_CONFIG_H */

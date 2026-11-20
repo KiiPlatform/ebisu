@@ -4,11 +4,21 @@
 # host's large tests are, with CTest's JUnit report in test-results/junit, as
 # CI does.
 #
-# Usage: tests/freertos_large/run.sh
+# Usage: tests/freertos_large/run.sh [<kernel> <lwip>]
 #   with APP_ID, DEFAULT_SITE, CLIENT_ID and CLIENT_SECRET in the environment.
+#   Without arguments, FreeRTOS-Plus-TCP and mbedTLS 3.6.7 on V11.3.3; with
+#   them, lwIP and mbedTLS 2.4.0, as Realtek's SDKs configure them: V8.1.2
+#   1.4.1, the AmebaZ's, or V10.0.1 2.0.2, the AmebaZ2's (see README.md).
 set -eu
 root=$(cd "$(dirname "$0")/../.." && pwd)
-build="$root/build/freertos_large"
+kernel=${1:-V11.3.3}
+lwip=${2:-}
+if [ -n "$lwip" ]; then
+    name="freertos_large-$kernel-lwip-$lwip"
+else
+    name=freertos_large
+fi
+build="$root/build/$name"
 : "${APP_ID:?}" "${DEFAULT_SITE:?}" "${CLIENT_ID:?}" "${CLIENT_SECRET:?}"
 mkdir -p "$build"
 # The admin's credentials, for the firmware to read through semihosting: in a
@@ -27,11 +37,11 @@ trap 'rm -f "$env_file"' EXIT INT TERM
 # before: -U drops what the cache has, for CMakeLists.txt to take them anew,
 # and keeps them off the command line.
 cmake -S "$root/tests/freertos_large" -B "$build" -U EBISU_APP_ID -U EBISU_DEFAULT_SITE \
-    -D EBISU_LTEST_ENV_FILE="$env_file"
+    -D EBISU_LTEST_ENV_FILE="$env_file" -D EBISU_LTEST_KERNEL="$kernel" -D EBISU_LTEST_LWIP="$lwip"
 cmake --build "$build" -j "$(nproc)"
 mkdir -p "$root/test-results/junit"
 # A suite's output only when it fails, as the host's large preset has it: what
 # the tests print, the responses' headers among it, stays out of the logs
 # otherwise.
 ctest --test-dir "$build" --output-on-failure --no-tests=error --repeat until-pass:2 \
-    --output-junit "$root/test-results/junit/freertos_large.xml"
+    --output-junit "$root/test-results/junit/$name.xml"
