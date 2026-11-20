@@ -7,8 +7,8 @@ var searchData=
   ['boolean_5fvalue_4',['boolean_value',['../../../jkii/html/structjkii__primitive__t.html#a9244dc683df36a621450650aa23506f1',1,'jkii_primitive_t::boolean_value'],['../../../jkii/html/structjkii__field__t.html#a24078e6c55d91846240e9bec09bad23d',1,'jkii_field_t::boolean_value']]],
   ['bucket_5fname_5',['bucket_name',['../../../kii/html/structkii__bucket__t.html#a017e05bd9ec6a26eeb4b9099da60f858',1,'kii_bucket_t']]],
   ['buff_6',['buff',['../../../core/html/structebisu__strbuf__t.html#a0387a9ac7fc90b16ebd2ce20af50eccd',1,'ebisu_strbuf_t']]],
-  ['buffers_7',['Set-up buffers',['../index.html#autotoc_md12',1,'']]],
-  ['by_20tio_5fhandler_5ft_8',['Tasks executed by &lt;span class=&quot;tt&quot;&gt;tio_handler_t&lt;/span&gt;.',['../index.html#autotoc_md32',1,'']]],
-  ['by_20tio_5fupdater_5ft_9',['Tasks executed by &lt;span class=&quot;tt&quot;&gt;tio_updater_t&lt;/span&gt;.',['../index.html#autotoc_md33',1,'']]],
+  ['buffers_7',['Set-up buffers',['../index.html#autotoc_md13',1,'']]],
+  ['by_20tio_5fhandler_5ft_8',['Tasks executed by &lt;span class=&quot;tt&quot;&gt;tio_handler_t&lt;/span&gt;.',['../index.html#autotoc_md33',1,'']]],
+  ['by_20tio_5fupdater_5ft_9',['Tasks executed by &lt;span class=&quot;tt&quot;&gt;tio_updater_t&lt;/span&gt;.',['../index.html#autotoc_md34',1,'']]],
   ['bytes_10',['bytes',['../../../core/html/structebisu__dns__addr__t.html#a263bdc2a0684b5208499fe9cdc47f803',1,'ebisu_dns_addr_t']]]
 ];

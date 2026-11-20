@@ -93,12 +93,36 @@ $(function() {
 <p>Once the module has been started, The loop inside the module keeps asking for update by sensors periodically with the specified interval.</p>
 <p>You can choose to run both <span class="tt"><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></span> and <span class="tt"><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></span> or either one.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md0"></a>
+Samples</h1>
+<p>Each sample is a thing that onboards, uploads its state periodically and handles the commands it receives, with tio on one platform. Most give tio platform's ports for their system, sockets and TLS; the esp32, cc3200 and gt202 samples have callbacks of their own.</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Sample  </th><th class="markdownTableHeadNone">Target  </th><th class="markdownTableHeadNone">Built with  </th><th class="markdownTableHeadNone">System, sockets and TLS  </th><th class="markdownTableHeadNone">What CI does  </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/README.md">linux</a>  </td><td class="markdownTableBodyNone">Linux  </td><td class="markdownTableBodyNone">CMake  </td><td class="markdownTableBodyNone">platform's POSIX and OpenSSL ports  </td><td class="markdownTableBodyNone">builds it for 32-bit ARM and on musl, and analyses it with clang-tidy and GCC's <span class="tt">-fanalyzer</span>; doesn't run it  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/win32-sample/README.md">win32</a>  </td><td class="markdownTableBodyNone">Windows  </td><td class="markdownTableBodyNone">CMake, with mingw-w64 or MSVC  </td><td class="markdownTableBodyNone">platform's Win32 and Schannel ports  </td><td class="markdownTableBodyNone">builds it with mingw-w64 and with MSVC; doesn't run it  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/freertos-sample/README.md">freertos</a>  </td><td class="markdownTableBodyNone">the MPS2 AN385 board QEMU emulates, a Cortex-M3  </td><td class="markdownTableBodyNone">CMake, with the Arm GNU toolchain  </td><td class="markdownTableBodyNone">platform's FreeRTOS, FreeRTOS-Plus-TCP and mbedTLS ports  </td><td class="markdownTableBodyNone">runs it in QEMU: built with its clock's floor in 2040, it has to refuse the server's certificate as expired, and with the secrets it runs against Kii Cloud  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/README.md">esp32</a>  </td><td class="markdownTableBodyNone">ESP32, on a board over Wi-Fi, or in Espressif's QEMU  </td><td class="markdownTableBodyNone">ESP-IDF v5.5  </td><td class="markdownTableBodyNone">its own, on FreeRTOS and ESP-IDF's esp-tls, mbedTLS over lwIP  </td><td class="markdownTableBodyNone">builds it for both, and runs it in Espressif's QEMU, as for the freertos sample  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/amebaz2-sample/README.md">amebaz2</a>  </td><td class="markdownTableBodyNone">Realtek's AmebaZ2, the RTL8710C  </td><td class="markdownTableBodyNone">its SDK, ameba-rtos-z2  </td><td class="markdownTableBodyNone">platform's FreeRTOS, lwIP and mbedTLS ports, over the SDK's FreeRTOS V10.0.1, lwIP 2.0.2 and mbedTLS 2.4.0  </td><td class="markdownTableBodyNone">builds the firmware image; nothing runs it  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/amebaz-sample/README.md">amebaz</a>  </td><td class="markdownTableBodyNone">Realtek's AmebaZ, the RTL8710B and RTL8711B  </td><td class="markdownTableBodyNone">its SDK, ameba-rtos-1  </td><td class="markdownTableBodyNone">platform's FreeRTOS, lwIP, and mbedTLS or PolarSSL (experimental) ports, over the SDK's FreeRTOS V8.1.2, lwIP 1.4.1, and mbedTLS 2.4.0 or PolarSSL 1.3.8  </td><td class="markdownTableBodyNone">builds the firmware's images with each library; nothing runs them  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/cc3200-sample/README.md">cc3200</a>  </td><td class="markdownTableBodyNone">TI's CC3200, a Cortex-M4  </td><td class="markdownTableBodyNone">the CC3200 SDK and Code Composer Studio  </td><td class="markdownTableBodyNone">its own, on FreeRTOS and SimpleLink's sockets, without TLS  </td><td class="markdownTableBodyNone">builds ebisu's sources as the sample's Makefile copies them, for a Cortex-M4, but not the sample's own  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/gt202-sample/README.md">gt202</a>  </td><td class="markdownTableBodyNone">the GT202 Wi-Fi module, on a FRDM-K22F board, a Cortex-M4  </td><td class="markdownTableBodyNone">MQX 4.1 and IAR Embedded Workbench for ARM  </td><td class="markdownTableBodyNone">its own, on MQX and the module's sockets, without TLS or with TLS that accepts any server  </td><td class="markdownTableBodyNone">as for the cc3200 sample  </td></tr>
+</table>
+<p>The cc3200 and gt202 samples' socket callbacks are not for a product: their READMEs say why.</p>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md1"></a>
 Use <span class="tt">tio_handler_t</span></h1>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md1"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
 Callback functions</h2>
 <p>Application developer needs to prepare following callback functions.</p>
 <p><a class="anchor" id="task-callbacks"></a> </p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
 The system</h3>
 <p><span class="tt"><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></span> needs executing task asynchronously since it keeps waiting for commands sent to MQTT topic, and both it and <span class="tt"><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></span> need to wait between attempts. The way of doing both varies in different environments, so the application gives <span class="tt">tio</span> an <span class="tt"><a class="elRef" href="../../core/html/structebisu__system__t.html">ebisu_system_t</a></span>, from <a href="https://github.com/KiiPlatform/ebisu/blob/master/core/README.md">core</a>.</p>
 <p>It is a struct holding a pointer to a table of operations, which <span class="tt">tio</span> calls with the system itself as their first argument:</p>
@@ -159,7 +183,7 @@ The system</h3>
 <div class="ttc" id="aebisu__system_8h_html_a90188fadee3bc027156aa75ab532454aa21b207febbcc0f779b0754a6da63d0d4"><div class="ttname"><a href="../../core/html/ebisu__system_8h.html#a90188fadee3bc027156aa75ab532454aa21b207febbcc0f779b0754a6da63d0d4">EBISU_TASKC_OK</a></div><div class="ttdeci">EBISU_TASKC_OK</div></div>
 <div class="ttc" id="aebisu__system_8h_html_a90188fadee3bc027156aa75ab532454aadb245d24463ad5c39c95dae216af46ea"><div class="ttname"><a href="../../core/html/ebisu__system_8h.html#a90188fadee3bc027156aa75ab532454aadb245d24463ad5c39c95dae216af46ea">EBISU_TASKC_FAIL</a></div><div class="ttdeci">EBISU_TASKC_FAIL</div></div>
 </div><!-- fragment --><p>A system that needs state, such as a stack size for its tasks, embeds <span class="tt"><a class="elRef" href="../../core/html/structebisu__system__t.html">ebisu_system_t</a></span> in a struct of its own and gets that back from <span class="tt">self</span> with <span class="tt"><a class="elRef" href="../../core/html/ebisu__object_8h.html#a5e7fdb772cc16ee485b366e1618a7136">EBISU_CONTAINER_OF()</a></span>, as sockets do below.</p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md4"></a>
 Task continue callback</h3>
 <p>Task continue callback is used to determine whether to continue or exit task from the loop.</p>
 <p>Task continue callback signature:</p>
@@ -175,7 +199,7 @@ Task continue callback</h3>
 <div class="line">}</div>
 </div><!-- fragment --><p><span class="tt">term_flag</span> is a variable determines whether to continue. Example app set it true when received <span class="tt">SIGINT</span> generated by Ctrl-C.</p>
 <p>Note that we use <span class="tt">atomic_bool</span> type introduced in C11 since <span class="tt">term_flag</span> is referenced from signal handler, main thread and handler task thread (<span class="tt">_handler_continue()</span> is executed in handler task thread.)</p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md4"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md5"></a>
 Task exit callback</h3>
 <p>Task exit callback is called when task continue callback returns <span class="tt">false</span> or unrecoverable error occurs.</p>
 <p>In this callback, you may need to free memories used for the handler task and other necessary steps when exiting task. The task has closed its MQTT connection by then, so don't close it here. The callback may call <span class="tt">tio_handler_start()</span> to start the task again.</p>
@@ -188,7 +212,7 @@ Task exit callback</h3>
 </div><!-- fragment --><p><span class="tt">handler_terminated</span> is a variable indicates that resources allocated by handler is now all freed.</p>
 <p>Details of memory management when exiting handler task, please refer to API reference of <span class="tt">tio_handler_set_cb_task_exit()</span>.</p>
 <p>We use <span class="tt">atomic_bool</span> here since the flag is referenced in main thread as well before exiting the process. (<span class="tt">_handler_exit()</span> is executed in handler task thread.)</p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md5"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md6"></a>
 Sockets</h3>
 <p><span class="tt">tio</span> provides abstraction of socket related functions. Each connection is an <span class="tt"><a class="elRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a></span>: a pointer to a table of operations, which <span class="tt">tio</span> calls with the socket itself as their first argument.</p>
 <div class="fragment"><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_structRef" href="../../core/html/structebisu__socket__ops__t.html">ebisu_socket_ops_t</a> {</div>
@@ -232,7 +256,7 @@ Sockets</h3>
 <p>Note that, <span class="tt">tio_handler</span> uses MQTT(s) to receive remote control commands and uses HTTP(s) to send the result of command execution, so it takes two sockets: one for each. Both can have the same operations, but they must be different objects, as the two connections are open at the same time. Please also check <a class="el" href="#asynchronous-task-management">Asynchronous task management</a> section as well.</p>
 <p>For both MQTT and HTTP, using them over secure connection is highly recommended. Our cloud supports non-secure connection for now. However, we may terminate supports of insecure connections in the future.</p>
 <p><a class="anchor" id="mqtt-socket-notes"></a> </p>
-<h4 class="doxsection"><a class="anchor" id="autotoc_md6"></a>
+<h4 class="doxsection"><a class="anchor" id="autotoc_md7"></a>
 Notes about socket implementation used for MQTT.</h4>
 <p>Underlying socket implementation used for MQTT must be blocking mode, with a send timeout, and its recv timeout must be shared with <span class="tt"><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></span>.</p>
 <p>With a <span class="tt">monotonic_ms</span> in the system set by <span class="tt">tio_handler_set_system()</span>, <span class="tt">tio_handler</span> times the keep-alive by it, and sends <span class="tt">PINGREQ</span> early enough that a receive running into its timeout still ends within the keep-alive. Without one, it estimates the time since the last MQTT message it sent from the recv timeout and its own waits, which misses the time spent elsewhere, such as in the action callback.</p>
@@ -242,7 +266,7 @@ Notes about socket implementation used for MQTT.</h4>
 </div><!-- fragment --><p>When the recv timeout runs out with nothing received, the MQTT socket's recv should return <span class="tt"><a class="elRef" href="../../core/html/ebisu__socket_8h.html#a7b634b2cbb6bc4349dab223fbee058baa914e89bcb40f7ddc05c46892a3150874">EBISU_SOCK_FAIL</a></span>. <span class="tt"><a class="elRef" href="../../core/html/ebisu__socket_8h.html#a7b634b2cbb6bc4349dab223fbee058baaba8e4dfed7fc8240ee78425110020017">EBISU_SOCK_OK</a></span> with 0 bytes means the broker closed the connection, and <span class="tt">tio_handler</span> connects again.</p>
 <p>A lost connection makes recv return <span class="tt"><a class="elRef" href="../../core/html/ebisu__socket_8h.html#a7b634b2cbb6bc4349dab223fbee058baa914e89bcb40f7ddc05c46892a3150874">EBISU_SOCK_FAIL</a></span> as well. To tell it from a timeout, give the socket the optional <span class="tt">recv_timed_out</span> operation: it returns <span class="tt">true</span> if the last receive timed out, and <span class="tt">false</span> if it failed otherwise, in which case <span class="tt">tio_handler</span> connects again. Without it, every <span class="tt"><a class="elRef" href="../../core/html/ebisu__socket_8h.html#a7b634b2cbb6bc4349dab223fbee058baa914e89bcb40f7ddc05c46892a3150874">EBISU_SOCK_FAIL</a></span> while waiting for a command is taken for a timeout, and a lost connection is only noticed when a <span class="tt">PINGREQ</span> fails or goes unanswered; with a keep-alive interval of 0, never. See <span class="tt">openssl_recv_timed_out()</span> in <a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c">platform's OpenSSL port</a>.</p>
 <p><a class="anchor" id="action-callback"></a> </p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md7"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md8"></a>
 Action callback</h3>
 <p>Action callback is called when the IoT device receives remote control command. You can implement IoT device specific control in the callback such as turn on/ off devices or changes level of actuators, etc.</p>
 <p>Action callback signature:</p>
@@ -271,7 +295,7 @@ Action callback</h3>
 <p><span class="tt">userdata</span> argument is a context object pointer given to <span class="tt">tio_handler_start()</span> method.</p>
 <p>Alias, action name, action value and its type is defined by the feature called <span class="tt">Trait</span>.</p>
 <p>For more details about Trait, please refer to the <a href="http://docs.kii.com/en/guides/thingifsdk/">document</a>.</p>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md8"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md9"></a>
 Set-up <span class="tt">tio_handler_t</span> instance</h2>
 <p>Here's the set-up code extracted from example app. The full code can be checked <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/example.c">handler_init() in example.c</a></p>
 <div class="fragment"><div class="line">tio_handler_init(handler);</div>
@@ -293,20 +317,20 @@ Set-up <span class="tt">tio_handler_t</span> instance</h2>
 <div class="line">tio_handler_set_cb_task_continue(handler, _handler_continue, NULL);</div>
 <div class="line">tio_handler_set_cb_task_exit(handler, _handler_exit, NULL);</div>
 </div><!-- fragment --><p>Here's anatomy of set-up calls.</p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md9"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md10"></a>
 <span class="tt">tio_handler_init</span> call</h3>
 <p>This function must be called prior to any other functions of <span class="tt"><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></span>.</p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md10"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md11"></a>
 <span class="tt">tio_handler_set_app</span> call</h3>
 <p>Set the Kii application information.</p>
 <p>In the example, <span class="tt">KII_APP_ID</span> and <span class="tt">KII_APP_HOST</span> is defined as Macro. Those are used to identify work space in the cloud and the value is determined when you Kii Cloud App has been created. To create your Kii Cloud App, Sign-up to <a href="https://developer.kii.com">Developer console</a>.</p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md11"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md12"></a>
 Set-up the system and sockets</h3>
 <div class="fragment"><div class="line">tio_handler_set_system(handler, ebisu_posix_system());</div>
 </div><!-- fragment --><p>Different socket objects, <span class="tt">http_ssl_ctx</span> and <span class="tt">mqtt_ssl_ctx</span>, are used since the connection and it's life-cycle is different between them. <span class="tt">tio</span> keeps a pointer to each object, so they have to outlive the handler's task. If your application allocates memory/ resources for them, application is responsible to free those memory/ resources.</p>
 <div class="fragment"><div class="line">tio_handler_set_http_socket(handler, &amp;http_ssl_ctx-&gt;base);</div>
 <div class="line">tio_handler_set_mqtt_socket(handler, &amp;mqtt_ssl_ctx-&gt;base);</div>
-</div><!-- fragment --><h3 class="doxsection"><a class="anchor" id="autotoc_md12"></a>
+</div><!-- fragment --><h3 class="doxsection"><a class="anchor" id="autotoc_md13"></a>
 Set-up buffers</h3>
 <p><span class="tt">tio_handler</span> needs memory buffer to store HTTP/ MQTT payloads.</p>
 <p>In this example, assigned 4KB for HTTP payloads and 2KB for MQTT payloads. This size may covers most use-cases. However, If you're remote command definition is more and larger, you may need to allocate larger size.</p>
@@ -320,12 +344,12 @@ Set-up buffers</h3>
 <div class="line">tio_handler_set_cb_slist_resource(handler, header_pool_alloc, header_pool_free,</div>
 <div class="line">        &amp;headers, &amp;headers);</div>
 </div><!-- fragment --><p>The updater has the same setters, and needs buffers and a pool of its own.</p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md13"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md14"></a>
 Set-up MQTT socket timeout.</h3>
 <p><span class="tt"><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></span> needs socket timeout in seconds to send MQTT <span class="tt">PINGREQ</span> periodically.</p>
 <p>Note that application must implement socket timeout in the socket implementation. You can see example <a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c">here</a></p>
 <div class="fragment"><div class="line">tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);</div>
-</div><!-- fragment --><h3 class="doxsection"><a class="anchor" id="autotoc_md14"></a>
+</div><!-- fragment --><h3 class="doxsection"><a class="anchor" id="autotoc_md15"></a>
 Set-up MQTT Keep Alive interval.</h3>
 <p>In the example, <span class="tt">HANDLER_KEEP_ALIVE_SEC</span> is defined as Macro and value is 300 (in seconds).</p>
 <p>MQTT have mechanism called <span class="tt">Keep Alive</span> detecting stale connection between the MQTT broker.</p>
@@ -335,7 +359,7 @@ Set-up MQTT Keep Alive interval.</h3>
 <p>MQTT keep alive interval must be larger than recv/ send timeout.</p>
 <div class="fragment"><div class="line">tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);</div>
 </div><!-- fragment --><p><a class="anchor" id="session"></a> </p>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md15"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md16"></a>
 Set up a session</h2>
 <p>Access tokens expire. A <span class="tt"><a class="elRef" href="../../kii/html/structkii__session__t.html">kii_session_t</a></span> holds the thing's token and, whenever the server refuses it, renews it the way it was obtained: by onboarding again through Thing-IF, with the thing's vendor thing ID and password. It then sends the refused request again. When the MQTT broker refuses the handler's credentials, the handler gets new ones the same way, as onboarding returns the MQTT endpoint along with the token. tio thus talks only to Thing-IF and the MQTT broker.</p>
 <p>The <span class="tt"><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></span> and the <span class="tt"><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></span> of a device share one session, so that a token refused to either is renewed once, for both.</p>
@@ -361,7 +385,7 @@ Set up a session</h2>
 <div class="ttc" id="astructkii__session__t_html"><div class="ttname"><a href="../../kii/html/structkii__session__t.html">kii_session_t</a></div></div>
 </div><!-- fragment --><p>Set the session before <a class="el" href="#execute-onboarding">onboarding</a>, which then stores the token it obtains in the session. The samples onboard at each start. To use a token saved before a restart instead, give it to the session with <span class="tt"><a class="elRef" href="../../kii/html/kii_8h.html#a72459c7ed527d9feb934be7287570402">kii_session_set_author()</a></span>; the handler then gets its MQTT endpoint from Kii Cloud's API, as without onboarding, until the broker refuses the credentials.</p>
 <p>Once the server refuses the password, the session doesn't try it again for 5 minutes, then twice as long after each further refusal, up to an hour: where the application limits login attempts, trying a wrong password whenever a token is refused would soon lock the thing out. Meanwhile requests refused for their token fail. Calling <span class="tt"><a class="elRef" href="../../kii/html/kii_8h.html#ae1036e32aa7dc6c1afa027dfd728ebbf">kii_session_set_password()</a></span> again ends the wait.</p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md16"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md17"></a>
 Lock</h3>
 <p>Required. The handler's MQTT task and the updater's task both use the session, and the lock keeps one of them from renewing the token while the other does. It is held for the length of the renewal request. It need not be recursive. On a platform where the two tasks cannot run at the same time, its operations can do nothing.</p>
 <p>An <span class="tt"><a class="elRef" href="../../core/html/structebisu__lock__t.html">ebisu_lock_t</a></span> is a pointer to its operations, embedded in the struct holding the mutex:</p>
@@ -384,10 +408,10 @@ Lock</h3>
 <div class="ttc" id="astructebisu__lock__ops__t_html"><div class="ttname"><a href="../../core/html/structebisu__lock__ops__t.html">ebisu_lock_ops_t</a></div></div>
 <div class="ttc" id="astructebisu__lock__t_html"><div class="ttname"><a href="../../core/html/structebisu__lock__t.html">ebisu_lock_t</a></div></div>
 </div><!-- fragment --><p><a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/posix/src/ebisu_posix.c">platform's POSIX port</a> has this one, <span class="tt">ebisu_posix_lock_t</span>, initialized with <span class="tt">ebisu_posix_lock_init()</span>.</p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md17"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md18"></a>
 The system's monotonic clock</h3>
 <p>Required. The session times the expiry of tokens that have a lifetime, which those onboarding issues do not, with the <span class="tt">monotonic_ms</span> of the <a class="el" href="#task-callbacks">system</a> set by <span class="tt"><a class="elRef" href="../../kii/html/kii_8h.html#aa035526f1f96acd8f8bc2b66c031d511">kii_session_set_system()</a></span>. It is called only with the session lock held, so it can count the wraps of a 32-bit tick counter without a lock of its own.</p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md18"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md19"></a>
 Author updated callback</h3>
 <p>Called whenever the session's token changes: after onboarding and after every renewal. A device that keeps its token across a restart saves the author here; onboarding again leaves earlier tokens valid, so one that onboards at each start, as the samples do, need not. It is called with the session lock held and must not call <span class="tt">tio</span> or <span class="tt">kii</span> APIs.</p>
 <div class="fragment"><div class="line"><span class="keywordtype">void</span> author_updated_callback(<span class="keyword">const</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">kii_author_t</a>* author, <span class="keywordtype">void</span>* userdata)</div>
@@ -396,11 +420,11 @@ Author updated callback</h3>
 <div class="line">}</div>
 <div class="ttc" id="astructkii__author__t_html"><div class="ttname"><a href="../../kii/html/structkii__author__t.html">kii_author_t</a></div></div>
 </div><!-- fragment --><p><a class="anchor" id="clock"></a> </p>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md19"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md20"></a>
 Keep the time</h2>
 <p>A device without a real-time clock needs the time to check the server's certificate in its socket callbacks. The handler and the updater give an <span class="tt"><a class="elRef" href="../../core/html/structebisu__server__clock__t.html">ebisu_server_clock_t</a></span> the time each response states, with <span class="tt">tio_handler_set_clock()</span> and <span class="tt">tio_updater_set_clock()</span>. They run in tasks of their own, so a clock they share needs a lock, set by <span class="tt"><a class="elRef" href="../../core/html/ebisu__server__clock_8h.html#a5505c829296480a5169e4407dc140afb">ebisu_server_clock_set_lock()</a></span>. That has to be a lock of its own, not the session's. A device whose system keeps the time sets <span class="tt">ebisu_system_clock()</span> on its sockets instead, and needs neither. The <a href="https://github.com/KiiPlatform/ebisu/blob/master/kii/README.md#the-time">kii README</a> describes the clock and how the socket callbacks use it.</p>
 <p><a class="anchor" id="execute-onboarding"></a> </p>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md20"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md21"></a>
 Execute onboarding</h2>
 <p>For the first time, Step called <span class="tt">onboarding</span> is required. In this step, Identifier of IoT device (thing ID) is generated and stored in cloud.</p>
 <p>After the step, thing ID and access token is returned to IoT device. By using thing ID and access token, cloud can identify the device when the remote command is sent to the device with the thing ID or sensor data sent from the device with the token.</p>
@@ -419,7 +443,7 @@ Execute onboarding</h2>
 <div class="line"><span class="comment">/* thing ID and access token is stored in tio_author_t.</span></div>
 <div class="line"><span class="comment">printf(&quot;thing ID: %s\n&quot;, author.author_id);</span></div>
 <div class="line"><span class="comment">*/</span></div>
-</div><!-- fragment --><h2 class="doxsection"><a class="anchor" id="autotoc_md21"></a>
+</div><!-- fragment --><h2 class="doxsection"><a class="anchor" id="autotoc_md22"></a>
 Start module</h2>
 <p>Now, it's ready to start <span class="tt"><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></span> module.</p>
 <div class="fragment"><div class="line">tio_handler_start(&amp;handler, NULL, tio_action_handler, NULL);</div>
@@ -429,21 +453,21 @@ Start module</h2>
 <li>last argument is context object pointer can be referenced in action callback. Passing NULL since we don't use context object in this example.</li>
 </ul>
 <p>This call results to execute asynchronous tasks created by <a class="el" href="#task-callbacks">Task callbacks</a>. The name of the task initiated by this call is exported as macro <span class="tt"><a class="elRef" href="../../kii/html/kii_8h.html#a48f058506a462a68bdf8fbd4c661accf">KII_TASK_NAME_MQTT</a></span> defined in <span class="tt"><a class="elRef" href="../../kii/html/kii_8h.html">kii.h</a></span>.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md22"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md23"></a>
 Use <span class="tt">tio_updater_t</span></h1>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md23"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md24"></a>
 Callback functions</h2>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md24"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md25"></a>
 The system, task callbacks, sockets</h3>
 <p>Similar to <span class="tt"><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></span>.</p>
 <p><span class="tt"><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></span> only uses HTTP(s) and does not use MQTT(s), so it takes one socket.</p>
-<h3 class="doxsection"><a class="anchor" id="autotoc_md25"></a>
+<h3 class="doxsection"><a class="anchor" id="autotoc_md26"></a>
 State read callbacks</h3>
 <p><span class="tt"><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></span> uploads the IoT device state such as sensor readings periodically with the specified interval.</p>
 <p>When the specified interval elapsed, <span class="tt"><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></span> execute callback function to read the latest state of the IoT device.</p>
 <p>Application can implement the process reading values from sensors, etc.</p>
 <p><a class="anchor" id="size-callback"></a> </p>
-<h4 class="doxsection"><a class="anchor" id="autotoc_md26"></a>
+<h4 class="doxsection"><a class="anchor" id="autotoc_md27"></a>
 Size callback.</h4>
 <p>Size callback is called to ask the size of new IoT device state. This callback is called before the read callback. If the returned size is 0, <span class="tt"><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></span> skips updating device state.</p>
 <p>With a <a class="el" href="#session">session</a>, it is called again when the server refused an upload for its token and the session renewed it: the upload is then made again, and the state read again from its beginning. The read callback must start over whenever this callback is called.</p>
@@ -451,7 +475,7 @@ Size callback.</h4>
 <div class="fragment"><div class="line"><span class="keyword">typedef</span> size_t (*TIO_CB_SIZE)(<span class="keywordtype">void</span>* userdata);</div>
 </div><!-- fragment --><p><span class="tt">userdata</span> is context object pointer given to <span class="tt">tio_updater_start()</span> argument.</p>
 <p><a class="anchor" id="read-callback"></a> </p>
-<h4 class="doxsection"><a class="anchor" id="autotoc_md27"></a>
+<h4 class="doxsection"><a class="anchor" id="autotoc_md28"></a>
 Read callback</h4>
 <p>Read callback is used to read actual IoT device state. Callback is repeatedly called until it returns 0.</p>
 <div class="fragment"><div class="line"><span class="keyword">typedef</span> size_t (*TIO_CB_READ)(</div>
@@ -477,7 +501,7 @@ Read callback</h4>
 <li><span class="tt">presetTemperature</span> is number type property defined in the <span class="tt">Trait</span>.</li>
 </ul>
 <p>For more details about format of the IoT device state and <span class="tt">Trait</span>, Please refer to (<a href="http://docs.kii.com/en/guides/thingifsdk/">http://docs.kii.com/en/guides/thingifsdk/</a>).</p>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md28"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md29"></a>
 Set-up <span class="tt">tio_updater_t</span> instance</h2>
 <p>Here's the set-up code extracted from example app. The full code can be checked <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/example.c">updater_init() in example.c</a></p>
 <div class="fragment"><div class="line">tio_updater_init(updater);</div>
@@ -498,12 +522,12 @@ Set-up <span class="tt">tio_updater_t</span> instance</h2>
 <li><span class="tt">tio_updater_set_interval()</span> specifies interval of uploading state in seconds.</li>
 </ul>
 <p>Other set-up process is similar to <span class="tt"><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></span>.</p>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md29"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md30"></a>
 Execute onboarding</h2>
 <p><span class="tt">tio_updater_onboard()</span> method is similar to <span class="tt">tio_handler_onboard()</span>.</p>
 <p>If you use both <span class="tt"><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></span> and <span class="tt"><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></span> for an IoT device, you just need to execute onboarding process from either one. No need to execute onboarding for both method since the thing ID bonding process just need to be executed once.</p>
 <p>After the onboarding has been done, you can get <span class="tt">tio_author_t</span> instance from either <span class="tt"><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></span> or <span class="tt"><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></span> and pass it to <span class="tt">tio_handler_start()</span> or <span class="tt">tio_updater_start()</span> method. With a <a class="el" href="#session">session</a> shared by both, they take the author from it instead.</p>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md30"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md31"></a>
 Start module</h2>
 <p>Now, it's ready to start the updater module.</p>
 <p>Here's code extracted from <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/example.c">example app</a>.</p>
@@ -521,11 +545,11 @@ Start module</h2>
 <li><span class="tt">updater_file_ctx</span> : Context object pointer referenced from both size callback/ read callback.</li>
 </ul>
 <p><a class="anchor" id="asynchronous-task-management"></a> </p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md31"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md32"></a>
 Asynchronous task management</h1>
 <p><span class="tt">tio</span> execute multiple asynchronous tasks.</p>
 <p>The name of tasks executed by <span class="tt"><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></span> and <span class="tt"><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></span> listed bellow.</p>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md32"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md33"></a>
 Tasks executed by <span class="tt">tio_handler_t</span>.</h2>
 <ul>
 <li><p class="startli"><span class="tt"><a class="elRef" href="../../kii/html/kii_8h.html#a48f058506a462a68bdf8fbd4c661accf">KII_TASK_NAME_MQTT</a></span> is a name of the task defined at <span class="tt"><a class="elRef" href="../../kii/html/kii_8h.html">kii.h</a></span> and passed as argument when <span class="tt">task_create</span> of the system set by <span class="tt">tio_handler_set_system()</span> is called to create task/ thread.</p>
@@ -546,7 +570,7 @@ Tasks executed by <span class="tt">tio_handler_t</span>.</h2>
 <p class="startli">Those two buffers must be separated and have no overlaps.</p>
 </li>
 </ul>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md33"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md34"></a>
 Tasks executed by <span class="tt">tio_updater_t</span>.</h2>
 <ul>
 <li><p class="startli"><span class="tt">TIO_TASK_NAME_UPDATE_STATE</span> is a name of the task declared in <span class="tt"><a class="el" href="tio_8h_source.html">tio.h</a></span> and passed as argument when <span class="tt">task_create</span> of the system set by <span class="tt">tio_updater_set_system()</span> is called to create task/ thread.</p>
@@ -564,7 +588,7 @@ Tasks executed by <span class="tt">tio_updater_t</span>.</h2>
 </ul>
 </li>
 </ul>
-<h2 class="doxsection"><a class="anchor" id="autotoc_md34"></a>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md35"></a>
 Avoiding race condition</h2>
 <ul>
 <li>Above 2 tasks <span class="tt"><a class="elRef" href="../../kii/html/kii_8h.html#a48f058506a462a68bdf8fbd4c661accf">KII_TASK_NAME_MQTT</a></span> and <span class="tt">TIO_TASK_NAME_UPDATE_STATE</span> would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access control mechanism.</li>

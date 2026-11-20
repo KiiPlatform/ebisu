@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['keep_20alive_20interval_0',['Set-up MQTT Keep Alive interval.',['../index.html#autotoc_md14',1,'']]],
-  ['keep_20the_20time_1',['Keep the time',['../index.html#autotoc_md19',1,'']]],
+  ['keep_20alive_20interval_0',['Set-up MQTT Keep Alive interval.',['../index.html#autotoc_md15',1,'']]],
+  ['keep_20the_20time_1',['Keep the time',['../index.html#autotoc_md20',1,'']]],
   ['key_2',['key',['../../../jkii/html/structjkii__member__t.html#a59c73f95abf1537745b9b0c744695517',1,'jkii_member_t']]],
   ['key_5flength_3',['key_length',['../../../jkii/html/structjkii__member__t.html#a9231355bb207946584972854c011c8eb',1,'jkii_member_t']]],
   ['khc_4',['khc',['../../../khc/html/structkhc.html',1,'']]],

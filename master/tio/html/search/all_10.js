@@ -1,8 +1,8 @@
 var searchData=
 [
-  ['race_20condition_0',['Avoiding race condition',['../index.html#autotoc_md34',1,'']]],
-  ['read_20callback_1',['Read callback',['../index.html#autotoc_md27',1,'']]],
-  ['read_20callbacks_2',['State read callbacks',['../index.html#autotoc_md25',1,'']]],
+  ['race_20condition_0',['Avoiding race condition',['../index.html#autotoc_md35',1,'']]],
+  ['read_20callback_1',['Read callback',['../index.html#autotoc_md28',1,'']]],
+  ['read_20callbacks_2',['State read callbacks',['../index.html#autotoc_md26',1,'']]],
   ['recv_3',['recv',['../../../core/html/structebisu__socket__ops__t.html#a28417969117e077e747944faac38efa8',1,'ebisu_socket_ops_t']]],
   ['recv_5ftimed_5fout_4',['recv_timed_out',['../../../core/html/structebisu__socket__ops__t.html#af8c5f0ab8132bb300aa61db25a4a8073',1,'ebisu_socket_ops_t']]],
   ['recv_5fwait_5',['recv_wait',['../../../core/html/structebisu__socket__ops__t.html#a4b245d596fc7e2c6937a70794b6cd031',1,'ebisu_socket_ops_t']]],

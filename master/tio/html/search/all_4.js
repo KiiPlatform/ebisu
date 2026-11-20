@@ -35,8 +35,8 @@ var searchData=
   ['err_5fmessage_32',['err_message',['../structtio__action__err__t.html#aece44befd7f0b26314a54894a2fefff3',1,'tio_action_err_t']]],
   ['error_33',['error',['../../../kii/html/structkii__mqtt__task__info.html#a92ee0b673e721c1deb760bb6853ec42e',1,'kii_mqtt_task_info::error'],['../structtio__handler__task__info__t.html#a2b725069e1e91b1111e5ed37cce547a4',1,'tio_handler_task_info_t::error']]],
   ['error_5fcode_34',['error_code',['../../../kii/html/structkii__server__code__result__t.html#a9b7ede64c6225bdc3ee727079c01192d',1,'kii_server_code_result_t']]],
-  ['execute_20onboarding_35',['Execute onboarding',['../index.html#autotoc_md20',1,'Execute onboarding'],['../index.html#autotoc_md29',1,'Execute onboarding']]],
-  ['executed_20by_20tio_5fhandler_5ft_36',['Tasks executed by &lt;span class=&quot;tt&quot;&gt;tio_handler_t&lt;/span&gt;.',['../index.html#autotoc_md32',1,'']]],
-  ['executed_20by_20tio_5fupdater_5ft_37',['Tasks executed by &lt;span class=&quot;tt&quot;&gt;tio_updater_t&lt;/span&gt;.',['../index.html#autotoc_md33',1,'']]],
-  ['exit_20callback_38',['Task exit callback',['../index.html#autotoc_md4',1,'']]]
+  ['execute_20onboarding_35',['Execute onboarding',['../index.html#autotoc_md21',1,'Execute onboarding'],['../index.html#autotoc_md30',1,'Execute onboarding']]],
+  ['executed_20by_20tio_5fhandler_5ft_36',['Tasks executed by &lt;span class=&quot;tt&quot;&gt;tio_handler_t&lt;/span&gt;.',['../index.html#autotoc_md33',1,'']]],
+  ['executed_20by_20tio_5fupdater_5ft_37',['Tasks executed by &lt;span class=&quot;tt&quot;&gt;tio_updater_t&lt;/span&gt;.',['../index.html#autotoc_md34',1,'']]],
+  ['exit_20callback_38',['Task exit callback',['../index.html#autotoc_md5',1,'']]]
 ];
