@@ -10,8 +10,16 @@ on:
 permissions:
   contents: read
 
+# Each job is named in lower case for what it builds or tests, as the tree
+# names it, the small or large tests, a port, a sample, or for the target it
+# builds them all for. In parentheses comes what tells it from the other jobs
+# on the same thing: a version, bare if it is of what the job is named for or
+# of what a port is a port to, and after its name if not; the target; and how
+# it runs, or that it is only built. A JUnit report is named for its job, the
+# parentheses opened: "JUnit Test Report (large, 64-bit, valgrind)".
 jobs:
   build:
+    name: small (64-bit, valgrind) and docs
     permissions:
       contents: write # to push the docs to gh-pages
       checks: write # for the JUnit report
@@ -47,6 +55,7 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
+          check_name: JUnit Test Report (small, 64-bit, valgrind)
       - name: build docs
         # The Doxyfiles write straight into the publish layout, so there is no
         # longer a copy step reassembling it from per-component html/ output in
@@ -392,7 +401,7 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
-          check_name: JUnit Test Report (mbedtls port, ${{ matrix.mbedtls }}${{ matrix.variant && format(', {0}', matrix.variant) || '' }})
+          check_name: JUnit Test Report (mbedtls port, ${{ matrix.mbedtls }}${{ matrix.variant && format(', {0}', matrix.variant) || '' }}, valgrind)
 
   # The PolarSSL port's tests, experimental: the mbedTLS port's, against
   # PolarSSL 1.3.8, as vendors' SDKs ship it, mbedTLS 1.3.22, the last of its
@@ -436,7 +445,7 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
-          check_name: JUnit Test Report (polarssl port, ${{ matrix.polarssl }}${{ matrix.variant && format(', {0}', matrix.variant) || '' }})
+          check_name: JUnit Test Report (polarssl port, ${{ matrix.polarssl }}${{ matrix.variant && format(', {0}', matrix.variant) || '' }}, valgrind)
 
   # Two static analyzers, each following paths through the C of the libraries
   # and the Linux sample for what no test happens to take: leaks, double frees,
@@ -478,7 +487,7 @@ jobs:
   # figure. The large tests, which need the application and its secrets, are
   # left out, and so is what only they run.
   coverage:
-    name: coverage (small tests, OpenSSL port)
+    name: coverage (small, openssl port)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -525,7 +534,7 @@ jobs:
   # built from its release tarball, the ports against it, and their tests run.
   # Every other job builds the ports against the runner's own OpenSSL.
   openssl:
-    name: ${{ format('OpenSSL {0} ports', matrix.version) }}
+    name: posix and openssl ports (OpenSSL ${{ matrix.version }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -546,7 +555,7 @@ jobs:
   # under qemu-arm. Stretch's glibc, 2.24, is older than the oldest the targets
   # have, so the job fails if anything needs a symbol newer than GLIBC_2.26.
   armhf:
-    name: ${{ format('armhf Linux, OpenSSL {0}', matrix.version) }}
+    name: armhf (OpenSSL ${{ matrix.version }}, qemu-arm)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -564,7 +573,7 @@ jobs:
   # 32-bit x86 Linux on musl, with Alpine's own OpenSSL, on both sides of musl
   # 1.2.0, which made time_t 64 bits on 32-bit targets.
   musl:
-    name: ${{ format('musl {0}, 32-bit', matrix.musl) }}
+    name: musl (${{ matrix.musl }}, 32-bit)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -586,7 +595,7 @@ jobs:
   # What `cmake --install` puts under a prefix, built against: a program finds
   # it through the CMake package and through pkg-config, and runs.
   package:
-    name: install, then find_package and pkg-config
+    name: package (cmake --install, find_package, pkg-config)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -656,7 +665,7 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
-          check_name: JUnit Test Report (large (64-bit, valgrind))
+          check_name: JUnit Test Report (large, 64-bit, valgrind)
 
   # The MQTT task against a Mosquitto broker of the run's own, in a container:
   # what Kii Cloud's broker can't be made to do, or does only now and then. On
@@ -699,7 +708,7 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
-          check_name: JUnit Test Report (broker (Mosquitto 2.1, valgrind))
+          check_name: JUnit Test Report (broker, Mosquitto 2.1, valgrind)
 
   # The embedded samples (GT202, CC3200) are built with their vendors'
   # tools, from the files their Makefiles copy, and not with CMake. Those SDKs
@@ -709,7 +718,7 @@ jobs:
   # checks that the version header their Makefiles write is the one CMake does,
   # and reports the code size of the libraries and of a thing linked with them.
   samples:
-    name: samples (Cortex-M4, arm-none-eabi)
+    name: cc3200 and gt202 samples (ebisu's sources, Cortex-M4, build)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -906,7 +915,7 @@ jobs:
   # are built only.
   # See tio/amebaz-sample/README.md.
   amebaz:
-    name: amebaz sample (Realtek SDK, ${{ matrix.tls }}, build)
+    name: amebaz sample (Realtek SDK, ${{ matrix.library }}, build)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -914,7 +923,11 @@ jobs:
       matrix:
         # The SDK's mbedTLS 2.4.0, and its PolarSSL 1.3.8, with ebisu's
         # PolarSSL port, experimental.
-        tls: [mbedtls, polarssl]
+        include:
+          - tls: mbedtls
+            library: mbedTLS 2.4.0
+          - tls: polarssl
+            library: PolarSSL 1.3.8
     env:
       # https://github.com/Ameba-AIoT/ameba-rtos-1, as of 2022-11-23.
       SDK_COMMIT: 63d54848534113c50e4e78d0ba45359be9ef7e0f
@@ -986,14 +999,14 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
-          check_name: JUnit Test Report (freertos port, ${{ matrix.kernel }})
+          check_name: JUnit Test Report (freertos port, ${{ matrix.kernel }}, Cortex-M3, QEMU)
 
   # The lwIP socket's tests, on the runner, with lwIP in the test's own process
   # and servers of the test's own on its loopback interface, configured two
   # ways, against the oldest lwIP the socket supports, 1.4.1, 2.0.2, 2.1.3, and
   # the latest, plain and under valgrind. See tests/lwip/README.md.
   lwip:
-    name: lwip socket (lwIP ${{ matrix.lwip }})
+    name: lwip socket (${{ matrix.lwip }}, valgrind)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -1030,13 +1043,13 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
-          check_name: JUnit Test Report (lwip socket, lwIP ${{ matrix.lwip }})
+          check_name: JUnit Test Report (lwip socket, ${{ matrix.lwip }}, valgrind)
 
   # The small tests, tests/small_test's suites, each a firmware for the same
   # board that runs it in a FreeRTOS task, with newlib and its C++ library,
   # run in QEMU by CTest. See tests/freertos_small/README.md.
   freertos-small:
-    name: freertos small tests (Cortex-M3, QEMU)
+    name: small (FreeRTOS, Cortex-M3, QEMU)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -1060,14 +1073,14 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
-          check_name: JUnit Test Report (freertos small tests)
+          check_name: JUnit Test Report (small, FreeRTOS, Cortex-M3, QEMU)
 
   # The large tests, each suite a firmware for the same board that runs it in
   # a FreeRTOS task against the live Kii application the secrets name, over
   # platform's mbedTLS port and its FreeRTOS-Plus-TCP socket, run in QEMU by
   # CTest. See tests/freertos_large/README.md.
   freertos-large:
-    name: freertos large tests (Cortex-M3, QEMU)
+    name: large (FreeRTOS, Cortex-M3, QEMU)
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -1101,7 +1114,7 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
-          check_name: JUnit Test Report (freertos large tests)
+          check_name: JUnit Test Report (large, FreeRTOS, Cortex-M3, QEMU)
 
   # The FreeRTOS-Plus-TCP socket's and name servers' tests: a firmware for the
   # same board, run in QEMU against servers on the runner, TCP ones and name
@@ -1145,4 +1158,4 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
-          check_name: JUnit Test Report (freertos tcp socket, ${{ matrix.plus_tcp }}${{ matrix.ipv6 && ', IPv6' || '' }})
+          check_name: JUnit Test Report (freertos tcp socket, ${{ matrix.plus_tcp }}${{ matrix.ipv6 && ', IPv6' || '' }}, Cortex-M3, QEMU)
