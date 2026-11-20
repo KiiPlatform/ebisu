@@ -9,6 +9,7 @@
 #include <lwip/init.h>
 #include <lwip/netdb.h>
 #include <lwip/sockets.h>
+#include <lwip/sys.h>
 
 #include "ebisu_lwip_impl.h"
 
@@ -167,6 +168,11 @@ static int connect_to(ebisu_lwip_tcp_socket_t* sock, const struct addrinfo* addr
     return s;
 }
 
+/* How long a lookup waits for a result of lwIP's MEMP_NETDB pool that another
+   task's holds: 50 tries, 10 ms apart, half a second. */
+#define LOOKUP_TRIES 50u
+#define LOOKUP_RETRY_MS 10u
+
 /* The port in decimal, as lwip_getaddrinfo() takes it. */
 static void format_port(uint16_t port, char out[6])
 {
@@ -196,15 +202,39 @@ static ebisu_sock_code_t tcp_connect(ebisu_socket_t* self, const char* host, uin
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     format_port(port, service);
-    /* An address as written is taken as it is, without asking a server. */
-    int ret = lwip_getaddrinfo(host, service, &hints, &results);
+    /* An address as written is taken as it is, without asking a server. The
+       result is one of lwIP's MEMP_NUM_NETDB, 1 unless lwipopts.h says more,
+       which another task's lookup may hold for a moment, as this one does:
+       EAI_MEMORY, while it does. */
+    int ret;
+    unsigned int tries = 0;
+    while ((ret = lwip_getaddrinfo(host, service, &hints, &results)) == EAI_MEMORY &&
+            ++tries < LOOKUP_TRIES) {
+        sys_msleep(LOOKUP_RETRY_MS);
+    }
     if (ret != 0 || results == NULL) {
         fail_with(sock, EBISU_SOCK_ERROR_DNS, ret);
         log_to(sock->_logger, EBISU_LOG_ERROR, "failed to look up %s: %d", host, ret);
         return EBISU_SOCK_FAIL;
     }
-    int s = connect_to(sock, results);
+    /* The address, which lwIP gives one of, out of the result, which goes
+       back to lwIP before the connect, which may take the connect timeout. */
+    union {
+        struct sockaddr any;
+        struct sockaddr_in in;
+#if LWIP_IPV6
+        struct sockaddr_in6 in6;
+#endif
+    } addr;
+    struct addrinfo address = *results;
+    memset(&addr, 0, sizeof(addr));
+    memcpy(&addr, results->ai_addr,
+            results->ai_addrlen < sizeof(addr) ? results->ai_addrlen : sizeof(addr));
+    address.ai_addr = &addr.any;
+    address.ai_canonname = NULL;
+    address.ai_next = NULL;
     lwip_freeaddrinfo(results);
+    int s = connect_to(sock, &address);
     if (s < 0) {
         log_to(sock->_logger, EBISU_LOG_ERROR, "failed to connect to %s:%u: errno=%ld", host,
                 (unsigned int)port, sock->_error_detail);

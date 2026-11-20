@@ -27,7 +27,10 @@ extern "C" {
  * written as it is, and gives a name's first address only, of the family
  * LWIP_DNS_ADDRTYPE_DEFAULT puts first, IPv4 in lwIP 1.4, which has no other:
  * that one address is what it connects to. A lookup takes as long as lwIP's DNS
- * client does, as DNS_MAX_RETRIES and DNS_TMR_INTERVAL have it. Connecting
+ * client does, as DNS_MAX_RETRIES and DNS_TMR_INTERVAL have it. Its result is
+ * one of lwIP's MEMP_NUM_NETDB, 1 by default, which the socket holds only while
+ * it copies the address out, and waits for while another task's lookup holds
+ * it, for half a second at the most, before failing with EAI_MEMORY. Connecting
  * takes the connect timeout at the most: see
  * ebisu_lwip_tcp_socket_set_connect_timeout(). It connects without blocking,
  * and waits for the connection with lwip_select(), or lwip_poll() where lwIP is

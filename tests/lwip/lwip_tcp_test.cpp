@@ -90,6 +90,92 @@ TEST_CASE( "The lwIP socket looks a name up, and takes an address as written" ) 
     ops->close(&sock.base);
 }
 
+// The tests' lwipopts.h leaves MEMP_NUM_NETDB at lwIP's default: one lookup's
+// result at a time, which lwip_getaddrinfo() takes and lwip_freeaddrinfo()
+// gives back.
+#if MEMP_NUM_NETDB != 1
+#error "lwipopts.h has room for more than one lookup's result"
+#endif
+
+TEST_CASE( "The lwIP socket's lookup leaves lwIP's one result to other tasks" ) {
+    Server server;
+    ebisu_lwip_tcp_socket_t sock;
+    ebisu_lwip_tcp_socket_init(&sock, 5, 5);
+    const ebisu_socket_ops_t* ops = sock.base.ops;
+    long detail = -1;
+
+    SECTION("while it connects") {
+        // Another task's socket, connecting to an address that doesn't
+        // answer, for its connect timeout.
+        ebisu_lwip_tcp_socket_t other;
+        ebisu_lwip_tcp_socket_init(&other, 5, 5);
+        ebisu_lwip_tcp_socket_set_connect_timeout(&other, 2);
+        std::atomic<int> other_code(-1);
+        std::thread connecting([&] {
+            other_code = other.base.ops->connect(&other.base, SILENT, 1883);
+        });
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        auto start = std::chrono::steady_clock::now();
+        CHECK( ops->connect(&sock.base, "server.test", server.port) == EBISU_SOCK_OK );
+        CHECK( elapsed_ms(start) < 1000 );
+        connecting.join();
+        CHECK( other_code == EBISU_SOCK_FAIL );
+        server.accept_one();
+    }
+
+    SECTION("and waits for it while another task's lookup holds it") {
+        // Catch's assertions from the test's own thread alone.
+        std::atomic<bool> held(false);
+        std::atomic<int> looked_up(-1);
+        std::thread holding([&] {
+            struct addrinfo* results = nullptr;
+            looked_up = lwip_getaddrinfo("server.test", "80", nullptr, &results);
+            held = true;
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            if (results != nullptr) {
+                lwip_freeaddrinfo(results);
+            }
+        });
+        while (!held) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        auto start = std::chrono::steady_clock::now();
+        CHECK( ops->connect(&sock.base, "server.test", server.port) == EBISU_SOCK_OK );
+        CHECK( elapsed_ms(start) >= 100 );
+        holding.join();
+        CHECK( looked_up == 0 );
+        server.accept_one();
+    }
+
+    SECTION("for half a second at the most, and then fails with EAI_MEMORY") {
+        // Catch's assertions from the test's own thread alone.
+        std::atomic<bool> held(false);
+        std::atomic<int> looked_up(-1);
+        std::thread holding([&] {
+            struct addrinfo* results = nullptr;
+            looked_up = lwip_getaddrinfo("server.test", "80", nullptr, &results);
+            held = true;
+            std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+            if (results != nullptr) {
+                lwip_freeaddrinfo(results);
+            }
+        });
+        while (!held) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        auto start = std::chrono::steady_clock::now();
+        CHECK( ops->connect(&sock.base, "server.test", server.port) == EBISU_SOCK_FAIL );
+        long ms = elapsed_ms(start);
+        CHECK( ms >= 400 );
+        CHECK( ms < 2500 );
+        CHECK( ops->last_error(&sock.base, &detail) == EBISU_SOCK_ERROR_DNS );
+        CHECK( detail == EAI_MEMORY );
+        holding.join();
+        CHECK( looked_up == 0 );
+    }
+    ops->close(&sock.base);
+}
+
 #if LWIP_IPV6
 TEST_CASE( "The lwIP socket connects over IPv6" ) {
     Server server(1, true);
