@@ -3,8 +3,9 @@
    The network and TLS are the FreeRTOS sample's: FreeRTOS-Plus-TCP on the
    board's Ethernet controller, with DHCP, and mbedTLS with the CA certificates
    of its ca.pem. Or, with EBISU_LTEST_LWIP, lwIP on the same controller, and
-   mbedTLS 2.4.0, as Realtek's SDKs for AmebaZ and AmebaZ2 configure them, with
-   the CA certificates of the AmebaZ samples' ca.pem: see lwip/. */
+   mbedTLS 2.4.0, as Realtek's SDKs for AmebaZ and AmebaZ2 configure them, or,
+   with EBISU_LTEST_POLARSSL too, PolarSSL 1.3.8, as the SDK for AmebaZ does,
+   with the CA certificates of the AmebaZ samples' ca.pem: see lwip/. */
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -46,12 +47,25 @@ int ebisu_test_main(int argc, char* argv[]);
 #define SUITE_PRIORITY (tskIDLE_PRIORITY + 2)
 #define MAX_ARGUMENTS 16
 
-static ebisu_mbedtls_tls_t tls;
+static ebisu::ltest::board_tls_t tls;
 
-ebisu_mbedtls_tls_t* ebisu::ltest::board_tls()
+ebisu::ltest::board_tls_t* ebisu::ltest::board_tls()
 {
     return &tls;
 }
+
+#ifdef EBISU_LTEST_POLARSSL
+/* Each connection's settings, as the AmebaZ sample's: random_polarssl.c's
+   generator, as PolarSSL is built without one, and records no larger than
+   the 4096 bytes of those it takes, SSL_MAX_CONTENT_LEN 5120, which the
+   server may not honor. */
+static void setup_connection(ssl_context* ssl, void* userdata)
+{
+    (void)userdata;
+    ssl_set_rng(ssl, random_tls, NULL);
+    (void)ssl_set_max_frag_len(ssl, SSL_MAX_FRAG_LEN_4096);
+}
+#endif
 
 /* SYS_GET_CMDLINE: the arguments QEMU is given with -semihosting-config
    arg=..., joined with spaces. */
@@ -117,11 +131,19 @@ static void run_suite(void* parameter)
     (void)ebisu::ltest::wall_us();
 
     net_wait_until_up();
+#ifdef EBISU_LTEST_POLARSSL
+    int ret = ebisu_polarssl_tls_init(&tls, (const unsigned char*)ca_pem, ca_pem_size);
+    if (ret != 0) {
+        board_fatal("failed to set up TLS: -0x%04x", (unsigned int)-ret);
+    }
+    ebisu_polarssl_tls_set_setup(&tls, setup_connection, NULL);
+#else
     int ret = ebisu_mbedtls_tls_init(&tls, (const unsigned char*)ca_pem, ca_pem_size);
     if (ret != 0) {
         board_fatal("failed to set up TLS: -0x%04x", (unsigned int)-ret);
     }
-#ifdef EBISU_LTEST_LWIP
+#endif
+#if defined(EBISU_LTEST_LWIP) && !defined(EBISU_LTEST_POLARSSL)
     /* As the AmebaZ and AmebaZ2 samples set them up: random.c's generator,
        as mbedTLS is built without one, and records no larger than mbedTLS
        takes, which the server may not honor. */

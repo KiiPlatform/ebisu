@@ -42,10 +42,11 @@ with `BAD_REQUEST` rather than `EMPTY_BODY`.
 
 ## On lwIP
 
-The suites run over platform's lwIP socket too, on the kernels, lwIP and
-mbedTLS that Realtek's SDKs ship: FreeRTOS V8.1.2 and lwIP 1.4.1, the SDK for
+The suites run over platform's lwIP socket too, on the kernels, lwIP and TLS
+that Realtek's SDKs ship: FreeRTOS V8.1.2 and lwIP 1.4.1, the SDK for
 AmebaZ's, and V10.0.1 and lwIP 2.0.2, the SDK for AmebaZ2's, both with mbedTLS
-2.4.0, configured as the SDKs configure them, in [lwip](lwip):
+2.4.0, and the first with PolarSSL 1.3.8 too, over platform's PolarSSL port,
+experimental, configured as the SDKs configure them, in [lwip](lwip):
 
 - **lwIP:** [lwip/port/lwipopts.h](lwip/port/lwipopts.h), the SDKs' settings
   wherever they bear on ebisu's socket: an OS without lwIP's core lock,
@@ -69,6 +70,16 @@ AmebaZ's, and V10.0.1 and lwIP 2.0.2, the SDK for AmebaZ2's, both with mbedTLS
   the tests ask the server for records no larger than mbedTLS takes, with the
   maximum fragment length extension, which Kii Cloud's API server ignores: a
   larger record would fail the connection.
+- **TLS with PolarSSL:** [lwip/polarssl_config.h](lwip/polarssl_config.h), the
+  SDK for AmebaZ's `config_rsa.h`: SSL 3.0 to TLS 1.2, of which ebisu's port
+  takes TLS 1.2, RSA key exchange alone, AES in CBC mode, records of 5120
+  bytes at the most, of which the tests ask for 4096, and no time, threads,
+  CTR_DRBG or entropy module, as with mbedTLS.
+  [lwip/random_polarssl.c](lwip/random_polarssl.c) is random.c's generator,
+  with PolarSSL's CTR_DRBG, where the AmebaZ sample takes the ROM's, and sets
+  PolarSSL's allocator, FreeRTOS's heap, as the sample does. A connection's
+  generator and record size are set as each connection is set up, as
+  PolarSSL has no configuration connections share.
 - **The CA certificates:** the AmebaZ samples',
   [ca.pem](../../tio/amebaz-sample/ca.pem), whose RSA roots this mbedTLS,
   without ECDSA, reads.
@@ -93,6 +104,7 @@ host's large tests, from the repository's root:
 tests/freertos_large/run.sh                  # FreeRTOS-Plus-TCP and mbedTLS 3.6.7 on V11.3.3
 tests/freertos_large/run.sh V8.1.2 1.4.1     # lwIP 1.4.1 and mbedTLS 2.4.0 on V8.1.2
 tests/freertos_large/run.sh V10.0.1 2.0.2    # lwIP 2.0.2 and mbedTLS 2.4.0 on V10.0.1
+tests/freertos_large/run.sh V8.1.2 1.4.1 polarssl  # lwIP 1.4.1 and PolarSSL 1.3.8 on V8.1.2
 ```
 
 which builds in `build/freertos_large`, or `build/freertos_large-V8.1.2-lwip-1.4.1`

@@ -44,6 +44,15 @@ set(EBISU_LTEST_KERNEL V11.3.3 CACHE STRING
     "The FreeRTOS kernel: V11.3.3, or, with lwIP, V8.1.2 or V10.0.1")
 set(EBISU_LTEST_LWIP "" CACHE STRING
     "lwIP, 1.4.1 or 2.0.2, with mbedTLS 2.4.0, or none, for FreeRTOS-Plus-TCP and mbedTLS 3.6.7")
+# With lwIP, the TLS: mbedTLS 2.4.0, or PolarSSL 1.3.8, as the SDK for AmebaZ
+# configures it, over platform's PolarSSL port, experimental.
+set(EBISU_LTEST_TLS mbedtls CACHE STRING "With lwIP, mbedtls or polarssl")
+if(NOT EBISU_LTEST_TLS MATCHES "^(mbedtls|polarssl)$")
+    message(FATAL_ERROR "No such TLS to test with: ${EBISU_LTEST_TLS}")
+endif()
+if(EBISU_LTEST_TLS STREQUAL "polarssl" AND NOT EBISU_LTEST_LWIP)
+    message(FATAL_ERROR "PolarSSL is tested with lwIP alone")
+endif()
 include(${ebisu_root}/tests/freertos/kernel.cmake)
 if(NOT DEFINED ebisu_kernel_sha256_${EBISU_LTEST_KERNEL})
     message(FATAL_ERROR "No such kernel to test with: ${EBISU_LTEST_KERNEL}")
@@ -75,7 +84,14 @@ FetchContent_Declare(freertos_plus_tcp
     URL_HASH SHA256=bea95f97c6eecfc957e3fba411a21055ef9f26906b3268bee911a7d2756bf181
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     SOURCE_SUBDIR not-built)
-if(EBISU_LTEST_LWIP)
+if(EBISU_LTEST_TLS STREQUAL "polarssl")
+    # PolarSSL's tag's archive, in mbedTLS's repository.
+    FetchContent_Declare(polarssl
+        URL https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/polarssl-1.3.8.tar.gz
+        URL_HASH SHA256=3e96a8a1c54be98e0d74ebc39f4926f432f5c6e83cc8941a6571a537bc0a62af
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        SOURCE_SUBDIR not-built)
+elseif(EBISU_LTEST_LWIP)
     FetchContent_Declare(mbedtls
         URL https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/mbedtls-2.4.0.tar.gz
         URL_HASH SHA256=9a1730ce07848d61ba2c2739566a3f61941f648bf626391afa93d1cd659d491b
@@ -90,7 +106,11 @@ else()
         SOURCE_SUBDIR not-built)
     set(mbedtls_config ${sample}/config/sample_mbedtls_config.h)
 endif()
-FetchContent_MakeAvailable(freertos_plus_tcp mbedtls)
+if(EBISU_LTEST_TLS STREQUAL "polarssl")
+    FetchContent_MakeAvailable(freertos_plus_tcp polarssl)
+else()
+    FetchContent_MakeAvailable(freertos_plus_tcp mbedtls)
+endif()
 set(tcp ${freertos_plus_tcp_SOURCE_DIR}/source)
 set(tcp_driver ${tcp}/portable/NetworkInterface/MPS2_AN385)
 
@@ -128,16 +148,32 @@ else()
     set(net_libs ebisu_freertos_tcp freertos_plus_tcp)
 endif()
 
-# mbedTLS with its configuration, under the name ebisu's CMake builds its
-# mbedTLS port for.
-set(mbedtls ${mbedtls_SOURCE_DIR})
-file(GLOB mbedtls_srcs ${mbedtls}/library/*.c)
-add_library(mbedtls STATIC ${mbedtls_srcs})
-target_include_directories(mbedtls
-    SYSTEM PUBLIC ${mbedtls}/include config
-    PRIVATE ${mbedtls}/library)
-target_compile_definitions(mbedtls PUBLIC MBEDTLS_CONFIG_FILE="${mbedtls_config}")
-add_library(MbedTLS::mbedtls ALIAS mbedtls)
+if(EBISU_LTEST_TLS STREQUAL "polarssl")
+    # PolarSSL with its configuration, under the name ebisu's CMake builds
+    # its PolarSSL port for.
+    set(tls_lib ${polarssl_SOURCE_DIR})
+    file(GLOB polarssl_srcs ${tls_lib}/library/*.c)
+    add_library(polarssl STATIC ${polarssl_srcs})
+    target_include_directories(polarssl
+        SYSTEM PUBLIC ${tls_lib}/include
+        PRIVATE ${tls_lib}/library)
+    target_compile_definitions(polarssl PUBLIC
+        POLARSSL_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/lwip/polarssl_config.h")
+    add_library(PolarSSL::polarssl ALIAS polarssl)
+    set(tls_libs ebisu_polarssl polarssl)
+else()
+    # mbedTLS with its configuration, under the name ebisu's CMake builds its
+    # mbedTLS port for.
+    set(tls_lib ${mbedtls_SOURCE_DIR})
+    file(GLOB mbedtls_srcs ${tls_lib}/library/*.c)
+    add_library(mbedtls STATIC ${mbedtls_srcs})
+    target_include_directories(mbedtls
+        SYSTEM PUBLIC ${tls_lib}/include config
+        PRIVATE ${tls_lib}/library)
+    target_compile_definitions(mbedtls PUBLIC MBEDTLS_CONFIG_FILE="${mbedtls_config}")
+    add_library(MbedTLS::mbedtls ALIAS mbedtls)
+    set(tls_libs ebisu_mbedtls mbedtls)
+endif()
 
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(${ebisu_root} ebisu EXCLUDE_FROM_ALL)
@@ -171,13 +207,18 @@ add_library(suite_runner OBJECT
     ${board}/startup.c
     ${CMAKE_CURRENT_BINARY_DIR}/ca_pem.c)
 if(EBISU_LTEST_LWIP)
-    target_sources(suite_runner PRIVATE lwip/net.c lwip/random.c)
-    # lwip/'s net.h and random.h before the sample's; lwIP's headers; and
-    # mbedTLS's ctr_drbg.c, which random.c builds.
+    if(EBISU_LTEST_TLS STREQUAL "polarssl")
+        target_sources(suite_runner PRIVATE lwip/net.c lwip/random_polarssl.c)
+        set(board_defines EBISU_LTEST_BOARD EBISU_LTEST_LWIP EBISU_LTEST_POLARSSL)
+    else()
+        target_sources(suite_runner PRIVATE lwip/net.c lwip/random.c)
+        set(board_defines EBISU_LTEST_BOARD EBISU_LTEST_LWIP)
+    endif()
+    # lwip/'s net.h and random.h before the sample's; lwIP's headers; and the
+    # TLS library's ctr_drbg.c, which random.c or random_polarssl.c builds.
     target_include_directories(suite_runner BEFORE PRIVATE lwip)
-    target_include_directories(suite_runner SYSTEM PRIVATE ${LWIP_INCLUDE_DIRS} ${mbedtls}/library)
+    target_include_directories(suite_runner SYSTEM PRIVATE ${LWIP_INCLUDE_DIRS} ${tls_lib}/library)
     target_compile_definitions(suite_runner PRIVATE ${LWIP_DEFINITIONS})
-    set(board_defines EBISU_LTEST_BOARD EBISU_LTEST_LWIP)
 else()
     target_sources(suite_runner PRIVATE
         ${sample}/mbedtls_threading.c ${sample}/net.c ${sample}/random.c)
@@ -185,7 +226,7 @@ else()
 endif()
 # The large tests' platform on the board, ltest_board.h, with the socket
 # callbacks, for tests/large_test/CMakeLists.txt to build each suite with.
-set(board_libs ebisu_mbedtls ${net_libs} mbedtls freertos_kernel)
+set(board_libs ${tls_libs} ${net_libs} freertos_kernel)
 add_library(ebisu_ltest_board INTERFACE)
 target_sources(ebisu_ltest_board INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_freertos.cpp)

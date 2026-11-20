@@ -10,8 +10,8 @@ uploads its state periodically, and logs the commands it receives.
 CI builds the firmware's images with the SDK, with each TLS library, and fails
 on a warning in ebisu's sources or the sample's. Nothing emulates the chip, so
 CI doesn't run them, and no device runs them either: they are built, not
-tested. CI runs ebisu's large tests on the SDK's FreeRTOS, lwIP and mbedTLS,
-configured as the SDK configures them, in QEMU, on another board, against Kii
+tested. CI runs ebisu's large tests on the SDK's FreeRTOS, lwIP, and mbedTLS
+and PolarSSL each, configured as the SDK configures them, in QEMU, on another board, against Kii
 Cloud: see [tests/freertos_large](../../tests/freertos_large/README.md#on-lwip).
 
 - [main.c](main.c): in place of the SDK's example's: starts the SDK's console
