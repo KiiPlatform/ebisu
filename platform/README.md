@@ -310,8 +310,9 @@ target_link_libraries(app PRIVATE ebisu_lwip ebisu_mbedtls tio)
 
 CI runs the lwIP socket's tests,
 [tests/lwip](https://github.com/KiiPlatform/ebisu/blob/master/tests/lwip/README.md),
-on Linux, with lwIP in the test's own process, against lwIP 2.0.2, the oldest
-the socket supports, 2.1.3 and 2.2.1, the latest, each configured two ways.
+on Linux, with lwIP in the test's own process, against lwIP 1.4.1, the oldest
+the socket supports, 2.0.2, 2.1.3 and 2.2.1, the latest, each configured two
+ways.
 
 With mbedTLS over the POSIX port's socket, and the CA certificates of the
 application's:
