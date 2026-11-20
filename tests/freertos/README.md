@@ -6,8 +6,8 @@ kernel: each check that fails prints a line on the console, and QEMU exits with
 1 if any did. CTest runs it in QEMU. FreeRTOS-Kernel is built with its own CMake
 and ebisu with its own, as an application builds them, and the board's support
 is the [FreeRTOS sample's](../../tio/freertos-sample/board/board.h). V8.1.2,
-V9.0.0 and V10.0.1 have no CMake build: [CMakeLists.txt](CMakeLists.txt) makes
-a library of their sources, of the name ebisu's CMake looks for, as an
+V9.0.0 and V10.0.1 have no CMake build: [kernel.cmake](kernel.cmake), which
+the large tests take too, makes a library of their sources, of the name ebisu's CMake looks for, as an
 application's build would, and the test gives V9.0.0's and V10.0.1's idle
 task's memory, which V11.1 on gives with `configKERNEL_PROVIDED_STATIC_MEMORY`.
 Their

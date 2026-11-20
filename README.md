@@ -173,9 +173,10 @@ firmware for a Cortex-M3 board that QEMU emulates, with newlib and FreeRTOS,
 and runs them in QEMU, as CI does: see
 [tests/freertos_small/README.md](tests/freertos_small/README.md).
 `tests/freertos_large/run.sh` does the same for the large tests, against the
-live application, over platform's mbedTLS port and FreeRTOS-Plus-TCP, with
-`APP_ID`, `DEFAULT_SITE`, `CLIENT_ID` and `CLIENT_SECRET` in the environment:
-see
+live application, over platform's mbedTLS port and FreeRTOS-Plus-TCP, or over
+its lwIP socket and mbedTLS 2.4.0, as Realtek's SDKs for AmebaZ and AmebaZ2
+configure them, with `APP_ID`, `DEFAULT_SITE`, `CLIENT_ID` and
+`CLIENT_SECRET` in the environment: see
 [tests/freertos_large/README.md](tests/freertos_large/README.md).
 
 Other useful targets and options:

@@ -2,8 +2,9 @@
 #define EBISU_LTEST_BOARD_H
 
 // What tests/large_test/ltest_platform.h has, on the board: platform's mbedTLS
-// port over its FreeRTOS-Plus-TCP socket, and FreeRTOS's tasks, mutexes and
-// ticks, as newlib's C++ library has no threads.
+// port over its FreeRTOS-Plus-TCP socket, or over its lwIP socket with
+// EBISU_LTEST_LWIP, and FreeRTOS's tasks, mutexes and ticks, as newlib's C++
+// library has no threads.
 
 #include <stdint.h>
 #include <time.h>
@@ -16,10 +17,17 @@
 #include <semphr.h>
 #include <task.h>
 
+#ifdef EBISU_LTEST_LWIP
+#include <ebisu_lwip.h>
+#else
 #include <ebisu_freertos_tcp.h>
+#endif
 #include <ebisu_mbedtls.h>
 #include <ebisu_socket.h>
 #include <ebisu_system.h>
+
+// The sample's log.c's: a logger for the ports, which writes to the console.
+extern "C" ebisu_logger_t* sample_logger(void);
 
 namespace ebisu {
 namespace ltest {
@@ -29,16 +37,29 @@ namespace ltest {
 ebisu_mbedtls_tls_t* board_tls();
 
 // The mbedTLS port's socket, whose base is the socket, over a socket of the
-// FreeRTOS-Plus-TCP port's, which plain TCP uses alone.
+// FreeRTOS-Plus-TCP port's, or of the lwIP port's, which plain TCP uses alone.
 struct platform_socket_t : ebisu_mbedtls_socket_t {
+#ifdef EBISU_LTEST_LWIP
+    ebisu_lwip_tcp_socket_t tcp;
+#else
     ebisu_freertos_tcp_socket_t tcp;
+#endif
 };
 
 inline void init_platform_socket(platform_socket_t* sock, unsigned int to_recv,
         unsigned int to_send)
 {
+    // Why a connection fails, on the console: the ports log the host and the
+    // error, and nothing sent or received.
+#ifdef EBISU_LTEST_LWIP
+    ebisu_lwip_tcp_socket_init(&sock->tcp, to_recv, to_send);
+    ebisu_lwip_tcp_socket_set_logger(&sock->tcp, sample_logger());
+#else
     ebisu_freertos_tcp_socket_init(&sock->tcp, to_recv, to_send);
+    ebisu_freertos_tcp_socket_set_logger(&sock->tcp, sample_logger());
+#endif
     ebisu_mbedtls_socket_init(sock, &sock->tcp.base, board_tls());
+    ebisu_mbedtls_socket_set_logger(sock, sample_logger());
 }
 
 inline void set_platform_socket_clock(platform_socket_t* sock, ebisu_clock_t* clock)
