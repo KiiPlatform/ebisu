@@ -1,6 +1,6 @@
 # TIO sample application on Windows
 
-The [linux sample](../linux-sample/README.mkd) on the Win32 API, with the same
+The [linux sample](../linux-sample/README.md) on the Win32 API, with the same
 tasks, callbacks and command line. As the linux sample uses platform's POSIX
 and OpenSSL ports, it uses its [Win32 and Schannel
 ports](../../platform/README.md#ports), which need nothing beyond what Windows
@@ -51,7 +51,7 @@ well, and MSVC's on Windows (see [Test](#test)).
 
 Set up the application, thing type, trait, alias and owner on
 https://developer.kii.com as the [linux sample's
-README](../linux-sample/README.mkd) describes, and put your application's ID
+README](../linux-sample/README.md) describes, and put your application's ID
 and site in `KII_APP_ID` and `KII_APP_HOST` in `example.h`.
 
 Then, from the directory `win32app.exe` is in (prefix the command with `wine`
