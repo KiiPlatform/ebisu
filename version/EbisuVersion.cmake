@@ -78,12 +78,14 @@ function(set_git_version_and_generate_header)
         set(VERSION_STRING "${FALLBACK_VERSION}")
     endif()
 
-    # The soname carries the major only. It used to be the whole
-    # major.minor.patch, which says that every patch release breaks the ABI:
-    # consumers had to relink for 1.3.1 -> 1.3.2 even though nothing about the
-    # interface had changed, and conversely there was no way to signal that it
-    # actually had.
-    string(REGEX MATCH "^[0-9]+" SOVERSION_STRING ${VERSION_STRING})
+    # The soname carries the major and the minor. An application allocates
+    # khc, kii_t, tio_handler_t and the like itself, with the size its headers
+    # gave them, so a minor release, which may add to them, breaks the ABI, and
+    # a patch release doesn't: an application built against 3.0 doesn't load
+    # 3.1's libraries, rather than run with structs of another size, and loads
+    # 3.0.1's. It used to be the whole major.minor.patch, which had consumers
+    # relink for 1.3.1 -> 1.3.2 with nothing about the interface changed.
+    string(REGEX MATCH "^[0-9]+\\.[0-9]+" SOVERSION_STRING ${VERSION_STRING})
 
     # `git describe` output as-is, so a build 19 commits past v1.3.2 is
     # distinguishable from the release itself. The numeric version cannot carry
