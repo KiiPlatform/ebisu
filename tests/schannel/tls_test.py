@@ -312,15 +312,17 @@ def serve_commands(conn):
 class Server:
     """Listens on 127.0.0.1 and records how each connection went."""
 
-    def __init__(self, cert=None, key=None, silent=False, canned=None):
+    def __init__(self, cert=None, key=None, silent=False, canned=None, drip=False):
         """With canned, bytes, answers the ClientHello with them, and waits for
-        the client to close."""
+        the client to close. With drip, answers it with the start of a
+        handshake record of 16384 bytes, then a byte of it every 100 ms."""
         self.ctx = None
         if cert:
             self.ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
             self.ctx.load_cert_chain(cert, key)
         self.silent = silent
         self.canned = canned
+        self.drip = drip
         self.listener = socket.socket()
         self.listener.bind(('127.0.0.1', 0))
         self.listener.listen(16)
@@ -344,6 +346,15 @@ class Server:
                 while sock.recv(65536):
                     pass
                 end = 'eof'
+                return
+            if self.drip:
+                sock.settimeout(TIMEOUT)
+                sock.recv(65536)
+                sock.sendall(bytes([0x16, 0x03, 0x03, 0x40, 0x00]))
+                for _ in range(100):
+                    sock.sendall(b'\x02')
+                    time.sleep(0.1)
+                end = 'drip'
                 return
             if self.canned is not None:
                 sock.settimeout(TIMEOUT)
@@ -561,6 +572,15 @@ def run_tests(t, d):
             all(1900 <= x[3] <= 4000 for x in r[:2]) and r[2][::4] == ('OK', 'late\\n'), out)
     t.check('receive timeout: last_error TIMEOUT, and nothing logged',
             last_error(steps, 2) == ('TIMEOUT', '0') and 'LOG ' not in out, out)
+
+    # The connect timeout is the handshake's: a receive after it waits for the
+    # receive timeout, not for what was left of the handshake's time.
+    out, steps = t.run(port, 2, 'to_connect:1', 'connect', 'send:sleep 5000\\necho late\\n', 'recv:100',
+                       'close')
+    r = recv_result(steps, 3)
+    t.check('receive after a handshake with a 1 s connect timeout: times out after the receive timeout, %s ms' % r[3],
+            result_code(steps, 1) == ('connect', 'OK') and r[:3] == ('FAIL', 0, '1') and
+            1900 <= r[3] <= 4000, out)
 
     # The MQTT task's wait in turns, so as to send what it is given meanwhile:
     # recv_wait waits for its timeout, and leaves the data to come for recv.
@@ -786,6 +806,32 @@ def run_tests(t, d):
             result_code(steps, 0) == ('connect', 'FAIL') and 'LOG error TLS handshake timed out' in out, out)
     t.check('server that never answers the ClientHello: last_error TIMEOUT',
             last_error(steps, 0)[0] == 'TIMEOUT', out)
+
+    # The receive timeout bounds each wait for the server, and not how many of
+    # them a handshake takes: the connect timeout bounds the handshake.
+    silent = Server(silent=True)
+    out, steps = t.run(silent.port, 0, 'to_connect:1', 'connect', 'close')
+    t.check('silent server, no receive timeout: connect FAILs at the connect timeout, %s ms' % connect_ms(steps, 1),
+            result_code(steps, 1) == ('connect', 'FAIL') and 900 <= connect_ms(steps, 1) <= 4000 and
+            last_error(steps, 1)[0] == 'TIMEOUT', out)
+
+    dripping = Server(drip=True)
+    out, steps = t.run(dripping.port, 5, 'to_connect:1', 'connect', 'close')
+    t.check('server that sends a byte at a time: connect FAILs at the connect timeout, %s ms' % connect_ms(steps, 1),
+            result_code(steps, 1) == ('connect', 'FAIL') and 900 <= connect_ms(steps, 1) <= 4000 and
+            last_error(steps, 1)[0] == 'TIMEOUT', out)
+
+    silent = Server(silent=True)
+    out, steps = t.run(silent.port, 1, 'to_connect:30', 'connect', 'close')
+    t.check('silent server: connect FAILs at the receive timeout, if that comes first, %s ms' % connect_ms(steps, 1),
+            result_code(steps, 1) == ('connect', 'FAIL') and 900 <= connect_ms(steps, 1) <= 4000 and
+            last_error(steps, 1)[0] == 'TIMEOUT', out)
+
+    silent = Server(silent=True)
+    out, steps = t.run(silent.port, 1, 'to_connect:0', 'connect', 'close')
+    t.check('silent server, no connect timeout: connect FAILs at the receive timeout, as before, %s ms' % connect_ms(steps, 1),
+            result_code(steps, 1) == ('connect', 'FAIL') and 900 <= connect_ms(steps, 1) <= 4000 and
+            last_error(steps, 1)[0] == 'TIMEOUT', out)
 
     closed = socket.socket()
     closed.bind(('127.0.0.1', 0))
