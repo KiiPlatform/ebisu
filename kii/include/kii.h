@@ -273,6 +273,8 @@ typedef struct kii_session_t {
     uint64_t _password_wait_ms;
     /** \private The monotonic time the server last refused _password at. */
     uint64_t _password_refused_at_ms;
+    /** \private The refusals of _password in a row, which lengthen the wait. */
+    uint32_t _password_refusals;
     KII_CB_AUTHOR_UPDATED _cb_author_updated; /**< \private */
     void* _author_updated_data; /**< \private */
     ebisu_lock_t* _lock; /**< \private */
@@ -802,8 +804,10 @@ void kii_session_set_system(kii_session_t* session, ebisu_system_t* system);
  * Where the application limits login attempts, each login the server refuses
  * counts against the thing, and enough of them lock it out for a while, the
  * right password included. So once the server refuses these credentials, the
- * session waits 5 minutes before trying them again, and twice as long after
- * each further refusal, up to an hour. Meanwhile a request refused for its
+ * session waits 5 to 10 minutes before trying them again, twice as long after
+ * each further refusal, and at most 1 to 2 hours. Each thing waits its own
+ * share of that, from its vendor thing ID, so that things the server refused
+ * together don't all try again together. Meanwhile a request refused for its
  * token is reported as it would be without them. The wait ends when the server
  * accepts them, or when they are set again, which may be done at any time.
  *

@@ -146,10 +146,11 @@ logging in. What it is given:
 - **Credentials**: the vendor thing ID and password to onboard or log in again
   with. Without them, a token onboarding obtained is never renewed. The strings
   are not copied. Once the server refuses them, they are not tried again for 5
-  minutes, then twice as long after each further refusal, up to an hour: where
-  the application limits login attempts, trying a wrong password on every
-  refused request would soon lock the thing out. Setting them again ends the
-  wait.
+  to 10 minutes, then twice as long after each further refusal, up to 1 to 2
+  hours: where the application limits login attempts, trying a wrong password
+  on every refused request would soon lock the thing out. Each thing waits its
+  own share, from its vendor thing ID, so that things the server refused
+  together don't all try again together. Setting them again ends the wait.
 - **Author updated**: called with the lock held whenever the tokens change.
   A refresh invalidates the tokens it replaces, so a device that keeps its
   tokens across a restart must save the author here before returning. It must

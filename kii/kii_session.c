@@ -6,6 +6,7 @@
 #include "kii_thing_impl.h"
 #include "kii_ti_impl.h"
 #include <ebisu_mem.h>
+#include <ebisu_retry.h>
 #include <ebisu_str.h>
 
 /* Built with EBISU_NO_SESSION, as -DEBISU_SESSION=OFF builds it, this file
@@ -24,16 +25,20 @@
  * scheduled. Kii's default, 2147483647 seconds, is within it. */
 #define _LIFETIME_MAX_SEC ((int64_t)UINT32_MAX)
 
-/* After the server refuses the thing's credentials, the session waits this
- * long before trying them again, and twice as long after each further refusal,
- * up to _PASSWORD_WAIT_MAX_MS. Where the application limits login attempts,
- * refused logins lock the thing out, and a wrong password would otherwise be
- * tried on every request refused for its token; spread out like this, few of
- * them fall within the period the application counts them over. Not giving up
- * altogether lets the thing log in again unattended once its password is put
- * right on the server. */
-#define _PASSWORD_WAIT_MIN_MS ((uint64_t)5 * 60 * 1000)
-#define _PASSWORD_WAIT_MAX_MS ((uint64_t)60 * 60 * 1000)
+/* After the server refuses the thing's credentials, the session waits at least
+ * this long before trying them again, and twice as long after each further
+ * refusal, up to _PASSWORD_WAIT_MAX_MS. Where the application limits login
+ * attempts, refused logins lock the thing out, and a wrong password would
+ * otherwise be tried on every request refused for its token; spread out like
+ * this, few of them fall within the period the application counts them over.
+ * Not giving up altogether lets the thing log in again unattended once its
+ * password is put right on the server.
+ *
+ * ebisu_retry.h's waits, from twice the one up to twice the other, so that a
+ * thing waits from one to two times these, its share from its vendor thing ID:
+ * things the server refused together don't try again together. */
+#define _PASSWORD_WAIT_MIN_MS ((uint32_t)5 * 60 * 1000)
+#define _PASSWORD_WAIT_MAX_MS ((uint32_t)60 * 60 * 1000)
 
 static const char _AUTH_HEADER_PREFIX[] = "Authorization: Bearer ";
 
@@ -96,6 +101,7 @@ void kii_session_set_password(
     session->_vendor_thing_id = vendor_thing_id;
     session->_password = password;
     session->_password_wait_ms = 0;
+    session->_password_refusals = 0;
     if (locked) {
         _unlock(session);
     }
@@ -261,14 +267,12 @@ static void _password_tried_locked(kii_session_t* session, kii_code_t res, bool 
 {
     if (res == KII_ERR_OK) {
         session->_password_wait_ms = 0;
+        session->_password_refusals = 0;
     } else if (refused) {
-        uint64_t wait_ms = session->_password_wait_ms * 2;
-        if (wait_ms < _PASSWORD_WAIT_MIN_MS) {
-            wait_ms = _PASSWORD_WAIT_MIN_MS;
-        } else if (wait_ms > _PASSWORD_WAIT_MAX_MS) {
-            wait_ms = _PASSWORD_WAIT_MAX_MS;
-        }
-        session->_password_wait_ms = wait_ms;
+        ++session->_password_refusals;
+        session->_password_wait_ms = ebisu_retry_wait(2 * _PASSWORD_WAIT_MIN_MS,
+                2 * _PASSWORD_WAIT_MAX_MS, session->_password_refusals,
+                ebisu_retry_seed(session->_vendor_thing_id));
         session->_password_refused_at_ms = _now_ms(session);
     }
 }
