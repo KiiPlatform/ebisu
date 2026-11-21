@@ -46,15 +46,22 @@ extern "C" {
 
 /** \brief Size of kii_author_t::author_id. */
 #define KII_AUTHOR_ID_MAX_SIZE 128
+/* The sizes of the tokens, and of kii_mqtt_endpoint_t's fields below, can be
+ * defined otherwise, for a server that issues longer tokens or a broker that
+ * gives longer fields: alike for kii and everything using it, as they change
+ * the layout of kii_author_t, kii_mqtt_endpoint_t and kii_t. A session's
+ * renewal needs as much more room in the buffer set by kii_set_buff(), as its
+ * response carries the tokens, and, by onboarding again, the endpoint. A token
+ * longer than its size fails the login, onboarding or renewal that got it
+ * with KII_ERR_TOO_LARGE_DATA. */
 /** \brief Size of kii_author_t::access_token. */
+#ifndef KII_TOKEN_MAX_SIZE
 #define KII_TOKEN_MAX_SIZE 128
+#endif
 /** \brief Size of kii_author_t::refresh_token. */
+#ifndef KII_REFRESH_TOKEN_MAX_SIZE
 #define KII_REFRESH_TOKEN_MAX_SIZE 128
-/* The sizes of kii_mqtt_endpoint_t's fields can be defined otherwise, for a
- * broker that gives longer ones: alike for kii and everything using it, as
- * they change the layout of kii_mqtt_endpoint_t and kii_t. A session renewing
- * by onboarding again needs as much more room in the buffer set by
- * kii_set_buff(), as onboarding's response carries the endpoint. */
+#endif
 /** \brief Size of kii_mqtt_endpoint_t::username. */
 #ifndef KII_USERNAME_MAX_SIZE
 #define KII_USERNAME_MAX_SIZE 64

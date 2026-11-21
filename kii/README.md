@@ -111,6 +111,13 @@ obtained:
   after 15 to 30 seconds, then twice as long after each further failure, up to
   2.5 to 5 minutes, and not before every request meanwhile.
 
+An access token or a refresh token can be 127 bytes long, far more than Kii
+Cloud's are. A server that issues longer ones needs kii, and everything using
+it, built with `KII_TOKEN_MAX_SIZE` and `KII_REFRESH_TOKEN_MAX_SIZE` defined
+as their length and one more, which makes `kii_author_t`, and what holds one,
+as much larger. A token longer than its size fails the login, onboarding or
+renewal that got it with `KII_ERR_TOO_LARGE_DATA`, and the log says which.
+
 The server refuses a token with `403` and the errorCode `WRONG_TOKEN`. The
 refused request is then sent again with the new token, provided its body was
 built in the buffer set by `kii_set_buff()`, and the buffer has room after the

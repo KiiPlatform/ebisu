@@ -91,6 +91,11 @@ kii_code_t kii_register_thing(
     fields[2].name = NULL;
 
     result = jkii_parse(buff, buff_size, fields);
+    if (result == JKII_ERR_PARTIAL &&
+            _kii_field_too_long(kii, &fields[0], "access token", "KII_TOKEN_MAX_SIZE")) {
+        ret = KII_ERR_TOO_LARGE_DATA;
+        goto exit;
+    }
     if (result != JKII_ERR_OK) {
         ret = KII_ERR_PARSE_JSON;
         goto exit;
