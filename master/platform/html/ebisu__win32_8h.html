@@ -115,8 +115,8 @@ typedef struct ebisu_win32_lock_t&#160;</td><td class="memItemRight" valign="bot
 Functions</h2></td></tr>
 <tr class="memitem:a8d84f62ef6dfdfc190453a04cb3b2045" id="r_a8d84f62ef6dfdfc190453a04cb3b2045"><td class="memItemLeft" align="right" valign="top"><a class="elRef" href="../../core/html/structebisu__system__t.html">ebisu_system_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8d84f62ef6dfdfc190453a04cb3b2045">ebisu_win32_system</a> (void)</td></tr>
 <tr class="memdesc:a8d84f62ef6dfdfc190453a04cb3b2045"><td class="mdescLeft">&#160;</td><td class="mdescRight">The system on Windows.  <br /></td></tr>
-<tr class="memitem:aa77cb4447ff9ac43260fc0622ba4b6fd" id="r_aa77cb4447ff9ac43260fc0622ba4b6fd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa77cb4447ff9ac43260fc0622ba4b6fd">ebisu_win32_lock_init</a> (<a class="el" href="structebisu__win32__lock__t.html">ebisu_win32_lock_t</a> *lock)</td></tr>
-<tr class="memdesc:aa77cb4447ff9ac43260fc0622ba4b6fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes the SRWLOCK, and makes base a lock of it.  <br /></td></tr>
+<tr class="memitem:ad16344b2401b105523a3f7a7958809de" id="r_ad16344b2401b105523a3f7a7958809de"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad16344b2401b105523a3f7a7958809de">ebisu_win32_lock_init</a> (<a class="el" href="structebisu__win32__lock__t.html">ebisu_win32_lock_t</a> *lock)</td></tr>
+<tr class="memdesc:ad16344b2401b105523a3f7a7958809de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes the SRWLOCK, and makes base a lock of it.  <br /></td></tr>
 <tr class="memitem:a556db7aedf778cd993354de03810f871" id="r_a556db7aedf778cd993354de03810f871"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a556db7aedf778cd993354de03810f871">ebisu_win32_tcp_socket_init</a> (<a class="el" href="structebisu__win32__tcp__socket__t.html">ebisu_win32_tcp_socket_t</a> *sock, unsigned int to_recv, unsigned int to_send)</td></tr>
 <tr class="memdesc:a556db7aedf778cd993354de03810f871"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the socket, with its timeouts, and makes base a socket of it.  <br /></td></tr>
 <tr class="memitem:abc3d7ff8a5ae6faf8976216267263cfa" id="r_abc3d7ff8a5ae6faf8976216267263cfa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abc3d7ff8a5ae6faf8976216267263cfa">ebisu_win32_tcp_socket_set_connect_timeout</a> (<a class="el" href="structebisu__win32__tcp__socket__t.html">ebisu_win32_tcp_socket_t</a> *sock, unsigned int seconds)</td></tr>
@@ -176,14 +176,14 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="aa77cb4447ff9ac43260fc0622ba4b6fd" name="aa77cb4447ff9ac43260fc0622ba4b6fd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa77cb4447ff9ac43260fc0622ba4b6fd">&#9670;&#160;</a></span>ebisu_win32_lock_init()</h2>
+<a id="ad16344b2401b105523a3f7a7958809de" name="ad16344b2401b105523a3f7a7958809de"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad16344b2401b105523a3f7a7958809de">&#9670;&#160;</a></span>ebisu_win32_lock_init()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void ebisu_win32_lock_init </td>
+          <td class="memname">bool ebisu_win32_lock_init </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structebisu__win32__lock__t.html">ebisu_win32_lock_t</a> *</td>          <td class="paramname"><span class="paramname"><em>lock</em></span></td><td>)</td>
           <td></td>
@@ -198,6 +198,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>true: an SRWLOCK's initialization doesn't fail. A bool as the other ports' lock initializers return, for code that is the same over them. </dd></dl>
 
 </div>
 </div>

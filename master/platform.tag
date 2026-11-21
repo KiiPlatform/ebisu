@@ -410,11 +410,11 @@
       <arglist></arglist>
     </member>
     <member kind="function">
-      <type>int</type>
+      <type>bool</type>
       <name>ebisu_mbedtls_tls_init</name>
       <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
-      <anchor>af86d53b56ce8eaf362a6f4617b495920</anchor>
-      <arglist>(ebisu_mbedtls_tls_t *tls, const unsigned char *ca, size_t ca_size)</arglist>
+      <anchor>a6361669ef5f00bb0a3ca2c243c0e32b5</anchor>
+      <arglist>(ebisu_mbedtls_tls_t *tls, const unsigned char *ca, size_t ca_size, int *out_error)</arglist>
     </member>
     <member kind="function">
       <type>mbedtls_ssl_config *</type>
@@ -613,11 +613,11 @@
       <arglist></arglist>
     </member>
     <member kind="function">
-      <type>int</type>
+      <type>bool</type>
       <name>ebisu_polarssl_tls_init</name>
       <anchorfile>ebisu__polarssl_8h.html</anchorfile>
-      <anchor>a6139bcc58fe73d1bf98ddcd6af33b409</anchor>
-      <arglist>(ebisu_polarssl_tls_t *tls, const unsigned char *ca, size_t ca_size)</arglist>
+      <anchor>a7bca3df8a1a6e32cb4e97f20a78f986e</anchor>
+      <arglist>(ebisu_polarssl_tls_t *tls, const unsigned char *ca, size_t ca_size, int *out_error)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -704,10 +704,10 @@
       <arglist>(void)</arglist>
     </member>
     <member kind="function">
-      <type>int</type>
+      <type>bool</type>
       <name>ebisu_posix_lock_init</name>
       <anchorfile>ebisu__posix_8h.html</anchorfile>
-      <anchor>a1c771ebce9cfb180f497092f6b8b5059</anchor>
+      <anchor>a3710d3f8057c11c20aacfaa5091a566d</anchor>
       <arglist>(ebisu_posix_lock_t *lock)</arglist>
     </member>
     <member kind="function">
@@ -864,10 +864,10 @@
       <arglist>(void)</arglist>
     </member>
     <member kind="function">
-      <type>void</type>
+      <type>bool</type>
       <name>ebisu_win32_lock_init</name>
       <anchorfile>ebisu__win32_8h.html</anchorfile>
-      <anchor>aa77cb4447ff9ac43260fc0622ba4b6fd</anchor>
+      <anchor>ad16344b2401b105523a3f7a7958809de</anchor>
       <arglist>(ebisu_win32_lock_t *lock)</arglist>
     </member>
     <member kind="function">
