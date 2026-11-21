@@ -281,7 +281,9 @@ a broker with nothing later.
 While it can't reach the cloud or the broker, the task waits longer between
 attempts: from about a second to at most five minutes, doubling each time, and
 for a share of that which depends on the thing, so that devices that lost their
-connection together don't all come back together.
+connection together don't all come back together. Where there is no thing, as
+there may be with an endpoint of the application's, the share depends on the
+client identifier set, or else on the endpoint's username and topic together.
 `kii_set_mqtt_retry_wait_max()` sets another longest wait. The wait goes back to
 the start once a connection has stayed subscribed for 30 seconds. One lost
 sooner counts as one more failure, so that a broker that closes connections as

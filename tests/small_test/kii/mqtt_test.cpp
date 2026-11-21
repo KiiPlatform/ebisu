@@ -4132,6 +4132,79 @@ TEST_CASE( "The waits between attempts" ) {
         CHECK( waits.size() > 32 );
     }
 
+    // With an endpoint of the application's there may be no thing: the waits
+    // still differ from one device to another.
+    SECTION("differ from one device to another with no thing, by the client identifier, or username and topic") {
+        kii._author.author_id[0] = '\0';
+        kii_mqtt_endpoint_t given;
+        memset(&given, 0, sizeof(given));
+        strcpy(given.host, "broker.example.com");
+        std::vector<std::string> ids;
+        for (int device = 0; device < 64; ++device) {
+            ids.push_back("dev." + std::to_string(device));
+        }
+        auto wait_of = [&]() {
+            kii._mqtt_endpoint = given;
+            kii._mqtt_endpoint_given = true;
+            _init_mqtt_state(&kii, &state);
+            state.retry_wait_ms = 300000;
+            _mqtt_state_reconnect(&state);
+            return state.wait_left_ms;
+        };
+
+        std::set<uint32_t> by_topic, by_username, by_client_id;
+        for (const std::string& id : ids) {
+            strcpy(given.topic, id.c_str());
+            by_topic.insert(wait_of());
+        }
+        CHECK( by_topic.size() > 32 );
+
+        strcpy(given.topic, "one-topic");
+        for (const std::string& id : ids) {
+            strcpy(given.username, id.c_str());
+            by_username.insert(wait_of());
+        }
+        CHECK( by_username.size() > 32 );
+
+        // A fleet on one account of the broker's: the topics tell its devices apart.
+        std::set<uint32_t> shared_account;
+        strcpy(given.username, "one-user");
+        for (const std::string& id : ids) {
+            strcpy(given.topic, id.c_str());
+            shared_account.insert(wait_of());
+        }
+        CHECK( shared_account.size() > 32 );
+
+        // The same text for both, as a broker may hand out, doesn't cancel out.
+        std::set<uint32_t> same_text;
+        for (const std::string& id : ids) {
+            strcpy(given.topic, id.c_str());
+            strcpy(given.username, id.c_str());
+            same_text.insert(wait_of());
+        }
+        CHECK( same_text.size() > 32 );
+
+        strcpy(given.topic, "one-topic");
+        strcpy(given.username, "one-user");
+        for (const std::string& id : ids) {
+            REQUIRE( kii_set_mqtt_client_id(&kii, id.c_str()) == KII_ERR_OK );
+            by_client_id.insert(wait_of());
+        }
+        CHECK( by_client_id.size() > 32 );
+
+        // The thing's ID, where there is one, as before: whatever the rest.
+        strcpy(kii._author.author_id, "th.1");
+        std::set<uint32_t> by_thing;
+        for (const std::string& id : ids) {
+            REQUIRE( kii_set_mqtt_client_id(&kii, id.c_str()) == KII_ERR_OK );
+            strcpy(given.username, id.c_str());
+            by_thing.insert(wait_of());
+        }
+        CHECK( by_thing.size() == 1 );
+        kii_set_mqtt_client_id(&kii, NULL);
+        kii._mqtt_endpoint_given = false;
+    }
+
     SECTION("do not differ between runs of one thing") {
         _mqtt_state_reconnect(&state);
         uint32_t wait_ms = state.wait_left_ms;
