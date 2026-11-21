@@ -28,8 +28,8 @@ extern "C" {
 /**
  * \brief A TLS connection over a Winsock socket, with Schannel through SSPI.
  *
- * Schannel negotiates the protocol versions the system enables, TLS 1.2 at
- * most, and the socket checks the server's certificate itself, with crypt32: a
+ * Schannel negotiates TLS 1.2, and nothing older, whatever versions the
+ * system enables, and the socket checks the server's certificate itself, with crypt32: a
  * chain to a root in the Windows root store, valid for server authentication,
  * issued for the host, and in date at the time of the clock set by
  * ebisu_schannel_socket_set_clock(), or the system's without one, unless

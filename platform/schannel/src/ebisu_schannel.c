@@ -742,10 +742,11 @@ done:
 static int tls_connect(ebisu_schannel_socket_t* ctx)
 {
     /* SCHANNEL_CRED, with which Schannel negotiates TLS 1.2 at most: TLS 1.3
-       needs SCH_CREDENTIALS, which older versions of Windows do not have. No
-       protocol versions are named, so those the system enables are used,
-       which an administrator can configure. Manual validation, since
-       verify_server_certificate() does it. */
+       needs SCH_CREDENTIALS, which older versions of Windows do not have. And
+       TLS 1.2 at the least, as the other ports have it, whatever older
+       versions the system enables for clients: named, it is the only one
+       offered. Manual validation, since verify_server_certificate() does
+       it. */
     SCHANNEL_CRED cred_data;
     memset(&cred_data, 0, sizeof(cred_data));
     cred_data.dwVersion = SCHANNEL_CRED_VERSION;
@@ -753,6 +754,7 @@ static int tls_connect(ebisu_schannel_socket_t* ctx)
         SCH_CRED_MANUAL_CRED_VALIDATION |
         SCH_CRED_NO_DEFAULT_CREDS |
         SCH_USE_STRONG_CRYPTO;
+    cred_data.grbitEnabledProtocols = SP_PROT_TLS1_2_CLIENT;
     SECURITY_STATUS status = AcquireCredentialsHandleA(
             NULL,
             (SEC_CHAR*)UNISP_NAME_A,

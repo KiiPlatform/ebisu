@@ -764,25 +764,28 @@ def run_tests(t, d):
     t.check('a server of a suite Windows has none of: last_error TLS_MISMATCH, and the hint',
             result_code(steps, 0) == ('connect', 'FAIL') and last_error(steps, 0)[0] == 'TLS_MISMATCH' and
             ('LOG error ' + hint) in out, out)
-    # Windows, as it is set up by default, enables neither TLS 1.0 nor 1.1, nor
-    # AES128-SHA: the server refuses them with an alert, and Windows a TLS 1.0
-    # ServerHello itself. wine's Schannel, over GnuTLS, takes TLS 1.0.
+    # The socket offers TLS 1.2 alone, whatever older versions the system
+    # enables for clients, as wine's Schannel, over GnuTLS, does TLS 1.0 and
+    # 1.1: a server of either alone refuses it with an alert. Windows, as it is
+    # set up by default, enables neither, nor AES128-SHA, and refuses a
+    # TLS 1.0 ServerHello itself.
+    old = [('TLS 1.0 alone', ssl.TLSVersion.TLSv1, 'AES128-SHA'),
+           ('TLS 1.1 alone', ssl.TLSVersion.TLSv1_1, 'AES128-SHA')]
     if windows:
-        old = [('TLS 1.0 alone', ssl.TLSVersion.TLSv1, 'AES128-SHA'),
-               ('TLS 1.1 alone', ssl.TLSVersion.TLSv1_1, 'AES128-SHA'),
-               ('TLS 1.2 with AES128-SHA alone', ssl.TLSVersion.TLSv1_2, 'AES128-SHA')]
-        for what, version, ciphers in old:
-            srv = Server(os.path.join(d, 'good.pem'), os.path.join(d, 'good.key'))
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', DeprecationWarning)
-                srv.ctx.minimum_version = version
-                srv.ctx.maximum_version = version
-            srv.ctx.set_ciphers(ciphers + ':@SECLEVEL=0')
-            out, steps = t.run(srv.port, 10, 'connect', 'negotiated', 'close')
-            t.check('a server of %s: last_error TLS_MISMATCH, and the hint' % what,
-                    result_code(steps, 0) == ('connect', 'FAIL') and
-                    last_error(steps, 0)[0] == 'TLS_MISMATCH' and ('LOG error ' + hint) in out and
-                    step(steps, 1) == none, out)
+        old.append(('TLS 1.2 with AES128-SHA alone', ssl.TLSVersion.TLSv1_2, 'AES128-SHA'))
+    for what, version, ciphers in old:
+        srv = Server(os.path.join(d, 'good.pem'), os.path.join(d, 'good.key'))
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', DeprecationWarning)
+            srv.ctx.minimum_version = version
+            srv.ctx.maximum_version = version
+        srv.ctx.set_ciphers(ciphers + ':@SECLEVEL=0')
+        out, steps = t.run(srv.port, 10, 'connect', 'negotiated', 'close')
+        t.check('a server of %s: last_error TLS_MISMATCH, and the hint' % what,
+                result_code(steps, 0) == ('connect', 'FAIL') and
+                last_error(steps, 0)[0] == 'TLS_MISMATCH' and ('LOG error ' + hint) in out and
+                step(steps, 1) == none, out)
+    if windows:
         tls10_hello = (bytes([0x16, 3, 1, 0, 0x2a, 2, 0, 0, 0x26, 3, 1]) + bytes(range(32)) +
                        bytes([0, 0, 0x2f, 0]))
         canned = Server(canned=tls10_hello)

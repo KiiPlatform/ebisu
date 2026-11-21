@@ -81,8 +81,9 @@ pieces TCP likes, and the MQTT task reads one byte at a time.
   the server refused failed some 2 seconds after it began, not at once: a
   connect to localhost, with nothing listening on `::1`, went on to
   127.0.0.1 only then.
-- The handshake sends the host name as SNI. The protocol versions are those
-  the system enables; with `SCHANNEL_CRED` that is TLS 1.2 at most.
+- The handshake sends the host name as SNI. The protocol version is TLS 1.2,
+  whatever older ones the system enables; with `SCHANNEL_CRED` that is the
+  latest too.
 - Windows' Schannel takes handshake messages of 32 kB, 0x8000 bytes, at most,
   unless `MessageLimitClient` in the registry raises that, up to 64 kB: a
   server whose Certificate message, its chain, is larger fails the handshake
