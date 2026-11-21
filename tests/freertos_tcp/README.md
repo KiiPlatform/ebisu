@@ -22,8 +22,12 @@ board's support is the [FreeRTOS sample's](../../tio/freertos-sample/board/board
   - it waits for its timeout with nothing to receive;
   - the receive timeout is as it was after it;
   - it returns at once for data received and not yet returned.
-- **The end of the stream:** a server that closes after its data, and one that
-  resets the connection, after which a send fails as closed.
+- **The end of the stream:**
+  - a server that closes after its data, after which a send fails as closed,
+    with nothing logged, as FreeRTOS-Plus-TCP sends nothing once the peer has
+    closed its side;
+  - one that resets the connection, after which a send fails as closed too,
+    and the failure is logged.
 - **Connecting fails:**
   - to a port nothing listens on, which QEMU's user-mode networking leaves
     unanswered rather than refuse, within the connect timeout, as a timeout;
