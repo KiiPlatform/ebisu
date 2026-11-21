@@ -38,8 +38,9 @@
    says it is. A record PolarSSL refused that is longer than it takes is said
    too: a build that takes less than the 16384 bytes a server may send in a
    record, as embedded ones are, otherwise fails as for a record that isn't
-   TLS. Its length is in the header, which PolarSSL leaves in the context's
-   in_hdr. */
+   TLS, or, just over, within the room the buffer has for padding and MAC, as
+   for a MAC that doesn't match, with AES-CBC. Its length is in the header,
+   which PolarSSL leaves in the context's in_hdr. */
 static void log_tls_error(ebisu_logger_t* logger, const char* what, const char* host,
         const ssl_context* ssl, int ret)
 {
@@ -49,7 +50,8 @@ static void log_tls_error(ebisu_logger_t* logger, const char* what, const char* 
 #endif
     log_to(logger, EBISU_LOG_ERROR, "%s %s: -0x%04x %s", what, host, (unsigned int)-ret,
             description);
-    if (ret != POLARSSL_ERR_SSL_INVALID_RECORD || ssl->in_hdr == NULL) {
+    if ((ret != POLARSSL_ERR_SSL_INVALID_RECORD && ret != POLARSSL_ERR_SSL_INVALID_MAC) ||
+            ssl->in_hdr == NULL) {
         return;
     }
     unsigned int length = (unsigned int)ssl->in_hdr[3] << 8 | ssl->in_hdr[4];

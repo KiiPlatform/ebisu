@@ -74,7 +74,9 @@
    says it is. A record mbedTLS refused that is longer than it takes is said
    too: a build that takes less than the 16384 bytes a server may send in a
    record, as embedded ones are, otherwise fails as for a record that isn't
-   TLS, or, from 2.28, as for more input than it has room for. Its length is
+   TLS, or, from 2.28, as for more input than it has room for. One just over,
+   within the room the buffer has for padding and MAC, fails in 2.4 as for a
+   MAC that doesn't match, with AES-CBC and no encrypt-then-MAC. Its length is
    in the header, which mbedTLS leaves in the context's in_hdr, a private
    member in 3.6 and 4.x. */
 static void log_tls_error(ebisu_logger_t* logger, const char* what, const char* host,
@@ -86,7 +88,8 @@ static void log_tls_error(ebisu_logger_t* logger, const char* what, const char* 
 #endif
     log_to(logger, EBISU_LOG_ERROR, "%s %s: -0x%04x %s", what, host, (unsigned int)-ret,
             description);
-    if ((ret != MBEDTLS_ERR_SSL_INVALID_RECORD && ret != MBEDTLS_ERR_SSL_BAD_INPUT_DATA) ||
+    if ((ret != MBEDTLS_ERR_SSL_INVALID_RECORD && ret != MBEDTLS_ERR_SSL_BAD_INPUT_DATA &&
+                ret != MBEDTLS_ERR_SSL_INVALID_MAC) ||
             ssl->MBEDTLS_PRIVATE(in_hdr) == NULL) {
         return;
     }
