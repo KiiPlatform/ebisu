@@ -1179,10 +1179,29 @@ TEST_CASE( "The PolarSSL socket says when the server sends a record longer than 
         CHECK_FALSE( client.logger.has("sent a record of") );
     }
 
-    SECTION("nor of a record that fits, but whose data isn't what it says") {
-        // As long as what it takes and the room left for the record's
-        // padding and MAC.
+    SECTION("just over, which fails as for a MAC that doesn't match") {
+        // As a record whose data is just over what the build takes does with
+        // AES-CBC and no encrypt-then-MAC, in mbedTLS 2.4 and PolarSSL: here
+        // a record of what it takes and 32 bytes, its data not what it says.
         const unsigned int length = SSL_MAX_CONTENT_LEN + 32;
+        TlsServer server(pki().server(),
+                send_then_wait(record_header(23, length) + std::string(length, 'x'), false));
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+        ebisu_sock_code_t code = EBISU_SOCK_OK;
+        client.recv(16, &code);
+        CHECK( code == EBISU_SOCK_FAIL );
+        long detail = 0;
+        CHECK( client.error(&detail) == EBISU_SOCK_ERROR_TLS );
+        CHECK( detail == POLARSSL_ERR_SSL_INVALID_MAC );
+#ifndef EBISU_NO_LOG
+        CHECK( client.logger.has("the server sent a record of " + std::to_string(length) +
+                " bytes, " + more_than) );
+#endif
+    }
+
+    SECTION("but not of one no longer than it takes whose MAC doesn't match") {
+        const unsigned int length = SSL_MAX_CONTENT_LEN;
         TlsServer server(pki().server(),
                 send_then_wait(record_header(23, length) + std::string(length, 'x'), false));
         Client client(&config.tls);
