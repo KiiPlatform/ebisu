@@ -805,16 +805,40 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
 /* Waits longer each time, so that devices do not keep at a cloud that is
  * refusing them or down, and part of the way at random, so that the ones that
  * lost it together do not come back together: ebisu_retry.h's waits, with the
- * thing's ID for the seed. The task keeps the wait and doubles it, where
+ * device's seed. The task keeps the wait and doubles it, where
  * ebisu_retry_wait() counts the failures; the waits are the same. They are
  * even, so each is spread over half to all of it. */
+
+/* What tells this device from the others, for the seed: the thing's ID. With
+ * an endpoint of the application's there may be no thing: then the client
+ * identifier set, or else the endpoint's username and topic together, since
+ * devices may share a broker's account and differ in topic, which is the
+ * client identifier by default, or the other way round. Without any, every
+ * device would wait alike. */
+static uint32_t _retry_seed(const mqtt_state_t* state)
+{
+    const kii_t* kii = state->kii;
+    if (kii->_author.author_id[0] != '\0') {
+        return ebisu_retry_seed(kii->_author.author_id);
+    }
+    if (kii->_mqtt_client_id != NULL && kii->_mqtt_client_id[0] != '\0') {
+        return ebisu_retry_seed(kii->_mqtt_client_id);
+    }
+    if (_kii_mqtt_endpoint_terminated(&state->endpoint)) {
+        /* The topic's turned, so that the same text in both doesn't cancel. */
+        uint32_t topic = ebisu_retry_seed(state->endpoint.topic);
+        return ebisu_retry_seed(state->endpoint.username) ^ ((topic << 16) | (topic >> 16));
+    }
+    return ebisu_retry_seed("");
+}
+
 static void _schedule_retry(mqtt_state_t* state)
 {
     const uint32_t max_ms = state->kii->_mqtt_retry_wait_max_ms != 0 ?
         state->kii->_mqtt_retry_wait_max_ms : RETRY_WAIT_MAX_MS;
     // A longest wait shorter than the first wait cuts that short too.
     uint32_t wait_ms = state->retry_wait_ms < max_ms ? state->retry_wait_ms : max_ms;
-    uint32_t seed = ebisu_retry_seed(state->kii->_author.author_id);
+    uint32_t seed = _retry_seed(state);
 
     state->wait_left_ms = ebisu_retry_spread(wait_ms, seed);
     state->retry_wait_ms = (wait_ms > max_ms / 2) ? max_ms : wait_ms * 2;
