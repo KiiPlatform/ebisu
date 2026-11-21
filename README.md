@@ -249,6 +249,14 @@ which, for the libraries, gives `-lebisu_tio -lebisu_kii -lebisu_khc
 -lebisu_jkii -lebisu_core`, the order a link by hand against the static
 libraries needs too.
 
+**Compatibility.** Every 3.x release keeps 3.0's API: code written for 3.0
+builds against 3.1. The ABI is kept by patch releases only, 3.0.1 for 3.0. An
+application allocates `khc`, `kii_t`, `tio_handler_t`, the sockets and the
+like itself, at the size its headers gave them, and a minor release may add to
+them, so build the application again for each minor release. The shared
+libraries' soname has the major and the minor, `libebisu_kii.so.3.0`, so that
+an application built against 3.0 doesn't load 3.1's.
+
 `tests/samples/package_consumer.sh` builds a program both ways against an
 installed copy, as CI does.
 

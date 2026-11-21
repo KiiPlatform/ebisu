@@ -208,9 +208,15 @@ value above `UINT32_MAX` is cut down before anything can check it.
   `tio_handler_t` and `tio_updater_t` changed. Code built against 1.x's headers
   can't use 3.0's libraries.
 - The libraries are `libebisu_khc`, `libebisu_jkii`, `libebisu_kii` and
-  `libebisu_tio`, all `.so.3`, with `libebisu_core` below them, where 1.x's were
-  `libkhc`, `libjkii`, `libkii` and `libtio`, and `libkhc` and `libjkii` had no
-  version in their soname. Linking them is under Building.
+  `libebisu_tio`, all `.so.3.0`, with `libebisu_core` below them, where 1.x's
+  were `libkhc`, `libjkii`, `libkii` and `libtio`, and `libkhc` and `libjkii`
+  had no version in their soname. Linking them is under Building.
+- The soname has the major and the minor version, as a minor release may
+  change the ABI: an application allocates `khc`, `kii_t`, `tio_handler_t` and
+  the like itself, at the size its headers gave them, and a minor release may
+  add to them. Rebuild the application against each minor release, 3.1 after
+  3.0; one built against 3.0 doesn't load 3.1's libraries. A patch release,
+  3.0.1, keeps the ABI and the soname, and every 3.x keeps the API.
 - The shared libraries export only what the public headers declare. Code that
   called anything else in them, such as `_extract_content_length()` or
   `_get_anonymous_token()`, no longer links.
