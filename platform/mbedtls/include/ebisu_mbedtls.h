@@ -118,15 +118,17 @@ int ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, si
  *
  * Such as the cipher suites, mbedtls_ssl_conf_ciphersuites(), or the lowest
  * version, mbedtls_ssl_conf_min_tls_version(), mbedtls_ssl_conf_min_version()
- * in mbedTLS 2. Or, for an mbedTLS built with a record smaller than the 16 KB
- * a server may send, MBEDTLS_SSL_IN_CONTENT_LEN or, before 2.12,
+ * in mbedTLS 2. Or, for an mbedTLS built with a record smaller than the 16 KB a
+ * server may send, MBEDTLS_SSL_IN_CONTENT_LEN or, before 2.12,
  * MBEDTLS_SSL_MAX_CONTENT_LEN, the maximum fragment length to ask the server
  * for, mbedtls_ssl_conf_max_frag_len(), which a server that doesn't take the
- * extension ignores. Changed after ebisu_mbedtls_tls_init(), before the first
- * connection. What ebisu_mbedtls_tls_init() set, the verification, the CA
- * certificates and the random generator, are the socket's to keep, but for
- * the random generator where EBISU_MBEDTLS_SETS_RNG is 0, which the
- * application sets here, with mbedtls_ssl_conf_rng().
+ * extension ignores. A record longer than mbedTLS takes fails the connection,
+ * and the socket's logger says so, with the record's length. Changed after
+ * ebisu_mbedtls_tls_init(), before the first connection. What
+ * ebisu_mbedtls_tls_init() set, the verification, the CA certificates and the
+ * random generator, are the socket's to keep, but for the random generator
+ * where EBISU_MBEDTLS_SETS_RNG is 0, which the application sets here, with
+ * mbedtls_ssl_conf_rng().
  *
  * \param [in] tls The configuration.
  * \return mbedTLS's configuration.

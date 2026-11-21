@@ -1086,3 +1086,123 @@ TEST_CASE( "The PolarSSL socket gives the TLS version and cipher suite its conne
         CHECK( ebisu_polarssl_socket_get_cipher(&client.tls) == nullptr );
     }
 }
+
+namespace {
+
+// The header of a record of this type and length, of TLS 1.2, without the
+// record.
+std::string record_header(unsigned char type, unsigned int length)
+{
+    const char header[] = { (char)type, 0x03, 0x03, (char)(length >> 8), (char)(length & 0xff) };
+    return std::string(header, sizeof(header));
+}
+
+// Sends what is given, at once if plain, after reading the ClientHello, and
+// then waits for the client to close.
+TlsServer::serve_t send_then_wait(const std::string& data, bool plain)
+{
+    return [data, plain](SSL*, int fd) {
+        char buffer[2048];
+        if (plain) {
+            (void)!read(fd, buffer, sizeof(buffer));
+        }
+        (void)!write(fd, data.data(), data.size());
+        while (read(fd, buffer, sizeof(buffer)) > 0) {
+        }
+    };
+}
+
+} // namespace
+
+// A server may send up to 16384 bytes of data in a record, which a build that
+// takes fewer, as embedded ones are, refuses. 18432 bytes, the most a TLS 1.2
+// record may hold, are more than any build takes.
+TEST_CASE( "The PolarSSL socket says when the server sends a record longer than it takes" ) {
+    Config config;
+    const std::string takes = " this PolarSSL takes, as SSL_MAX_CONTENT_LEN sets it.";
+    const std::string more_than = "more than the " + std::to_string(SSL_MAX_CONTENT_LEN) + takes;
+
+    SECTION("in the handshake") {
+        TlsServer server(pki().server(), send_then_wait(record_header(22, 18432), true), 1, 0, true);
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        long detail = 0;
+        CHECK( client.error(&detail) == EBISU_SOCK_ERROR_TLS );
+        CHECK( detail == POLARSSL_ERR_SSL_INVALID_RECORD );
+#ifdef EBISU_NO_LOG
+        CHECK( client.logger.lines.empty() );
+#else
+        CHECK( client.logger.has("localhost sent a record of 18432 bytes, " + more_than) );
+#endif
+    }
+
+    SECTION("once connected") {
+        TlsServer server(pki().server(), send_then_wait(record_header(23, 18432), false));
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+        ebisu_sock_code_t code = EBISU_SOCK_OK;
+        client.recv(16, &code);
+        CHECK( code == EBISU_SOCK_FAIL );
+        long detail = 0;
+        CHECK( client.error(&detail) == EBISU_SOCK_ERROR_TLS );
+        CHECK( detail == POLARSSL_ERR_SSL_INVALID_RECORD );
+#ifndef EBISU_NO_LOG
+        CHECK( client.logger.has("the server sent a record of 18432 bytes, " + more_than) );
+#endif
+    }
+
+    SECTION("but not of a server that isn't TLS") {
+        // Whose "P/" would be a length of 20527.
+        TlsServer server(pki().server(),
+                send_then_wait("HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n", true), 1, 0, true);
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        long detail = 0;
+        CHECK( client.error(&detail) == EBISU_SOCK_ERROR_TLS );
+        CHECK( detail == POLARSSL_ERR_SSL_INVALID_RECORD );
+        CHECK_FALSE( client.logger.has("sent a record of") );
+    }
+
+    SECTION("nor of a record of a type TLS hasn't") {
+        TlsServer server(pki().server(), send_then_wait(record_header(99, 18432), true), 1, 0, true);
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        CHECK_FALSE( client.logger.has("sent a record of") );
+    }
+
+    SECTION("nor of a record of a version TLS hasn't") {
+        std::string header = record_header(22, 18432);
+        header[1] = 9;
+        TlsServer server(pki().server(), send_then_wait(header, true), 1, 0, true);
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        CHECK_FALSE( client.logger.has("sent a record of") );
+    }
+
+    SECTION("nor of a record that fits, but whose data isn't what it says") {
+        // As long as what it takes and the room left for the record's
+        // padding and MAC.
+        const unsigned int length = SSL_MAX_CONTENT_LEN + 32;
+        TlsServer server(pki().server(),
+                send_then_wait(record_header(23, length) + std::string(length, 'x'), false));
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+        ebisu_sock_code_t code = EBISU_SOCK_OK;
+        client.recv(16, &code);
+        CHECK( code == EBISU_SOCK_FAIL );
+        long detail = 0;
+        CHECK( client.error(&detail) == EBISU_SOCK_ERROR_TLS );
+        CHECK( detail == POLARSSL_ERR_SSL_INVALID_MAC );
+        CHECK_FALSE( client.logger.has("sent a record of") );
+    }
+
+    SECTION("nor of a record no longer than it takes") {
+        // Of a TLS version that isn't, which is refused whatever its length.
+        std::string header = record_header(22, SSL_MAX_CONTENT_LEN);
+        header[2] = 9;
+        TlsServer server(pki().server(), send_then_wait(header + std::string(SSL_MAX_CONTENT_LEN, 'x'), true), 1, 0, true);
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        CHECK_FALSE( client.logger.has("sent a record of") );
+    }
+}

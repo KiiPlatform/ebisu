@@ -28,15 +28,20 @@
 /* Built without logging, a diagnostic is left out, its message too, and its
    arguments aren't evaluated. */
 #define log_to(logger, level, ...) ((void)0)
-#define log_tls_error(logger, what, host, ret) ((void)0)
+#define log_tls_error(logger, what, host, ssl, ret) ((void)0)
 #define log_refused(logger, host, flags) ((void)0)
 #else
 /* Sends a diagnostic to logger. Without one, it goes nowhere. */
 #define log_to(logger, level, ...) ebisu_log((logger), (level), __VA_ARGS__)
 
 /* What failed, with PolarSSL's error and, built with POLARSSL_ERROR_C, what it
-   says it is. */
-static void log_tls_error(ebisu_logger_t* logger, const char* what, const char* host, int ret)
+   says it is. A record PolarSSL refused that is longer than it takes is said
+   too: a build that takes less than the 16384 bytes a server may send in a
+   record, as embedded ones are, otherwise fails as for a record that isn't
+   TLS. Its length is in the header, which PolarSSL leaves in the context's
+   in_hdr. */
+static void log_tls_error(ebisu_logger_t* logger, const char* what, const char* host,
+        const ssl_context* ssl, int ret)
 {
     char description[96] = "";
 #if defined(POLARSSL_ERROR_C)
@@ -44,6 +49,21 @@ static void log_tls_error(ebisu_logger_t* logger, const char* what, const char* 
 #endif
     log_to(logger, EBISU_LOG_ERROR, "%s %s: -0x%04x %s", what, host, (unsigned int)-ret,
             description);
+    if (ret != POLARSSL_ERR_SSL_INVALID_RECORD || ssl->in_hdr == NULL) {
+        return;
+    }
+    unsigned int length = (unsigned int)ssl->in_hdr[3] << 8 | ssl->in_hdr[4];
+    /* Of one of TLS's types, and its version 3: not, say, the start of an
+       HTTP response, which PolarSSL refuses as a record too. */
+    if (ssl->in_hdr[0] >= SSL_MSG_CHANGE_CIPHER_SPEC &&
+            ssl->in_hdr[0] <= SSL_MSG_APPLICATION_DATA && ssl->in_hdr[1] == 3 &&
+            length > SSL_MAX_CONTENT_LEN) {
+        log_to(logger, EBISU_LOG_ERROR,
+                "%s sent a record of %u bytes, more than the %u this PolarSSL takes, as "
+                "SSL_MAX_CONTENT_LEN sets it. A server may send up to 16384 bytes of data "
+                "in a record, unless it honours the max_fragment_length asked of it.",
+                host, length, (unsigned int)SSL_MAX_CONTENT_LEN);
+    }
 }
 
 /* Why the server's certificate was refused: the first of the reasons in the
@@ -494,7 +514,7 @@ static ebisu_sock_code_t polarssl_connect(ebisu_socket_t* self, const char* host
     /* Before connecting: none of it is sent. */
     ret = set_up(sock, host);
     if (ret != 0) {
-        log_tls_error(sock->_logger, "failed to set up TLS for", host, ret);
+        log_tls_error(sock->_logger, "failed to set up TLS for", host, &sock->_ssl, ret);
         set_error(sock, EBISU_SOCK_ERROR_TLS, ret);
         end(sock, false);
         return EBISU_SOCK_FAIL;
@@ -554,7 +574,7 @@ static ebisu_sock_code_t polarssl_connect(ebisu_socket_t* self, const char* host
         set_error(sock, EBISU_SOCK_ERROR_VERIFY, (long)flags);
         goto fail;
     } else if (ret != 0) {
-        log_tls_error(sock->_logger, "TLS handshake failed with", host, ret);
+        log_tls_error(sock->_logger, "TLS handshake failed with", host, &sock->_ssl, ret);
         if (is_mismatch(&sock->_ssl, ret)) {
             log_to(sock->_logger, EBISU_LOG_ERROR,
                     "%s may take only TLS older than 1.2, or none of the cipher suites "
@@ -601,7 +621,7 @@ static ebisu_sock_code_t polarssl_send(
     }
     if (!sock->_timed_out) {
         sock->_failed = true;
-        log_tls_error(sock->_logger, "failed to send to", "the server", ret);
+        log_tls_error(sock->_logger, "failed to send to", "the server", &sock->_ssl, ret);
     }
     set_tls_error(sock, ret);
     return EBISU_SOCK_FAIL;
@@ -641,7 +661,7 @@ static ebisu_sock_code_t polarssl_recv(
         return EBISU_SOCK_FAIL;
     }
     sock->_failed = true;
-    log_tls_error(sock->_logger, "failed to receive from", "the server", ret);
+    log_tls_error(sock->_logger, "failed to receive from", "the server", &sock->_ssl, ret);
     set_tls_error(sock, ret);
     return EBISU_SOCK_FAIL;
 }

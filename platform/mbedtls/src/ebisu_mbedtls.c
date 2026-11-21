@@ -53,15 +53,32 @@
 /* Built without logging, a diagnostic is left out, its message too, and its
    arguments aren't evaluated. */
 #define log_to(logger, level, ...) ((void)0)
-#define log_tls_error(logger, what, host, ret) ((void)0)
+#define log_tls_error(logger, what, host, ssl, ret) ((void)0)
 #define log_refused(logger, host, flags) ((void)0)
 #else
 /* Sends a diagnostic to logger. Without one, it goes nowhere. */
 #define log_to(logger, level, ...) ebisu_log((logger), (level), __VA_ARGS__)
 
+/* The most data mbedTLS was built to take in a record, and the option that
+   sets it: MBEDTLS_SSL_IN_CONTENT_LEN from 2.12, MBEDTLS_SSL_MAX_CONTENT_LEN
+   before. */
+#if defined(MBEDTLS_SSL_IN_CONTENT_LEN)
+#define IN_CONTENT_LEN MBEDTLS_SSL_IN_CONTENT_LEN
+#define IN_CONTENT_LEN_OPTION "MBEDTLS_SSL_IN_CONTENT_LEN"
+#else
+#define IN_CONTENT_LEN MBEDTLS_SSL_MAX_CONTENT_LEN
+#define IN_CONTENT_LEN_OPTION "MBEDTLS_SSL_MAX_CONTENT_LEN"
+#endif
+
 /* What failed, with mbedTLS's error and, built with MBEDTLS_ERROR_C, what it
-   says it is. */
-static void log_tls_error(ebisu_logger_t* logger, const char* what, const char* host, int ret)
+   says it is. A record mbedTLS refused that is longer than it takes is said
+   too: a build that takes less than the 16384 bytes a server may send in a
+   record, as embedded ones are, otherwise fails as for a record that isn't
+   TLS, or, from 2.28, as for more input than it has room for. Its length is
+   in the header, which mbedTLS leaves in the context's in_hdr, a private
+   member in 3.6 and 4.x. */
+static void log_tls_error(ebisu_logger_t* logger, const char* what, const char* host,
+        const mbedtls_ssl_context* ssl, int ret)
 {
     char description[96] = "";
 #if defined(MBEDTLS_ERROR_C)
@@ -69,6 +86,23 @@ static void log_tls_error(ebisu_logger_t* logger, const char* what, const char* 
 #endif
     log_to(logger, EBISU_LOG_ERROR, "%s %s: -0x%04x %s", what, host, (unsigned int)-ret,
             description);
+    if ((ret != MBEDTLS_ERR_SSL_INVALID_RECORD && ret != MBEDTLS_ERR_SSL_BAD_INPUT_DATA) ||
+            ssl->MBEDTLS_PRIVATE(in_hdr) == NULL) {
+        return;
+    }
+    const unsigned char* header = ssl->MBEDTLS_PRIVATE(in_hdr);
+    unsigned int length = (unsigned int)header[3] << 8 | header[4];
+    /* Of one of TLS's types, and its version 3: not, say, the start of an
+       HTTP response, which mbedTLS refuses as a record too. */
+    if (header[0] >= MBEDTLS_SSL_MSG_CHANGE_CIPHER_SPEC &&
+            header[0] <= MBEDTLS_SSL_MSG_APPLICATION_DATA && header[1] == 3 &&
+            length > IN_CONTENT_LEN) {
+        log_to(logger, EBISU_LOG_ERROR,
+                "%s sent a record of %u bytes, more than the %u this mbedTLS takes, as "
+                IN_CONTENT_LEN_OPTION " sets it. A server may send up to 16384 bytes of "
+                "data in a record, unless it honours the max_fragment_length asked of it.",
+                host, length, (unsigned int)IN_CONTENT_LEN);
+    }
 }
 
 /* Why the server's certificate was refused: the first of the reasons mbedTLS
@@ -488,7 +522,7 @@ static ebisu_sock_code_t mbedtls_connect(ebisu_socket_t* self, const char* host,
         ret = mbedtls_ssl_set_hostname(&sock->_ssl, host);
     }
     if (ret != 0) {
-        log_tls_error(sock->_logger, "failed to set up TLS for", host, ret);
+        log_tls_error(sock->_logger, "failed to set up TLS for", host, &sock->_ssl, ret);
         set_error(sock, EBISU_SOCK_ERROR_TLS, ret);
         goto fail;
     }
@@ -533,7 +567,7 @@ static ebisu_sock_code_t mbedtls_connect(ebisu_socket_t* self, const char* host,
         set_error(sock, EBISU_SOCK_ERROR_VERIFY, (long)flags);
         goto fail;
     } else if (ret != 0) {
-        log_tls_error(sock->_logger, "TLS handshake failed with", host, ret);
+        log_tls_error(sock->_logger, "TLS handshake failed with", host, &sock->_ssl, ret);
         if (is_mismatch(&sock->_ssl, ret)) {
             log_to(sock->_logger, EBISU_LOG_ERROR,
                     "%s may take only TLS older than 1.2, or none of the cipher suites "
@@ -580,7 +614,7 @@ static ebisu_sock_code_t mbedtls_send(
     }
     if (!sock->_timed_out) {
         sock->_failed = true;
-        log_tls_error(sock->_logger, "failed to send to", "the server", ret);
+        log_tls_error(sock->_logger, "failed to send to", "the server", &sock->_ssl, ret);
     }
     set_tls_error(sock, ret);
     return EBISU_SOCK_FAIL;
@@ -631,7 +665,7 @@ static ebisu_sock_code_t mbedtls_recv(
         return EBISU_SOCK_FAIL;
     }
     sock->_failed = true;
-    log_tls_error(sock->_logger, "failed to receive from", "the server", ret);
+    log_tls_error(sock->_logger, "failed to receive from", "the server", &sock->_ssl, ret);
     set_tls_error(sock, ret);
     return EBISU_SOCK_FAIL;
 }
