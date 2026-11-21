@@ -102,8 +102,11 @@ obtained:
   refuses the token. Onboarding issues no refresh token and no lifetime, and
   onboarding again leaves earlier tokens valid.
 - **From a login or registration**: with the refresh token, or by logging in
-  again when there is none or the server refuses it. This happens shortly
-  before the token expires, and whenever the server refuses it. A renewal
+  again when there is none or the server refuses it. This happens shortly before
+  the token expires, and whenever the server refuses it. Shortly before means
+  from 5 minutes before, or a fifth of the token's lifetime if that is less,
+  down to half of that, each thing its own share, from its ID, so that things
+  whose tokens were issued together don't all renew them together. A renewal
   before expiry that fails, as when the server can't be reached, is tried again
   after 15 to 30 seconds, then twice as long after each further failure, up to
   2.5 to 5 minutes, and not before every request meanwhile.

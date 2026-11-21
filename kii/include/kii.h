@@ -894,6 +894,10 @@ void kii_session_get_author(kii_session_t* session, kii_author_t* out_author);
  *   kii_get_resp_status() -- without its body, and calling it again uses the
  *   renewed token. Other responses, other 403s included, reach the caller as
  *   they would without a session.
+ * - Shortly before it expires means from 5 minutes before, or a fifth of its
+ *   lifetime if that is less, down to half of that, each thing its own share,
+ *   from its ID, so that things whose tokens were issued together don't all
+ *   renew them together.
  * - A renewal ahead of expiry that fails, as when the server can't be reached,
  *   isn't tried before every request: it is tried again after 15 to 30
  *   seconds, twice as long after each further failure, and at most 2.5 to 5

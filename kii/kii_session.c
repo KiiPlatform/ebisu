@@ -18,7 +18,10 @@
 
 #ifndef EBISU_NO_SESSION
 /* Kii's own SDKs renew five minutes before expiry. Short-lived tokens get a
- * fifth of their lifetime instead, so they are not renewed as soon as issued. */
+ * fifth of their lifetime instead, so they are not renewed as soon as issued.
+ * A thing renews from that margin to half of it before expiry, its share by
+ * its ID, as ebisu_retry_spread() gives it, so that things whose tokens were
+ * issued together, as after an outage, don't all renew together. */
 #define _RENEW_MARGIN_MAX_MS ((uint64_t)5 * 60 * 1000)
 
 /* Lifetimes beyond this, some 136 years, are treated as unknown rather than
@@ -198,15 +201,15 @@ static uint64_t _now_ms(kii_session_t* session)
     return session->_system->ops->monotonic_ms(session->_system);
 }
 
-/* How long after it was issued a token with this lifetime is renewed, or
- * false when that is unknown.
+/* How long after it was issued a token with this lifetime is renewed, by the
+ * thing whose ID gave the seed, or false when that is unknown.
  *
  * 0 is a response that gave no lifetime. One that is negative, or longer than
  * _LIFETIME_MAX_SEC, cannot be scheduled either; the token is kept all the
  * same, rather than failing the login or refresh that issued it, and renewed
  * when the server refuses it. Within range the lifetime is at most
  * 4294967295000 ms, far from overflowing. */
-static bool _renew_after_ms(int64_t expires_in_sec, uint64_t* out_ms)
+static bool _renew_after_ms(int64_t expires_in_sec, uint32_t seed, uint64_t* out_ms)
 {
     if (expires_in_sec <= 0 || expires_in_sec > _LIFETIME_MAX_SEC) {
         return false;
@@ -216,7 +219,8 @@ static bool _renew_after_ms(int64_t expires_in_sec, uint64_t* out_ms)
     if (margin_ms > _RENEW_MARGIN_MAX_MS) {
         margin_ms = _RENEW_MARGIN_MAX_MS;
     }
-    *out_ms = lifetime_ms - margin_ms;
+    /* At most _RENEW_MARGIN_MAX_MS, which a uint32_t holds. */
+    *out_ms = lifetime_ms - ebisu_retry_spread((uint32_t)margin_ms, seed);
     return true;
 }
 
@@ -226,7 +230,8 @@ static void _store_locked(
         int64_t expires_in_sec)
 {
     session->_author = *author;
-    session->_renew_at_known = _renew_after_ms(expires_in_sec, &session->_renew_after_ms);
+    session->_renew_at_known = _renew_after_ms(expires_in_sec,
+            ebisu_retry_seed(author->author_id), &session->_renew_after_ms);
     session->_renew_failures = 0;
     if (session->_renew_at_known) {
         session->_stored_at_ms = _now_ms(session);
