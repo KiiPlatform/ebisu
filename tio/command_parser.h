@@ -1,5 +1,5 @@
-#ifndef _command_parser_
-#define _command_parser_
+#ifndef TIO_COMMAND_PARSER_H
+#define TIO_COMMAND_PARSER_H
 
 #ifdef __cplusplus
 extern "C" {

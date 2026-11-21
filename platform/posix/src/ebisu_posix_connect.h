@@ -6,8 +6,8 @@
    Not a header of the API: it defines what it declares, and is included once,
    by a source file that has defined log_to(), as ebisu_log() or nothing. It
    needs _DEFAULT_SOURCE under -std=c99, for what glibc declares of POSIX. */
-#ifndef _EBISU_POSIX_CONNECT
-#define _EBISU_POSIX_CONNECT
+#ifndef EBISU_POSIX_CONNECT_H
+#define EBISU_POSIX_CONNECT_H
 
 #include <ebisu_log.h>
 #include <ebisu_socket.h>
@@ -433,5 +433,5 @@ static void set_tcp_options(int sock, const tcp_options_t* options, ebisu_logger
     }
 }
 
-#endif /* _EBISU_POSIX_CONNECT */
+#endif /* EBISU_POSIX_CONNECT_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

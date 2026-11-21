@@ -2,8 +2,8 @@
  * @file ebisu_freertos_tcp.h
  * @brief A socket of plain TCP over FreeRTOS-Plus-TCP, and its name servers.
  */
-#ifndef _EBISU_FREERTOS_TCP
-#define _EBISU_FREERTOS_TCP
+#ifndef EBISU_FREERTOS_TCP_H
+#define EBISU_FREERTOS_TCP_H
 
 #include <ebisu_dns.h>
 #include <ebisu_log.h>
@@ -150,5 +150,5 @@ ebisu_dns_t* ebisu_freertos_tcp_dns(void);
 }
 #endif
 
-#endif /* _EBISU_FREERTOS_TCP */
+#endif /* EBISU_FREERTOS_TCP_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

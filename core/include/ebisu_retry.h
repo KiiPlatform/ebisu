@@ -3,8 +3,8 @@
  * @brief Exponential back-off: waits before trying again after a failure,
  * longer each time and spread from device to device.
  */
-#ifndef _EBISU_RETRY
-#define _EBISU_RETRY
+#ifndef EBISU_RETRY_H
+#define EBISU_RETRY_H
 
 #include <stdint.h>
 
@@ -82,5 +82,5 @@ uint32_t ebisu_retry_wait(uint32_t first, uint32_t max, uint32_t n, uint32_t see
 #pragma GCC visibility pop
 #endif
 
-#endif /* _EBISU_RETRY */
+#endif /* EBISU_RETRY_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

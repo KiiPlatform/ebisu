@@ -2,8 +2,8 @@
  * @file ebisu_time.h
  * @brief UTC dates and times to seconds since the epoch, and back.
  */
-#ifndef _EBISU_TIME
-#define _EBISU_TIME
+#ifndef EBISU_TIME_H
+#define EBISU_TIME_H
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -138,5 +138,5 @@ bool ebisu_time_format_iso8601(int64_t seconds, char sep, char* buff, size_t siz
 #pragma GCC visibility pop
 #endif
 
-#endif /* _EBISU_TIME */
+#endif /* EBISU_TIME_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

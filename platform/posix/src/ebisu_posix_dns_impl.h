@@ -1,7 +1,7 @@
 /* The parts of the POSIX port's name servers the tests and the fuzzer call by
    themselves. */
-#ifndef _EBISU_POSIX_DNS_IMPL
-#define _EBISU_POSIX_DNS_IMPL
+#ifndef EBISU_POSIX_DNS_IMPL_H
+#define EBISU_POSIX_DNS_IMPL_H
 
 #include <ebisu_dns.h>
 
@@ -47,5 +47,5 @@ size_t _ebisu_posix_dns_read_servers(const char* path, ebisu_dns_addr_t* servers
 }
 #endif
 
-#endif /* _EBISU_POSIX_DNS_IMPL */
+#endif /* EBISU_POSIX_DNS_IMPL_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

@@ -1,5 +1,5 @@
-#ifndef _jkii_utils_
-#define _jkii_utils_
+#ifndef JKII_UTILS_H
+#define JKII_UTILS_H
 
 #ifdef __cplusplus
 extern "C" {

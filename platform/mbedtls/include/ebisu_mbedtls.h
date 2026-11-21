@@ -2,8 +2,8 @@
  * @file ebisu_mbedtls.h
  * @brief TLS with mbedTLS, over another socket of the system's.
  */
-#ifndef _EBISU_MBEDTLS
-#define _EBISU_MBEDTLS
+#ifndef EBISU_MBEDTLS_H
+#define EBISU_MBEDTLS_H
 
 #include <ebisu_clock.h>
 #include <ebisu_log.h>
@@ -326,5 +326,5 @@ const char* ebisu_mbedtls_socket_get_cipher(const ebisu_mbedtls_socket_t* sock);
 #pragma GCC visibility pop
 #endif
 
-#endif /* _EBISU_MBEDTLS */
+#endif /* EBISU_MBEDTLS_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

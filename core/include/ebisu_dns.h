@@ -2,8 +2,8 @@
  * @file ebisu_dns.h
  * @brief The system's name servers, and asking one of them, for the DNS probe.
  */
-#ifndef _EBISU_DNS
-#define _EBISU_DNS
+#ifndef EBISU_DNS_H
+#define EBISU_DNS_H
 
 #include "ebisu_object.h"
 
@@ -208,5 +208,5 @@ void ebisu_dns_format_address(ebisu_dns_t* dns, const ebisu_dns_addr_t* addr, ch
 #pragma GCC visibility pop
 #endif
 
-#endif /* _EBISU_DNS */
+#endif /* EBISU_DNS_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

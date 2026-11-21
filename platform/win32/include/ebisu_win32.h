@@ -3,8 +3,8 @@
  * @brief The system, its clock, a lock, a socket of plain TCP and the name
  * servers on Windows.
  */
-#ifndef _EBISU_WIN32
-#define _EBISU_WIN32
+#ifndef EBISU_WIN32_H
+#define EBISU_WIN32_H
 
 #include <ebisu_dns.h>
 #include <ebisu_log.h>
@@ -221,5 +221,5 @@ ebisu_dns_t* ebisu_win32_dns(void);
 #pragma GCC visibility pop
 #endif
 
-#endif /* _EBISU_WIN32 */
+#endif /* EBISU_WIN32_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

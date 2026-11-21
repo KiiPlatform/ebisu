@@ -2,8 +2,8 @@
    otherwise than 2.0 on, waiting for one of lwIP's sockets, with
    lwip_select(), or lwip_poll() where lwIP 2.1 or later is built without
    select, and why a call of its sockets failed. Private to the port. */
-#ifndef _EBISU_LWIP_IMPL
-#define _EBISU_LWIP_IMPL
+#ifndef EBISU_LWIP_IMPL_H
+#define EBISU_LWIP_IMPL_H
 
 #include <limits.h>
 #include <stdbool.h>
@@ -112,4 +112,4 @@ static int ebisu_lwip_error(int s)
 #endif
 }
 
-#endif /* _EBISU_LWIP_IMPL */
+#endif /* EBISU_LWIP_IMPL_H */

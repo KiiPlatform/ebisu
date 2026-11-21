@@ -2,8 +2,8 @@
  * @file ebisu_lwip.h
  * @brief A socket of plain TCP over lwIP's sockets, and its name servers.
  */
-#ifndef _EBISU_LWIP
-#define _EBISU_LWIP
+#ifndef EBISU_LWIP_H
+#define EBISU_LWIP_H
 
 #include <ebisu_dns.h>
 #include <ebisu_log.h>
@@ -206,5 +206,5 @@ ebisu_dns_t* ebisu_lwip_dns(void);
 }
 #endif
 
-#endif /* _EBISU_LWIP */
+#endif /* EBISU_LWIP_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

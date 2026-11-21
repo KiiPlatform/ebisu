@@ -1,5 +1,5 @@
-#ifndef __kii_object_impl__
-#define __kii_object_impl__
+#ifndef KII_OBJECT_IMPL_H
+#define KII_OBJECT_IMPL_H
 
 #ifdef __cplusplus
 extern "C" {

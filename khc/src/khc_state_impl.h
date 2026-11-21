@@ -1,5 +1,5 @@
-#ifndef __khc_state_impl
-#define __khc_state_impl
+#ifndef KHC_STATE_IMPL_H
+#define KHC_STATE_IMPL_H
 
 #ifdef __cplusplus
 extern "C"
@@ -59,4 +59,4 @@ extern const KHC_STATE_HANDLER state_handlers[];
 }
 #endif
 
-#endif //__khc_state_impl
+#endif //KHC_STATE_IMPL_H

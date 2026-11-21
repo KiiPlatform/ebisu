@@ -1,5 +1,5 @@
-#ifndef __example
-#define __example
+#ifndef EXAMPLE_H
+#define EXAMPLE_H
 
 #ifdef __cplusplus
 extern 'C' {

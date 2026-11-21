@@ -1,5 +1,5 @@
-#ifndef __kii_req_impl__
-#define __kii_req_impl__
+#ifndef KII_REQ_IMPL_H
+#define KII_REQ_IMPL_H
 
 #include "kii.h"
 #include "kii_api_call.h"

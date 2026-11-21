@@ -2,8 +2,8 @@
  * @file ebisu_clock.h
  * @brief The time of day: what a clock does, and the checks made against one.
  */
-#ifndef _EBISU_CLOCK
-#define _EBISU_CLOCK
+#ifndef EBISU_CLOCK_H
+#define EBISU_CLOCK_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -195,5 +195,5 @@ bool ebisu_clock_from_system_time(int64_t seconds, int64_t* out_now);
 }
 #endif
 
-#endif /* _EBISU_CLOCK */
+#endif /* EBISU_CLOCK_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

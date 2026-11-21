@@ -1,5 +1,5 @@
-#ifndef _EBISU_LOGGERS_FORMAT
-#define _EBISU_LOGGERS_FORMAT
+#ifndef EBISU_LOGGERS_FORMAT_H
+#define EBISU_LOGGERS_FORMAT_H
 
 #include <ebisu_log.h>
 
@@ -32,4 +32,4 @@ size_t _ebisu_loggers_format(
    terminated. */
 void _ebisu_loggers_timestamp(char* out, size_t size);
 
-#endif /* _EBISU_LOGGERS_FORMAT */
+#endif /* EBISU_LOGGERS_FORMAT_H */

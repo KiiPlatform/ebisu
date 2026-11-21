@@ -2,8 +2,8 @@
  * @file ebisu_str.h
  * @brief Bounded strings and numbers: copying, building, parsing and splitting.
  */
-#ifndef _EBISU_STR
-#define _EBISU_STR
+#ifndef EBISU_STR_H
+#define EBISU_STR_H
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -435,5 +435,5 @@ bool ebisu_span_find(ebisu_span_t s, const char* needle, size_t* out_offset);
 #pragma GCC visibility pop
 #endif
 
-#endif /* _EBISU_STR */
+#endif /* EBISU_STR_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

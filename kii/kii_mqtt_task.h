@@ -1,5 +1,5 @@
-#ifndef __KII_MQTT_TASK_H__
-#define __KII_MQTT_TASK_H__
+#ifndef KII_MQTT_TASK_H
+#define KII_MQTT_TASK_H
 
 #ifdef __cplusplus
 extern "C"

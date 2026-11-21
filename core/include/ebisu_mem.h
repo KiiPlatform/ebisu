@@ -2,8 +2,8 @@
  * @file ebisu_mem.h
  * @brief Clearing memory that held a secret.
  */
-#ifndef _EBISU_MEM
-#define _EBISU_MEM
+#ifndef EBISU_MEM_H
+#define EBISU_MEM_H
 
 #include <stddef.h>
 
@@ -40,5 +40,5 @@ void ebisu_secure_zero(void* p, size_t n);
 #pragma GCC visibility pop
 #endif
 
-#endif /* _EBISU_MEM */
+#endif /* EBISU_MEM_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

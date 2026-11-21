@@ -1,6 +1,6 @@
 /* The part of the Win32 port's name servers the tests call by itself. */
-#ifndef _EBISU_WIN32_DNS_IMPL
-#define _EBISU_WIN32_DNS_IMPL
+#ifndef EBISU_WIN32_DNS_IMPL_H
+#define EBISU_WIN32_DNS_IMPL_H
 
 #include <ebisu_dns.h>
 
@@ -24,5 +24,5 @@ size_t _ebisu_win32_dns_adapter_servers(const IP_ADAPTER_ADDRESSES* adapters,
 }
 #endif
 
-#endif /* _EBISU_WIN32_DNS_IMPL */
+#endif /* EBISU_WIN32_DNS_IMPL_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

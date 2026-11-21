@@ -1,5 +1,5 @@
-#ifndef __tio__
-#define __tio__
+#ifndef TIO_H
+#define TIO_H
 
 #include <stdbool.h>
 #include <stdint.h>
