@@ -29,7 +29,8 @@ extern "C" {
  * ebisu_openssl_socket_set_clock(), or the system's without one, against the
  * CA certificates of the configuration set by ebisu_openssl_socket_set_tls(),
  * or the system's without one. A receive that times out is EBISU_SOCK_FAIL,
- * which recv_timed_out tells from a lost connection. One serves one connection
+ * which recv_timed_out tells from a lost connection. A send to a peer that
+ * has gone fails, and never raises SIGPIPE. One serves one connection
  * at a time, and is used again for the next once closed. A connection offers
  * the server the session of the last one to the same host and port to resume,
  * from those its configuration keeps, which saves most of the handshake if the

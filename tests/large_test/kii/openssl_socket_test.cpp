@@ -324,6 +324,99 @@ TEST_CASE( "The OpenSSL socket's send reports a connection that has gone" ) {
     CHECK( c.close_client() == EBISU_SOCK_OK );
 }
 
+namespace {
+
+volatile sig_atomic_t sigpipes_delivered = 0;
+
+void count_sigpipe(int) { sigpipes_delivered = sigpipes_delivered + 1; }
+
+// SIGPIPE as an application that does nothing about it has it, but counted
+// rather than the end of the process; as the fixture left it, afterwards.
+struct CountingSigpipe {
+    CountingSigpipe() {
+        sigpipes_delivered = 0;
+        signal(SIGPIPE, count_sigpipe);
+    }
+    ~CountingSigpipe() { signal(SIGPIPE, SIG_IGN); }
+};
+
+bool sigpipe_pending()
+{
+    sigset_t pending;
+    REQUIRE( sigpending(&pending) == 0 );
+    return sigismember(&pending, SIGPIPE) == 1;
+}
+
+// A send to the peer that has gone, which fails.
+void send_to_no_one(Connection& c)
+{
+    const char data[] = "hello";
+    size_t sent = 0;
+    ebisu_sock_code_t res = EBISU_SOCK_OK;
+    for (int i = 0; i < 2 && res == EBISU_SOCK_OK; ++i) {
+        res = c.client.base.ops->send(&c.client.base, data, sizeof(data), &sent);
+    }
+    REQUIRE( res == EBISU_SOCK_FAIL );
+}
+
+}
+
+// OpenSSL writes with write(), which raises SIGPIPE on a peer that has gone:
+// by default the end of the process.
+TEST_CASE( "The OpenSSL socket raises no SIGPIPE on a peer that has gone" ) {
+    Connection c;
+    CountingSigpipe counting;
+    c.close_server_socket();
+
+    SECTION("from a send") {
+        send_to_no_one(c);
+        CHECK( sigpipes_delivered == 0 );
+        CHECK_FALSE( sigpipe_pending() );
+        long detail = 0;
+        CHECK( c.client.base.ops->last_error(&c.client.base, &detail) == EBISU_SOCK_ERROR_CLOSED );
+        CHECK( detail == EPIPE );
+        // And the thread's mask is as it was: SIGPIPE not blocked.
+        sigset_t mask;
+        REQUIRE( pthread_sigmask(SIG_SETMASK, nullptr, &mask) == 0 );
+        CHECK( sigismember(&mask, SIGPIPE) == 0 );
+    }
+
+    SECTION("from a close, whose close_notify goes to no one") {
+        CHECK( c.close_client() == EBISU_SOCK_OK );
+        CHECK( sigpipes_delivered == 0 );
+        CHECK_FALSE( sigpipe_pending() );
+    }
+
+    SECTION("nor leaves one pending for an application that blocks it") {
+        sigset_t sigpipe, old_mask;
+        sigemptyset(&sigpipe);
+        sigaddset(&sigpipe, SIGPIPE);
+        REQUIRE( pthread_sigmask(SIG_BLOCK, &sigpipe, &old_mask) == 0 );
+        send_to_no_one(c);
+        CHECK_FALSE( sigpipe_pending() );
+        // The mask is the application's still.
+        sigset_t now_mask;
+        REQUIRE( pthread_sigmask(SIG_SETMASK, &old_mask, &now_mask) == 0 );
+        CHECK( sigismember(&now_mask, SIGPIPE) == 1 );
+        CHECK( sigpipes_delivered == 0 );
+    }
+
+    SECTION("and leaves one that was pending before, which isn't its own") {
+        sigset_t sigpipe, old_mask;
+        sigemptyset(&sigpipe);
+        sigaddset(&sigpipe, SIGPIPE);
+        REQUIRE( pthread_sigmask(SIG_BLOCK, &sigpipe, &old_mask) == 0 );
+        REQUIRE( pthread_kill(pthread_self(), SIGPIPE) == 0 );
+        REQUIRE( sigpipe_pending() );
+        send_to_no_one(c);
+        CHECK( sigpipe_pending() );
+        CHECK( sigpipes_delivered == 0 );
+        // Unblocked, the application's own is delivered to it.
+        REQUIRE( pthread_sigmask(SIG_SETMASK, &old_mask, nullptr) == 0 );
+        CHECK( sigpipes_delivered == 1 );
+    }
+}
+
 // The first attempt failing must not be held against the next.
 TEST_CASE( "The OpenSSL socket's send sends with an earlier failure left behind" ) {
     Connection c;

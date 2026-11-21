@@ -6,6 +6,7 @@
 #include <netdb.h>
 #include <poll.h>
 #include <pthread.h>
+#include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -595,6 +596,61 @@ static bool is_mismatch(unsigned long e, const first_record_t* first)
     }
 }
 
+/* OpenSSL writes to the socket with write(), which raises SIGPIPE when the
+   peer has gone: by default the end of the process, where the plain TCP
+   socket's send() only fails. Where a socket can be told not to raise it,
+   SO_NOSIGPIPE, it is, at connect. Elsewhere the signal is blocked on the
+   thread for as long as OpenSSL may write, and one the write raised, which is
+   then pending on this thread alone, is taken off before the mask is put
+   back: other threads' signals, the application's handler and its mask are
+   as they were. A SIGPIPE pending before isn't this call's, and is left. */
+typedef struct sigpipe_guard_t {
+#ifndef SO_NOSIGPIPE
+    sigset_t old_mask;
+    bool blocked;
+    bool was_pending;
+#else
+    char unused;
+#endif
+} sigpipe_guard_t;
+
+static void sigpipe_block(sigpipe_guard_t* guard)
+{
+#ifndef SO_NOSIGPIPE
+    sigset_t sigpipe;
+    sigset_t pending;
+    sigemptyset(&sigpipe);
+    sigaddset(&sigpipe, SIGPIPE);
+    guard->was_pending = sigpending(&pending) == 0 && sigismember(&pending, SIGPIPE) == 1;
+    guard->blocked = pthread_sigmask(SIG_BLOCK, &sigpipe, &guard->old_mask) == 0;
+#else
+    (void)guard;
+#endif
+}
+
+/* Leaves errno as it was, for the caller to read after the OpenSSL call. */
+static void sigpipe_restore(sigpipe_guard_t* guard)
+{
+#ifndef SO_NOSIGPIPE
+    int saved_errno = errno;
+    if (!guard->blocked) {
+        return;
+    }
+    if (!guard->was_pending) {
+        const struct timespec no_wait = { 0, 0 };
+        sigset_t sigpipe;
+        sigemptyset(&sigpipe);
+        sigaddset(&sigpipe, SIGPIPE);
+        while (sigtimedwait(&sigpipe, NULL, &no_wait) == -1 && errno == EINTR) {
+        }
+    }
+    pthread_sigmask(SIG_SETMASK, &guard->old_mask, NULL);
+    errno = saved_errno;
+#else
+    (void)guard;
+#endif
+}
+
 /* Why SSL_read() or SSL_write() failed, from SSL_get_error() and errno. */
 static ebisu_sock_error_t io_error(int ssl_error, int saved_errno, long* out_detail)
 {
@@ -815,6 +871,13 @@ static ebisu_sock_code_t
         X509_VERIFY_PARAM_set_time(param, (time_t)now);
     }
 
+#ifdef SO_NOSIGPIPE
+    {
+        /* See sigpipe_guard_t. */
+        int on = 1;
+        setsockopt(sock, SOL_SOCKET, SO_NOSIGPIPE, &on, sizeof(on));
+    }
+#endif
     ret = SSL_set_fd(ssl, sock);
     if (ret == 0){
         log_to(ctx->logger, EBISU_LOG_ERROR, "failed to set fd.");
@@ -831,7 +894,10 @@ static ebisu_sock_code_t
     memset(&first, 0, sizeof(first));
     SSL_set_msg_callback(ssl, note_first_record);
     SSL_set_msg_callback_arg(ssl, &first);
+    sigpipe_guard_t guard;
+    sigpipe_block(&guard);
     ret = SSL_connect(ssl);
+    sigpipe_restore(&guard);
     SSL_set_msg_callback(ssl, NULL);
     SSL_set_msg_callback_arg(ssl, NULL);
     if (ret != 1) {
@@ -895,7 +961,10 @@ static ebisu_sock_code_t
 {
     ebisu_openssl_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_openssl_socket_t, base);
     clear_errors();
+    sigpipe_guard_t guard;
+    sigpipe_block(&guard);
     int ret = SSL_write(ctx->ssl, buffer, length);
+    sigpipe_restore(&guard);
     if (ret > 0) {
         *out_sent_length = ret;
         return EBISU_SOCK_OK;
@@ -921,7 +990,11 @@ static ebisu_sock_code_t
     ebisu_openssl_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_openssl_socket_t, base);
     *out_actual_length = 0;
     clear_errors();
+    /* A read can write too: an alert, or a handshake the peer asked for. */
+    sigpipe_guard_t guard;
+    sigpipe_block(&guard);
     int ret = SSL_read(ctx->ssl, buffer, length_to_read);
+    sigpipe_restore(&guard);
     if (ret > 0) {
         *out_actual_length = ret;
         return EBISU_SOCK_OK;
@@ -1024,7 +1097,10 @@ static ebisu_sock_code_t
     int shutdown_ok = 1;
     if (!ctx->ssl_failed) {
         clear_errors();
+        sigpipe_guard_t guard;
+        sigpipe_block(&guard);
         int ret = SSL_shutdown(ctx->ssl);
+        sigpipe_restore(&guard);
         if (ret < 0) {
             int sslErr = SSL_get_error(ctx->ssl, ret);
             if (sslErr != SSL_ERROR_SYSCALL && sslErr != SSL_ERROR_ZERO_RETURN) {
