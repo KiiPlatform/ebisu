@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds ebisu as each embedded sample's vendor build does: from the files the
+# Builds ebisu as each legacy sample's vendor build does, legacy/'s: from the files the
 # sample's Makefile copies into the vendor's tree, with that build's include
 # paths, for the Cortex-M4 both boards have, with arm-none-eabi-gcc. The
 # objects are then linked whole against newlib, so that a source a build leaves
@@ -67,10 +67,10 @@ copy() {
     if [ ! -d "$src" ]; then
         mkdir -p "$src"
         cp -r "$root"/core "$root"/platform "$root"/jkii "$root"/khc "$root"/kii "$root"/tio \
-            "$root"/version "$src"
+            "$root"/legacy "$root"/version "$src"
     fi
-    make -s -C "$src/tio/$sample-sample" >/dev/null
-    mv "$src/tio/$sample-sample/$dir" "$work/$sample"
+    make -s -C "$src/legacy/$sample-sample" >/dev/null
+    mv "$src/legacy/$sample-sample/$dir" "$work/$sample"
 }
 
 gt202() {

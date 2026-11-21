@@ -284,7 +284,8 @@ With CMake:
   the root, or `add_subdirectory()` it.
 - The Makefiles at the root, in each component, in `tio/linux-sample` and in the
   tests are gone. See Building in the [README](./README.md#building). The cc3200
-  and gt202 samples keep theirs.
+  and gt202 samples keep theirs, in `legacy/`, where the two have moved from
+  `tio/`.
 - `tio/arm-toolchain.cmake`, for armv5t with soft floating point, and
   `tio/README.ARM.mkd` are gone. `cmake/arm-linux-gnueabihf.cmake` cross-compiles
   for armv7-a with hard floating point; see Building in the

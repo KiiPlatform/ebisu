@@ -29,8 +29,8 @@ You can choose to run both `tio_handler_t` and `tio_updater_t` or either one.
 
 Each sample is a thing that onboards, uploads its state periodically and
 handles the commands it receives, with tio on one platform. Most give tio
-platform's ports for their system, sockets and TLS; the esp32, cc3200 and
-gt202 samples have callbacks of their own.
+platform's ports for their system, sockets and TLS; the esp32 sample has
+callbacks of its own.
 
 | Sample | Target | Built with | System, sockets and TLS | What CI does |
 |---|---|---|---|---|
@@ -40,11 +40,11 @@ gt202 samples have callbacks of their own.
 | [esp32](https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/README.md) | ESP32, on a board over Wi-Fi, or in Espressif's QEMU | ESP-IDF v5.5 | its own, on FreeRTOS and ESP-IDF's esp-tls, mbedTLS over lwIP | builds it for both, and runs it in Espressif's QEMU, as for the freertos sample |
 | [amebaz2](https://github.com/KiiPlatform/ebisu/blob/master/tio/amebaz2-sample/README.md) | Realtek's AmebaZ2, the RTL8710C | its SDK, ameba-rtos-z2 | platform's FreeRTOS, lwIP and mbedTLS ports, over the SDK's FreeRTOS V10.0.1, lwIP 2.0.2 and mbedTLS 2.4.0 | builds the firmware image, which nothing runs, and runs the large tests on the SDK's FreeRTOS, lwIP and mbedTLS in QEMU |
 | [amebaz](https://github.com/KiiPlatform/ebisu/blob/master/tio/amebaz-sample/README.md) | Realtek's AmebaZ, the RTL8710B and RTL8711B | its SDK, ameba-rtos-1 | platform's FreeRTOS, lwIP, and mbedTLS or PolarSSL (experimental) ports, over the SDK's FreeRTOS V8.1.2, lwIP 1.4.1, and mbedTLS 2.4.0 or PolarSSL 1.3.8 | builds the firmware's images with each library, which nothing runs, and runs the large tests on the SDK's FreeRTOS, lwIP, and each library, in QEMU |
-| [cc3200](https://github.com/KiiPlatform/ebisu/blob/master/tio/cc3200-sample/README.md) | TI's CC3200, a Cortex-M4 | the CC3200 SDK and Code Composer Studio | its own, on FreeRTOS and SimpleLink's sockets, without TLS | builds ebisu's sources as the sample's Makefile copies them, for a Cortex-M4, but not the sample's own |
-| [gt202](https://github.com/KiiPlatform/ebisu/blob/master/tio/gt202-sample/README.md) | the GT202 Wi-Fi module, on a FRDM-K22F board, a Cortex-M4 | MQX 4.1 and IAR Embedded Workbench for ARM | its own, on MQX and the module's sockets, without TLS or with TLS that accepts any server | as for the cc3200 sample |
 
-The cc3200 and gt202 samples' socket callbacks are not for a product: their
-READMEs say why.
+Two older samples, for TI's CC3200 and for the GT202 Wi-Fi module, are in
+[legacy](https://github.com/KiiPlatform/ebisu/blob/master/legacy/README.md):
+they connect without TLS, or with TLS that accepts any server, and nothing
+builds or runs them.
 
 # Use `tio_handler_t`
 
