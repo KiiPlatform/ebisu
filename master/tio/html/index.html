@@ -94,7 +94,7 @@ $(function() {
 <p>You can choose to run both <span class="tt"><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></span> and <span class="tt"><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></span> or either one.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md0"></a>
 Samples</h1>
-<p>Each sample is a thing that onboards, uploads its state periodically and handles the commands it receives, with tio on one platform. Most give tio platform's ports for their system, sockets and TLS; the esp32, cc3200 and gt202 samples have callbacks of their own.</p>
+<p>Each sample is a thing that onboards, uploads its state periodically and handles the commands it receives, with tio on one platform. Most give tio platform's ports for their system, sockets and TLS; the esp32 sample has callbacks of its own.</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Sample  </th><th class="markdownTableHeadNone">Target  </th><th class="markdownTableHeadNone">Built with  </th><th class="markdownTableHeadNone">System, sockets and TLS  </th><th class="markdownTableHeadNone">What CI does  </th></tr>
@@ -110,12 +110,8 @@ Samples</h1>
 <td class="markdownTableBodyNone"><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/amebaz2-sample/README.md">amebaz2</a>  </td><td class="markdownTableBodyNone">Realtek's AmebaZ2, the RTL8710C  </td><td class="markdownTableBodyNone">its SDK, ameba-rtos-z2  </td><td class="markdownTableBodyNone">platform's FreeRTOS, lwIP and mbedTLS ports, over the SDK's FreeRTOS V10.0.1, lwIP 2.0.2 and mbedTLS 2.4.0  </td><td class="markdownTableBodyNone">builds the firmware image, which nothing runs, and runs the large tests on the SDK's FreeRTOS, lwIP and mbedTLS in QEMU  </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/amebaz-sample/README.md">amebaz</a>  </td><td class="markdownTableBodyNone">Realtek's AmebaZ, the RTL8710B and RTL8711B  </td><td class="markdownTableBodyNone">its SDK, ameba-rtos-1  </td><td class="markdownTableBodyNone">platform's FreeRTOS, lwIP, and mbedTLS or PolarSSL (experimental) ports, over the SDK's FreeRTOS V8.1.2, lwIP 1.4.1, and mbedTLS 2.4.0 or PolarSSL 1.3.8  </td><td class="markdownTableBodyNone">builds the firmware's images with each library, which nothing runs, and runs the large tests on the SDK's FreeRTOS, lwIP, and each library, in QEMU  </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/cc3200-sample/README.md">cc3200</a>  </td><td class="markdownTableBodyNone">TI's CC3200, a Cortex-M4  </td><td class="markdownTableBodyNone">the CC3200 SDK and Code Composer Studio  </td><td class="markdownTableBodyNone">its own, on FreeRTOS and SimpleLink's sockets, without TLS  </td><td class="markdownTableBodyNone">builds ebisu's sources as the sample's Makefile copies them, for a Cortex-M4, but not the sample's own  </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/gt202-sample/README.md">gt202</a>  </td><td class="markdownTableBodyNone">the GT202 Wi-Fi module, on a FRDM-K22F board, a Cortex-M4  </td><td class="markdownTableBodyNone">MQX 4.1 and IAR Embedded Workbench for ARM  </td><td class="markdownTableBodyNone">its own, on MQX and the module's sockets, without TLS or with TLS that accepts any server  </td><td class="markdownTableBodyNone">as for the cc3200 sample  </td></tr>
 </table>
-<p>The cc3200 and gt202 samples' socket callbacks are not for a product: their READMEs say why.</p>
+<p>Two older samples, for TI's CC3200 and for the GT202 Wi-Fi module, are in <a href="https://github.com/KiiPlatform/ebisu/blob/master/legacy/README.md">legacy</a>: they connect without TLS, or with TLS that accepts any server, and nothing builds or runs them.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md1"></a>
 Use <span class="tt">tio_handler_t</span></h1>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
