@@ -651,6 +651,55 @@ static void sigpipe_restore(sigpipe_guard_t* guard)
 #endif
 }
 
+/* The handshake, by a deadline: to_connect seconds from now, where the
+   receive and send timeouts alone bound each wait for the server, and not how
+   many there are, so that a server that says nothing with no receive timeout,
+   or a little at a time, would keep connect from returning. The socket
+   doesn't block meanwhile, and blocks again after. What SSL_connect()
+   returned, last: on a wait that ran out, less than 1, with
+   SSL_ERROR_WANT_READ or SSL_ERROR_WANT_WRITE for SSL_get_error(), as a
+   blocking socket's timeout leaves it. With to_connect of 0, as it was: one
+   call, on the blocking socket. */
+static int handshake(SSL* ssl, int sock, unsigned int to_recv, unsigned int to_send,
+        unsigned int to_connect)
+{
+    if (to_connect == 0) {
+        return SSL_connect(ssl);
+    }
+    int flags = fcntl(sock, F_GETFL, 0);
+    if (flags < 0 || fcntl(sock, F_SETFL, flags | O_NONBLOCK) != 0) {
+        return SSL_connect(ssl);
+    }
+    const int64_t deadline_ms = monotonic_ms() + (int64_t)to_connect * 1000;
+    int ret;
+    for (;;) {
+        ret = SSL_connect(ssl);
+        if (ret == 1) {
+            break;
+        }
+        int ssl_error = SSL_get_error(ssl, ret);
+        if (ssl_error != SSL_ERROR_WANT_READ && ssl_error != SSL_ERROR_WANT_WRITE) {
+            break;
+        }
+        /* For the server until the deadline, or the receive or send timeout
+           if that comes first. */
+        const bool reading = (ssl_error == SSL_ERROR_WANT_READ);
+        const unsigned int to_wait = reading ? to_recv : to_send;
+        int64_t wait_until_ms = deadline_ms;
+        if (to_wait > 0 && monotonic_ms() + (int64_t)to_wait * 1000 < deadline_ms) {
+            wait_until_ms = monotonic_ms() + (int64_t)to_wait * 1000;
+        }
+        if (wait_for(sock, reading ? POLLIN : POLLOUT, wait_until_ms) != 1) {
+            errno = EAGAIN;
+            break;
+        }
+    }
+    int saved_errno = errno;
+    (void)fcntl(sock, F_SETFL, flags);
+    errno = saved_errno;
+    return ret;
+}
+
 /* Why SSL_read() or SSL_write() failed, from SSL_get_error() and errno. */
 static ebisu_sock_error_t io_error(int ssl_error, int saved_errno, long* out_detail)
 {
@@ -896,7 +945,7 @@ static ebisu_sock_code_t
     SSL_set_msg_callback_arg(ssl, &first);
     sigpipe_guard_t guard;
     sigpipe_block(&guard);
-    ret = SSL_connect(ssl);
+    ret = handshake(ssl, sock, ctx->to_recv, ctx->to_send, ctx->to_connect);
     sigpipe_restore(&guard);
     SSL_set_msg_callback(ssl, NULL);
     SSL_set_msg_callback_arg(ssl, NULL);
