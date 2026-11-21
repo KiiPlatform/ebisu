@@ -9,7 +9,7 @@
 #include <sstream>
 
 TEST_CASE( "HTTP minimal" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
     const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
@@ -175,7 +175,7 @@ TEST_CASE( "HTTP minimal" ) {
 }
 
 TEST_CASE( "HTTP 1.1 chunked minimal" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
     const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
@@ -400,7 +400,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
 }
 
 TEST_CASE( "Socket send partial" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
     const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
@@ -414,7 +414,7 @@ TEST_CASE( "Socket send partial" ) {
     resp.headers = { "HTTP/1.0 200 OK" };
 
     char req_header[] = "X-KII-dummy-Header: test partial.";
-    khc_slist* req_headers = NULL;
+    khc_slist_t* req_headers = NULL;
     req_headers = khc_slist_append(req_headers, req_header, strlen(req_header));
 
     khc_set_host(&http, "api.kii.com");
@@ -774,7 +774,7 @@ TEST_CASE( "Socket send partial" ) {
 }
 
 TEST_CASE( "state abnormal tests." ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
     const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
@@ -890,7 +890,7 @@ TEST_CASE( "state abnormal tests." ) {
     SECTION("state req header send retry.") {
         http._state = KHC_STATE_REQ_HEADER_SEND;
         http._sent_length = 0;
-        khc_slist header;
+        khc_slist_t header;
         header.data = (char*)"dummy";
         header.next = NULL;
         http._current_req_header = &header;
@@ -910,7 +910,7 @@ TEST_CASE( "state abnormal tests." ) {
     SECTION("state req header send failed.") {
         http._state = KHC_STATE_REQ_HEADER_SEND;
         http._sent_length = 0;
-        khc_slist header;
+        khc_slist_t header;
         header.data = (char*)"dummy";
         header.next = NULL;
         http._current_req_header = &header;
@@ -1622,7 +1622,7 @@ TEST_CASE( "state abnormal tests." ) {
 }
 
 TEST_CASE( "Enable insecure" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
 
     khc_set_host(&http, "api.kii.com");
@@ -1673,7 +1673,7 @@ TEST_CASE( "Enable insecure" ) {
 
 // What the request line state sends.
 static std::string sent_request_line(const char* path, bool absolute, bool insecure) {
-    khc http;
+    khc_t http;
     khc_init(&http);
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
@@ -1714,7 +1714,7 @@ TEST_CASE( "The request line carries the whole URL, for a forward proxy" ) {
 // What khc_perform() sends for a request with the method given and a read
 // callback giving body.
 static std::string sent_request(const char* method, const char* body) {
-    khc http;
+    khc_t http;
     khc_init(&http);
     char stream_buff[DEFAULT_STREAM_BUFF_SIZE];
     char resp_header_buff[DEFAULT_RESP_HEADER_BUFF_SIZE];

@@ -76,9 +76,9 @@ void updater_init(
 
     tio_updater_set_system(updater, gt202_system());
 
-    tio_updater_set_buff(updater, buffer, buffer_size);
+    tio_updater_set_http_buff(updater, buffer, buffer_size);
 
-    tio_updater_set_socket(updater, &sock_ssl_ctx->base);
+    tio_updater_set_http_socket(updater, &sock_ssl_ctx->base);
 
     tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
 

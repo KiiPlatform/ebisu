@@ -8,7 +8,7 @@
 #include <string>
 
 TEST_CASE( "HTTP Get" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
     khc_set_host(&http, "api-jp.kii.com");
     khc_set_method(&http, "GET");
@@ -52,7 +52,7 @@ TEST_CASE( "HTTP Get" ) {
         return size;
     };
 
-    khc_code res = khc_perform(&http);
+    khc_code_t res = khc_perform(&http);
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 404 );
     // A GET sends no body, so the read callback is not called.

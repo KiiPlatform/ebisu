@@ -410,7 +410,7 @@ namespace {
 // A khc whose requests are each answered, on a connection of their own, by the
 // next of the script's responses.
 struct Http {
-    khc http;
+    khc_t http;
     khct::HttpScript script;
     khct::cb::IOCtx io;
 
@@ -434,7 +434,7 @@ struct Http {
     }
 
     // As kii does before each request.
-    khc_code get() {
+    khc_code_t get() {
         khc_reset_except_request(&http);
         return khc_perform(&http);
     }

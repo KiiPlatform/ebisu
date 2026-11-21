@@ -20,19 +20,19 @@ const char PASSWORD[] = "PASSWORD-SECRET";
 
 // Each header line as allocated, and as it was when freed.
 struct Headers {
-    std::map<const khc_slist*, std::string> live;
+    std::map<const khc_slist_t*, std::string> live;
     std::vector<std::pair<std::string, std::string>> freed;
 };
 
-khc_slist* cb_alloc(const char* str, size_t len, void* data) {
-    khc_slist* node = khc_cb_slist_alloc(str, len, NULL);
+khc_slist_t* cb_alloc(const char* str, size_t len, void* data) {
+    khc_slist_t* node = khc_cb_slist_alloc(str, len, NULL);
     if (node != NULL) {
         ((Headers*)data)->live[node] = std::string(str, len);
     }
     return node;
 }
 
-void cb_free(khc_slist* node, void* data) {
+void cb_free(khc_slist_t* node, void* data) {
     Headers* h = (Headers*)data;
     const std::string allocated = h->live[node];
     h->live.erase(node);

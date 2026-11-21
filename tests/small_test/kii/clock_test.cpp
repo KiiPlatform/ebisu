@@ -89,7 +89,7 @@ TEST_CASE( "A new clock has the floor khc has, and no time" ) {
     Platform p;
     ebisu_server_clock_t clock;
     REQUIRE( ebisu_server_clock_init(&clock, p.system.system()) );
-    khc http;
+    khc_t http;
     khc_init(&http);
     CHECK( clock._floor == http._resp_date_floor );
     CHECK( clock._floor == EBISU_SOURCE_TIME - 7 * 86400 );

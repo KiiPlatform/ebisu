@@ -76,7 +76,7 @@ size_t read_state(char* buffer, size_t size, void* userdata) {
 }
 
 ebisu_task_code_t cb_task_not_started(const char*, EBISU_TASK_ENTRY, void*, void*) {
-    return EBISU_TASKC_OK;
+    return EBISU_TASK_OK;
 }
 
 }
@@ -90,7 +90,7 @@ TEST_CASE( "The updater uploads again when its token was renewed" ) {
     tio_updater_init(&updater);
     char buff[2048];
     tio_updater_set_app(&updater, "app", "api.kii.com");
-    tio_updater_set_buff(&updater, buff, sizeof(buff));
+    tio_updater_set_http_buff(&updater, buff, sizeof(buff));
     tio_updater_set_system(&updater, khct::cb::delay_only_system());
     khct::HttpScript http;
     http.attach(&updater._kii);
@@ -307,7 +307,7 @@ TEST_CASE( "A response tio can't read is TIO_ERR_INVALID_RESPONSE" ) {
     tio_updater_init(&updater);
     char buff[2048];
     tio_updater_set_app(&updater, "app", "api.kii.com");
-    tio_updater_set_buff(&updater, buff, sizeof(buff));
+    tio_updater_set_http_buff(&updater, buff, sizeof(buff));
     tio_updater_set_system(&updater, khct::cb::delay_only_system());
     khct::HttpScript http;
     http.attach(&updater._kii);

@@ -389,7 +389,7 @@ void kii_cancel_request_being_prepared(kii_t* kii) {
 }
 
 
-kii_code_t _convert_code(khc_code khc_c) {
+kii_code_t _convert_code(khc_code_t khc_c) {
     switch(khc_c) {
         case KHC_ERR_OK:
             return KII_ERR_OK;
@@ -439,7 +439,7 @@ void _reset_buff(kii_t* kii) {
 /* khc treats its stream and response header buffers as per-request, so
  * khc_reset_except_cb() clears them along with the rest of the request state.
  * kii's setters are per kii_t, and every API resets khc before its request,
- * so the buffers have to be handed back to khc each time. Resetting khc
+ * so the buffers have to be handed back to khc each time. Resetting khc_t
  * directly instead left them NULL, and khc allocated its defaults for every
  * request. */
 void _reset_khc(kii_t* kii) {

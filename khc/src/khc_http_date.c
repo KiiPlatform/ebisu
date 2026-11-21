@@ -208,7 +208,7 @@ int64_t _parse_http_date(const char* header, size_t header_len, int64_t floor)
     return (date < floor) ? -2 : date;
 }
 
-void _record_resp_date(khc* khc, const char* line, size_t line_len)
+void _record_resp_date(khc_t* khc, const char* line, size_t line_len)
 {
     if (line == NULL) {
         return;

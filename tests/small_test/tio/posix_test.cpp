@@ -66,7 +66,7 @@ TEST_CASE( "The POSIX system's tasks leave nothing behind when they end" ) {
     d.state = -1;
 
     ebisu_system_t* system = ebisu_posix_system();
-    REQUIRE( system->ops->task_create(system, "task", report_detach_state, &d) == EBISU_TASKC_OK );
+    REQUIRE( system->ops->task_create(system, "task", report_detach_state, &d) == EBISU_TASK_OK );
     d.created = true;
     while (d.state == -1) {
         sched_yield();

@@ -45,7 +45,7 @@ kii_code_t _set_bucket_path(
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     } else {
-        khc_code ret = khc_set_path(&kii->_khc, kii->_rw_buff);
+        khc_code_t ret = khc_set_path(&kii->_khc, kii->_rw_buff);
         if (ret == KHC_ERR_OK) {
             return KII_ERR_OK;
         } else {
@@ -78,7 +78,7 @@ kii_code_t _set_bucket_subscription_path(kii_t* kii, const kii_bucket_t* bucket)
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
+    khc_code_t kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
     if (kcode != KHC_ERR_OK) {
         return KII_ERR_TOO_LARGE_DATA;
     }
@@ -111,7 +111,7 @@ kii_code_t _set_topic_path(
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
+    khc_code_t kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
     if (kcode != KHC_ERR_OK) {
         return KII_ERR_TOO_LARGE_DATA;
     }
@@ -142,7 +142,7 @@ kii_code_t _set_topic_subscription_path(kii_t* kii, const kii_topic_t* topic) {
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
+    khc_code_t kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
     if (kcode != KHC_ERR_OK) {
         return KII_ERR_TOO_LARGE_DATA;
     }
@@ -172,7 +172,7 @@ kii_code_t _set_topic_push_message_path(kii_t* kii, const kii_topic_t* topic) {
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
+    khc_code_t kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
     if (kcode != KHC_ERR_OK) {
         return KII_ERR_TOO_LARGE_DATA;
     }
@@ -186,7 +186,7 @@ kii_code_t _set_thing_push_message_path(kii_t* kii, const char* thing_id) {
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
+    khc_code_t kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
     if (kcode != KHC_ERR_OK) {
         return KII_ERR_TOO_LARGE_DATA;
     }

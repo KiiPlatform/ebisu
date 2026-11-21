@@ -1401,7 +1401,7 @@ struct UntilThirdSubscription {
 
 bool cb_continue(void* task_info, void* userdata) {
     UntilThirdSubscription* until = (UntilThirdSubscription*)userdata;
-    kii_mqtt_task_info* info = (kii_mqtt_task_info*)task_info;
+    kii_mqtt_task_info_t* info = (kii_mqtt_task_info_t*)task_info;
     if (++until->steps > 100) {
         return false;
     }

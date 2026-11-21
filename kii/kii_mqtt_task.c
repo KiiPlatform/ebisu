@@ -866,7 +866,7 @@ static bool _is_temporary_error(kii_t* kii, kii_code_t res)
 void _mqtt_state_install_push(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
-    kii_mqtt_task_info* task_info = &state->info;
+    kii_mqtt_task_info_t* task_info = &state->info;
     kii_code_t res = kii_install_push(kii, false, &state->ins_id);
     if (res != KII_ERR_OK) {
         _event(kii, KII_MQTT_EVENT_INSTALL_FAILED, khc_get_status_code(&kii->_khc));
@@ -905,7 +905,7 @@ static kii_code_t _onboard_for_endpoint(mqtt_state_t* state)
 void _mqtt_state_get_endpoint(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
-    kii_mqtt_task_info* task_info = &state->info;
+    kii_mqtt_task_info_t* task_info = &state->info;
     _delay_ms(kii, WAIT_MS);
     kii_code_t res = (_kii_session_renews_by_onboarding(kii)) ?
         _onboard_for_endpoint(state) :
@@ -927,7 +927,7 @@ void _mqtt_state_get_endpoint(mqtt_state_t* state)
 void _mqtt_state_sock_connect(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
-    kii_mqtt_task_info* task_info = &state->info;
+    kii_mqtt_task_info_t* task_info = &state->info;
     kii_mqtt_endpoint_t* endpoint = &state->endpoint;
     uint16_t port = endpoint->port_ssl;
     if (kii->_insecure_mqtt) {
@@ -959,7 +959,7 @@ void _mqtt_state_sock_connect(mqtt_state_t* state)
 void _mqtt_state_send_connect(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
-    kii_mqtt_task_info* task_info = &state->info;
+    kii_mqtt_task_info_t* task_info = &state->info;
     kii_mqtt_endpoint_t* endpoint = &state->endpoint;
     if (kii->_mqtt_buffer == NULL || kii->_mqtt_buffer_size == 0) {
         task_info->error = KII_MQTT_ERR_INSUFFICIENT_BUFF;
@@ -996,7 +996,7 @@ void _mqtt_state_send_connect(mqtt_state_t* state)
 void _mqtt_state_recv_connack(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
-    kii_mqtt_task_info* task_info = &state->info;
+    kii_mqtt_task_info_t* task_info = &state->info;
     kii_mqtt_fixed_header fixed_header;
     ebisu_sock_code_t res = _mqtt_recv_fixed_header(kii, &fixed_header);
     if (res != EBISU_SOCK_OK) {
@@ -1081,7 +1081,7 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
 void _mqtt_state_send_subscribe(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
-    kii_mqtt_task_info* task_info = &state->info;
+    kii_mqtt_task_info_t* task_info = &state->info;
     // The 8 bytes kept for the fixed header, the packet identifier, 2 bytes
     // before the topic, and the QoS after it, which takes the place of the
     // terminator the topic is copied with. CONNECT's check counts the topic
@@ -1105,7 +1105,7 @@ void _mqtt_state_send_subscribe(mqtt_state_t* state)
 void _mqtt_state_recv_suback(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
-    kii_mqtt_task_info* task_info = &state->info;
+    kii_mqtt_task_info_t* task_info = &state->info;
     state->awaiting_suback = false;
     kii_mqtt_fixed_header fixed_header;
     ebisu_sock_code_t res = _mqtt_recv_fixed_header(kii, &fixed_header);
@@ -1240,7 +1240,7 @@ static bool _mqtt_wait_for_packet(kii_t* kii, uint32_t* out_waited_ms)
 void _mqtt_state_recv_ready(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
-    kii_mqtt_task_info* task_info = &state->info;
+    kii_mqtt_task_info_t* task_info = &state->info;
     // A keep-alive of 0 disables PINGREQ. Otherwise send one early enough that
     // a receive running into its timeout still ends within the keep-alive.
     // A timeout as long as the keep-alive leaves no such margin. Then send one
@@ -1423,7 +1423,7 @@ static ebisu_sock_code_t _mqtt_recv_msg_trash(mqtt_state_t* state,
 void _mqtt_state_recv_msg(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
-    kii_mqtt_task_info* task_info = &state->info;
+    kii_mqtt_task_info_t* task_info = &state->info;
     const unsigned long remaining_message_size = state->remaining_message_size;
     // Whether the message is at QoS 1, and so to be acknowledged, and with
     // which packet identifier.
@@ -1524,7 +1524,7 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
 void _mqtt_state_send_pingreq(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
-    kii_mqtt_task_info* task_info = &state->info;
+    kii_mqtt_task_info_t* task_info = &state->info;
 
     // The previous PINGREQ was never answered, so the connection is gone even
     // though sending may still appear to succeed. Reconnect rather than send
@@ -1553,7 +1553,7 @@ void _mqtt_state_send_pingreq(mqtt_state_t* state)
 void _mqtt_state_send_publish(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
-    kii_mqtt_task_info* task_info = &state->info;
+    kii_mqtt_task_info_t* task_info = &state->info;
     // Taken by _publish_take(), so its caller waits, and leaves the message as
     // it is, while it is sent.
     const ebisu_sock_code_t res = _mqtt_send_publish(kii, &kii->_mqtt_pub);

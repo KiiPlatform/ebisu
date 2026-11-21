@@ -12,11 +12,11 @@
 namespace {
 
 struct Fixture {
-    khc http;
+    khc_t http;
     khct::HttpScript script;
     khct::cb::IOCtx io;
     khct::cb::LoggerCtx log;
-    khc_slist* headers = nullptr;
+    khc_slist_t* headers = nullptr;
     std::string body;
     size_t body_read = 0;
 

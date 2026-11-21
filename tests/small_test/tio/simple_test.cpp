@@ -105,7 +105,7 @@ TEST_CASE( "tio_handler sets the longest wait between attempts on its kii" ) {
 
 static ebisu_task_code_t fail_task_create(const char*, EBISU_TASK_ENTRY, void*, void*)
 {
-    return EBISU_TASKC_FAIL;
+    return EBISU_TASK_FAIL;
 }
 
 static bool no_action(tio_action_t*, tio_action_err_t*, tio_action_result_data_t*, void*)
@@ -116,7 +116,7 @@ static bool no_action(tio_action_t*, tio_action_err_t*, tio_action_result_data_t
 static ebisu_task_code_t count_task_create(const char* name, EBISU_TASK_ENTRY entry, void* entry_param, void* userdata)
 {
     ++*(int*)userdata;
-    return EBISU_TASKC_OK;
+    return EBISU_TASK_OK;
 }
 
 // MQTT carries a keep-alive of at most 65535 seconds. tio takes it as a
@@ -229,7 +229,7 @@ TEST_CASE( "tio_handler_start reports a task it could not create" ) {
     tio_author_t author = {};
 
     SECTION("task created") {
-        TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
+        TaskCreateCtx ctx = { EBISU_TASK_OK, 0 };
         khct::cb::SystemCtx handler_sys;
         handler_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
             return mock_task_create(name, entry, entry_param, &ctx);
@@ -240,7 +240,7 @@ TEST_CASE( "tio_handler_start reports a task it could not create" ) {
     }
 
     SECTION("task not created") {
-        TaskCreateCtx ctx = { EBISU_TASKC_FAIL, 0 };
+        TaskCreateCtx ctx = { EBISU_TASK_FAIL, 0 };
         khct::cb::SystemCtx handler_sys;
         handler_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
             return mock_task_create(name, entry, entry_param, &ctx);
@@ -285,7 +285,7 @@ TEST_CASE( "tio_handler and tio_updater say why their socket failed" ) {
 TEST_CASE( "tio_updater_start without an interval" ) {
     tio_updater_t updater;
     tio_updater_init(&updater);
-    TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
+    TaskCreateCtx ctx = { EBISU_TASK_OK, 0 };
     khct::cb::SystemCtx updater_sys;
     updater_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
         return mock_task_create(name, entry, entry_param, &ctx);
@@ -311,7 +311,7 @@ struct UpdaterTask {
 ebisu_task_code_t run_task(const char* name, EBISU_TASK_ENTRY entry, void* entry_param, void* userdata)
 {
     entry(entry_param);
-    return EBISU_TASKC_OK;
+    return EBISU_TASK_OK;
 }
 
 bool updater_continue(void* task_info, void* userdata)
@@ -358,7 +358,7 @@ static ebisu_task_code_t hold_task(const char*, EBISU_TASK_ENTRY entry, void* en
     held->entry = entry;
     held->entry_param = entry_param;
     ++held->calls;
-    return EBISU_TASKC_OK;
+    return EBISU_TASK_OK;
 }
 
 static bool stop_task(void*, void*)
@@ -441,7 +441,7 @@ TEST_CASE( "tio_updater_start needs what the task uses" ) {
     };
     tio_updater_set_system(&updater, updater_sys.system());
     khct::cb::SockCtx http_ctx;
-    tio_updater_set_socket(&updater, http_ctx.socket());
+    tio_updater_set_http_socket(&updater, http_ctx.socket());
     tio_author_t author = {};
     UpdaterTask task = {};
 
@@ -450,7 +450,7 @@ TEST_CASE( "tio_updater_start needs what the task uses" ) {
         std::function<void()> unset;
     } cases[] = {
         { "delay", [&] { updater_sys.ops.delay_ms = NULL; } },
-        { "socket", [&] { tio_updater_set_socket(&updater, NULL); } },
+        { "socket", [&] { tio_updater_set_http_socket(&updater, NULL); } },
         { "connect", [&] { http_ctx.ops.connect = NULL; } },
         { "send", [&] { http_ctx.ops.send = NULL; } },
         { "recv", [&] { http_ctx.ops.recv = NULL; } },

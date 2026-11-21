@@ -39,7 +39,7 @@ kii_code_t _kii_session_onboard_again(kii_t* kii);
 /* khc_perform() for requests that may carry the session's token: renews the
  * token close to expiry or when the server refuses it, and then sends the
  * request again when its body allows. Without a session it is khc_perform(). */
-khc_code _kii_perform(kii_t* kii);
+khc_code_t _kii_perform(kii_t* kii);
 
 /* Where in kii->_rw_buff the response body being received starts: past the
  * request's body when the response is a 403 to a request carrying the

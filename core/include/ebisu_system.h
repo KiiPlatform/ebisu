@@ -30,8 +30,8 @@ extern "C" {
  * \brief Task codes.
  */
 typedef enum ebisu_task_code_t {
-    EBISU_TASKC_OK, /**< \brief The task was created. */
-    EBISU_TASKC_FAIL /**< \brief The task could not be created. */
+    EBISU_TASK_OK, /**< \brief The task was created. */
+    EBISU_TASK_FAIL /**< \brief The task could not be created. */
 } ebisu_task_code_t;
 
 /**

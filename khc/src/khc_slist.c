@@ -3,12 +3,12 @@
 #include "khc.h"
 #include <ebisu_mem.h>
 
-khc_slist* khc_cb_slist_alloc(const char* str, size_t str_len, void* data) {
+khc_slist_t* khc_cb_slist_alloc(const char* str, size_t str_len, void* data) {
     char* copy = malloc(str_len+1);
     if (copy == NULL) {
         return NULL;
     }
-    khc_slist* node = malloc(sizeof(khc_slist));
+    khc_slist_t* node = malloc(sizeof(khc_slist_t));
     if (node == NULL) {
         free(copy);
         return NULL;
@@ -20,22 +20,22 @@ khc_slist* khc_cb_slist_alloc(const char* str, size_t str_len, void* data) {
     return node;
 }
 
-void khc_cb_slist_free(khc_slist* slist, void* data) {
+void khc_cb_slist_free(khc_slist_t* slist, void* data) {
     free(slist->data);
     free(slist);
 }
 
-khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length) {
+khc_slist_t* khc_slist_append(khc_slist_t* slist, const char* string, size_t length) {
     return khc_slist_append_using_cb_alloc(slist, string, length, khc_cb_slist_alloc, NULL);
 }
 
-khc_slist* khc_slist_append_using_cb_alloc(
-        khc_slist* slist,
+khc_slist_t* khc_slist_append_using_cb_alloc(
+        khc_slist_t* slist,
         const char* string,
         size_t length,
         KHC_CB_SLIST_ALLOC cb_alloc,
         void* cb_alloc_data) {
-    khc_slist* next;
+    khc_slist_t* next;
     next = cb_alloc(string, length, cb_alloc_data);
     if (next == NULL) {
         return NULL;
@@ -45,7 +45,7 @@ khc_slist* khc_slist_append_using_cb_alloc(
     if (slist == NULL) {
         return next;
     }
-    khc_slist* end = slist;
+    khc_slist_t* end = slist;
     while (end->next != NULL) {
         end = end->next;
     }
@@ -53,18 +53,18 @@ khc_slist* khc_slist_append_using_cb_alloc(
     return slist;
 }
 
-void khc_slist_free_all(khc_slist* slist) {
+void khc_slist_free_all(khc_slist_t* slist) {
     khc_slist_free_all_using_cb_free(slist, khc_cb_slist_free, NULL);
 }
 
 void khc_slist_free_all_using_cb_free(
-        khc_slist* slist,
+        khc_slist_t* slist,
         KHC_CB_SLIST_FREE cb_free,
         void* cb_free_data) {
-    khc_slist *curr;
+    khc_slist_t *curr;
     curr = slist;
     while (curr != NULL) {
-        khc_slist *next = curr->next;
+        khc_slist_t *next = curr->next;
         // A request header may carry a token, as Authorization does, and
         // whatever frees it may leave it where it was.
         if (curr->data != NULL) {

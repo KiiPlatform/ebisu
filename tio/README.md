@@ -88,11 +88,11 @@ static ebisu_task_code_t task_create(ebisu_system_t* self, const char* name,
 {
     pthread_t pthid;
     if (pthread_create(&pthid, NULL, entry, param) != 0) {
-        return EBISU_TASKC_FAIL;
+        return EBISU_TASK_FAIL;
     }
     /* Nothing joins a task, so its thread has to go by itself when it ends. */
     pthread_detach(pthid);
-    return EBISU_TASKC_OK;
+    return EBISU_TASK_OK;
 }
 
 static void delay_ms(ebisu_system_t* self, uint32_t msec)
@@ -675,9 +675,9 @@ The full code can be checked [updater_init() in example.c](https://github.com/Ki
 
     tio_updater_set_system(updater, ebisu_posix_system());
 
-    tio_updater_set_buff(updater, buffer, buffer_size);
+    tio_updater_set_http_buff(updater, buffer, buffer_size);
 
-    tio_updater_set_socket(updater, &sock_ssl_ctx->base);
+    tio_updater_set_http_socket(updater, &sock_ssl_ctx->base);
 
     tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
 
@@ -766,17 +766,17 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
     This task calls the operations of the objects, and the callbacks, set by following APIs.
 
-    - `tio_updater_set_socket()`
+    - `tio_updater_set_http_socket()`
     - `tio_updater_set_system()` (`delay_ms`)
     - `tio_updater_start()` (`TIO_CB_SIZE`, `TIO_CB_READ` callbacks.)
-    - `tio_updater_set_cb_error()`
+    - `tio_updater_set_cb_err()`
         (Optional. In case set the error handler for debugging, etc.)
     - `tio_updater_set_logger()`
         (Optional. The logger the updater's requests, and a state it couldn't upload, are logged to.)
 
     This task uses buffers set by following APIs.
 
-    - `tio_updater_set_buff()`
+    - `tio_updater_set_http_buff()`
 
 ## Avoiding race condition
 

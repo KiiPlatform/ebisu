@@ -149,9 +149,9 @@ static ebisu_task_code_t task_create(
 {
     cc3200_system_t* ctx = EBISU_CONTAINER_OF(self, cc3200_system_t, base);
     if (osi_TaskCreate(entry, (const signed char*) name, ctx->stk_size, param, ctx->priority, NULL) < 0) {
-        return EBISU_TASKC_FAIL;
+        return EBISU_TASK_FAIL;
     } else {
-        return EBISU_TASKC_OK;
+        return EBISU_TASK_OK;
     }
 }
 

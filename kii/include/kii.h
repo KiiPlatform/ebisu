@@ -354,7 +354,7 @@ typedef enum kii_mqtt_event_t {
      * code: the QoS it granted, or 0x80 when it refused. */
     KII_MQTT_EVENT_SUBACK,
     /** \brief Sending to the broker failed. The detail is the task's state, a
-     * kii_mqtt_task_state, which says what it was sending. */
+     * kii_mqtt_task_state_t, which says what it was sending. */
     KII_MQTT_EVENT_SEND_FAILED,
     /** \brief Receiving from the broker failed, or ended partway through a
      * packet, the connection lost, or gave a remaining length MQTT doesn't
@@ -503,7 +503,7 @@ typedef bool (*KII_CB_MQTT_CREDENTIALS)(kii_mqtt_endpoint_t* endpoint, void* use
  * \brief Stores data/ callbacks used by kii module.
  */
 typedef struct kii_t {
-    khc _khc; /**< \private */
+    khc_t _khc; /**< \private */
 	kii_author_t _author; /**< \private */
 	char _app_id[KII_APP_ID_MAX_SIZE]; /**< \private */
 	char _app_host[KII_APP_HOST_MAX_SIZE]; /**< \private */
@@ -577,7 +577,7 @@ typedef struct kii_t {
     char* _resp_header_buff; /**< \private */
     size_t _resp_header_buff_size; /**< \private */
 
-    khc_slist* _req_headers; /**< \private */
+    khc_slist_t* _req_headers; /**< \private */
 
     char _etag[KII_ETAG_MAX_SIZE]; /**< \private */
     /** \private Whether the last response had an ETag longer than _etag
@@ -2057,7 +2057,7 @@ kii_code_t kii_set_mqtt_retry_wait_max(kii_t* kii, uint32_t max_sec);
  * estimates the time by adding up its waits and receive timeouts, which misses
  * the time spent elsewhere, such as in the push callback.
  *
- * Requests use it too, as khc_set_system(khc*, ebisu_system_t*) describes: a
+ * Requests use it too, as khc_set_system(khc_t*, ebisu_system_t*) describes: a
  * socket operation that returns EBISU_SOCK_AGAIN is called again after a delay
  * of KHC_AGAIN_WAIT_MS, and the timeout set by kii_set_request_timeout() is
  * timed by its monotonic_ms.
@@ -2107,7 +2107,7 @@ kii_code_t kii_set_request_timeout(kii_t* kii, uint32_t timeout_sec);
  * \param [in] cb_continue Callback determines whether to continue or discontinue task.
  * If cb_continue returns true, task continues. Otherwise the task exits the infinite loop
  * and calls KII_CB_TASK_EXIT callback if set.
- * task_info argument type of the continue_cb function (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
+ * task_info argument type of the continue_cb function (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info_t*.
  * \param [in] userdata Context data pointer passed as second argument when cb_continue is called.
  */
 void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb_continue, void* userdata);
@@ -2134,7 +2134,7 @@ void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb_continue, void
 
  * \param [out] kii kii_t instance
  * \param [in] cb_exit Called right before the exit.
- * task_info argument type of cb_exit (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
+ * task_info argument type of cb_exit (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info_t*.
  * \param [in] userdata Context data pointer passed as second argument when cb_exit is called.
  */
 void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT cb_exit, void* userdata);
@@ -2157,7 +2157,7 @@ void kii_set_cb_mqtt_event(kii_t* kii, KII_CB_MQTT_EVENT cb, void* userdata);
 /**
  * \brief Set where kii logs what it does.
  *
- * What khc logs of each request, as khc_set_logger(khc*, ebisu_logger_t*) says:
+ * What khc logs of each request, as khc_set_logger(khc_t*, ebisu_logger_t*) says:
  * at EBISU_LOG_DEBUG, the request's and the response's lines and headers,
  * credentials included, but not their bodies, and at EBISU_LOG_WARNING, a
  * request that failed. And what the MQTT task tells the callback set by
@@ -2172,7 +2172,7 @@ void kii_set_cb_mqtt_event(kii_t* kii, KII_CB_MQTT_EVENT cb, void* userdata);
  */
 void kii_set_logger(kii_t* kii, ebisu_logger_t* logger);
 /**
- * \brief Set khc_slist (linked list) resource allocators.
+ * \brief Set khc_slist_t (linked list) resource allocators.
 
  * If this method is not called, default allocators implemented with malloc/free is used to
  * allocate linked list used to construct HTTP request headers.
@@ -2219,7 +2219,7 @@ uint16_t kii_get_resp_status(kii_t* kii);
  * \brief Why the HTTP socket failed, in the last call.
  *
  * After KII_ERR_SOCK_CONNECT, KII_ERR_SOCK_SEND or KII_ERR_SOCK_RECV, what the
- * socket's last_error said, as khc_get_sock_error(khc*, long*) gives it: a
+ * socket's last_error said, as khc_get_sock_error(khc_t*, long*) gives it: a
  * host that didn't resolve, a certificate refused, a timeout, a connection
  * closed. Where a call made several requests, renewing the session's token
  * for instance, it is the last one's.
@@ -2234,7 +2234,7 @@ ebisu_sock_error_t kii_get_sock_error(kii_t* kii, long* out_detail);
 /**
  * \brief Get the server's time, from the Date header of the last response.
  *
- * As khc_get_resp_date(khc*) gives it, for the kii_t's HTTP client: which forms
+ * As khc_get_resp_date(khc_t*) gives it, for the kii_t's HTTP client: which forms
  * are taken, and which dates refused, is described there.
  *
  * Every API call starts with it cleared, so it never comes from an earlier
@@ -2293,7 +2293,7 @@ typedef enum
     KII_MQTT_ST_RECONNECT, /**< \brief Re-establishing connection. */
     KII_MQTT_ST_ERR_EXIT, /**< \brief Exiting due to un-recoverble error. */
     KII_MQTT_ST_DISCONTINUED, /**< \brief Task discontinued by the application . */
-} kii_mqtt_task_state;
+} kii_mqtt_task_state_t;
 
 /**
  * \brief MQTT error codes.
@@ -2308,15 +2308,15 @@ typedef enum
      * kii_start_mqtt_task_with_endpoint(), and the callback set by
      * kii_set_cb_mqtt_credentials() gave no new ones, or there is none. */
     KII_MQTT_ERR_CREDENTIALS
-} kii_mqtt_error;
+} kii_mqtt_error_t;
 
 /**
  * \brief Stores MQTT task information.
  */
 typedef struct {
-    kii_mqtt_error error; /**< Last reported error. */
-    kii_mqtt_task_state task_state; /**< Current task state. */
-} kii_mqtt_task_info;
+    kii_mqtt_error_t error; /**< Last reported error. */
+    kii_mqtt_task_state_t task_state; /**< Current task state. */
+} kii_mqtt_task_info_t;
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC visibility pop

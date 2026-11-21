@@ -44,16 +44,16 @@ static ebisu_task_code_t task_create(
     ebisu_freertos_system_t* system = EBISU_CONTAINER_OF(self, ebisu_freertos_system_t, base);
     task_start_t* start = (task_start_t*)pvPortMalloc(sizeof(*start));
     if (start == NULL) {
-        return EBISU_TASKC_FAIL;
+        return EBISU_TASK_FAIL;
     }
     start->entry = entry;
     start->param = entry_param;
     if (xTaskCreate(task_main, name, system->_stack_depth, start, system->_priority, NULL) !=
             pdPASS) {
         vPortFree(start);
-        return EBISU_TASKC_FAIL;
+        return EBISU_TASK_FAIL;
     }
-    return EBISU_TASKC_OK;
+    return EBISU_TASK_OK;
 }
 
 #endif /* EBISU_FREERTOS_DYNAMIC_ALLOCATION */

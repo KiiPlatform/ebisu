@@ -21,7 +21,7 @@ extern "C"
 int64_t _parse_http_date(const char* header, size_t header_len, int64_t floor);
 
 /* Keeps the Date of the response a header line belongs to. */
-void _record_resp_date(khc* khc, const char* line, size_t line_len);
+void _record_resp_date(khc_t* khc, const char* line, size_t line_len);
 
 #ifdef __cplusplus
 }

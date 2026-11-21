@@ -31,16 +31,16 @@ static ebisu_task_code_t task_create(
 {
     task_start_t* start = malloc(sizeof(task_start_t));
     if (start == NULL) {
-        return EBISU_TASKC_FAIL;
+        return EBISU_TASK_FAIL;
     }
     start->entry = entry;
     start->param = param;
     if (xTaskCreate(task_main, name, CONFIG_EBISU_SAMPLE_TASK_STACK_SIZE, start,
                 tskIDLE_PRIORITY + 5, NULL) != pdPASS) {
         free(start);
-        return EBISU_TASKC_FAIL;
+        return EBISU_TASK_FAIL;
     }
-    return EBISU_TASKC_OK;
+    return EBISU_TASK_OK;
 }
 
 static void delay_ms(ebisu_system_t* self, uint32_t msec)

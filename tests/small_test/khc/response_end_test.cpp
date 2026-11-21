@@ -18,7 +18,7 @@ struct Peer {
 };
 
 struct Result {
-    khc_code res;
+    khc_code_t res;
     std::string body;
     int timeouts;
     int on_close_called;
@@ -28,7 +28,7 @@ struct Result {
 // on a connection left open would, unless the peer closes.
 Result perform(const Peer& peer) {
     std::vector<char> stream_buff(peer.stream_buff_size);
-    khc http;
+    khc_t http;
     khc_init(&http);
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, peer.method.c_str());

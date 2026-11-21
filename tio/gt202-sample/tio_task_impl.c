@@ -36,7 +36,7 @@ static ebisu_task_code_t task_create
 
     _task_create(0, task, (uint_32) data);
 
-    return EBISU_TASKC_OK;
+    return EBISU_TASK_OK;
 }
 
 static void delay_ms(ebisu_system_t* self, uint32_t msec)

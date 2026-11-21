@@ -23,7 +23,7 @@ extern "C" {
  *
  * The name task_create of the system set by tio_updater_set_system() is given.
  */
-extern const char TIO_TASK_NAME_UPDATE_STATE[];
+#define TIO_TASK_NAME_UPDATE_STATE "task_update_state"
 
 /**
  * \brief Author of API.
@@ -188,7 +188,7 @@ typedef bool (*TIO_CB_ACTION)(tio_action_t* action, tio_action_err_t* err, tio_a
  *
  * \param [in] code Error code.
  * \param [in] err_message Error message.
- * \param [in,out] userdata Context object pointer passed to tio_handler_set_cb_err()/ tio_updater_set_cb_error().
+ * \param [in,out] userdata Context object pointer passed to tio_handler_set_cb_err()/ tio_updater_set_cb_err().
  */
 typedef void (*TIO_CB_ERR)(tio_code_t code, const char* err_message, void* userdata);
 /**
@@ -232,8 +232,8 @@ typedef struct tio_handler_t {
  * \brief Indicates handler state.
  */
 typedef struct {
-    kii_mqtt_error error; /**< MQTT error code */
-    kii_mqtt_task_state task_state; /**< Indicates processing phase of MQTT */
+    kii_mqtt_error_t error; /**< MQTT error code */
+    kii_mqtt_task_state_t task_state; /**< Indicates processing phase of MQTT */
 } tio_handler_task_info_t;
 
 /**
@@ -442,7 +442,7 @@ tio_code_t tio_handler_set_request_timeout(tio_handler_t* handler, uint32_t time
  * \param [in] cb_continue Callback determines whether to continue or discontinue task.
  * If continue_cb returns true, task continues. Otherwise the task exits the infinite loop
  * and calls KII_CB_TASK_EXIT callback if set.
- * task_info argument type of the cb_continue (defined as void* in KII_CB_TASK_CONTINUE) is kii_mqtt_task_info*.
+ * task_info argument type of the cb_continue (defined as void* in KII_CB_TASK_CONTINUE) is kii_mqtt_task_info_t*.
  * \param [in] userdata Context data pointer passed as second argument when cb_continue is called.
  */
 void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTINUE cb_continue, void* userdata);
@@ -476,7 +476,7 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTIN
 
  * \param [out] handler tio_handler_t instance.
  * \param [in] cb_exit Called right before the exit.
- * task_info argument type of cb_exit (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*
+ * task_info argument type of cb_exit (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info_t*
  * \param [in] userdata Context data pointer passed as second argument when cb_exit is called.
  */
 void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_CB_TASK_EXIT cb_exit, void* userdata);
@@ -906,7 +906,7 @@ void tio_updater_init(tio_updater_t* updater);
  * \param [out] updater tio_updater_t instance.
  * \param [in] socket The socket. It has to outlive the updater's task.
  */
-void tio_updater_set_socket(tio_updater_t* updater, ebisu_socket_t* socket);
+void tio_updater_set_http_socket(tio_updater_t* updater, ebisu_socket_t* socket);
 /**
  * \brief Set the system: tasks, delays and a monotonic clock.
  *
@@ -956,10 +956,10 @@ void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_CB_TASK_CONTIN
 
  * Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback.
  * In exit_cb, you'll need to free memory used for buffers set by following APIs
- * - tio_updater_set_buff(),
+ * - tio_updater_set_http_buff(),
  * - tio_updater_set_stream_buff(),
  * - tio_updater_set_resp_header_buff()
- * the socket set by tio_updater_set_socket(), and memory used for the userdata
+ * the socket set by tio_updater_set_http_socket(), and memory used for the userdata
  * passed to following callbacks in case not yet freed.
  * - tio_updater_set_cb_task_continue()
  * - tio_updater_set_cb_task_exit()
@@ -985,7 +985,7 @@ void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_CB_TASK_EXIT cb_ex
  * \param [in] cb_err Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_err.
  */
-void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* userdata);
+void tio_updater_set_cb_err(tio_updater_t* updater, TIO_CB_ERR cb_err, void* userdata);
 
 /**
  * \brief Set where the updater logs what it does.
@@ -1019,7 +1019,7 @@ void tio_updater_set_logger(tio_updater_t* updater, ebisu_logger_t* logger);
  * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
-void tio_updater_set_buff(tio_updater_t* updater, char* buff, size_t buff_size);
+void tio_updater_set_http_buff(tio_updater_t* updater, char* buff, size_t buff_size);
 
 /**
  * \brief Set stream buffer.

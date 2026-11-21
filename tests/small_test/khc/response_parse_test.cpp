@@ -17,7 +17,7 @@ struct Reply {
 };
 
 struct Outcome {
-    khc_code res;
+    khc_code_t res;
     uint16_t status;
     std::vector<std::string> headers;
     std::string body;
@@ -29,7 +29,7 @@ struct Outcome {
 Outcome perform(const Reply& reply) {
     std::vector<char> header_buff(reply.header_buff_size);
     std::vector<char> stream_buff(reply.stream_buff_size);
-    khc http;
+    khc_t http;
     khc_init(&http);
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, reply.method.c_str());
@@ -104,7 +104,7 @@ std::vector<std::vector<std::string>> splits_of(const std::string& response) {
 
 // What a test expects of a response, however it is read.
 struct Expected {
-    khc_code res;
+    khc_code_t res;
     uint16_t status;
     std::vector<std::string> headers;
     std::string body;

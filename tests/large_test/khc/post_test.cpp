@@ -9,7 +9,7 @@
 #include "../test_env.h"
 
 TEST_CASE( "HTTP Post" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
 
     std::string app_id(APP_ID);
@@ -34,7 +34,7 @@ TEST_CASE( "HTTP Post" ) {
     std::string req_body = v.serialize();
 
     // Prepare Req Headers.
-    khc_slist* headers = NULL;
+    khc_slist_t* headers = NULL;
     headers = khc_slist_append(headers, x_kii_appid.c_str(), x_kii_appid.length());
     headers = khc_slist_append(headers, content_type.c_str(), content_type.length());
     headers = khc_slist_append(headers, x_kii_appkey.c_str(), x_kii_appkey.length());
@@ -79,7 +79,7 @@ TEST_CASE( "HTTP Post" ) {
         return size;
     };
 
-    khc_code res = khc_perform(&http);
+    khc_code_t res = khc_perform(&http);
     khc_slist_free_all(headers);
     REQUIRE( khc_get_status_code(&http) == 200 );
 

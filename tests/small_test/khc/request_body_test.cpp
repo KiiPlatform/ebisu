@@ -18,7 +18,7 @@ struct Request {
 };
 
 struct Sent {
-    khc_code res;
+    khc_code_t res;
     // Up to the blank line that ends them.
     std::string headers;
     // Each send after the headers.
@@ -31,7 +31,7 @@ struct Sent {
 // Performs req, answered with 204, and records what khc sent.
 Sent perform(const Request& req) {
     std::vector<char> stream_buff(req.stream_buff_size);
-    khc http;
+    khc_t http;
     khc_init(&http);
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, req.method.c_str());
@@ -233,7 +233,7 @@ TEST_CASE( "A request body of known length is sent with a Content-Length" ) {
 }
 
 TEST_CASE( "The request body's length is part of the request" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
     CHECK( http._req_body_length == KHC_REQ_BODY_LENGTH_UNKNOWN );
     khc_set_req_body_length(&http, 42);

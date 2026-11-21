@@ -13,7 +13,7 @@
 #include <vector>
 
 TEST_CASE( "HTTP response test" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
 
     ifstream ifs;
@@ -102,7 +102,7 @@ TEST_CASE( "HTTP response test" ) {
         return EBISU_SOCK_OK;
     };
 
-    khc_code res = khc_perform(&http);
+    khc_code_t res = khc_perform(&http);
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
@@ -115,7 +115,7 @@ TEST_CASE( "HTTP response test" ) {
 }
 
 TEST_CASE( "Ignore HTTP status 100" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
 
     ifstream ifs;
@@ -196,7 +196,7 @@ TEST_CASE( "Ignore HTTP status 100" ) {
         return EBISU_SOCK_OK;
     };
 
-    khc_code res = khc_perform(&http);
+    khc_code_t res = khc_perform(&http);
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
@@ -209,7 +209,7 @@ TEST_CASE( "Ignore HTTP status 100" ) {
 }
 
 TEST_CASE( "Small resp header skip test" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
     const size_t resp_header_buff_size = 120;
     char resp_header_buff[resp_header_buff_size];
@@ -298,7 +298,7 @@ TEST_CASE( "Small resp header skip test" ) {
         return EBISU_SOCK_OK;
     };
 
-    khc_code res = khc_perform(&http);
+    khc_code_t res = khc_perform(&http);
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
@@ -311,7 +311,7 @@ TEST_CASE( "Small resp header skip test" ) {
 }
 
 TEST_CASE( "HTTP response 400 test" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
 
     stringstream ss;
@@ -390,7 +390,7 @@ TEST_CASE( "HTTP response 400 test" ) {
         return EBISU_SOCK_OK;
     };
 
-    khc_code res = khc_perform(&http);
+    khc_code_t res = khc_perform(&http);
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 400 );
     REQUIRE( on_connect_called == 1 );
@@ -405,7 +405,7 @@ TEST_CASE( "HTTP response 400 test" ) {
 namespace {
 
 struct ContentLengthResult {
-    khc_code res;
+    khc_code_t res;
     size_t content_length;
     int on_header_called;
     int on_write_called;
@@ -417,7 +417,7 @@ ContentLengthResult perform_with_header(
         const std::string& header,
         const std::string& status = "200 OK",
         const std::string& method = "GET") {
-    khc http;
+    khc_t http;
     khc_init(&http);
 
     khc_set_host(&http, "api.kii.com");
@@ -538,8 +538,8 @@ TEST_CASE( "Content-Length of an interim response is not the final one's" ) {
 namespace {
 
 // Performs a GET whose response comes in the given reads.
-khc_code perform_with_reads(const std::vector<std::string>& reads, uint16_t* status_code) {
-    khc http;
+khc_code_t perform_with_reads(const std::vector<std::string>& reads, uint16_t* status_code) {
+    khc_t http;
     khc_init(&http);
 
     khc_set_host(&http, "api.kii.com");
@@ -580,7 +580,7 @@ khc_code perform_with_reads(const std::vector<std::string>& reads, uint16_t* sta
         return size;
     };
 
-    khc_code res = khc_perform(&http);
+    khc_code_t res = khc_perform(&http);
     *status_code = khc_get_status_code(&http);
     return res;
 }
@@ -595,7 +595,7 @@ TEST_CASE( "A status line arriving in several reads" ) {
     for (size_t split = 1; split < line_size; ++split) {
         INFO("split at " << split);
         uint16_t status_code = 0;
-        khc_code res = perform_with_reads(
+        khc_code_t res = perform_with_reads(
                 { response.substr(0, split), response.substr(split) }, &status_code);
         CHECK( res == KHC_ERR_OK );
         CHECK( status_code == 200 );
@@ -723,7 +723,7 @@ namespace {
 const int MAX_RECV_CALLS = 32;
 
 struct ClosedResult {
-    khc_code res;
+    khc_code_t res;
     int on_recv_called;
     int on_close_called;
 };
@@ -731,7 +731,7 @@ struct ClosedResult {
 // Performs a GET whose response is the given bytes, then the connection
 // closing.
 ClosedResult perform_closing_after(const std::string& response) {
-    khc http;
+    khc_t http;
     khc_init(&http);
 
     khc_set_host(&http, "api.kii.com");
@@ -818,7 +818,7 @@ TEST_CASE( "A response ended by the connection closing" ) {
 namespace {
 
 struct HeaderResult {
-    khc_code res;
+    khc_code_t res;
     bool skipped;
     std::vector<std::string> headers;
     std::string body;
@@ -828,7 +828,7 @@ struct HeaderResult {
 HeaderResult perform_with_small_header_buffer(const std::string& resp)
 {
     char resp_header_buff[64];
-    khc http;
+    khc_t http;
     khc_init(&http);
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
@@ -947,19 +947,19 @@ TEST_CASE( "A framing header too long for the buffer is too large whatever the l
 TEST_CASE( "khc_perform needs its socket and callbacks" ) {
     const struct {
         const char* left_out;
-        std::function<void(khc*, khct::cb::SockCtx&)> unset;
+        std::function<void(khc_t*, khct::cb::SockCtx&)> unset;
     } cases[] = {
-        { "socket", [](khc* h, khct::cb::SockCtx&) { khc_set_socket(h, NULL); } },
-        { "connect", [](khc*, khct::cb::SockCtx& s) { s.ops.connect = NULL; } },
-        { "send", [](khc*, khct::cb::SockCtx& s) { s.ops.send = NULL; } },
-        { "recv", [](khc*, khct::cb::SockCtx& s) { s.ops.recv = NULL; } },
-        { "close", [](khc*, khct::cb::SockCtx& s) { s.ops.close = NULL; } },
-        { "write", [](khc* h, khct::cb::SockCtx&) { khc_set_cb_write(h, NULL, NULL); } },
-        { "header", [](khc* h, khct::cb::SockCtx&) { khc_set_cb_header(h, NULL, NULL); } },
+        { "socket", [](khc_t* h, khct::cb::SockCtx&) { khc_set_socket(h, NULL); } },
+        { "connect", [](khc_t*, khct::cb::SockCtx& s) { s.ops.connect = NULL; } },
+        { "send", [](khc_t*, khct::cb::SockCtx& s) { s.ops.send = NULL; } },
+        { "recv", [](khc_t*, khct::cb::SockCtx& s) { s.ops.recv = NULL; } },
+        { "close", [](khc_t*, khct::cb::SockCtx& s) { s.ops.close = NULL; } },
+        { "write", [](khc_t* h, khct::cb::SockCtx&) { khc_set_cb_write(h, NULL, NULL); } },
+        { "header", [](khc_t* h, khct::cb::SockCtx&) { khc_set_cb_header(h, NULL, NULL); } },
     };
     for (const auto& c : cases) {
         INFO("left out " << c.left_out);
-        khc http;
+        khc_t http;
         khc_init(&http);
         khc_set_host(&http, "api.kii.com");
         khc_set_method(&http, "GET");

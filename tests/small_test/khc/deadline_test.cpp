@@ -13,7 +13,7 @@
 namespace {
 
 struct Fixture {
-    khc http;
+    khc_t http;
     khct::cb::SockCtx s_ctx;
     khct::cb::IOCtx io_ctx;
     khct::cb::SystemCtx sys;

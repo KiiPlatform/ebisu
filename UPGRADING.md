@@ -65,7 +65,7 @@ where in one assigned field by field they would be whatever the memory held.
 | `kii_set_cb_mqtt_sock_connect()`, `_send()`, `_recv()` and `_close()` | `kii_set_mqtt_socket()` |
 | `tio_handler_set_cb_sock_connect_http()`, `_send_http()`, `_recv_http()` and `_close_http()` | `tio_handler_set_http_socket()` |
 | `tio_handler_set_cb_sock_connect_mqtt()`, `_send_mqtt()`, `_recv_mqtt()` and `_close_mqtt()` | `tio_handler_set_mqtt_socket()` |
-| `tio_updater_set_cb_sock_connect()`, `_send()`, `_recv()` and `_close()` | `tio_updater_set_socket()` |
+| `tio_updater_set_cb_sock_connect()`, `_send()`, `_recv()` and `_close()` | `tio_updater_set_http_socket()` |
 | `kii_set_cb_task_create()` and `kii_set_cb_delay_ms()` | `kii_set_system()` |
 | `tio_handler_set_cb_task_create()` and `tio_handler_set_cb_delay_ms()` | `tio_handler_set_system()` |
 | `tio_updater_set_cb_task_create()` and `tio_updater_set_cb_delay_ms()` | `tio_updater_set_system()` |
@@ -88,7 +88,7 @@ The rest moved to `core` and was renamed, with no aliases for the old names:
 | `khc_sock_code_t` | `ebisu_sock_code_t` |
 | `KHC_SOCK_OK`, `KHC_SOCK_FAIL`, `KHC_SOCK_AGAIN` | `EBISU_SOCK_OK`, `EBISU_SOCK_FAIL`, `EBISU_SOCK_AGAIN` |
 | `kii_task_code_t` | `ebisu_task_code_t` |
-| `KII_TASKC_OK`, `KII_TASKC_FAIL` | `EBISU_TASKC_OK`, `EBISU_TASKC_FAIL` |
+| `KII_TASKC_OK`, `KII_TASKC_FAIL` | `EBISU_TASK_OK`, `EBISU_TASK_FAIL` |
 | `KII_TASK_ENTRY` | `EBISU_TASK_ENTRY` |
 
 `kii_task_callback.h` remains for `KII_CB_TASK_EXIT` and
@@ -118,6 +118,34 @@ sed -i -e 's/\b\(kii\|tio\)_bool_t\b/bool/g' -e 's/\bjkii_boolean_t\b/bool/g' \
 
 A comparison such as `== KII_TRUE` or `== JKII_TRUE` becomes `== true`, which
 means the same for a `bool`.
+
+**Every type's name ends in `_t`, and the updater's setters are named as the
+handler's.** khc's types and three of kii's MQTT task's had none, and
+`tio_updater_t` named three setters otherwise than `tio_handler_t` names the
+same ones. Replace the names, with no aliases for them:
+
+| 1.x | 3.0 |
+|---|---|
+| `khc` | `khc_t` |
+| `khc_code`, `khc_state`, `khc_slist` | `khc_code_t`, `khc_state_t`, `khc_slist_t` |
+| `kii_mqtt_task_state`, `kii_mqtt_error`, `kii_mqtt_task_info` | `kii_mqtt_task_state_t`, `kii_mqtt_error_t`, `kii_mqtt_task_info_t` |
+| `tio_updater_set_cb_error()` | `tio_updater_set_cb_err()` |
+| `tio_updater_set_buff()` | `tio_updater_set_http_buff()` |
+
+With GNU sed, for each source file:
+
+```
+sed -i -e 's/\b\(khc_code\|khc_state\|khc_slist\)\b/\1_t/g' \
+    -e 's/\bkii_mqtt_\(task_state\|error\|task_info\)\b/kii_mqtt_\1_t/g' \
+    -e 's/\bkhc\( *\*\)/khc_t\1/g' -e 's/sizeof(khc)/sizeof(khc_t)/g' \
+    -e 's/\btio_updater_set_cb_error\b/tio_updater_set_cb_err/g' \
+    -e 's/\btio_updater_set_buff\b/tio_updater_set_http_buff/g' app.c
+```
+
+which leaves a `khc` declared as a variable, `khc http;`, to change by hand to
+`khc_t http;`: the compiler names each. `TIO_TASK_NAME_UPDATE_STATE` is a
+macro for the name, as `KII_TASK_NAME_MQTT` is, where it was an array of
+`char`.
 
 **jkii's tokens are gone.** jkii parses with coreJSON, which needs no token
 array, so `jkii_token_t`, `jkii_resource_t`, `JKII_CB_RESOURCE_ALLOC` and
@@ -204,7 +232,7 @@ value above `UINT32_MAX` is cut down before anything can check it.
 
 ### Rebuild everything
 
-- The layouts of `khc`, `kii_t`, `kii_author_t`, `kii_mqtt_endpoint_t`,
+- The layouts of `khc_t`, `kii_t`, `kii_author_t`, `kii_mqtt_endpoint_t`,
   `tio_handler_t` and `tio_updater_t` changed. Code built against 1.x's headers
   can't use 3.0's libraries.
 - The libraries are `libebisu_khc`, `libebisu_jkii`, `libebisu_kii` and
@@ -294,7 +322,7 @@ Starting tasks:
   65535, with `KII_ERR_FAIL` and `TIO_ERR_FAIL`. 1.x sent the broker the value
   cut down to 16 bits.
 - The result of the system's `task_create` counts, so it has to return
-  `EBISU_TASKC_OK` when it succeeds. Anything else makes `kii_start_push_task()`
+  `EBISU_TASK_OK` when it succeeds. Anything else makes `kii_start_push_task()`
   return the new `KII_ERR_CREATE_TASK` and `tio_handler_start()` return
   `TIO_ERR_CREATE_TASK`, where 1.x ignored it and reported success. No system,
   or one without a `task_create`, gives the same codes, and
@@ -537,5 +565,5 @@ With one:
 
 - A `TIO_CB_SIZE` callback has to restart its `TIO_CB_READ` reader whenever it is
   called, as the updater uploads again after a token is renewed.
-- A renewal keeps a copy of `khc` on the stack of the task making the request,
+- A renewal keeps a copy of `khc_t` on the stack of the task making the request,
   about 700 bytes on x86-64. Allow for it in that task's stack.

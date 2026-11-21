@@ -6,7 +6,7 @@
 #include <string.h>
 
 TEST_CASE( "khc_reset_except_request sends the same request again" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
     khct::HttpScript script;
     script.attach(&http);
@@ -36,7 +36,7 @@ TEST_CASE( "khc_reset_except_request sends the same request again" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "POST");
     khc_set_path(&http, "/x");
-    khc_slist* headers = khc_slist_append(NULL, "X-Test: 1", strlen("X-Test: 1"));
+    khc_slist_t* headers = khc_slist_append(NULL, "X-Test: 1", strlen("X-Test: 1"));
     khc_set_req_headers(&http, headers);
 
     // The first response is chunked and the second is not: state left over from
@@ -72,7 +72,7 @@ TEST_CASE( "khc_reset_except_request sends the same request again" ) {
 }
 
 TEST_CASE( "khc_get_close_failed says what the last request's close did" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
     khct::HttpScript script;
     script.attach(&http);
@@ -119,7 +119,7 @@ namespace {
 struct Request {
     khct::HttpScript script;
     khct::cb::IOCtx io;
-    khc_slist* headers;
+    khc_slist_t* headers;
     char stream_buff[64];
     char resp_header_buff[256];
 
@@ -139,7 +139,7 @@ struct Request {
 
     // Everything a request consists of: what kii sets for each one, and the
     // callbacks and settings it keeps across them.
-    void set(khc* http, bool own_buffers) {
+    void set(khc_t* http, bool own_buffers) {
         script.attach(http);
         khc_set_cb_read(http, khct::cb::cb_read, &io);
         khc_set_cb_write(http, khct::cb::cb_write, &io);
@@ -169,7 +169,7 @@ struct Request {
 
     // Filled before khc_init(), which leaves the padding alone, so that two
     // set up alike compare equal byte for byte.
-    void init(khc* http, bool own_buffers, unsigned char fill) {
+    void init(khc_t* http, bool own_buffers, unsigned char fill) {
         memset(http, fill, sizeof(*http));
         khc_init(http);
         set(http, own_buffers);
@@ -195,8 +195,8 @@ TEST_CASE( "khc_reset_except_request leaves khc as if the request were new" ) {
         for (bool own_buffers : { true, false }) {
             INFO("own buffers " << own_buffers << ", response " << response);
             Request req;
-            khc used;
-            khc fresh;
+            khc_t used;
+            khc_t fresh;
             req.init(&used, own_buffers, 0);
             req.init(&fresh, own_buffers, 0);
 
@@ -235,7 +235,7 @@ TEST_CASE( "khc_reset_except_request leaves khc as if the request were new" ) {
             CHECK( (const void*)used._stream_buff == (const void*)fresh._stream_buff );
             CHECK( (const void*)used._resp_header_buff == (const void*)fresh._resp_header_buff );
             // And whole, for a member not named here.
-            REQUIRE( memcmp(&used, &fresh, sizeof(khc)) == 0 );
+            REQUIRE( memcmp(&used, &fresh, sizeof(khc_t)) == 0 );
         }
     }
 }
@@ -250,8 +250,8 @@ TEST_CASE( "khc_reset_except_request resets all that the request does not set" )
     for (bool own_buffers : { true, false }) {
         INFO("own buffers " << own_buffers);
         Request req;
-        khc used;
-        khc fresh;
+        khc_t used;
+        khc_t fresh;
         req.init(&fresh, own_buffers, 0xA5);
         memset(&used, 0xA5, sizeof(used));
         req.set(&used, own_buffers);
@@ -259,6 +259,6 @@ TEST_CASE( "khc_reset_except_request resets all that the request does not set" )
         used._resp_header_buff_allocated = false;
 
         khc_reset_except_request(&used);
-        REQUIRE( memcmp(&used, &fresh, sizeof(khc)) == 0 );
+        REQUIRE( memcmp(&used, &fresh, sizeof(khc_t)) == 0 );
     }
 }

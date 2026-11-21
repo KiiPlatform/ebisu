@@ -4,7 +4,7 @@
 #include "kii.h"
 #include "khc.h"
 
-kii_code_t _convert_code(khc_code khc_c);
+kii_code_t _convert_code(khc_code_t khc_c);
 
 #ifdef EBISU_NO_LOG
 /* Built without logging, nothing is logged, and the arguments aren't
@@ -27,7 +27,7 @@ void _req_headers_free_all(kii_t* kii);
 /* Clears the buffer set by kii_set_buff(), as kii->_rw_buff points at it, and
  * the one set by kii_set_stream_buff(), after a request whose body or response
  * held a secret: a password, a token or MQTT credentials. A response whose
- * status refused the request is kept, as it says why and holds none. khc
+ * status refused the request is kept, as it says why and holds none. khc_t
  * clears a stream buffer of its own as it frees it. */
 void _kii_clear_buffers(kii_t* kii);
 

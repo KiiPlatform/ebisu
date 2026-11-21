@@ -50,7 +50,7 @@ struct ThreadSystem {
         static const ebisu_system_ops_t ops = {
             [](ebisu_system_t* self, const char*, EBISU_TASK_ENTRY entry, void* entry_param) {
                 ((Link*)self)->owner->keep(ltest::thread(entry, entry_param));
-                return EBISU_TASKC_OK;
+                return EBISU_TASK_OK;
             },
             [](ebisu_system_t*, uint32_t msec) {
                 sleep_for(std::chrono::milliseconds(msec));

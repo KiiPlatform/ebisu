@@ -49,7 +49,7 @@ struct MqttTest {
     ebisu::ltest::condition_variable changed;
     // Guarded by mutex.
     // The task's states, each time it entered one other than the last.
-    std::vector<kii_mqtt_task_state> states;
+    std::vector<kii_mqtt_task_state_t> states;
     std::vector<std::string> received;
     // Run on the task's thread, then cleared.
     std::function<void()> step;
@@ -59,7 +59,7 @@ struct MqttTest {
     int send_status = 0;
     bool stop = false;
     bool exited = false;
-    kii_mqtt_task_info exit_info;
+    kii_mqtt_task_info_t exit_info;
 
     std::atomic<int> connects{0};
     std::atomic<int> closes{0};
@@ -68,7 +68,7 @@ struct MqttTest {
     // On the task's thread only: whether the last receive was made to fail.
     bool recv_made_to_fail = false;
 
-    int count(kii_mqtt_task_state state) {
+    int count(kii_mqtt_task_state_t state) {
         return (int)std::count(states.begin(), states.end(), state);
     }
 
@@ -130,7 +130,7 @@ ebisu_sock_code_t cb_close(ebisu_socket_t* self)
 bool cb_continue(void* task_info, void* userdata)
 {
     MqttTest* t = (MqttTest*)userdata;
-    kii_mqtt_task_state state = ((kii_mqtt_task_info*)task_info)->task_state;
+    kii_mqtt_task_state_t state = ((kii_mqtt_task_info_t*)task_info)->task_state;
     std::function<void()> step;
     {
         std::lock_guard<ebisu::ltest::mutex> lock(t->mutex);
@@ -158,7 +158,7 @@ void cb_exit(void* task_info, void* userdata)
 {
     MqttTest* t = (MqttTest*)userdata;
     std::lock_guard<ebisu::ltest::mutex> lock(t->mutex);
-    t->exit_info = *(kii_mqtt_task_info*)task_info;
+    t->exit_info = *(kii_mqtt_task_info_t*)task_info;
     t->exited = true;
     t->changed.notify_all();
 }
