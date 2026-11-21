@@ -15,8 +15,11 @@
 #include <sys/socket.h>
 #endif
 
+#include "test_callbacks.h"
+
 #include <stdio.h>
 #include <string.h>
+#include <functional>
 #include <map>
 #include <string>
 #include <vector>
@@ -57,6 +60,8 @@ struct TestDns {
     std::map<std::string, uint32_t> interfaces;
     long no_answer = 0;
     int servers_asked = 0;
+    // Called at each query, before its answer is looked up.
+    std::function<void()> on_ask;
     std::vector<std::string> asked;
     std::vector<std::string> queries;
 
@@ -91,6 +96,9 @@ struct TestDns {
             void* userdata, char* why, size_t why_size) {
         TestDns* dns = of(self);
         std::string name = text_of(self, server);
+        if (dns->on_ask) {
+            dns->on_ask();
+        }
         dns->asked.push_back(name);
         dns->queries.push_back(std::string((const char*)query, length));
         auto found = dns->answers.find(name);
@@ -388,5 +396,151 @@ TEST_CASE("A probing socket gives the name servers' error for none answering") {
     SECTION("and connects the socket inside once one answers") {
         dns.answers["10.0.0.1:53"] = { EBISU_DNS_ASKED_ANSWERED, "" };
         CHECK(sock.base.ops->connect(&sock.base, "example.com", 1883) == EBISU_SOCK_OK);
+    }
+}
+
+namespace {
+
+// A system whose clock the waits move on, and each probe by what it takes.
+struct WaitWorld {
+    TestDns dns;
+    khct::cb::SystemCtx sys;
+    uint64_t now_ms;
+    std::vector<uint32_t> delays;
+    // What a probe takes, and from which probe on, counted from 1, the server answers: 0 for never.
+    uint32_t probe_takes_ms = 100;
+    size_t answers_from = 0;
+    char detail[EBISU_DNS_PROBE_DETAIL_SIZE];
+
+    explicit WaitWorld(uint64_t start_ms = 5000) : now_ms(start_ms) {
+        dns.list("10.0.0.1");
+        sys.on_monotonic_ms = [this]() { return now_ms; };
+        sys.on_delay_ms = [this](uint32_t ms) {
+            delays.push_back(ms);
+            now_ms += ms;
+        };
+        dns.on_ask = [this]() {
+            now_ms += probe_takes_ms;
+            bool answers = answers_from != 0 && dns.asked.size() + 1 >= answers_from;
+            dns.answers["10.0.0.1:53"] = { answers ? EBISU_DNS_ASKED_ANSWERED : EBISU_DNS_ASKED_TIMEOUT, "" };
+        };
+    }
+
+    ebisu_dns_probe_result_t wait(uint32_t every_ms, uint32_t max_ms, const char* host = "example.com") {
+        return ebisu_dns_probe_wait(dns.get(), sys.system(), host, 300, every_ms, max_ms, detail,
+                sizeof(detail));
+    }
+
+    size_t probes() const { return dns.asked.size(); }
+};
+
+}
+
+TEST_CASE("A wait for the name servers probes until one answers, or for so long") {
+    SECTION("a server that answers at once: one probe, no wait") {
+        WaitWorld w;
+        w.answers_from = 1;
+        CHECK(w.wait(5000, 600000) == EBISU_DNS_PROBE_ANSWERED);
+        CHECK(w.probes() == 1);
+        CHECK(w.delays.empty());
+        CHECK(std::string(w.detail) == "10.0.0.1:53 answered");
+    }
+
+    SECTION("one that answers the third probe: two waits of every_ms, and the last probe's detail") {
+        WaitWorld w;
+        w.answers_from = 3;
+        CHECK(w.wait(5000, 600000) == EBISU_DNS_PROBE_ANSWERED);
+        CHECK(w.probes() == 3);
+        CHECK(w.delays == std::vector<uint32_t>({ 5000, 5000 }));
+        CHECK(std::string(w.detail) == "10.0.0.1:53 answered");
+    }
+
+    SECTION("none that answers: the last wait cut to end at max_ms, a last probe, and no wait after it") {
+        WaitWorld w;
+        const uint64_t start = w.now_ms;
+        CHECK(w.wait(5000, 12000) == EBISU_DNS_PROBE_SILENT);
+        // Probes of 100 ms at 0, 5100 and 10200, and the last at 12000.
+        CHECK(w.delays == std::vector<uint32_t>({ 5000, 5000, 1700 }));
+        CHECK(w.probes() == 4);
+        CHECK(w.now_ms - start == 12000 + 100);
+        CHECK(std::string(w.detail) == "10.0.0.1:53 didn't answer in time");
+    }
+
+    SECTION("a probe that ends just at max_ms is the last") {
+        WaitWorld w;
+        CHECK(w.wait(4900, 10000) == EBISU_DNS_PROBE_SILENT);
+        // Probes at 0 and 5000, the second ending at 5100: 4900 left, a wait, and the probe at 10000.
+        CHECK(w.delays == std::vector<uint32_t>({ 4900, 4900 }));
+        CHECK(w.probes() == 3);
+    }
+
+    SECTION("max_ms of 0: one probe, no wait") {
+        WaitWorld w;
+        CHECK(w.wait(5000, 0) == EBISU_DNS_PROBE_SILENT);
+        CHECK(w.probes() == 1);
+        CHECK(w.delays.empty());
+    }
+
+    SECTION("a first probe that takes max_ms or longer: one probe, no wait") {
+        WaitWorld w;
+        w.probe_takes_ms = 3000;
+        CHECK(w.wait(1000, 3000) == EBISU_DNS_PROBE_SILENT);
+        CHECK(w.probes() == 1);
+        CHECK(w.delays.empty());
+        w.probe_takes_ms = 2999;
+        w.dns.asked.clear();
+        CHECK(w.wait(1000, 3000) == EBISU_DNS_PROBE_SILENT);
+        CHECK(w.probes() == 2);
+        CHECK(w.delays == std::vector<uint32_t>({ 1 }));
+    }
+
+    SECTION("every_ms of 0: a probe at once after the last, with no delay asked of the system") {
+        WaitWorld w;
+        CHECK(w.wait(0, 1000) == EBISU_DNS_PROBE_SILENT);
+        CHECK(w.delays.empty());
+        // Of 100 ms each: the one that ends at 1000 is the last.
+        CHECK(w.probes() == 10);
+    }
+
+    SECTION("an answer that the name doesn't exist is an answer, and a host that needs no server needs no wait") {
+        WaitWorld w;
+        CHECK(w.wait(5000, 60000, "127.0.0.1") == EBISU_DNS_PROBE_NOT_NEEDED);
+        CHECK(w.probes() == 0);
+        CHECK(w.delays.empty());
+        CHECK(w.wait(5000, 60000, "localhost") == EBISU_DNS_PROBE_NOT_NEEDED);
+        CHECK(w.probes() == 0);
+    }
+
+    SECTION("a clock near its end: the time gone by is a difference") {
+        WaitWorld w(UINT64_MAX - 6000);
+        CHECK(w.wait(5000, 12000) == EBISU_DNS_PROBE_SILENT);
+        CHECK(w.delays == std::vector<uint32_t>({ 5000, 5000, 1700 }));
+        CHECK(w.probes() == 4);
+    }
+
+    SECTION("the longest of each: no overflow") {
+        WaitWorld w;
+        w.answers_from = 2;
+        CHECK(w.wait(UINT32_MAX, UINT32_MAX) == EBISU_DNS_PROBE_ANSWERED);
+        CHECK(w.delays == std::vector<uint32_t>({ UINT32_MAX - 100 }));
+    }
+
+    SECTION("without a system, or one that can't tell the time or wait: one probe") {
+        WaitWorld w;
+        CHECK(ebisu_dns_probe_wait(w.dns.get(), nullptr, "example.com", 300, 5000, 60000, w.detail,
+                    sizeof(w.detail)) == EBISU_DNS_PROBE_SILENT);
+        CHECK(w.probes() == 1);
+        w.sys.ops.monotonic_ms = nullptr;
+        CHECK(w.wait(5000, 60000) == EBISU_DNS_PROBE_SILENT);
+        CHECK(w.probes() == 2);
+        w.sys.ops.monotonic_ms = khct::cb::mock_monotonic_ms;
+        w.sys.ops.delay_ms = nullptr;
+        CHECK(w.wait(5000, 60000) == EBISU_DNS_PROBE_SILENT);
+        CHECK(w.probes() == 3);
+        CHECK(w.delays.empty());
+        // And an answer is still one.
+        w.answers_from = 1;
+        CHECK(ebisu_dns_probe_wait(w.dns.get(), nullptr, "example.com", 300, 5000, 60000, nullptr, 0) ==
+                EBISU_DNS_PROBE_ANSWERED);
     }
 }
