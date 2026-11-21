@@ -68,6 +68,13 @@
     </member>
     <member kind="function">
       <type>ebisu_dns_probe_result_t</type>
+      <name>ebisu_dns_probe_wait</name>
+      <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
+      <anchor>a554189e6bce75cab64eb2ff883555d2e</anchor>
+      <arglist>(ebisu_dns_t *dns, ebisu_system_t *system, const char *host, uint32_t timeout_ms, uint32_t every_ms, uint32_t max_ms, char *detail, size_t detail_size)</arglist>
+    </member>
+    <member kind="function">
+      <type>ebisu_dns_probe_result_t</type>
       <name>ebisu_dns_probe_servers</name>
       <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
       <anchor>a31bc113ff095e1378de0cbcd9a827b6a</anchor>

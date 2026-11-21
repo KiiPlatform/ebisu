@@ -80,8 +80,8 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <a href="ebisu__retry_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span></div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#ifndef _EBISU_RETRY</span></div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#define _EBISU_RETRY</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#ifndef EBISU_RETRY_H</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#define EBISU_RETRY_H</span></div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;stdint.h&gt;</span></div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
@@ -126,7 +126,7 @@ $(function() {
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span><span class="preprocessor">#pragma GCC visibility pop</span></div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span> </div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="preprocessor">#endif </span><span class="comment">/* _EBISU_RETRY */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="preprocessor">#endif </span><span class="comment">/* EBISU_RETRY_H */</span><span class="preprocessor"></span></div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span><span class="comment">/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */</span></div>
 <div class="ttc" id="aebisu__retry_8h_html_a2636ddd6a6178a7f48cddc7317d5a070"><div class="ttname"><a href="ebisu__retry_8h.html#a2636ddd6a6178a7f48cddc7317d5a070">ebisu_retry_wait</a></div><div class="ttdeci">uint32_t ebisu_retry_wait(uint32_t first, uint32_t max, uint32_t n, uint32_t seed)</div><div class="ttdoc">The wait after the n-th failure in a row.</div></div>
 <div class="ttc" id="aebisu__retry_8h_html_a44432e8b7b28b390b3b90c4f8ddf03a0"><div class="ttname"><a href="ebisu__retry_8h.html#a44432e8b7b28b390b3b90c4f8ddf03a0">ebisu_retry_seed</a></div><div class="ttdeci">uint32_t ebisu_retry_seed(const char *id)</div><div class="ttdoc">A seed for ebisu_retry_spread() and ebisu_retry_wait() from a device&#39;s ID: its 32-bit FNV-1a hash.</div></div>

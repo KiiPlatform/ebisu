@@ -91,6 +91,7 @@ $(function() {
 <div class="textblock"><code>#include &lt;<a class="elRef" href="../../core/html/ebisu__dns_8h.html">ebisu_dns.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="../../core/html/ebisu__socket_8h.html">ebisu_socket.h</a>&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="../../core/html/ebisu__system_8h.html">ebisu_system.h</a>&gt;</code><br />
 <code>#include &lt;stdbool.h&gt;</code><br />
 <code>#include &lt;stddef.h&gt;</code><br />
 <code>#include &lt;stdint.h&gt;</code><br />
@@ -133,6 +134,8 @@ Enumerations</h2></td></tr>
 Functions</h2></td></tr>
 <tr class="memitem:a50ed0a1893bde9bdc0d4fd0d76f2bd2e" id="r_a50ed0a1893bde9bdc0d4fd0d76f2bd2e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a4acf05f6db48f7f1298d0d1a62cd13b8">ebisu_dns_probe_result_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a50ed0a1893bde9bdc0d4fd0d76f2bd2e">ebisu_dns_probe</a> (<a class="elRef" href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a> *dns, const char *host, uint32_t timeout_ms, char *detail, size_t detail_size)</td></tr>
 <tr class="memdesc:a50ed0a1893bde9bdc0d4fd0d76f2bd2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Asks the system's name servers whether they answer.  <br /></td></tr>
+<tr class="memitem:a554189e6bce75cab64eb2ff883555d2e" id="r_a554189e6bce75cab64eb2ff883555d2e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a4acf05f6db48f7f1298d0d1a62cd13b8">ebisu_dns_probe_result_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a554189e6bce75cab64eb2ff883555d2e">ebisu_dns_probe_wait</a> (<a class="elRef" href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a> *dns, <a class="elRef" href="../../core/html/structebisu__system__t.html">ebisu_system_t</a> *system, const char *host, uint32_t timeout_ms, uint32_t every_ms, uint32_t max_ms, char *detail, size_t detail_size)</td></tr>
+<tr class="memdesc:a554189e6bce75cab64eb2ff883555d2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Waits until one of the system's name servers answers.  <br /></td></tr>
 <tr class="memitem:a31bc113ff095e1378de0cbcd9a827b6a" id="r_a31bc113ff095e1378de0cbcd9a827b6a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a4acf05f6db48f7f1298d0d1a62cd13b8">ebisu_dns_probe_result_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a31bc113ff095e1378de0cbcd9a827b6a">ebisu_dns_probe_servers</a> (<a class="elRef" href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a> *dns, const char *host, const <a class="el" href="structebisu__dns__server__t.html">ebisu_dns_server_t</a> *servers, size_t count, uint32_t timeout_ms, char *detail, size_t detail_size)</td></tr>
 <tr class="memdesc:a31bc113ff095e1378de0cbcd9a827b6a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Asks the given name servers whether they answer.  <br /></td></tr>
 <tr class="memitem:a93885c453451937efdf49a889e4b4433" id="r_a93885c453451937efdf49a889e4b4433"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a93885c453451937efdf49a889e4b4433">ebisu_dns_probe_socket_init</a> (<a class="el" href="structebisu__dns__probe__socket__t.html">ebisu_dns_probe_socket_t</a> *sock, <a class="elRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a> *inner, <a class="elRef" href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a> *dns, uint32_t timeout_ms)</td></tr>
@@ -412,6 +415,77 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a554189e6bce75cab64eb2ff883555d2e" name="a554189e6bce75cab64eb2ff883555d2e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a554189e6bce75cab64eb2ff883555d2e">&#9670;&#160;</a></span>ebisu_dns_probe_wait()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a4acf05f6db48f7f1298d0d1a62cd13b8">ebisu_dns_probe_result_t</a> ebisu_dns_probe_wait </td>
+          <td>(</td>
+          <td class="paramtype"><a class="elRef" href="../../core/html/structebisu__dns__t.html">ebisu_dns_t</a> *</td>          <td class="paramname"><span class="paramname"><em>dns</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="elRef" href="../../core/html/structebisu__system__t.html">ebisu_system_t</a> *</td>          <td class="paramname"><span class="paramname"><em>system</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>host</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t</td>          <td class="paramname"><span class="paramname"><em>timeout_ms</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t</td>          <td class="paramname"><span class="paramname"><em>every_ms</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t</td>          <td class="paramname"><span class="paramname"><em>max_ms</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>detail</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>detail_size</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Waits until one of the system's name servers answers. </p>
+<p>For a program started before its network is up, as at boot: rather than fail its first lookup, it waits here, for a time it bounds.</p>
+<p>It probes as <a class="el" href="#a50ed0a1893bde9bdc0d4fd0d76f2bd2e" title="Asks the system&#39;s name servers whether they answer.">ebisu_dns_probe()</a> does, and again every_ms after a probe that found no server answering, until one isn't EBISU_DNS_PROBE_SILENT or max_ms have gone by since it was called. "Answers" is <a class="el" href="#a50ed0a1893bde9bdc0d4fd0d76f2bd2e" title="Asks the system&#39;s name servers whether they answer.">ebisu_dns_probe()</a>'s: any answer, that the name doesn't exist too, and a host that needs no server.</p>
+<p>The time is the system's monotonic_ms, and the waits its delay_ms. A probe is never followed by a wait that isn't followed by a probe: the last wait is cut so that it ends max_ms after the call, and the last probe starts then at the latest, taking what a probe takes on top, timeout_ms for each server. With max_ms of 0, or a first probe that takes max_ms or longer, there is one probe and no wait. With every_ms of 0 a probe follows the last at once, the probes' own timeouts all there is between them.</p>
+<p>Without a system, or one without monotonic_ms or delay_ms, it can't wait: it probes once, as with max_ms of 0.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">dns</td><td>The system's name servers, and how one is asked. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">system</td><td>The system, for its monotonic_ms and delay_ms. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">host</td><td>The host to be looked up. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">timeout_ms</td><td>How long each server has to answer a probe, in milliseconds. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">every_ms</td><td>How long to wait after a probe no server answered before the next, in milliseconds. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">max_ms</td><td>How long to go on for at most, in milliseconds, from the call to the start of the last probe. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">detail</td><td>As for <a class="el" href="#a50ed0a1893bde9bdc0d4fd0d76f2bd2e" title="Asks the system&#39;s name servers whether they answer.">ebisu_dns_probe()</a>, of the last probe, or NULL. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">detail_size</td><td>Its size. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>What the last probe found: EBISU_DNS_PROBE_SILENT if no server answered in the time. </dd></dl>
 
 </div>
 </div>

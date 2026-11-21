@@ -80,8 +80,8 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <a href="ebisu__dns_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span></div>
-<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#ifndef _EBISU_DNS</span></div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#define _EBISU_DNS</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#ifndef EBISU_DNS_H</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#define EBISU_DNS_H</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &quot;<a class="code" href="ebisu__object_8h.html">ebisu_object.h</a>&quot;</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
@@ -163,7 +163,7 @@ $(function() {
 <div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span><span class="preprocessor">#pragma GCC visibility pop</span></div>
 <div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span> </div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span><span class="preprocessor">#endif </span><span class="comment">/* _EBISU_DNS */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span><span class="preprocessor">#endif </span><span class="comment">/* EBISU_DNS_H */</span><span class="preprocessor"></span></div>
 <div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span><span class="comment">/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */</span></div>
 <div class="ttc" id="aebisu__dns_8h_html_a8ce76d38dcf2433d22f2e5d9970aac8d"><div class="ttname"><a href="ebisu__dns_8h.html#a8ce76d38dcf2433d22f2e5d9970aac8d">ebisu_dns_is_answer_t</a></div><div class="ttdeci">bool(* ebisu_dns_is_answer_t)(const unsigned char *datagram, size_t length, void *userdata)</div><div class="ttdoc">Whether a datagram is the answer to the query, for ebisu_dns_ops_t::ask.</div><div class="ttdef"><b>Definition</b> ebisu_dns.h:64</div></div>
 <div class="ttc" id="aebisu__dns_8h_html_a9f397eef10cb82cabb9b01a5e0e84914"><div class="ttname"><a href="ebisu__dns_8h.html#a9f397eef10cb82cabb9b01a5e0e84914">ebisu_dns_format_address</a></div><div class="ttdeci">void ebisu_dns_format_address(ebisu_dns_t *dns, const ebisu_dns_addr_t *addr, char *out, size_t size)</div><div class="ttdoc">Writes a name server&#39;s address, for a log: &quot;address:port&quot;, or &quot;[address]:port&quot; or &quot;[address%scope]:po...</div></div>
