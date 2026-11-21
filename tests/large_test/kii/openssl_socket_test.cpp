@@ -1049,6 +1049,145 @@ TEST_CASE( "The OpenSSL socket says why it failed" ) {
     }
 }
 
+namespace {
+
+// A server that takes one connection and does with it what it is given to,
+// until the client closes or the test ends.
+struct RawServer {
+    int listen_fd;
+    uint16_t port;
+    std::atomic<bool> stopping;
+    std::thread thread;
+
+    explicit RawServer(std::function<void(int fd, const std::atomic<bool>& stopping)> serve) :
+            listen_fd(socket(AF_INET, SOCK_STREAM, 0)), port(0), stopping(false) {
+        REQUIRE( listen_fd >= 0 );
+        struct sockaddr_storage addr = loopback(AF_INET, 0);
+        REQUIRE( bind(listen_fd, (struct sockaddr*)&addr, length_of(AF_INET)) == 0 );
+        REQUIRE( listen(listen_fd, 1) == 0 );
+        socklen_t len = sizeof(addr);
+        REQUIRE( getsockname(listen_fd, (struct sockaddr*)&addr, &len) == 0 );
+        port = ntohs(((struct sockaddr_in*)&addr)->sin_port);
+        thread = std::thread([this, serve] {
+            int fd = accept(listen_fd, nullptr, nullptr);
+            if (fd < 0) {
+                return;
+            }
+            serve(fd, stopping);
+            close(fd);
+        });
+    }
+
+    ~RawServer() {
+        stopping = true;
+        shutdown(listen_fd, SHUT_RDWR);
+        thread.join();
+        close(listen_fd);
+    }
+};
+
+// Says nothing, for as long as the client stays.
+void say_nothing(int fd, const std::atomic<bool>&)
+{
+    char buffer[2048];
+    while (recv(fd, buffer, sizeof(buffer), 0) > 0) {
+    }
+}
+
+// The start of a handshake record of 16384 bytes, then a byte of it every
+// 100 ms: each wait for the server is short, and there is no end to them.
+void drip(int fd, const std::atomic<bool>& stopping)
+{
+    const char header[] = { 0x16, 0x03, 0x03, 0x40, 0x00 };
+    (void)send(fd, header, sizeof(header), MSG_NOSIGNAL);
+    for (int i = 0; i < 300 && !stopping; ++i) {
+        const char byte = 0x02;
+        if (send(fd, &byte, 1, MSG_NOSIGNAL) != 1) {
+            return;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+double seconds_since(std::chrono::steady_clock::time_point start)
+{
+    return std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+}
+
+}
+
+// The receive and send timeouts bound each wait for the server, and not how
+// many of them a handshake takes.
+TEST_CASE( "The OpenSSL socket gives up a handshake at its connect timeout" ) {
+    ebisu_openssl_socket_t sock;
+    long detail = -1;
+
+    SECTION("with a server that says nothing, and no receive timeout") {
+        RawServer server(say_nothing);
+        ebisu_openssl_socket_init(&sock, 0, 0);
+        ebisu_openssl_socket_set_connect_timeout(&sock, 1);
+        auto start = std::chrono::steady_clock::now();
+        CHECK( sock.base.ops->connect(&sock.base, "127.0.0.1", server.port) == EBISU_SOCK_FAIL );
+        CHECK( seconds_since(start) >= 0.9 );
+        CHECK( seconds_since(start) < 4 );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TIMEOUT );
+    }
+
+    SECTION("with a server that sends a byte at a time, each within the receive timeout") {
+        RawServer server(drip);
+        ebisu_openssl_socket_init(&sock, 5, 5);
+        ebisu_openssl_socket_set_connect_timeout(&sock, 1);
+        auto start = std::chrono::steady_clock::now();
+        CHECK( sock.base.ops->connect(&sock.base, "127.0.0.1", server.port) == EBISU_SOCK_FAIL );
+        CHECK( seconds_since(start) >= 0.9 );
+        CHECK( seconds_since(start) < 4 );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TIMEOUT );
+    }
+
+    SECTION("at the receive timeout, if that comes first") {
+        RawServer server(say_nothing);
+        ebisu_openssl_socket_init(&sock, 1, 1);
+        ebisu_openssl_socket_set_connect_timeout(&sock, 30);
+        auto start = std::chrono::steady_clock::now();
+        CHECK( sock.base.ops->connect(&sock.base, "127.0.0.1", server.port) == EBISU_SOCK_FAIL );
+        CHECK( seconds_since(start) >= 0.9 );
+        CHECK( seconds_since(start) < 4 );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TIMEOUT );
+    }
+
+    SECTION("without a connect timeout, at the receive timeout alone, as before") {
+        RawServer server(say_nothing);
+        ebisu_openssl_socket_init(&sock, 1, 1);
+        ebisu_openssl_socket_set_connect_timeout(&sock, 0);
+        auto start = std::chrono::steady_clock::now();
+        CHECK( sock.base.ops->connect(&sock.base, "127.0.0.1", server.port) == EBISU_SOCK_FAIL );
+        CHECK( seconds_since(start) >= 0.9 );
+        CHECK( seconds_since(start) < 4 );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TIMEOUT );
+    }
+
+    SECTION("and a handshake within it leaves a socket that blocks, with its receive timeout") {
+        LocalServer server;
+        REQUIRE( server.listening );
+        CaFile ca;
+        ebisu_openssl_tls_t tls;
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        ebisu_openssl_socket_init(&sock, 1, 5);
+        ebisu_openssl_socket_set_connect_timeout(&sock, 5);
+        ebisu_openssl_socket_set_tls(&sock, &tls);
+        REQUIRE( connect_to(&sock, server) == EBISU_SOCK_OK );
+        CHECK( (fcntl(sock.socket, F_GETFL, 0) & O_NONBLOCK) == 0 );
+        char buffer[16];
+        size_t received = 0;
+        auto start = std::chrono::steady_clock::now();
+        CHECK( sock.base.ops->recv(&sock.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TIMEOUT );
+        CHECK( seconds_since(start) >= 0.9 );
+        CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+        ebisu_openssl_tls_free(&tls);
+    }
+}
+
 TEST_CASE( "The OpenSSL socket says a receive timed out, or a peer went" ) {
     Connection c;
     long detail = -1;

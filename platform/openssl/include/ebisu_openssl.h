@@ -183,8 +183,11 @@ void ebisu_openssl_socket_init(
  *
  * The host is looked up with getaddrinfo(), and its addresses tried in the
  * order it gives them, IPv6 and IPv4, until one connects. The timeout bounds
- * the lookup, and each attempt to connect to an address, but not the TLS
- * handshake, which the receive and send timeouts bound.
+ * the lookup, each attempt to connect to an address, and then the TLS
+ * handshake, each for as long. The receive and send timeouts bound each wait
+ * for the server within the handshake too, and not how many there are: by
+ * them alone, a server that says nothing to a socket with no receive
+ * timeout, or a little at a time, would keep connect from returning.
  *
  * getaddrinfo() can't be given a timeout: a lookup the timeout cuts short goes
  * on, on a thread of its own, for as long as the system's resolver takes. A
@@ -195,7 +198,8 @@ void ebisu_openssl_socket_init(
  *
  * \param [out] sock The socket.
  * \param [in] seconds 0 for no bound: the lookup takes as long as the system's
- * resolver does, and an attempt as long as the system's TCP does.
+ * resolver does, an attempt as long as the system's TCP does, and the
+ * handshake as long as the server does within the receive and send timeouts.
  */
 void ebisu_openssl_socket_set_connect_timeout(ebisu_openssl_socket_t* sock, unsigned int seconds);
 
