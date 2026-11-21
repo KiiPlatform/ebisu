@@ -27,11 +27,17 @@ uint32_t ebisu_retry_spread(uint32_t wait, uint32_t seed)
 
 uint32_t ebisu_retry_wait(uint32_t first, uint32_t max, uint32_t n, uint32_t seed)
 {
-    uint32_t wait = first < max ? first : max;
-    /* At most 32 doublings take any wait from 1 to max, so the loop is short
-     * whatever n is; a wait of 0 stays 0. */
-    for (uint32_t i = 1; i < n && wait != 0 && wait < max; ++i) {
-        wait = wait > max / 2 ? max : wait * 2;
+    uint32_t doublings = n > 1 ? n - 1 : 0;
+    /* first doubled that many times is past max exactly when first is past
+     * max >> doublings, and 32 doublings take any first but 0 past every max:
+     * nothing overflows, and no loop. */
+    uint32_t wait;
+    if (first == 0) {
+        wait = 0;
+    } else if (doublings >= 32 || first > max >> doublings) {
+        wait = max;
+    } else {
+        wait = first << doublings;
     }
     return ebisu_retry_spread(wait, seed);
 }

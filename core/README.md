@@ -68,12 +68,12 @@ set on.
   `ebisu_log_level_parse()` reads a level's name, and `ebisu_log_level_name()`
   writes it. platform's `ebisu_loggers.h` has loggers to a stdio stream, to a
   file kept under a size, to syslog and to a syslog server over UDP.
-- **Waits between attempts** (`ebisu_retry.h`): the wait after the n-th failure
-  in a row, doubled from a first wait up to a longest one, of which a device
-  waits half to all, its share from a seed such as an FNV-1a hash of its ID,
-  so that devices that lost the cloud together don't come back together. In
-  the caller's unit, with no clock, randomness or state; the MQTT task waits
-  so between its attempts to reach the broker.
+- **Waits between attempts** (`ebisu_retry.h`): exponential back-off. The
+  wait after the n-th failure in a row, doubled from a first wait up to a
+  longest one, of which a device waits half to all, its share from a seed such
+  as an FNV-1a hash of its ID, so that devices that lost the cloud together
+  don't come back together. In the caller's unit, with no clock, randomness or
+  state; the MQTT task waits so between its attempts to reach the broker.
 - **Clearing secrets** (`ebisu_mem.h`): `ebisu_secure_zero()` sets memory to 0
   in a way the compiler can't take for a store nothing reads, and leave out, as
   it may a `memset()` just before memory is freed or goes out of scope. ebisu

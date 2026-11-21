@@ -1,7 +1,7 @@
 /**
  * @file ebisu_retry.h
- * @brief Waits before trying again after a failure, longer each time and
- * spread from device to device.
+ * @brief Exponential back-off: waits before trying again after a failure,
+ * longer each time and spread from device to device.
  */
 #ifndef _EBISU_RETRY
 #define _EBISU_RETRY
@@ -48,8 +48,10 @@ uint32_t ebisu_retry_seed(const char* id);
  * \brief A device's share of a wait: from half of it, rounded up, to all of
  * it.
  *
- * The share changes from wait to wait, so a device doesn't wait the same part
- * of every one.
+ * The share changes as the wait doubles, so a device doesn't wait the same
+ * part of each; once the wait is at the longest, a device waits the same
+ * share of it each time. Devices still differ from one another, which is what
+ * spreads them out.
  *
  * \param [in] wait The wait, in the caller's unit.
  * \param [in] seed The device's, from ebisu_retry_seed().
