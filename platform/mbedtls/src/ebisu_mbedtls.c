@@ -121,7 +121,8 @@ static void log_refused(ebisu_logger_t* logger, const char* host, uint32_t flags
 }
 #endif
 
-int ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, size_t ca_size)
+/* 0, or mbedTLS's or PSA's error, the configuration then holding nothing to free. */
+static int tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, size_t ca_size)
 {
     int ret;
     mbedtls_ssl_config_init(&tls->_config);
@@ -180,6 +181,16 @@ int ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, si
 fail:
     ebisu_mbedtls_tls_free(tls);
     return ret;
+}
+
+bool ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, size_t ca_size,
+        int* out_error)
+{
+    int ret = tls_init(tls, ca, ca_size);
+    if (out_error != NULL) {
+        *out_error = ret;
+    }
+    return ret == 0;
 }
 
 mbedtls_ssl_config* ebisu_mbedtls_tls_config(ebisu_mbedtls_tls_t* tls)

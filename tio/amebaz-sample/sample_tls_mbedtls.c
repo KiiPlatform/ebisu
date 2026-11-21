@@ -17,8 +17,7 @@ void sample_tls_init(const char* ca, size_t ca_size)
     mbedtls_ssl_config* conf;
     int ret;
 
-    ret = ebisu_mbedtls_tls_init(&tls_config, (const unsigned char*)ca, ca_size);
-    if (ret != 0) {
+    if (!ebisu_mbedtls_tls_init(&tls_config, (const unsigned char*)ca, ca_size, &ret)) {
         sample_fatal("failed to set up TLS: -0x%04x", (unsigned int)-ret);
     }
     conf = ebisu_mbedtls_tls_config(&tls_config);

@@ -148,10 +148,11 @@ static const ebisu_lock_ops_t win32_lock_ops = {
     unlock
 };
 
-void ebisu_win32_lock_init(ebisu_win32_lock_t* lock)
+bool ebisu_win32_lock_init(ebisu_win32_lock_t* lock)
 {
     lock->base.ops = &win32_lock_ops;
     InitializeSRWLock(&lock->srwlock);
+    return true;
 }
 
 /* An ebisu_win32_lock_t of its own, from the heap. An SRWLOCK needs nothing

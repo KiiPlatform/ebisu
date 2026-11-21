@@ -93,10 +93,10 @@ static const ebisu_lock_ops_t posix_lock_ops = {
     unlock
 };
 
-int ebisu_posix_lock_init(ebisu_posix_lock_t* lock)
+bool ebisu_posix_lock_init(ebisu_posix_lock_t* lock)
 {
     lock->base.ops = &posix_lock_ops;
-    return pthread_mutex_init(&lock->mutex, NULL);
+    return pthread_mutex_init(&lock->mutex, NULL) == 0;
 }
 
 void ebisu_posix_lock_destroy(ebisu_posix_lock_t* lock)
@@ -111,7 +111,7 @@ static ebisu_lock_t* lock_create(ebisu_system_t* self)
     if (lock == NULL) {
         return NULL;
     }
-    if (ebisu_posix_lock_init(lock) != 0) {
+    if (!ebisu_posix_lock_init(lock)) {
         free(lock);
         return NULL;
     }

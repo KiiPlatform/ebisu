@@ -50,9 +50,9 @@ typedef struct ebisu_posix_lock_t {
  * \brief Initializes the mutex, and makes base a lock of it.
  *
  * \param [out] lock The lock.
- * \return 0, or what pthread_mutex_init() returned on failure.
+ * \return Whether it did: false if pthread_mutex_init() failed.
  */
-int ebisu_posix_lock_init(ebisu_posix_lock_t* lock);
+bool ebisu_posix_lock_init(ebisu_posix_lock_t* lock);
 
 /**
  * \brief Destroys the mutex, which nothing may hold or use any more.
