@@ -299,11 +299,17 @@ typedef struct jkii_field_t {
     } field_copy; /**< \brief Copy of the parsed field value. Which member is
                        valid is given by jkii_field_t#type. */
 
-    /** Length of field_copy#string. ignored if field_copy#string is
-     * null or jkii_field_t#type is not
-     * jkii_field_type_t#JKII_FIELD_TYPE_STRING,
-     * jkii_field_type_t#JKII_FIELD_TYPE_OBJECT and
-     * jkii_field_type_t#JKII_FIELD_TYPE_ARRAY.
+    /** Length of field_copy#string. Leave it 0 for a field without a buffer,
+     * one read as a number or a boolean among them.
+     *
+     * Other than 0, it says field_copy holds a buffer's address, which
+     * jkii_parse() then never writes a number or a boolean over, whatever
+     * the document has: the field can be used again for another document
+     * with its buffer as it was. A number or a boolean found for such a
+     * field is, expected as jkii_field_type_t#JKII_FIELD_TYPE_ANY,
+     * jkii_field_err_t#JKII_FIELD_ERR_OK with its type and position and
+     * without its value, and, expected as a number or a boolean,
+     * jkii_field_err_t#JKII_FIELD_ERR_COPY.
      */
     size_t field_copy_buff_size;
 

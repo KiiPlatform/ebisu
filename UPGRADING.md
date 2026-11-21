@@ -512,6 +512,14 @@ jkii:
   reach an array's elements.
 - A path lookup doesn't find a key that isn't a string, or follow a path that
   isn't valid.
+- `jkii_parse()` never writes a number or a boolean into a field that has a
+  buffer, one whose `field_copy_buff_size` isn't 0: `field_copy` holds the
+  buffer's address then, and a number written over it would be where the next
+  document's string is copied to, for a field used again. Such a field
+  expected as `JKII_FIELD_TYPE_ANY` gets a number's or a boolean's type and
+  position without its value, and one expected as a number or a boolean is
+  `JKII_FIELD_ERR_COPY`. Leave `field_copy_buff_size` 0 for a field read as a
+  number or a boolean, as a field zeroed before it is set has it.
 - `jkii_escape_str()` can write six bytes for each one it reads, up from two. It
   returns -1 if the buffer is too small, so size one for it at
   `strlen(str) * 6 + 1`.

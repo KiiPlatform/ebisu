@@ -2223,3 +2223,77 @@ TEST_CASE("KiiJson, NestingDeeperThan32IsInvalid") {
         }
     }
 }
+
+// A document's number must not become the address the next document's string
+// is copied to.
+TEST_CASE( "jkii_parse() never writes a number or a boolean over a field's buffer address" ) {
+    char buf[16] = "untouched";
+    jkii_field_t fields[2];
+    memset(fields, 0, sizeof(fields));
+    fields[0].path = "/a";
+    fields[0].field_copy.string = buf;
+    fields[0].field_copy_buff_size = sizeof(buf);
+    fields[1].path = NULL;
+
+    SECTION("a field of any type, used for one document after another") {
+        fields[0].type = JKII_FIELD_TYPE_ANY;
+        // 0x4141414141414141, as an address.
+        const char number[] = "{\"a\":4702111234474983745}";
+        CHECK( jkii_parse(number, strlen(number), fields) == JKII_ERR_OK );
+        CHECK( fields[0].result == JKII_FIELD_ERR_OK );
+        CHECK( fields[0].type == JKII_FIELD_TYPE_LONG );
+        CHECK( std::string(number + fields[0].start, fields[0].end - fields[0].start) ==
+                "4702111234474983745" );
+        CHECK( (const void*)fields[0].field_copy.string == (const void*)buf );
+        CHECK( std::string(buf) == "untouched" );
+
+        // Now expected as a number, with the buffer still.
+        CHECK( jkii_parse(number, strlen(number), fields) == JKII_ERR_PARTIAL );
+        CHECK( fields[0].result == JKII_FIELD_ERR_COPY );
+        CHECK( (const void*)fields[0].field_copy.string == (const void*)buf );
+
+        const char text[] = "{\"a\":\"x\"}";
+        CHECK( jkii_parse(text, strlen(text), fields) == JKII_ERR_PARTIAL );
+        CHECK( fields[0].result == JKII_FIELD_ERR_TYPE_MISMATCH );
+        CHECK( fields[0].type == JKII_FIELD_TYPE_STRING );
+        CHECK( (const void*)fields[0].field_copy.string == (const void*)buf );
+
+        const char more[] = "{\"a\":\"copied\"}";
+        CHECK( jkii_parse(more, strlen(more), fields) == JKII_ERR_OK );
+        CHECK( (const void*)fields[0].field_copy.string == (const void*)buf );
+        CHECK( std::string(buf) == "copied" );
+    }
+
+    SECTION("each number and boolean, expected as any type or as itself") {
+        const struct { const char* json; jkii_field_type_t type; } cases[] = {
+            { "{\"a\":7}", JKII_FIELD_TYPE_INTEGER },
+            { "{\"a\":4702111234474983745}", JKII_FIELD_TYPE_LONG },
+            { "{\"a\":1.5}", JKII_FIELD_TYPE_DOUBLE },
+            { "{\"a\":true}", JKII_FIELD_TYPE_BOOLEAN },
+        };
+        for (const auto& c : cases) {
+            INFO( c.json );
+            fields[0].type = JKII_FIELD_TYPE_ANY;
+            CHECK( jkii_parse(c.json, strlen(c.json), fields) == JKII_ERR_OK );
+            CHECK( fields[0].result == JKII_FIELD_ERR_OK );
+            CHECK( fields[0].type == c.type );
+            CHECK( (const void*)fields[0].field_copy.string == (const void*)buf );
+
+            fields[0].type = c.type;
+            CHECK( jkii_parse(c.json, strlen(c.json), fields) == JKII_ERR_PARTIAL );
+            CHECK( fields[0].result == JKII_FIELD_ERR_COPY );
+            CHECK( (const void*)fields[0].field_copy.string == (const void*)buf );
+        }
+        CHECK( std::string(buf) == "untouched" );
+    }
+
+    SECTION("without a buffer, a field of any type has the number, as before") {
+        fields[0].field_copy.string = NULL;
+        fields[0].field_copy_buff_size = 0;
+        fields[0].type = JKII_FIELD_TYPE_ANY;
+        const char number[] = "{\"a\":4702111234474983745}";
+        CHECK( jkii_parse(number, strlen(number), fields) == JKII_ERR_OK );
+        CHECK( fields[0].type == JKII_FIELD_TYPE_LONG );
+        CHECK( fields[0].field_copy.long_value == INT64_C(4702111234474983745) );
+    }
+}
