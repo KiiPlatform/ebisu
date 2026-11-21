@@ -876,12 +876,32 @@ static jkii_parse_err_t _jkii_convert_value_to_field(
         return JKII_ERR_INVALID_INPUT;
     }
 
-    if (field->type == JKII_FIELD_TYPE_ANY) {
+    /* Given a buffer, field_copy holds its address, which no number or
+     * boolean is written over: a field used for another document would
+     * otherwise copy that one's string to wherever this one's number said. */
+    const bool has_buffer = (field->field_copy_buff_size != 0);
+    const bool any = (field->type == JKII_FIELD_TYPE_ANY);
+    if (any) {
         field->type = type;
     }
 
     field->start = (size_t)(value->ptr - json_string);
     field->end = field->start + value->len;
+
+    if (has_buffer && (type == JKII_FIELD_TYPE_INTEGER || type == JKII_FIELD_TYPE_LONG ||
+                type == JKII_FIELD_TYPE_DOUBLE || type == JKII_FIELD_TYPE_BOOLEAN) &&
+            (field->type == JKII_FIELD_TYPE_INTEGER || field->type == JKII_FIELD_TYPE_LONG ||
+             field->type == JKII_FIELD_TYPE_DOUBLE || field->type == JKII_FIELD_TYPE_BOOLEAN)) {
+        if (any) {
+            /* Of any type: its type and where it is, without its value. */
+            field->result = JKII_FIELD_ERR_OK;
+            return JKII_ERR_OK;
+        }
+        /* Expected as a number or a boolean, with a buffer for a string. */
+        field->type = type;
+        field->result = JKII_FIELD_ERR_COPY;
+        return JKII_ERR_PARTIAL;
+    }
 
     switch (field->type) {
         case JKII_FIELD_TYPE_STRING:
