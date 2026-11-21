@@ -45,22 +45,39 @@ case "$version" in
     4.2.0) sha256=2bed9d713b4668f76553b097e72b8aa30bc8f112a940d7ae228d524bbde6ffea ;;
     *) echo "no hash for mbedTLS $version" >&2; exit 2 ;;
 esac
+# Downloads url to archive and checks it against sha256. With
+# EBISU_DOWNLOADS set, a directory, an archive already there with that hash is
+# taken in place of the download, and a downloaded one is left there: CI keeps
+# the directory in its cache, so that a job doesn't depend on the download.
+fetch() {
+    url=$1; archive=$2; sha256=$3
+    kept=${EBISU_DOWNLOADS:+$EBISU_DOWNLOADS/$(basename "$archive")}
+    if [ -n "$kept" ] && [ -f "$kept" ] &&
+            echo "$sha256  $kept" | sha256sum -c - > /dev/null 2>&1; then
+        cp "$kept" "$archive"
+        return
+    fi
+    curl -fsSL --retry 3 -o "$archive" "$url"
+    echo "$sha256  $archive" | sha256sum -c -
+    if [ -n "$kept" ]; then
+        mkdir -p "$EBISU_DOWNLOADS"
+        cp "$archive" "$kept"
+    fi
+}
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 case "$version" in
     2.*)
         archive="$work/mbedtls-$version.tar.gz"
-        curl -fsSL --retry 3 -o "$archive" \
-            "https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/mbedtls-$version.tar.gz"
-        echo "$sha256  $archive" | sha256sum -c -
+        fetch "https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/mbedtls-$version.tar.gz" \
+            "$archive" "$sha256"
         tar -xzf "$archive" -C "$work"
         src="$work/mbedtls-mbedtls-$version"
         ;;
     *)
         archive="$work/mbedtls-$version.tar.bz2"
-        curl -fsSL --retry 3 -o "$archive" \
-            "https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-$version/mbedtls-$version.tar.bz2"
-        echo "$sha256  $archive" | sha256sum -c -
+        fetch "https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-$version/mbedtls-$version.tar.bz2" \
+            "$archive" "$sha256"
         tar -xjf "$archive" -C "$work"
         src="$work/mbedtls-$version"
         ;;

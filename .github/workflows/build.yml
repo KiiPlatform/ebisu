@@ -399,8 +399,15 @@ jobs:
         with:
           packages: g++ cmake libssl-dev valgrind python3 perl bzip2 curl
           options: --no-install-recommends
+      # The archive, kept from an earlier run: the download has failed a job
+      # with a 403 at times. The script checks its hash either way.
+      - name: Restore the mbedTLS archive
+        uses: actions/cache@v6
+        with:
+          path: ~/ebisu-downloads
+          key: download-mbedtls-${{ matrix.mbedtls }}
       - name: mbedTLS ${{ matrix.mbedtls }} ${{ matrix.variant }}
-        run: tests/mbedtls/install_mbedtls.sh ${{ matrix.mbedtls }} "$RUNNER_TEMP/mbedtls" ${{ matrix.variant }}
+        run: EBISU_DOWNLOADS="$HOME/ebisu-downloads" tests/mbedtls/install_mbedtls.sh ${{ matrix.mbedtls }} "$RUNNER_TEMP/mbedtls" ${{ matrix.variant }}
       - name: configure
         run: cmake --preset debug -DEBISU_TEST_JUNIT=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/mbedtls"
       - name: build
@@ -443,8 +450,15 @@ jobs:
         with:
           packages: g++ cmake libssl-dev valgrind python3 curl
           options: --no-install-recommends
+      # The archive, kept from an earlier run: the download has failed a job
+      # with a 403 at times. The script checks its hash either way.
+      - name: Restore the PolarSSL archive
+        uses: actions/cache@v6
+        with:
+          path: ~/ebisu-downloads
+          key: download-polarssl-${{ matrix.polarssl }}
       - name: PolarSSL ${{ matrix.polarssl }} ${{ matrix.variant }}
-        run: tests/polarssl/install_polarssl.sh ${{ matrix.polarssl }} "$RUNNER_TEMP/polarssl" ${{ matrix.variant }}
+        run: EBISU_DOWNLOADS="$HOME/ebisu-downloads" tests/polarssl/install_polarssl.sh ${{ matrix.polarssl }} "$RUNNER_TEMP/polarssl" ${{ matrix.variant }}
       - name: configure
         run: cmake --preset debug -DEBISU_TEST_JUNIT=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/polarssl"
       - name: build
