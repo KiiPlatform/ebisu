@@ -1133,6 +1133,73 @@ TEST_CASE( "A renewal ahead of expiry by onboarding again that fails waits too" 
     REQUIRE( contains(c.http.requests[1], "Authorization: Bearer at2\r\n") );
 }
 
+// A token longer than its array can't be kept. The call says so, and the
+// log why, rather than that the response couldn't be parsed.
+TEST_CASE( "A token longer than kii has room for fails the call that got it as too large" ) {
+    Client c;
+    khct::cb::LoggerCtx log;
+    kii_set_logger(&c.kii, log.get());
+    // Whether a line with the text was logged, as expected: built without
+    // logging, nothing is, whatever is expected.
+    auto logged = [&](const std::string& text, bool expected = true) {
+#ifdef EBISU_NO_LOG
+        (void)text;
+        return log.lines.empty() ? expected : !expected;
+#else
+        for (const auto& line : log.lines) {
+            if (line.second.find(text) != std::string::npos) {
+                return true;
+            }
+        }
+        return false;
+#endif
+    };
+    const std::string fits(KII_TOKEN_MAX_SIZE - 1, 'a');
+    const std::string too_long(KII_TOKEN_MAX_SIZE, 'a');
+    const std::string size = std::to_string(KII_TOKEN_MAX_SIZE - 1);
+
+    SECTION("a login's access token") {
+        c.http.responses = { http_response(200, "{\"id\":\"th.1\",\"access_token\":\"" + too_long + "\"}") };
+        CHECK( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_TOO_LARGE_DATA );
+        CHECK( logged("the server's access token, of " + std::to_string(too_long.size()) +
+                    " bytes, is longer than the " + size + " KII_TOKEN_MAX_SIZE gives it room for.") );
+    }
+
+    SECTION("a login's refresh token") {
+        const std::string long_refresh(KII_REFRESH_TOKEN_MAX_SIZE, 'r');
+        c.http.responses = { http_response(200, "{\"id\":\"th.1\",\"access_token\":\"at1\","
+                "\"refresh_token\":\"" + long_refresh + "\"}") };
+        CHECK( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_TOO_LARGE_DATA );
+        CHECK( logged("the server's refresh token") );
+        CHECK( logged("KII_REFRESH_TOKEN_MAX_SIZE") );
+    }
+
+    SECTION("onboarding's") {
+        c.http.responses = { onboarded(too_long.c_str()) };
+        CHECK( kii_ti_onboard(&c.kii, "vid", "pw", NULL, NULL, NULL, NULL) == KII_ERR_TOO_LARGE_DATA );
+        CHECK( logged("the server's access token") );
+    }
+
+    SECTION("a registration's") {
+        c.http.responses = { http_response(201, "{\"_thingID\":\"th.1\",\"_accessToken\":\"" + too_long + "\"}") };
+        CHECK( kii_register_thing(&c.kii, "vid", "type", "pw") == KII_ERR_TOO_LARGE_DATA );
+        CHECK( logged("the server's access token") );
+    }
+
+    SECTION("one that just fits is taken") {
+        c.http.responses = { http_response(200, "{\"id\":\"th.1\",\"access_token\":\"" + fits + "\"}") };
+        CHECK( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_OK );
+        CHECK( std::string(c.kii._author.access_token) == fits );
+        CHECK_FALSE( logged("is longer than", false) );
+    }
+
+    SECTION("a token that isn't a string is still a response that can't be read") {
+        c.http.responses = { http_response(200, "{\"id\":\"th.1\",\"access_token\":7}") };
+        CHECK( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_PARSE_JSON );
+        CHECK_FALSE( logged("is longer than", false) );
+    }
+}
+
 TEST_CASE( "How the token was obtained decides how it is renewed" ) {
     Platform platform;
     kii_session_t session;

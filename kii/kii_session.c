@@ -357,6 +357,11 @@ kii_code_t _kii_parse_token_response(
     if (result != JKII_ERR_OK && result != JKII_ERR_PARTIAL) {
         return KII_ERR_PARSE_JSON;
     }
+    if (_kii_field_too_long(kii, &fields[1], "access token", "KII_TOKEN_MAX_SIZE") ||
+            _kii_field_too_long(kii, &fields[2], "refresh token",
+                "KII_REFRESH_TOKEN_MAX_SIZE")) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
     if (fields[1].result != JKII_FIELD_ERR_OK) {
         return KII_ERR_PARSE_JSON;
     }

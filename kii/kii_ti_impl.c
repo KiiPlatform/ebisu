@@ -146,6 +146,11 @@ static kii_code_t _onboard_and_read(
     fields[9].name = NULL;
 
     result = jkii_parse(buff, buff_size, fields);
+    if ((result == JKII_ERR_OK || result == JKII_ERR_PARTIAL) &&
+            _kii_field_too_long(kii, &fields[0], "access token", "KII_TOKEN_MAX_SIZE")) {
+        ebisu_secure_zero(&endpoint, sizeof(endpoint));
+        return KII_ERR_TOO_LARGE_DATA;
+    }
     if ((result != JKII_ERR_OK && result != JKII_ERR_PARTIAL) ||
             fields[0].result != JKII_FIELD_ERR_OK ||
             fields[1].result != JKII_FIELD_ERR_OK) {

@@ -431,6 +431,21 @@ kii_code_t _convert_code(khc_code_t khc_c) {
     return KII_ERR_FAIL;
 }
 
+bool _kii_field_too_long(kii_t* kii, const jkii_field_t* field, const char* what,
+        const char* size_name)
+{
+    if (field->result != JKII_FIELD_ERR_COPY) {
+        return false;
+    }
+    (void)what;
+    (void)size_name;
+    _kii_log(kii, EBISU_LOG_ERROR,
+            "the server's %s, of %lu bytes, is longer than the %lu %s gives it room for.",
+            what, (unsigned long)(field->end - field->start),
+            (unsigned long)(field->field_copy_buff_size - 1), size_name);
+    return true;
+}
+
 void _reset_buff(kii_t* kii) {
     kii->_rw_buff_read = 0;
     kii->_rw_buff_written = 0;

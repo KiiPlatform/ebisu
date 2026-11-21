@@ -17,6 +17,12 @@ kii_code_t _convert_code(khc_code_t khc_c);
 
 void _reset_buff(kii_t* kii);
 
+/* Whether a field jkii_parse() was to copy was too long for where it goes, a
+ * token for its array in kii_author_t: logged, with the size and the name of
+ * what sets it, as nothing else says why the token wasn't taken. */
+bool _kii_field_too_long(kii_t* kii, const jkii_field_t* field, const char* what,
+        const char* size_name);
+
 /* Resets khc for a new request, keeping the buffers set by
  * kii_set_stream_buff() and kii_set_resp_header_buff(). Use it rather than
  * khc_reset_except_cb(), which drops them. */
