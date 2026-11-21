@@ -264,6 +264,10 @@ typedef struct kii_session_t {
     uint64_t _stored_at_ms;
     /** \private How long after _stored_at_ms it is renewed. */
     uint64_t _renew_after_ms;
+    /** \private Renewals of it ahead of expiry that failed in a row. */
+    uint32_t _renew_failures;
+    /** \private The monotonic time the last of them failed at. */
+    uint64_t _renew_failed_at_ms;
     /** \private How _author is renewed. */
     kii_renew_mode_t _renew_mode;
     const char* _vendor_thing_id; /**< \private */
@@ -890,6 +894,11 @@ void kii_session_get_author(kii_session_t* session, kii_author_t* out_author);
  *   kii_get_resp_status() -- without its body, and calling it again uses the
  *   renewed token. Other responses, other 403s included, reach the caller as
  *   they would without a session.
+ * - A renewal ahead of expiry that fails, as when the server can't be reached,
+ *   isn't tried before every request: it is tried again after 15 to 30
+ *   seconds, twice as long after each further failure, and at most 2.5 to 5
+ *   minutes later, each thing its own share of the wait, from its ID. A token
+ *   the server refuses is renewed at once all the same.
  * - A token issued without a lifetime, or with one that is not positive or
  *   exceeds UINT32_MAX seconds, is renewed only when refused. Onboarding
  *   issues neither a lifetime nor a refresh token, so its token is renewed

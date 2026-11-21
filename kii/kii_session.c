@@ -40,6 +40,15 @@
 #define _PASSWORD_WAIT_MIN_MS ((uint32_t)5 * 60 * 1000)
 #define _PASSWORD_WAIT_MAX_MS ((uint32_t)60 * 60 * 1000)
 
+/* A renewal ahead of expiry that fails, as when the server can't be reached,
+ * is tried again after ebisu_retry.h's waits, from this up to
+ * _RENEW_RETRY_MAX_MS, each thing its share by its ID, rather than before
+ * every request: the token is still good meanwhile, and a request that first
+ * renewed would be two that fail while the server is down. A token the server
+ * refuses is renewed at once all the same. */
+#define _RENEW_RETRY_MIN_MS ((uint32_t)30 * 1000)
+#define _RENEW_RETRY_MAX_MS ((uint32_t)5 * 60 * 1000)
+
 static const char _AUTH_HEADER_PREFIX[] = "Authorization: Bearer ";
 
 /* The errorCode of the 403 Kii answers for a token that is not valid: one that
@@ -218,6 +227,7 @@ static void _store_locked(
 {
     session->_author = *author;
     session->_renew_at_known = _renew_after_ms(expires_in_sec, &session->_renew_after_ms);
+    session->_renew_failures = 0;
     if (session->_renew_at_known) {
         session->_stored_at_ms = _now_ms(session);
     }
@@ -285,8 +295,23 @@ static bool _due_locked(kii_session_t* session)
     /* The time elapsed rather than a deadline: the clock's origin is
      * arbitrary, and a deadline added to a large one could wrap around and be
      * due at once. The unsigned difference is right wherever the origin is. */
-    uint64_t elapsed_ms = _now_ms(session) - session->_stored_at_ms;
-    return (elapsed_ms >= session->_renew_after_ms);
+    uint64_t now_ms = _now_ms(session);
+    if (now_ms - session->_stored_at_ms < session->_renew_after_ms) {
+        return false;
+    }
+    if (session->_renew_failures == 0) {
+        return true;
+    }
+    uint32_t wait_ms = ebisu_retry_wait(_RENEW_RETRY_MIN_MS, _RENEW_RETRY_MAX_MS,
+            session->_renew_failures, ebisu_retry_seed(session->_author.author_id));
+    return (now_ms - session->_renew_failed_at_ms >= wait_ms);
+}
+
+/* Records a renewal ahead of expiry that failed, which the next waits for. */
+static void _renew_failed_locked(kii_session_t* session)
+{
+    ++session->_renew_failures;
+    session->_renew_failed_at_ms = _now_ms(session);
 }
 #endif /* EBISU_NO_SESSION */
 
@@ -450,6 +475,8 @@ static kii_code_t _renew_locked(kii_t* kii, bool force)
         res = _onboard_again(kii, &author);
         if (res == KII_ERR_OK) {
             _store_locked(session, &author, 0);
+        } else if (!force) {
+            _renew_failed_locked(session);
         }
         ebisu_secure_zero(&author, sizeof(author));
         _sync_locked(kii);
@@ -480,6 +507,8 @@ static kii_code_t _renew_locked(kii_t* kii, bool force)
     }
     if (res == KII_ERR_OK) {
         _store_locked(session, &author, expires_in_sec);
+    } else if (!force) {
+        _renew_failed_locked(session);
     }
     ebisu_secure_zero(&author, sizeof(author));
     _sync_locked(kii);

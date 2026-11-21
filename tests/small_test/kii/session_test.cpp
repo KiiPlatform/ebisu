@@ -539,6 +539,115 @@ TEST_CASE( "The token is refreshed ahead of expiry" ) {
     }
 }
 
+// How long the session waits after the n-th renewal ahead of expiry in a row
+// that failed: thing th.1's share of 30 seconds doubled up to 5 minutes.
+uint64_t renew_wait_ms(uint32_t n) {
+    return ebisu_retry_wait(30 * 1000, 5 * 60 * 1000, n, ebisu_retry_seed("th.1"));
+}
+
+// While the server can't be reached, a request that renewed first would be
+// two that fail.
+TEST_CASE( "A renewal ahead of expiry that fails is tried again after a wait" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+
+    // A 1000 second token, due at 80% of its lifetime.
+    platform.now_ms = 1000;
+    c.http.responses = { refreshed("at1", "rt1", 1000) };
+    REQUIRE( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_OK );
+    platform.now_ms = 1000 + 800000;
+
+    // The renewal can't connect, and the request goes with the token it has.
+    c.http.requests.clear();
+    c.http.responses = { "", DONE };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( kii_get_resp_status(&c.kii) == 200 );
+    REQUIRE( c.http.requests.size() == 2 );
+    REQUIRE( contains(c.http.requests[1], "Authorization: Bearer at1\r\n") );
+
+    SECTION("longer after each failure") {
+        // 15 to 30 seconds after the first, twice as long after each further
+        // one, and 2.5 to 5 minutes at most.
+        const uint64_t least_s[] = { 15, 30, 60, 120, 150, 150 };
+        for (uint32_t n = 1; n <= 6; ++n) {
+            uint64_t wait_ms = renew_wait_ms(n);
+            INFO("failure " << n << ", wait " << wait_ms);
+            CHECK( wait_ms >= least_s[n - 1] * 1000 );
+            CHECK( wait_ms <= 2 * least_s[n - 1] * 1000 );
+
+            // Meanwhile requests go without it.
+            platform.now_ms += wait_ms - 1;
+            c.http.requests.clear();
+            c.http.responses = { DONE };
+            REQUIRE( c.put(BODY) == KII_ERR_OK );
+            REQUIRE( c.http.requests.size() == 1 );
+            REQUIRE( contains(c.http.requests[0], "Authorization: Bearer at1\r\n") );
+
+            platform.now_ms += 1;
+            c.http.requests.clear();
+            c.http.responses = { http_response(503, "{}"), DONE };
+            REQUIRE( c.put(BODY) == KII_ERR_OK );
+            REQUIRE( c.http.requests.size() == 2 );
+            REQUIRE( contains(c.http.requests[0], "\"refresh_token\":\"rt1\"") );
+        }
+
+        // Renewed at last.
+        platform.now_ms += renew_wait_ms(7);
+        c.http.requests.clear();
+        c.http.responses = { refreshed("at2", "rt2", 1000), DONE };
+        REQUIRE( c.put(BODY) == KII_ERR_OK );
+        REQUIRE( c.http.requests.size() == 2 );
+        REQUIRE( contains(c.http.requests[1], "Authorization: Bearer at2\r\n") );
+
+        // So the next renewal that fails waits as long as after a first.
+        platform.now_ms += 800000;
+        c.http.requests.clear();
+        c.http.responses = { "", DONE };
+        REQUIRE( c.put(BODY) == KII_ERR_OK );
+        REQUIRE( c.http.requests.size() == 2 );
+        platform.now_ms += renew_wait_ms(1) - 1;
+        c.http.requests.clear();
+        c.http.responses = { DONE };
+        REQUIRE( c.put(BODY) == KII_ERR_OK );
+        REQUIRE( c.http.requests.size() == 1 );
+        platform.now_ms += 1;
+        c.http.requests.clear();
+        c.http.responses = { refreshed("at3", "rt3", 1000), DONE };
+        REQUIRE( c.put(BODY) == KII_ERR_OK );
+        REQUIRE( c.http.requests.size() == 2 );
+        REQUIRE( contains(c.http.requests[1], "Authorization: Bearer at3\r\n") );
+    }
+
+    SECTION("a token the server refuses meanwhile is renewed at once") {
+        c.http.requests.clear();
+        c.http.responses = { REFUSED, refreshed("at2", "rt2", 1000), DONE };
+        REQUIRE( c.put(BODY) == KII_ERR_OK );
+        REQUIRE( kii_get_resp_status(&c.kii) == 200 );
+        REQUIRE( c.http.requests.size() == 3 );
+        REQUIRE( contains(c.http.requests[1], "\"refresh_token\":\"rt1\"") );
+        REQUIRE( contains(c.http.requests[2], "Authorization: Bearer at2\r\n") );
+    }
+
+    SECTION("a renewal of a refused token that fails doesn't make the wait longer") {
+        c.http.requests.clear();
+        c.http.responses = { REFUSED, "" };
+        REQUIRE( c.put(BODY) == KII_ERR_OK );
+        REQUIRE( kii_get_resp_status(&c.kii) == 403 );
+        REQUIRE( c.http.requests.size() == 2 );
+
+        platform.now_ms += renew_wait_ms(1);
+        c.http.requests.clear();
+        c.http.responses = { refreshed("at2", "rt2", 1000), DONE };
+        REQUIRE( c.put(BODY) == KII_ERR_OK );
+        REQUIRE( c.http.requests.size() == 2 );
+        REQUIRE( contains(c.http.requests[1], "Authorization: Bearer at2\r\n") );
+    }
+    REQUIRE( platform.depth == 0 );
+}
+
 TEST_CASE( "A token renewed through another kii_t is taken, not renewed again" ) {
     Platform platform;
     kii_session_t session;
@@ -975,6 +1084,40 @@ TEST_CASE( "A refused onboarding is not tried again until the session has waited
     REQUIRE( c.http.requests.size() == 7 );
     REQUIRE( onboarding_again(c.http.requests[5]) );
     REQUIRE( contains(c.http.requests[6], "Authorization: Bearer at2\r\n") );
+}
+
+TEST_CASE( "A renewal ahead of expiry by onboarding again that fails waits too" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_session_set_password(&session, "vid", "pw");
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+    platform.now_ms = 1000;
+    c.http.responses = { refreshed("at1", "rt1", 1000) };
+    REQUIRE( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_OK );
+    kii_session_set_renew_mode(&session, KII_RENEW_BY_ONBOARDING);
+    platform.now_ms = 1000 + 800000;
+
+    c.http.requests.clear();
+    c.http.responses = { http_response(503, "{}"), DONE };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 2 );
+    REQUIRE( onboarding_again(c.http.requests[0]) );
+
+    platform.now_ms += renew_wait_ms(1) - 1;
+    c.http.requests.clear();
+    c.http.responses = { DONE };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 1 );
+
+    platform.now_ms += 1;
+    c.http.requests.clear();
+    c.http.responses = { onboarded("at2"), DONE };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 2 );
+    REQUIRE( onboarding_again(c.http.requests[0]) );
+    REQUIRE( contains(c.http.requests[1], "Authorization: Bearer at2\r\n") );
 }
 
 TEST_CASE( "How the token was obtained decides how it is renewed" ) {
