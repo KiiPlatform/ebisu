@@ -25,13 +25,13 @@ else
 fi
 
 # The numeric version is the first vX.Y.Z in `git describe --tags`, without the
-# v, or 0.0.0; the soversion is its major; the full version is `git describe`
-# output as it is, or the numeric version without git.
+# v, or 0.0.0; the soversion is its major and minor; the full version is
+# `git describe` output as it is, or the numeric version without git.
 version=$(printf '%s\n' "$describe" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 | sed 's/^v//')
 if [ -z "$version" ]; then
     version=0.0.0
 fi
-soversion=${version%%.*}
+soversion=${version%.*}
 version_full=${describe:-$version}
 
 # When the source was committed, or the same fixed date as CMake's without git.
