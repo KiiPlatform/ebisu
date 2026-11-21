@@ -2602,7 +2602,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 
 <p>Set the thing's credentials the session renews tokens with. </p>
 <p>A token onboarding obtained is renewed by onboarding again with them, so without them it cannot be renewed at all. A token a login obtained is renewed by logging in with them when there is no refresh token, or the server rejects it: after it expired, after a renewal whose response was lost, or after a restart with an author saved before the last renewal. Without them such a session cannot recover.</p>
-<p>Where the application limits login attempts, each login the server refuses counts against the thing, and enough of them lock it out for a while, the right password included. So once the server refuses these credentials, the session waits 5 minutes before trying them again, and twice as long after each further refusal, up to an hour. Meanwhile a request refused for its token is reported as it would be without them. The wait ends when the server accepts them, or when they are set again, which may be done at any time.</p>
+<p>Where the application limits login attempts, each login the server refuses counts against the thing, and enough of them lock it out for a while, the right password included. So once the server refuses these credentials, the session waits 5 to 10 minutes before trying them again, twice as long after each further refusal, and at most 1 to 2 hours. Each thing waits its own share of that, from its vendor thing ID, so that things the server refused together don't all try again together. Meanwhile a request refused for its token is reported as it would be without them. The wait ends when the server accepts them, or when they are set again, which may be done at any time.</p>
 <p>The strings are not copied and must outlive the session, or remain valid until replaced by setting them again.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -3267,7 +3267,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 </div><div class="memdoc">
 
 <p>Set the longest wait between the push task's attempts to reach the cloud. </p>
-<p>When an attempt fails, to install push, to get the endpoint, or to connect to the broker and subscribe, the task waits before the next. The wait starts at 2 seconds and doubles with each failure in a row, up to this, and what the task waits is half to all of it, a share that depends on the thing, so that devices that lost the cloud together don't come back together. A subscribed connection starts it over.</p>
+<p>When an attempt fails, to install push, to get the endpoint, or to connect to the broker and subscribe, the task waits before the next. The wait starts at 2 seconds and doubles with each failure in a row, up to this, and what the task waits is half to all of it, a share that depends on the thing, so that devices that lost the cloud together don't come back together. A connection that stays subscribed for 30 seconds starts it over; one lost sooner is one more failure, so that a broker that closes connections as soon as they are made isn't reconnected to every few seconds.</p>
 <p>A shorter one brings a device back sooner after an outage, and has more devices try during it. Set it before starting the task.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
