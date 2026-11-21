@@ -103,7 +103,8 @@ void ebisu_freertos_tcp_socket_set_connect_timeout(ebisu_freertos_tcp_socket_t* 
  *
  * Why an operation failed, at EBISU_LOG_ERROR: a host that didn't resolve or
  * connect, a send or a receive that failed. A receive that times out isn't
- * one.
+ * one, and nor is a send once the peer has closed its side, which
+ * FreeRTOS-Plus-TCP refuses, where TCP would send: it fails as closed.
  *
  * Built with EBISU_NO_LOG, as -DEBISU_LOG=OFF builds it, the socket logs
  * nothing.

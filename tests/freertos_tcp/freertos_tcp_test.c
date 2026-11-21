@@ -358,7 +358,10 @@ static void test_end_of_stream(void)
     ebisu_freertos_tcp_socket_t sock;
     char buffer[16];
     size_t received = 1;
+    size_t sent = 1;
     ebisu_freertos_tcp_socket_init(&sock, 5, 5);
+    captured.lines = 0;
+    ebisu_freertos_tcp_socket_set_logger(&sock, &captured.base);
     CHECK(sock.base.ops->connect(&sock.base, host, ports.closer) == EBISU_SOCK_OK);
     CHECK_EQ(recv_all(&sock, buffer, 3), 3);
     CHECK(strcmp(buffer, "bye") == 0);
@@ -366,6 +369,13 @@ static void test_end_of_stream(void)
     CHECK_EQ(received, 0);
     /* The peer gone, recv_wait doesn't wait. */
     CHECK(sock.base.ops->recv_wait(&sock.base, 5000));
+    /* A send, as a TLS socket's close_notify, fails as closed, as
+       FreeRTOS-Plus-TCP sends nothing once the peer has closed its side, and
+       nothing is logged. */
+    CHECK(sock.base.ops->send(&sock.base, "data", 4, &sent) == EBISU_SOCK_FAIL);
+    CHECK_EQ(sent, 0);
+    CHECK(last_error(&sock, NULL) == EBISU_SOCK_ERROR_CLOSED);
+    CHECK_EQ(captured.lines, 0);
     sock.base.ops->close(&sock.base);
 }
 
@@ -376,12 +386,17 @@ static void test_reset(void)
     char buffer[16];
     size_t received = 1;
     ebisu_freertos_tcp_socket_init(&sock, 5, 5);
+    captured.lines = 0;
+    ebisu_freertos_tcp_socket_set_logger(&sock, &captured.base);
     CHECK(sock.base.ops->connect(&sock.base, host, ports.reset) == EBISU_SOCK_OK);
     CHECK(sock.base.ops->recv(&sock.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK);
     CHECK_EQ(received, 0);
     size_t sent = 0;
     CHECK(sock.base.ops->send(&sock.base, "data", 4, &sent) == EBISU_SOCK_FAIL);
     CHECK(last_error(&sock, NULL) == EBISU_SOCK_ERROR_CLOSED);
+    /* Reset, the connection's failure is said. */
+    CHECK_EQ(captured.lines, 1);
+    CHECK(strstr(captured.last, "failed to send: ") != NULL);
     sock.base.ops->close(&sock.base);
 }
 

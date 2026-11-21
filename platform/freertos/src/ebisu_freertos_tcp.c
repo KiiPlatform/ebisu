@@ -212,7 +212,15 @@ static ebisu_sock_code_t tcp_send(ebisu_socket_t* self, const char* buffer, size
         log_to(sock->_logger, EBISU_LOG_ERROR, "failed to send: timed out");
         return fail_with(sock, EBISU_SOCK_ERROR_TIMEOUT, 0);
     }
-    log_to(sock->_logger, EBISU_LOG_ERROR, "failed to send: %ld", (long)-ret);
+    /* FreeRTOS-Plus-TCP sends nothing once the peer has closed its side, in
+       CLOSE_WAIT, where TCP would. Then the connection is closed, as when it
+       is reset, but not as something gone wrong: a TLS socket's close_notify
+       goes there, for instance, after the server ended the response by
+       closing. */
+    if (ret != -pdFREERTOS_ERRNO_ENOTCONN ||
+            FreeRTOS_connstatus(sock->_socket) != (BaseType_t)eCLOSE_WAIT) {
+        log_to(sock->_logger, EBISU_LOG_ERROR, "failed to send: %ld", (long)-ret);
+    }
     return fail_with(sock, ret == -pdFREERTOS_ERRNO_ENOTCONN ?
             EBISU_SOCK_ERROR_CLOSED : EBISU_SOCK_ERROR_OTHER, (long)-ret);
 }
