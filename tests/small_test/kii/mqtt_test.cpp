@@ -4020,6 +4020,24 @@ TEST_CASE( "The waits between attempts" ) {
     mqtt_state_t state;
     _init_mqtt_state(&kii, &state);
 
+    // What the broker sends, and then no packet.
+    std::string to_recv;
+    mqtt_ctx.on_recv = [&to_recv](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        if (to_recv.empty()) {
+            return EBISU_SOCK_AGAIN;
+        }
+        *out_actual_length = to_recv.copy(buffer, length_to_read);
+        to_recv.erase(0, *out_actual_length);
+        return EBISU_SOCK_OK;
+    };
+    // A SUBACK that grants the subscription.
+    auto subscribe = [&]() {
+        to_recv = std::string("\x90\x03\x00\x01\x00", 5);
+        state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
+        _mqtt_state_recv_suback(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+    };
+
     SECTION("double from about a second to at most five minutes") {
         uint32_t base_ms = 2000;
         for (int attempt = 0; attempt < 12; ++attempt) {
@@ -4120,6 +4138,69 @@ TEST_CASE( "The waits between attempts" ) {
         _init_mqtt_state(&kii, &state);
         _mqtt_state_reconnect(&state);
         CHECK( state.wait_left_ms == wait_ms );
+    }
+
+    // A broker that closes connections as soon as they are made, as one does
+    // when another client connects with the same client ID, isn't reconnected
+    // to every few seconds.
+    SECTION("start again once a connection has stayed subscribed for 30 seconds") {
+        uint64_t now_ms = 1000;
+        khct::cb::SystemCtx sys;
+        sys.on_monotonic_ms = [&now_ms]() { return now_ms; };
+        kii_set_system(&kii, sys.system());
+        _mqtt_state_reconnect(&state);
+        _mqtt_state_reconnect(&state);
+        REQUIRE( state.retry_wait_ms == 8000 );
+
+        // Lost sooner, the waits go on doubling.
+        subscribe();
+        now_ms += 29999;
+        _mqtt_state_reconnect(&state);
+        CHECK( state.retry_wait_ms == 16000 );
+        CHECK( state.wait_left_ms >= 4000 );
+        CHECK( state.wait_left_ms <= 8000 );
+
+        subscribe();
+        now_ms += 30000;
+        _mqtt_state_reconnect(&state);
+        CHECK( state.retry_wait_ms == 4000 );
+        CHECK( state.wait_left_ms >= 1000 );
+        CHECK( state.wait_left_ms <= 2000 );
+
+        // However long it takes, a connection that isn't subscribed doesn't
+        // start them again.
+        now_ms += 3600000;
+        _mqtt_state_reconnect(&state);
+        CHECK( state.retry_wait_ms == 8000 );
+    }
+
+    SECTION("without a monotonic clock, by the task's receive timeouts and waits") {
+        khct::cb::SystemCtx sys;
+        sys.ops.monotonic_ms = NULL;
+        kii_set_system(&kii, sys.system());
+        kii._keep_alive_interval = 0;
+        // Each receive times out after 4 seconds, and the task waits 1 more.
+        kii_set_mqtt_to_sock_recv(&kii, 4);
+        auto stay_subscribed = [&](int receives) {
+            subscribe();
+            for (int i = 0; i < receives; ++i) {
+                _mqtt_state_recv_ready(&state);
+                REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+            }
+        };
+        _mqtt_state_reconnect(&state);
+        _mqtt_state_reconnect(&state);
+        REQUIRE( state.retry_wait_ms == 8000 );
+
+        // 30 seconds.
+        stay_subscribed(6);
+        _mqtt_state_reconnect(&state);
+        CHECK( state.retry_wait_ms == 4000 );
+
+        // 25, the time of the connection before not counted.
+        stay_subscribed(5);
+        _mqtt_state_reconnect(&state);
+        CHECK( state.retry_wait_ms == 8000 );
     }
 }
 

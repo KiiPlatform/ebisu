@@ -73,6 +73,12 @@ static void _event(kii_t* kii, kii_mqtt_event_t event, uint32_t detail)
  * what the task waits is half to all of that. */
 #define RETRY_WAIT_MIN_MS 2000
 #define RETRY_WAIT_MAX_MS 300000
+/* A connection lost within this long of being subscribed is a failure like any
+ * other, and the waits go on doubling, so that a broker that closes
+ * connections as soon as they are made, as it does when another client
+ * connects with the same client ID, isn't reconnected to every few seconds.
+ * One that stayed subscribed longer starts the waits again. */
+#define RETRY_RESET_MS 30000
 /* A broker that cannot be reached after this many attempts may have moved, so
  * the task asks for the endpoint again. */
 #define MAX_CONNECT_FAILURES 8
@@ -791,6 +797,9 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
     state->retry_wait_ms = RETRY_WAIT_MIN_MS;
     state->wait_left_ms = 0;
     state->connect_failures = 0;
+    state->subscribed = false;
+    state->subscribed_time_ms = 0;
+    state->subscribed_since_ms = 0;
 }
 
 /* Waits longer each time, so that devices do not keep at a cloud that is
@@ -1128,8 +1137,13 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
     }
     _event(kii, KII_MQTT_EVENT_SUBACK, return_code);
     if (return_code != 0x80) {
-        // Connected and subscribed: losing this is a new failure.
-        state->retry_wait_ms = RETRY_WAIT_MIN_MS;
+        // Connected and subscribed. Lost within RETRY_RESET_MS, it is one
+        // more failure; lost after, a new one.
+        state->subscribed = true;
+        state->subscribed_time_ms = 0;
+        if (_has_clock(kii)) {
+            state->subscribed_since_ms = kii->_system->ops->monotonic_ms(kii->_system);
+        }
         task_info->task_state = KII_MQTT_ST_RECV_READY;
     } else {
         _delay_ms(kii, WAIT_MS);
@@ -1137,15 +1151,31 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
     }
 }
 
+// a + b, or UINT32_MAX if that is more.
+static uint32_t _add_ms(uint32_t a, uint32_t b)
+{
+    return b > UINT32_MAX - a ? UINT32_MAX : a + b;
+}
+
 // Adds to the time elapsed since the last PINGREQ, stopping at UINT32_MAX
-// rather than wrapping round to a time at which no PINGREQ is due.
+// rather than wrapping round to a time at which no PINGREQ is due, and to the
+// time the connection has been subscribed.
 static void _add_elapsed_ms(mqtt_state_t* state, uint32_t ms)
 {
-    if (ms > UINT32_MAX - state->elapsed_time_ms) {
-        state->elapsed_time_ms = UINT32_MAX;
-    } else {
-        state->elapsed_time_ms += ms;
+    state->elapsed_time_ms = _add_ms(state->elapsed_time_ms, ms);
+    state->subscribed_time_ms = _add_ms(state->subscribed_time_ms, ms);
+}
+
+// How long the connection has been subscribed, in milliseconds, at most
+// UINT32_MAX.
+static uint32_t _subscribed_ms(const mqtt_state_t* state)
+{
+    kii_t* kii = state->kii;
+    if (!_has_clock(kii)) {
+        return state->subscribed_time_ms;
     }
+    uint64_t ms = kii->_system->ops->monotonic_ms(kii->_system) - state->subscribed_since_ms;
+    return ms > UINT32_MAX ? UINT32_MAX : (uint32_t)ms;
 }
 
 // The receive timeout in milliseconds, or UINT32_MAX if it is longer than that.
@@ -1534,6 +1564,10 @@ void _mqtt_state_reconnect(mqtt_state_t* state)
     kii->_mqtt_socket->ops->close(kii->_mqtt_socket);
     state->sock_connected = false;
     state->mqtt_connected = false;
+    if (state->subscribed && _subscribed_ms(state) >= RETRY_RESET_MS) {
+        state->retry_wait_ms = RETRY_WAIT_MIN_MS;
+    }
+    state->subscribed = false;
     _schedule_retry(state);
     state->info.task_state = KII_MQTT_ST_SOCK_CONNECT;
 }

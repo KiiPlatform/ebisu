@@ -69,8 +69,8 @@ typedef struct {
     bool mqtt_connected;
     /** \private
      * How long the wait before the next attempt to reach the cloud is based
-     * on, in milliseconds. It doubles with each failure until a connection is
-     * subscribed.
+     * on, in milliseconds. It doubles with each failure, until a connection
+     * has stayed subscribed for a while.
      */
     uint32_t retry_wait_ms;
     /** \private
@@ -82,6 +82,20 @@ typedef struct {
      * Attempts in a row to connect to the broker that have failed.
      */
     uint32_t connect_failures;
+    /** \private
+     * Whether the connection is subscribed: from a SUBACK that grants the
+     * subscription until the connection is closed.
+     */
+    bool subscribed;
+    /** \private
+     * How long it has been subscribed, in milliseconds, as estimated as
+     * elapsed_time_ms is. Used when the system has no monotonic clock.
+     */
+    uint32_t subscribed_time_ms;
+    /** \private
+     * When it was subscribed, by the system's monotonic clock, if it has one.
+     */
+    uint64_t subscribed_since_ms;
 } mqtt_state_t;
 
 /* Where the message kii_mqtt_publish() gave the task is, in
