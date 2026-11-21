@@ -9,6 +9,7 @@
 #include <ebisu_dns.h>
 #include <ebisu_log.h>
 #include <ebisu_socket.h>
+#include <ebisu_system.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -97,6 +98,52 @@ ebisu_dns_probe_result_t ebisu_dns_probe(
         ebisu_dns_t* dns,
         const char* host,
         uint32_t timeout_ms,
+        char* detail,
+        size_t detail_size);
+
+/**
+ * \brief Waits until one of the system's name servers answers.
+ *
+ * For a program started before its network is up, as at boot: rather than
+ * fail its first lookup, it waits here, for a time it bounds.
+ *
+ * It probes as ebisu_dns_probe() does, and again every_ms after a probe that
+ * found no server answering, until one isn't EBISU_DNS_PROBE_SILENT or max_ms
+ * have gone by since it was called. "Answers" is ebisu_dns_probe()'s: any
+ * answer, that the name doesn't exist too, and a host that needs no server.
+ *
+ * The time is the system's monotonic_ms, and the waits its delay_ms. A probe
+ * is never followed by a wait that isn't followed by a probe: the last wait
+ * is cut so that it ends max_ms after the call, and the last probe starts
+ * then at the latest, taking what a probe takes on top, timeout_ms for each
+ * server. With max_ms of 0, or a first probe that takes max_ms or longer,
+ * there is one probe and no wait. With every_ms of 0 a probe follows the
+ * last at once, the probes' own timeouts all there is between them.
+ *
+ * Without a system, or one without monotonic_ms or delay_ms, it can't wait:
+ * it probes once, as with max_ms of 0.
+ *
+ * \param [in] dns The system's name servers, and how one is asked.
+ * \param [in] system The system, for its monotonic_ms and delay_ms.
+ * \param [in] host The host to be looked up.
+ * \param [in] timeout_ms How long each server has to answer a probe, in
+ * milliseconds.
+ * \param [in] every_ms How long to wait after a probe no server answered
+ * before the next, in milliseconds.
+ * \param [in] max_ms How long to go on for at most, in milliseconds, from
+ * the call to the start of the last probe.
+ * \param [out] detail As for ebisu_dns_probe(), of the last probe, or NULL.
+ * \param [in] detail_size Its size.
+ * \return What the last probe found: EBISU_DNS_PROBE_SILENT if no server
+ * answered in the time.
+ */
+ebisu_dns_probe_result_t ebisu_dns_probe_wait(
+        ebisu_dns_t* dns,
+        ebisu_system_t* system,
+        const char* host,
+        uint32_t timeout_ms,
+        uint32_t every_ms,
+        uint32_t max_ms,
         char* detail,
         size_t detail_size);
 

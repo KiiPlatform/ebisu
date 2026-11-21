@@ -256,6 +256,38 @@ ebisu_dns_probe_result_t ebisu_dns_probe(
             detail_size);
 }
 
+ebisu_dns_probe_result_t ebisu_dns_probe_wait(
+        ebisu_dns_t* dns,
+        ebisu_system_t* system,
+        const char* host,
+        uint32_t timeout_ms,
+        uint32_t every_ms,
+        uint32_t max_ms,
+        char* detail,
+        size_t detail_size)
+{
+    const bool can_wait = system != NULL && system->ops != NULL &&
+        system->ops->monotonic_ms != NULL && system->ops->delay_ms != NULL;
+    const uint64_t start_ms = can_wait ? ebisu_system_monotonic_ms(system) : 0;
+
+    for (;;) {
+        ebisu_dns_probe_result_t result = ebisu_dns_probe(dns, host, timeout_ms, detail, detail_size);
+        if (result != EBISU_DNS_PROBE_SILENT || !can_wait) {
+            return result;
+        }
+        /* Time gone by as a difference, which a clock near its end doesn't
+           upset, never a deadline added to now. */
+        uint64_t elapsed_ms = ebisu_system_monotonic_ms(system) - start_ms;
+        if (elapsed_ms >= max_ms) {
+            return result;
+        }
+        uint64_t left_ms = max_ms - elapsed_ms;
+        if (every_ms > 0) {
+            ebisu_system_delay_ms(system, every_ms < left_ms ? every_ms : (uint32_t)left_ms);
+        }
+    }
+}
+
 ebisu_dns_probe_result_t ebisu_dns_probe_servers(
         ebisu_dns_t* dns,
         const char* host,

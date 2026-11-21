@@ -581,6 +581,11 @@ servers in turn, until one answers, giving each the time it is given.
 counts, that the name doesn't exist too: the probe tells only whether a server
 answers. A host that needs no server, an address or localhost, needs no probe.
 
+`ebisu_dns_probe_wait()` probes until a server answers, every so often and
+for so long at most, by the system's `monotonic_ms` and `delay_ms`: for a
+program started before its network is up, which would otherwise fail its
+first lookup. It returns what the last probe found.
+
 `ebisu_dns_probe_socket_t` probes before another socket connects, and fails the
 connect if no server answers, with `EBISU_SOCK_ERROR_DNS`, rather than have
 the other socket look the host up. The rest is the other socket's, which may be
