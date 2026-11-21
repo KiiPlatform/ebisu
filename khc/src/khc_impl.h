@@ -1,5 +1,5 @@
-#ifndef __khc_impl__
-#define __khc_impl__
+#ifndef KHC_IMPL_H
+#define KHC_IMPL_H
 #ifdef __cplusplus
 extern "C"
 {
@@ -64,4 +64,4 @@ bool _is_field_text(const char* text, size_t text_length);
 #ifdef __cplusplus
 }
 #endif
-#endif // __khc_impl__
+#endif // KHC_IMPL_H

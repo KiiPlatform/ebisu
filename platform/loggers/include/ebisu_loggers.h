@@ -2,8 +2,8 @@
  * @file ebisu_loggers.h
  * @brief Loggers to a stdio stream, to syslog, and to a syslog server over UDP.
  */
-#ifndef _EBISU_LOGGERS
-#define _EBISU_LOGGERS
+#ifndef EBISU_LOGGERS_H
+#define EBISU_LOGGERS_H
 
 #include <ebisu_log.h>
 
@@ -292,5 +292,5 @@ void ebisu_syslog_udp_logger_close(ebisu_syslog_udp_logger_t* logger);
 #pragma GCC visibility pop
 #endif
 
-#endif /* _EBISU_LOGGERS */
+#endif /* EBISU_LOGGERS_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

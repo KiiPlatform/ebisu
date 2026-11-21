@@ -1,5 +1,5 @@
-#ifndef __kii_session_impl__
-#define __kii_session_impl__
+#ifndef KII_SESSION_IMPL_H
+#define KII_SESSION_IMPL_H
 
 #include "kii.h"
 #include "khc.h"

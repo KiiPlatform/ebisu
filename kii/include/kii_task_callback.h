@@ -2,8 +2,8 @@
  * @file kii_task_callback.h
  * @brief Callbacks into the tasks kii runs.
  */
-#ifndef _KII_TASK_CALLBACK
-#define _KII_TASK_CALLBACK
+#ifndef KII_TASK_CALLBACK_H
+#define KII_TASK_CALLBACK_H
 
 #include <stdbool.h>
 
@@ -47,5 +47,5 @@ typedef bool (*KII_CB_TASK_CONTINUE)(void* task_info, void* userdata);
 }
 #endif
 
-#endif /* _KII_TASK_CALLBACK  */
+#endif /* KII_TASK_CALLBACK_H  */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

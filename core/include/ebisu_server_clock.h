@@ -3,8 +3,8 @@
  * @brief A clock for a device without a real-time clock: the time servers
  * state.
  */
-#ifndef _EBISU_SERVER_CLOCK
-#define _EBISU_SERVER_CLOCK
+#ifndef EBISU_SERVER_CLOCK_H
+#define EBISU_SERVER_CLOCK_H
 
 #include "ebisu_clock.h"
 #include "ebisu_system.h"
@@ -171,5 +171,5 @@ bool ebisu_server_clock_override_time(ebisu_server_clock_t* clock, int64_t now);
 }
 #endif
 
-#endif /* _EBISU_SERVER_CLOCK */
+#endif /* EBISU_SERVER_CLOCK_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

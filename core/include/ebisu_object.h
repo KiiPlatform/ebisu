@@ -26,8 +26,8 @@
  * microcontroller it stays in flash and each object costs one pointer. ebisu
  * keeps a pointer to the object, so it has to outlive whatever it is set on.
  */
-#ifndef _EBISU_OBJECT
-#define _EBISU_OBJECT
+#ifndef EBISU_OBJECT_H
+#define EBISU_OBJECT_H
 
 #include <stddef.h>
 
@@ -41,5 +41,5 @@
 #define EBISU_CONTAINER_OF(ptr, type, member) \
     ((type*)(void*)((char*)(ptr) - offsetof(type, member)))
 
-#endif /* _EBISU_OBJECT */
+#endif /* EBISU_OBJECT_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

@@ -6,8 +6,8 @@
  * system or a lock reads as calls: ebisu_system_delay_ms(system, 100) rather
  * than system->ops->delay_ms(system, 100).
  */
-#ifndef _EBISU_SYSTEM
-#define _EBISU_SYSTEM
+#ifndef EBISU_SYSTEM_H
+#define EBISU_SYSTEM_H
 
 #include "ebisu_clock.h"
 #include "ebisu_object.h"
@@ -276,5 +276,5 @@ static inline void ebisu_lock_release(ebisu_lock_t* lock)
 }
 #endif
 
-#endif /* _EBISU_SYSTEM */
+#endif /* EBISU_SYSTEM_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

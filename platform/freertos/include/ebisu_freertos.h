@@ -2,8 +2,8 @@
  * @file ebisu_freertos.h
  * @brief The system and a lock on FreeRTOS.
  */
-#ifndef _EBISU_FREERTOS
-#define _EBISU_FREERTOS
+#ifndef EBISU_FREERTOS_H
+#define EBISU_FREERTOS_H
 
 #include <ebisu_system.h>
 
@@ -171,5 +171,5 @@ void ebisu_freertos_lock_destroy(ebisu_freertos_lock_t* lock);
 }
 #endif
 
-#endif /* _EBISU_FREERTOS */
+#endif /* EBISU_FREERTOS_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

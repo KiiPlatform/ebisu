@@ -2,8 +2,8 @@
  * \file khc.h
  * Kii HTTP clinet public API definitions.
  */
-#ifndef __khc
-#define __khc
+#ifndef KHC_H
+#define KHC_H
 
 #ifdef __cplusplus
 extern "C"
@@ -821,4 +821,4 @@ bool khc_method_can_have_body(khc* khc);
 }
 #endif
 
-#endif //__khc
+#endif //KHC_H

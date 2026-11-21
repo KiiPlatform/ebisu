@@ -2,8 +2,8 @@
  * @file ebisu_schannel.h
  * @brief A socket of Schannel over Winsock.
  */
-#ifndef _EBISU_SCHANNEL
-#define _EBISU_SCHANNEL
+#ifndef EBISU_SCHANNEL_H
+#define EBISU_SCHANNEL_H
 
 #include <winsock2.h>
 #ifndef SECURITY_WIN32
@@ -266,5 +266,5 @@ const char* ebisu_schannel_socket_get_cipher(const ebisu_schannel_socket_t* sock
 #pragma GCC visibility pop
 #endif
 
-#endif /* _EBISU_SCHANNEL */
+#endif /* EBISU_SCHANNEL_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

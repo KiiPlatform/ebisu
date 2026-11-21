@@ -2,8 +2,8 @@
  * @file ebisu_log.h
  * @brief Where a port's diagnostics go.
  */
-#ifndef _EBISU_LOG
-#define _EBISU_LOG
+#ifndef EBISU_LOG_H
+#define EBISU_LOG_H
 
 #include "ebisu_system.h"
 
@@ -250,5 +250,5 @@ ebisu_logger_t* ebisu_log_slot_set(ebisu_log_slot_t* slot, ebisu_logger_t* targe
 #pragma GCC visibility pop
 #endif
 
-#endif /* _EBISU_LOG */
+#endif /* EBISU_LOG_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

@@ -2,8 +2,8 @@
  * @file ebisu_openssl.h
  * @brief A socket of OpenSSL over BSD sockets.
  */
-#ifndef _EBISU_OPENSSL
-#define _EBISU_OPENSSL
+#ifndef EBISU_OPENSSL_H
+#define EBISU_OPENSSL_H
 
 #include <ebisu_clock.h>
 #include <ebisu_log.h>
@@ -301,5 +301,5 @@ const char* ebisu_openssl_socket_get_cipher(const ebisu_openssl_socket_t* sock);
 #pragma GCC visibility pop
 #endif
 
-#endif /* _EBISU_OPENSSL */
+#endif /* EBISU_OPENSSL_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

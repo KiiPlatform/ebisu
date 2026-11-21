@@ -6,8 +6,8 @@
    Not a header of the API: it defines what it declares, and is included once,
    by a source file that has defined log_to(), as ebisu_log() or nothing. It
    defines log_code_to(), for what failed with a Windows error code. */
-#ifndef _EBISU_WIN32_CONNECT
-#define _EBISU_WIN32_CONNECT
+#ifndef EBISU_WIN32_CONNECT_H
+#define EBISU_WIN32_CONNECT_H
 
 #include <ebisu_log.h>
 #include <ebisu_object.h>
@@ -364,5 +364,5 @@ static void set_tcp_options(SOCKET sock, const tcp_options_t* options, ebisu_log
     }
 }
 
-#endif /* _EBISU_WIN32_CONNECT */
+#endif /* EBISU_WIN32_CONNECT_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

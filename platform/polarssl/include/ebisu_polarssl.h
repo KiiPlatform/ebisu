@@ -11,8 +11,8 @@
  * 2014, lacks the security fixes of each of the 14 since. Use the mbedTLS port
  * where mbedTLS 2.4 or later can be had.
  */
-#ifndef _EBISU_POLARSSL
-#define _EBISU_POLARSSL
+#ifndef EBISU_POLARSSL_H
+#define EBISU_POLARSSL_H
 
 #include <ebisu_clock.h>
 #include <ebisu_log.h>
@@ -328,5 +328,5 @@ const char* ebisu_polarssl_socket_get_cipher(const ebisu_polarssl_socket_t* sock
 #pragma GCC visibility pop
 #endif
 
-#endif /* _EBISU_POLARSSL */
+#endif /* EBISU_POLARSSL_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

@@ -1,6 +1,6 @@
 /* The parts of the probe the tests and the fuzzer call by themselves. */
-#ifndef _EBISU_DNS_PROBE_IMPL
-#define _EBISU_DNS_PROBE_IMPL
+#ifndef EBISU_DNS_PROBE_IMPL_H
+#define EBISU_DNS_PROBE_IMPL_H
 
 #include <ebisu_dns.h>
 #include <ebisu_dns_probe.h>
@@ -50,5 +50,5 @@ ebisu_dns_probe_result_t _ebisu_dns_probe_ask_servers(ebisu_dns_t* dns, const ch
 }
 #endif
 
-#endif /* _EBISU_DNS_PROBE_IMPL */
+#endif /* EBISU_DNS_PROBE_IMPL_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

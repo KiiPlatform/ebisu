@@ -1,5 +1,5 @@
-#ifndef __khc_http_date__
-#define __khc_http_date__
+#ifndef KHC_HTTP_DATE_H
+#define KHC_HTTP_DATE_H
 
 #include "khc.h"
 

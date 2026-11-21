@@ -1,5 +1,5 @@
-#ifndef __kii_thing_impl__
-#define __kii_thing_impl__
+#ifndef KII_THING_IMPL_H
+#define KII_THING_IMPL_H
 
 #include "kii.h"
 

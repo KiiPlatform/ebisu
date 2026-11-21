@@ -3,8 +3,8 @@
  * @brief The system, its clock, a lock, a socket of plain TCP and the name
  * servers on POSIX.
  */
-#ifndef _EBISU_POSIX
-#define _EBISU_POSIX
+#ifndef EBISU_POSIX_H
+#define EBISU_POSIX_H
 
 #include <ebisu_dns.h>
 #include <ebisu_log.h>
@@ -232,5 +232,5 @@ ebisu_dns_t* ebisu_posix_dns(void);
 #pragma GCC visibility pop
 #endif
 
-#endif /* _EBISU_POSIX */
+#endif /* EBISU_POSIX_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

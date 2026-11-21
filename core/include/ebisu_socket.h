@@ -1,8 +1,8 @@
 /** \file ebisu_socket.h
  * Provides socket abstraction.
  */
-#ifndef _EBISU_SOCKET
-#define _EBISU_SOCKET
+#ifndef EBISU_SOCKET_H
+#define EBISU_SOCKET_H
 
 #include "ebisu_object.h"
 
@@ -234,5 +234,5 @@ struct ebisu_socket_t {
 }
 #endif
 
-#endif /* _EBISU_SOCKET */
+#endif /* EBISU_SOCKET_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

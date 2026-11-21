@@ -3,8 +3,8 @@
  * @brief Whether the system's name servers answer, asked before a lookup that
  * can't be bounded.
  */
-#ifndef _EBISU_DNS_PROBE
-#define _EBISU_DNS_PROBE
+#ifndef EBISU_DNS_PROBE_H
+#define EBISU_DNS_PROBE_H
 
 #include <ebisu_dns.h>
 #include <ebisu_log.h>
@@ -223,5 +223,5 @@ void ebisu_dns_probe_socket_set_logger(ebisu_dns_probe_socket_t* sock, ebisu_log
 #pragma GCC visibility pop
 #endif
 
-#endif /* _EBISU_DNS_PROBE */
+#endif /* EBISU_DNS_PROBE_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
