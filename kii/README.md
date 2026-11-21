@@ -103,7 +103,10 @@ obtained:
   onboarding again leaves earlier tokens valid.
 - **From a login or registration**: with the refresh token, or by logging in
   again when there is none or the server refuses it. This happens shortly
-  before the token expires, and whenever the server refuses it.
+  before the token expires, and whenever the server refuses it. A renewal
+  before expiry that fails, as when the server can't be reached, is tried again
+  after 15 to 30 seconds, then twice as long after each further failure, up to
+  2.5 to 5 minutes, and not before every request meanwhile.
 
 The server refuses a token with `403` and the errorCode `WRONG_TOKEN`. The
 refused request is then sent again with the new token, provided its body was
