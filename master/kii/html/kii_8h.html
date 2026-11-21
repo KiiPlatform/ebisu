@@ -121,8 +121,8 @@ Data Structures</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A server code's response, as <a class="el" href="#a95e473b240605c8a74b48433511fed96" title="Read the response of the server code just executed.">kii_get_server_code_result()</a> reads it.  <a href="structkii__server__code__result__t.html#details">More...</a><br /></td></tr>
 <tr class="memitem:kii_5Fti_5Ffirmware_5Fversion_5Ft" id="r_kii_5Fti_5Ffirmware_5Fversion_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structkii__ti__firmware__version__t.html">kii_ti_firmware_version_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores firmware version.  <a href="structkii__ti__firmware__version__t.html#details">More...</a><br /></td></tr>
-<tr class="memitem:kii_5Fmqtt_5Ftask_5Finfo" id="r_kii_5Fmqtt_5Ftask_5Finfo"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structkii__mqtt__task__info.html">kii_mqtt_task_info</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores MQTT task information.  <a href="structkii__mqtt__task__info.html#details">More...</a><br /></td></tr>
+<tr class="memitem:kii_5Fmqtt_5Ftask_5Finfo_5Ft" id="r_kii_5Fmqtt_5Ftask_5Finfo_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structkii__mqtt__task__info__t.html">kii_mqtt_task_info_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores MQTT task information.  <a href="structkii__mqtt__task__info__t.html#details">More...</a><br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-define-members" class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
@@ -294,37 +294,37 @@ Enumerations</h2></td></tr>
 , <a class="el" href="#a971acd03c2d0df621d7f60b0b4644dbbafac745a5df8ea0fafaea7bc3d0440ca7">KII_MQTT_QOS_1</a>
  }</td></tr>
 <tr class="memdesc:a971acd03c2d0df621d7f60b0b4644dbb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Qualities of service the push task can subscribe with.  <a href="#a971acd03c2d0df621d7f60b0b4644dbb">More...</a><br /></td></tr>
-<tr class="memitem:afbdebbbeb8812da258f2c985a2b10db3" id="r_afbdebbbeb8812da258f2c985a2b10db3"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3">kii_mqtt_task_state</a> { <br />
-&#160;&#160;<a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3a732682069159c445921e286c056aa6bb">KII_MQTT_ST_INSTALL_PUSH</a>
-, <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3a10325842254cc0f24ec27ffb9798617d">KII_MQTT_ST_GET_ENDPOINT</a>
-, <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3a897362005afd9ec3e6ce2fe835270458">KII_MQTT_ST_SOCK_CONNECT</a>
-, <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3aac800502452b8784f558e7cc2ee6cd54">KII_MQTT_ST_SEND_CONNECT</a>
+<tr class="memitem:a92d42b4373f7e7c5d889f080304792a3" id="r_a92d42b4373f7e7c5d889f080304792a3"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a92d42b4373f7e7c5d889f080304792a3">kii_mqtt_task_state_t</a> { <br />
+&#160;&#160;<a class="el" href="#a92d42b4373f7e7c5d889f080304792a3a732682069159c445921e286c056aa6bb">KII_MQTT_ST_INSTALL_PUSH</a>
+, <a class="el" href="#a92d42b4373f7e7c5d889f080304792a3a10325842254cc0f24ec27ffb9798617d">KII_MQTT_ST_GET_ENDPOINT</a>
+, <a class="el" href="#a92d42b4373f7e7c5d889f080304792a3a897362005afd9ec3e6ce2fe835270458">KII_MQTT_ST_SOCK_CONNECT</a>
+, <a class="el" href="#a92d42b4373f7e7c5d889f080304792a3aac800502452b8784f558e7cc2ee6cd54">KII_MQTT_ST_SEND_CONNECT</a>
 , <br />
-&#160;&#160;<a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3a4a0552111077f56357b67824ed8728d8">KII_MQTT_ST_RECV_CONNACK</a>
-, <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3af0fa7e3699a3b84da36f56c3461c9c2c">KII_MQTT_ST_SEND_SUBSCRIBE</a>
-, <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3ac64f894e9fa5128616926f5138f182e2">KII_MQTT_ST_RECV_SUBACK</a>
-, <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3ac54a5a76afc0fd08cb39eb09bf600d44">KII_MQTT_ST_RECV_READY</a>
+&#160;&#160;<a class="el" href="#a92d42b4373f7e7c5d889f080304792a3a4a0552111077f56357b67824ed8728d8">KII_MQTT_ST_RECV_CONNACK</a>
+, <a class="el" href="#a92d42b4373f7e7c5d889f080304792a3af0fa7e3699a3b84da36f56c3461c9c2c">KII_MQTT_ST_SEND_SUBSCRIBE</a>
+, <a class="el" href="#a92d42b4373f7e7c5d889f080304792a3ac64f894e9fa5128616926f5138f182e2">KII_MQTT_ST_RECV_SUBACK</a>
+, <a class="el" href="#a92d42b4373f7e7c5d889f080304792a3ac54a5a76afc0fd08cb39eb09bf600d44">KII_MQTT_ST_RECV_READY</a>
 , <br />
-&#160;&#160;<a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3a133dbec03e4e77ddfd4df2f1abc988b3">KII_MQTT_ST_RECV_MSG</a>
-, <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3ae28e87c388e298b2d6f575c0417b8a52">KII_MQTT_ST_SEND_PINGREQ</a>
-, <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3ac3f230f6a3930978688f379028496fcc">KII_MQTT_ST_SEND_PUBLISH</a>
-, <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3adec6a548d8ad9577dc54cc1b3dda615f">KII_MQTT_ST_RECONNECT</a>
+&#160;&#160;<a class="el" href="#a92d42b4373f7e7c5d889f080304792a3a133dbec03e4e77ddfd4df2f1abc988b3">KII_MQTT_ST_RECV_MSG</a>
+, <a class="el" href="#a92d42b4373f7e7c5d889f080304792a3ae28e87c388e298b2d6f575c0417b8a52">KII_MQTT_ST_SEND_PINGREQ</a>
+, <a class="el" href="#a92d42b4373f7e7c5d889f080304792a3ac3f230f6a3930978688f379028496fcc">KII_MQTT_ST_SEND_PUBLISH</a>
+, <a class="el" href="#a92d42b4373f7e7c5d889f080304792a3adec6a548d8ad9577dc54cc1b3dda615f">KII_MQTT_ST_RECONNECT</a>
 , <br />
-&#160;&#160;<a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3acddcf8a4f850063b9fe95f0f88800b24">KII_MQTT_ST_ERR_EXIT</a>
-, <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3a82d610abc8b8d60b8aaabaa5c14df92d">KII_MQTT_ST_DISCONTINUED</a>
+&#160;&#160;<a class="el" href="#a92d42b4373f7e7c5d889f080304792a3acddcf8a4f850063b9fe95f0f88800b24">KII_MQTT_ST_ERR_EXIT</a>
+, <a class="el" href="#a92d42b4373f7e7c5d889f080304792a3a82d610abc8b8d60b8aaabaa5c14df92d">KII_MQTT_ST_DISCONTINUED</a>
 <br />
  }</td></tr>
-<tr class="memdesc:afbdebbbeb8812da258f2c985a2b10db3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents MQTT task state.  <a href="#afbdebbbeb8812da258f2c985a2b10db3">More...</a><br /></td></tr>
-<tr class="memitem:ace11a8cf8764373a85c96643195289b2" id="r_ace11a8cf8764373a85c96643195289b2"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ace11a8cf8764373a85c96643195289b2">kii_mqtt_error</a> { <br />
-&#160;&#160;<a class="el" href="#ace11a8cf8764373a85c96643195289b2acbcfb4685d031175132599b1f925b798">KII_MQTT_ERR_OK</a>
-, <a class="el" href="#ace11a8cf8764373a85c96643195289b2afde8aeb9b4525616e3c461412e54d726">KII_MQTT_ERR_INSTALLATION</a>
-, <a class="el" href="#ace11a8cf8764373a85c96643195289b2aa32ccee9cf4b58d75cdeb92b36eee6a8">KII_MQTT_ERR_GET_ENDPOINT</a>
-, <a class="el" href="#ace11a8cf8764373a85c96643195289b2a9cdad92c2105b2fc05f9264be83d59a9">KII_MQTT_ERR_INSUFFICIENT_BUFF</a>
+<tr class="memdesc:a92d42b4373f7e7c5d889f080304792a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents MQTT task state.  <a href="#a92d42b4373f7e7c5d889f080304792a3">More...</a><br /></td></tr>
+<tr class="memitem:a6ffa8dd3275c339455e224f432b4982f" id="r_a6ffa8dd3275c339455e224f432b4982f"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6ffa8dd3275c339455e224f432b4982f">kii_mqtt_error_t</a> { <br />
+&#160;&#160;<a class="el" href="#a6ffa8dd3275c339455e224f432b4982facbcfb4685d031175132599b1f925b798">KII_MQTT_ERR_OK</a>
+, <a class="el" href="#a6ffa8dd3275c339455e224f432b4982fafde8aeb9b4525616e3c461412e54d726">KII_MQTT_ERR_INSTALLATION</a>
+, <a class="el" href="#a6ffa8dd3275c339455e224f432b4982faa32ccee9cf4b58d75cdeb92b36eee6a8">KII_MQTT_ERR_GET_ENDPOINT</a>
+, <a class="el" href="#a6ffa8dd3275c339455e224f432b4982fa9cdad92c2105b2fc05f9264be83d59a9">KII_MQTT_ERR_INSUFFICIENT_BUFF</a>
 , <br />
-&#160;&#160;<a class="el" href="#ace11a8cf8764373a85c96643195289b2ad0063cb9e8b7ec3ae2ed2241ad50115b">KII_MQTT_ERR_CREDENTIALS</a>
+&#160;&#160;<a class="el" href="#a6ffa8dd3275c339455e224f432b4982fad0063cb9e8b7ec3ae2ed2241ad50115b">KII_MQTT_ERR_CREDENTIALS</a>
 <br />
  }</td></tr>
-<tr class="memdesc:ace11a8cf8764373a85c96643195289b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT error codes.  <a href="#ace11a8cf8764373a85c96643195289b2">More...</a><br /></td></tr>
+<tr class="memdesc:a6ffa8dd3275c339455e224f432b4982f"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT error codes.  <a href="#a6ffa8dd3275c339455e224f432b4982f">More...</a><br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -484,8 +484,8 @@ Functions</h2></td></tr>
 <tr class="memdesc:a853c3e530701ed2821591d8e04572606"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the callback the MQTT task tells why it reconnects, waits or drops a message.  <br /></td></tr>
 <tr class="memitem:a22bcc2607fdb5daa6ed0794f130f6228" id="r_a22bcc2607fdb5daa6ed0794f130f6228"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a22bcc2607fdb5daa6ed0794f130f6228">kii_set_logger</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a> *logger)</td></tr>
 <tr class="memdesc:a22bcc2607fdb5daa6ed0794f130f6228"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set where kii logs what it does.  <br /></td></tr>
-<tr class="memitem:af8d81eaeba5dfa0aceff7347e8f7419a" id="r_af8d81eaeba5dfa0aceff7347e8f7419a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af8d81eaeba5dfa0aceff7347e8f7419a">kii_set_cb_slist_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc_8h.html#a14e10ebf817cb0b1dc8dca9ce3794b9c">KHC_CB_SLIST_ALLOC</a> cb_alloc, <a class="elRef" href="../../khc/html/khc_8h.html#a32bafb6cf1da963a57d8a167efe9f833">KHC_CB_SLIST_FREE</a> cb_free, void *cb_alloc_data, void *cb_free_data)</td></tr>
-<tr class="memdesc:af8d81eaeba5dfa0aceff7347e8f7419a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set <a class="elRef" href="../../khc/html/structkhc__slist.html">khc_slist</a> (linked list) resource allocators.  <br /></td></tr>
+<tr class="memitem:af8d81eaeba5dfa0aceff7347e8f7419a" id="r_af8d81eaeba5dfa0aceff7347e8f7419a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af8d81eaeba5dfa0aceff7347e8f7419a">kii_set_cb_slist_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc_8h.html#aea187d1c7ac23b27a0e544c3da8e0032">KHC_CB_SLIST_ALLOC</a> cb_alloc, <a class="elRef" href="../../khc/html/khc_8h.html#aa3292ea4fbe63e8c4eb3af988047e92f">KHC_CB_SLIST_FREE</a> cb_free, void *cb_alloc_data, void *cb_free_data)</td></tr>
+<tr class="memdesc:af8d81eaeba5dfa0aceff7347e8f7419a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set <a class="elRef" href="../../khc/html/structkhc__slist__t.html">khc_slist_t</a> (linked list) resource allocators.  <br /></td></tr>
 <tr class="memitem:a51c376c5e496e52aec2375a3ff70a885" id="r_a51c376c5e496e52aec2375a3ff70a885"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a51c376c5e496e52aec2375a3ff70a885">kii_get_etag</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii)</td></tr>
 <tr class="memdesc:a51c376c5e496e52aec2375a3ff70a885"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the ETag of the last response.  <br /></td></tr>
 <tr class="memitem:ae61dfefd97935dd1d068dd640ec30af1" id="r_ae61dfefd97935dd1d068dd640ec30af1"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae61dfefd97935dd1d068dd640ec30af1">kii_get_resp_status</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii)</td></tr>
@@ -843,29 +843,29 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ace11a8cf8764373a85c96643195289b2" name="ace11a8cf8764373a85c96643195289b2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ace11a8cf8764373a85c96643195289b2">&#9670;&#160;</a></span>kii_mqtt_error</h2>
+<a id="a6ffa8dd3275c339455e224f432b4982f" name="a6ffa8dd3275c339455e224f432b4982f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6ffa8dd3275c339455e224f432b4982f">&#9670;&#160;</a></span>kii_mqtt_error_t</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">enum <a class="el" href="#ace11a8cf8764373a85c96643195289b2">kii_mqtt_error</a></td>
+          <td class="memname">enum <a class="el" href="#a6ffa8dd3275c339455e224f432b4982f">kii_mqtt_error_t</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>MQTT error codes. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ace11a8cf8764373a85c96643195289b2acbcfb4685d031175132599b1f925b798" name="ace11a8cf8764373a85c96643195289b2acbcfb4685d031175132599b1f925b798"></a>KII_MQTT_ERR_OK&#160;</td><td class="fielddoc"><p>No errors so far. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a6ffa8dd3275c339455e224f432b4982facbcfb4685d031175132599b1f925b798" name="a6ffa8dd3275c339455e224f432b4982facbcfb4685d031175132599b1f925b798"></a>KII_MQTT_ERR_OK&#160;</td><td class="fielddoc"><p>No errors so far. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ace11a8cf8764373a85c96643195289b2afde8aeb9b4525616e3c461412e54d726" name="ace11a8cf8764373a85c96643195289b2afde8aeb9b4525616e3c461412e54d726"></a>KII_MQTT_ERR_INSTALLATION&#160;</td><td class="fielddoc"><p>Un-recoverble error in push installation. </p>
+<tr><td class="fieldname"><a id="a6ffa8dd3275c339455e224f432b4982fafde8aeb9b4525616e3c461412e54d726" name="a6ffa8dd3275c339455e224f432b4982fafde8aeb9b4525616e3c461412e54d726"></a>KII_MQTT_ERR_INSTALLATION&#160;</td><td class="fielddoc"><p>Un-recoverble error in push installation. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ace11a8cf8764373a85c96643195289b2aa32ccee9cf4b58d75cdeb92b36eee6a8" name="ace11a8cf8764373a85c96643195289b2aa32ccee9cf4b58d75cdeb92b36eee6a8"></a>KII_MQTT_ERR_GET_ENDPOINT&#160;</td><td class="fielddoc"><p>Un-recoverble error in getting MQTT endpoint. </p>
+<tr><td class="fieldname"><a id="a6ffa8dd3275c339455e224f432b4982faa32ccee9cf4b58d75cdeb92b36eee6a8" name="a6ffa8dd3275c339455e224f432b4982faa32ccee9cf4b58d75cdeb92b36eee6a8"></a>KII_MQTT_ERR_GET_ENDPOINT&#160;</td><td class="fielddoc"><p>Un-recoverble error in getting MQTT endpoint. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ace11a8cf8764373a85c96643195289b2a9cdad92c2105b2fc05f9264be83d59a9" name="ace11a8cf8764373a85c96643195289b2a9cdad92c2105b2fc05f9264be83d59a9"></a>KII_MQTT_ERR_INSUFFICIENT_BUFF&#160;</td><td class="fielddoc"><p>Buffer set by <a class="el" href="#adb5bef6d077b15fca3195ef7d39681cd" title="Set buffer used to parse MQTT message.">kii_set_mqtt_buff()</a> is too small. </p>
+<tr><td class="fieldname"><a id="a6ffa8dd3275c339455e224f432b4982fa9cdad92c2105b2fc05f9264be83d59a9" name="a6ffa8dd3275c339455e224f432b4982fa9cdad92c2105b2fc05f9264be83d59a9"></a>KII_MQTT_ERR_INSUFFICIENT_BUFF&#160;</td><td class="fielddoc"><p>Buffer set by <a class="el" href="#adb5bef6d077b15fca3195ef7d39681cd" title="Set buffer used to parse MQTT message.">kii_set_mqtt_buff()</a> is too small. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ace11a8cf8764373a85c96643195289b2ad0063cb9e8b7ec3ae2ed2241ad50115b" name="ace11a8cf8764373a85c96643195289b2ad0063cb9e8b7ec3ae2ed2241ad50115b"></a>KII_MQTT_ERR_CREDENTIALS&#160;</td><td class="fielddoc"><p>The broker refused the credentials of a task started with <a class="el" href="#a9a45e46fde50b06e7c42d74cabd9a853" title="Start the MQTT task with an endpoint of the application&#39;s.">kii_start_mqtt_task_with_endpoint()</a>, and the callback set by <a class="el" href="#a547c8e56022dc1ba57f3ee70776e65db" title="Set the callback asked for new credentials when the broker refuses those of a task started with kii_s...">kii_set_cb_mqtt_credentials()</a> gave no new ones, or there is none. </p>
+<tr><td class="fieldname"><a id="a6ffa8dd3275c339455e224f432b4982fad0063cb9e8b7ec3ae2ed2241ad50115b" name="a6ffa8dd3275c339455e224f432b4982fad0063cb9e8b7ec3ae2ed2241ad50115b"></a>KII_MQTT_ERR_CREDENTIALS&#160;</td><td class="fielddoc"><p>The broker refused the credentials of a task started with <a class="el" href="#a9a45e46fde50b06e7c42d74cabd9a853" title="Start the MQTT task with an endpoint of the application&#39;s.">kii_start_mqtt_task_with_endpoint()</a>, and the callback set by <a class="el" href="#a547c8e56022dc1ba57f3ee70776e65db" title="Set the callback asked for new credentials when the broker refuses those of a task started with kii_s...">kii_set_cb_mqtt_credentials()</a> gave no new ones, or there is none. </p>
 </td></tr>
 </table>
 
@@ -896,7 +896,7 @@ Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677cadff3dd1e39ad81e7838315e1553e90ef" name="a719bdf1a2b7209f8f03dd16a10b3677cadff3dd1e39ad81e7838315e1553e90ef"></a>KII_MQTT_EVENT_SUBACK&#160;</td><td class="fielddoc"><p>The broker answered SUBSCRIBE. The detail is SUBACK's return code: the QoS it granted, or 0x80 when it refused. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca16fb05f3dca69f3fd9e3cebe5f79798d" name="a719bdf1a2b7209f8f03dd16a10b3677ca16fb05f3dca69f3fd9e3cebe5f79798d"></a>KII_MQTT_EVENT_SEND_FAILED&#160;</td><td class="fielddoc"><p>Sending to the broker failed. The detail is the task's state, a <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3" title="Represents MQTT task state.">kii_mqtt_task_state</a>, which says what it was sending. </p>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca16fb05f3dca69f3fd9e3cebe5f79798d" name="a719bdf1a2b7209f8f03dd16a10b3677ca16fb05f3dca69f3fd9e3cebe5f79798d"></a>KII_MQTT_EVENT_SEND_FAILED&#160;</td><td class="fielddoc"><p>Sending to the broker failed. The detail is the task's state, a <a class="el" href="#a92d42b4373f7e7c5d889f080304792a3" title="Represents MQTT task state.">kii_mqtt_task_state_t</a>, which says what it was sending. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca8e6b57e9fcd56bda99b528353dba54b5" name="a719bdf1a2b7209f8f03dd16a10b3677ca8e6b57e9fcd56bda99b528353dba54b5"></a>KII_MQTT_EVENT_RECV_FAILED&#160;</td><td class="fielddoc"><p>Receiving from the broker failed, or ended partway through a packet, the connection lost, or gave a remaining length MQTT doesn't allow: longer than four bytes, or than it takes. The detail is the task's state. </p>
 </td></tr>
@@ -945,47 +945,47 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="afbdebbbeb8812da258f2c985a2b10db3" name="afbdebbbeb8812da258f2c985a2b10db3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afbdebbbeb8812da258f2c985a2b10db3">&#9670;&#160;</a></span>kii_mqtt_task_state</h2>
+<a id="a92d42b4373f7e7c5d889f080304792a3" name="a92d42b4373f7e7c5d889f080304792a3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a92d42b4373f7e7c5d889f080304792a3">&#9670;&#160;</a></span>kii_mqtt_task_state_t</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">enum <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3">kii_mqtt_task_state</a></td>
+          <td class="memname">enum <a class="el" href="#a92d42b4373f7e7c5d889f080304792a3">kii_mqtt_task_state_t</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>Represents MQTT task state. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3a732682069159c445921e286c056aa6bb" name="afbdebbbeb8812da258f2c985a2b10db3a732682069159c445921e286c056aa6bb"></a>KII_MQTT_ST_INSTALL_PUSH&#160;</td><td class="fielddoc"><p>Installing push. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a92d42b4373f7e7c5d889f080304792a3a732682069159c445921e286c056aa6bb" name="a92d42b4373f7e7c5d889f080304792a3a732682069159c445921e286c056aa6bb"></a>KII_MQTT_ST_INSTALL_PUSH&#160;</td><td class="fielddoc"><p>Installing push. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3a10325842254cc0f24ec27ffb9798617d" name="afbdebbbeb8812da258f2c985a2b10db3a10325842254cc0f24ec27ffb9798617d"></a>KII_MQTT_ST_GET_ENDPOINT&#160;</td><td class="fielddoc"><p>Getting MQTT endpoint. </p>
+<tr><td class="fieldname"><a id="a92d42b4373f7e7c5d889f080304792a3a10325842254cc0f24ec27ffb9798617d" name="a92d42b4373f7e7c5d889f080304792a3a10325842254cc0f24ec27ffb9798617d"></a>KII_MQTT_ST_GET_ENDPOINT&#160;</td><td class="fielddoc"><p>Getting MQTT endpoint. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3a897362005afd9ec3e6ce2fe835270458" name="afbdebbbeb8812da258f2c985a2b10db3a897362005afd9ec3e6ce2fe835270458"></a>KII_MQTT_ST_SOCK_CONNECT&#160;</td><td class="fielddoc"><p>Establishing connection. </p>
+<tr><td class="fieldname"><a id="a92d42b4373f7e7c5d889f080304792a3a897362005afd9ec3e6ce2fe835270458" name="a92d42b4373f7e7c5d889f080304792a3a897362005afd9ec3e6ce2fe835270458"></a>KII_MQTT_ST_SOCK_CONNECT&#160;</td><td class="fielddoc"><p>Establishing connection. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3aac800502452b8784f558e7cc2ee6cd54" name="afbdebbbeb8812da258f2c985a2b10db3aac800502452b8784f558e7cc2ee6cd54"></a>KII_MQTT_ST_SEND_CONNECT&#160;</td><td class="fielddoc"><p>Sending CONNECT message. </p>
+<tr><td class="fieldname"><a id="a92d42b4373f7e7c5d889f080304792a3aac800502452b8784f558e7cc2ee6cd54" name="a92d42b4373f7e7c5d889f080304792a3aac800502452b8784f558e7cc2ee6cd54"></a>KII_MQTT_ST_SEND_CONNECT&#160;</td><td class="fielddoc"><p>Sending CONNECT message. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3a4a0552111077f56357b67824ed8728d8" name="afbdebbbeb8812da258f2c985a2b10db3a4a0552111077f56357b67824ed8728d8"></a>KII_MQTT_ST_RECV_CONNACK&#160;</td><td class="fielddoc"><p>Receiving CONNACK message. </p>
+<tr><td class="fieldname"><a id="a92d42b4373f7e7c5d889f080304792a3a4a0552111077f56357b67824ed8728d8" name="a92d42b4373f7e7c5d889f080304792a3a4a0552111077f56357b67824ed8728d8"></a>KII_MQTT_ST_RECV_CONNACK&#160;</td><td class="fielddoc"><p>Receiving CONNACK message. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3af0fa7e3699a3b84da36f56c3461c9c2c" name="afbdebbbeb8812da258f2c985a2b10db3af0fa7e3699a3b84da36f56c3461c9c2c"></a>KII_MQTT_ST_SEND_SUBSCRIBE&#160;</td><td class="fielddoc"><p>Sending SUBSCRIBE message. </p>
+<tr><td class="fieldname"><a id="a92d42b4373f7e7c5d889f080304792a3af0fa7e3699a3b84da36f56c3461c9c2c" name="a92d42b4373f7e7c5d889f080304792a3af0fa7e3699a3b84da36f56c3461c9c2c"></a>KII_MQTT_ST_SEND_SUBSCRIBE&#160;</td><td class="fielddoc"><p>Sending SUBSCRIBE message. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3ac64f894e9fa5128616926f5138f182e2" name="afbdebbbeb8812da258f2c985a2b10db3ac64f894e9fa5128616926f5138f182e2"></a>KII_MQTT_ST_RECV_SUBACK&#160;</td><td class="fielddoc"><p>Receiving SUBACK message. </p>
+<tr><td class="fieldname"><a id="a92d42b4373f7e7c5d889f080304792a3ac64f894e9fa5128616926f5138f182e2" name="a92d42b4373f7e7c5d889f080304792a3ac64f894e9fa5128616926f5138f182e2"></a>KII_MQTT_ST_RECV_SUBACK&#160;</td><td class="fielddoc"><p>Receiving SUBACK message. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3ac54a5a76afc0fd08cb39eb09bf600d44" name="afbdebbbeb8812da258f2c985a2b10db3ac54a5a76afc0fd08cb39eb09bf600d44"></a>KII_MQTT_ST_RECV_READY&#160;</td><td class="fielddoc"><p>Ready to recieve message published by Cloud. </p>
+<tr><td class="fieldname"><a id="a92d42b4373f7e7c5d889f080304792a3ac54a5a76afc0fd08cb39eb09bf600d44" name="a92d42b4373f7e7c5d889f080304792a3ac54a5a76afc0fd08cb39eb09bf600d44"></a>KII_MQTT_ST_RECV_READY&#160;</td><td class="fielddoc"><p>Ready to recieve message published by Cloud. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3a133dbec03e4e77ddfd4df2f1abc988b3" name="afbdebbbeb8812da258f2c985a2b10db3a133dbec03e4e77ddfd4df2f1abc988b3"></a>KII_MQTT_ST_RECV_MSG&#160;</td><td class="fielddoc"><p>Receiving message published by Cloud. </p>
+<tr><td class="fieldname"><a id="a92d42b4373f7e7c5d889f080304792a3a133dbec03e4e77ddfd4df2f1abc988b3" name="a92d42b4373f7e7c5d889f080304792a3a133dbec03e4e77ddfd4df2f1abc988b3"></a>KII_MQTT_ST_RECV_MSG&#160;</td><td class="fielddoc"><p>Receiving message published by Cloud. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3ae28e87c388e298b2d6f575c0417b8a52" name="afbdebbbeb8812da258f2c985a2b10db3ae28e87c388e298b2d6f575c0417b8a52"></a>KII_MQTT_ST_SEND_PINGREQ&#160;</td><td class="fielddoc"><p>Sending PINGREQ message. </p>
+<tr><td class="fieldname"><a id="a92d42b4373f7e7c5d889f080304792a3ae28e87c388e298b2d6f575c0417b8a52" name="a92d42b4373f7e7c5d889f080304792a3ae28e87c388e298b2d6f575c0417b8a52"></a>KII_MQTT_ST_SEND_PINGREQ&#160;</td><td class="fielddoc"><p>Sending PINGREQ message. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3ac3f230f6a3930978688f379028496fcc" name="afbdebbbeb8812da258f2c985a2b10db3ac3f230f6a3930978688f379028496fcc"></a>KII_MQTT_ST_SEND_PUBLISH&#160;</td><td class="fielddoc"><p>Sending the message <a class="el" href="#acb549044e84222521934c23cc95ab84d" title="Publish a message through the MQTT task, and wait until it is done.">kii_mqtt_publish()</a> was given. </p>
+<tr><td class="fieldname"><a id="a92d42b4373f7e7c5d889f080304792a3ac3f230f6a3930978688f379028496fcc" name="a92d42b4373f7e7c5d889f080304792a3ac3f230f6a3930978688f379028496fcc"></a>KII_MQTT_ST_SEND_PUBLISH&#160;</td><td class="fielddoc"><p>Sending the message <a class="el" href="#acb549044e84222521934c23cc95ab84d" title="Publish a message through the MQTT task, and wait until it is done.">kii_mqtt_publish()</a> was given. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3adec6a548d8ad9577dc54cc1b3dda615f" name="afbdebbbeb8812da258f2c985a2b10db3adec6a548d8ad9577dc54cc1b3dda615f"></a>KII_MQTT_ST_RECONNECT&#160;</td><td class="fielddoc"><p>Re-establishing connection. </p>
+<tr><td class="fieldname"><a id="a92d42b4373f7e7c5d889f080304792a3adec6a548d8ad9577dc54cc1b3dda615f" name="a92d42b4373f7e7c5d889f080304792a3adec6a548d8ad9577dc54cc1b3dda615f"></a>KII_MQTT_ST_RECONNECT&#160;</td><td class="fielddoc"><p>Re-establishing connection. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3acddcf8a4f850063b9fe95f0f88800b24" name="afbdebbbeb8812da258f2c985a2b10db3acddcf8a4f850063b9fe95f0f88800b24"></a>KII_MQTT_ST_ERR_EXIT&#160;</td><td class="fielddoc"><p>Exiting due to un-recoverble error. </p>
+<tr><td class="fieldname"><a id="a92d42b4373f7e7c5d889f080304792a3acddcf8a4f850063b9fe95f0f88800b24" name="a92d42b4373f7e7c5d889f080304792a3acddcf8a4f850063b9fe95f0f88800b24"></a>KII_MQTT_ST_ERR_EXIT&#160;</td><td class="fielddoc"><p>Exiting due to un-recoverble error. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3a82d610abc8b8d60b8aaabaa5c14df92d" name="afbdebbbeb8812da258f2c985a2b10db3a82d610abc8b8d60b8aaabaa5c14df92d"></a>KII_MQTT_ST_DISCONTINUED&#160;</td><td class="fielddoc"><p>Task discontinued by the application . </p>
+<tr><td class="fieldname"><a id="a92d42b4373f7e7c5d889f080304792a3a82d610abc8b8d60b8aaabaa5c14df92d" name="a92d42b4373f7e7c5d889f080304792a3a82d610abc8b8d60b8aaabaa5c14df92d"></a>KII_MQTT_ST_DISCONTINUED&#160;</td><td class="fielddoc"><p>Task discontinued by the application . </p>
 </td></tr>
 </table>
 
@@ -1467,7 +1467,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 </div><div class="memdoc">
 
 <p>Send the whole URL in HTTP request lines. </p>
-<p>By default, requests carry the path, with the host in the Host header. A forward proxy that requests go through in plain HTTP takes the URL instead, and needs this method. See <a class="elRef" href="../../khc/html/khc_8h.html#a3b0cd0780345cbf9f6631aaf1c626cbd">khc_enable_absolute_target()</a>. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>By default, requests carry the path, with the host in the Host header. A forward proxy that requests go through in plain HTTP takes the URL instead, and needs this method. See <a class="elRef" href="../../khc/html/khc_8h.html#ae52a7f9a211e4496cc49bf482fb19f82">khc_enable_absolute_target()</a>. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">enable_absolute_target</td><td>true for the whole URL. </td></tr>
@@ -1885,7 +1885,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 </div><div class="memdoc">
 
 <p>Get the server's time, from the Date header of the last response. </p>
-<p>As <a class="elRef" href="../../khc/html/khc_8h.html#a0e1ee79bbbbeefbbac3228cb5ef0d9d8">khc_get_resp_date(khc*)</a> gives it, for the <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a>'s HTTP client: which forms are taken, and which dates refused, is described there.</p>
+<p>As <a class="elRef" href="../../khc/html/khc_8h.html#ae4d393d99631763e36e32294fea1b4e9">khc_get_resp_date(khc_t*)</a> gives it, for the <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a>'s HTTP client: which forms are taken, and which dates refused, is described there.</p>
 <p>Every API call starts with it cleared, so it never comes from an earlier call. Where a call gets several responses, renewing the session's token for instance, it is the date of the response whose status <a class="el" href="#ae61dfefd97935dd1d068dd640ec30af1" title="Get HTTP status code.">kii_get_resp_status()</a> gives: the request's own, sent again or not.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -1977,7 +1977,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 </div><div class="memdoc">
 
 <p>Why the HTTP socket failed, in the last call. </p>
-<p>After KII_ERR_SOCK_CONNECT, KII_ERR_SOCK_SEND or KII_ERR_SOCK_RECV, what the socket's last_error said, as <a class="elRef" href="../../khc/html/khc_8h.html#a8ba60ff46c996714ab1d945a68bb7898">khc_get_sock_error(khc*, long*)</a> gives it: a host that didn't resolve, a certificate refused, a timeout, a connection closed. Where a call made several requests, renewing the session's token for instance, it is the last one's.</p>
+<p>After KII_ERR_SOCK_CONNECT, KII_ERR_SOCK_SEND or KII_ERR_SOCK_RECV, what the socket's last_error said, as <a class="elRef" href="../../khc/html/khc_8h.html#a828574d36f71896b7d8751bd716b1153">khc_get_sock_error(khc_t*, long*)</a> gives it: a host that didn't resolve, a certificate refused, a timeout, a connection closed. Where a call made several requests, renewing the session's token for instance, it is the last one's.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
@@ -2875,12 +2875,12 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="elRef" href="../../khc/html/khc_8h.html#a14e10ebf817cb0b1dc8dca9ce3794b9c">KHC_CB_SLIST_ALLOC</a></td>          <td class="paramname"><span class="paramname"><em>cb_alloc</em></span>, </td>
+          <td class="paramtype"><a class="elRef" href="../../khc/html/khc_8h.html#aea187d1c7ac23b27a0e544c3da8e0032">KHC_CB_SLIST_ALLOC</a></td>          <td class="paramname"><span class="paramname"><em>cb_alloc</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="elRef" href="../../khc/html/khc_8h.html#a32bafb6cf1da963a57d8a167efe9f833">KHC_CB_SLIST_FREE</a></td>          <td class="paramname"><span class="paramname"><em>cb_free</em></span>, </td>
+          <td class="paramtype"><a class="elRef" href="../../khc/html/khc_8h.html#aa3292ea4fbe63e8c4eb3af988047e92f">KHC_CB_SLIST_FREE</a></td>          <td class="paramname"><span class="paramname"><em>cb_free</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -2895,7 +2895,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
       </table>
 </div><div class="memdoc">
 
-<p>Set <a class="elRef" href="../../khc/html/structkhc__slist.html">khc_slist</a> (linked list) resource allocators. </p>
+<p>Set <a class="elRef" href="../../khc/html/structkhc__slist__t.html">khc_slist_t</a> (linked list) resource allocators. </p>
 <p>If this method is not called, default allocators implemented with malloc/free is used to allocate linked list used to construct HTTP request headers.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -2941,7 +2941,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_continue</td><td>Callback determines whether to continue or discontinue task. If cb_continue returns true, task continues. Otherwise the task exits the infinite loop and calls <a class="el" href="kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5" title="Callback called right before exit of the task.">KII_CB_TASK_EXIT</a> callback if set. task_info argument type of the continue_cb function (defined as void* in <a class="el" href="kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5" title="Callback called right before exit of the task.">KII_CB_TASK_EXIT</a>) is kii_mqtt_task_info*. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cb_continue</td><td>Callback determines whether to continue or discontinue task. If cb_continue returns true, task continues. Otherwise the task exits the infinite loop and calls <a class="el" href="kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5" title="Callback called right before exit of the task.">KII_CB_TASK_EXIT</a> callback if set. task_info argument type of the continue_cb function (defined as void* in <a class="el" href="kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5" title="Callback called right before exit of the task.">KII_CB_TASK_EXIT</a>) is kii_mqtt_task_info_t*. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context data pointer passed as second argument when cb_continue is called. </td></tr>
   </table>
   </dd>
@@ -2980,7 +2980,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_exit</td><td>Called right before the exit. task_info argument type of cb_exit (defined as void* in <a class="el" href="kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5" title="Callback called right before exit of the task.">KII_CB_TASK_EXIT</a>) is kii_mqtt_task_info*. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cb_exit</td><td>Called right before the exit. task_info argument type of cb_exit (defined as void* in <a class="el" href="kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5" title="Callback called right before exit of the task.">KII_CB_TASK_EXIT</a>) is kii_mqtt_task_info_t*. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context data pointer passed as second argument when cb_exit is called. </td></tr>
   </table>
   </dd>
@@ -3071,7 +3071,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 </div><div class="memdoc">
 
 <p>Set where kii logs what it does. </p>
-<p>What khc logs of each request, as <a class="elRef" href="../../khc/html/khc_8h.html#a176015d9b2cad1a09e21f922da826730">khc_set_logger(khc*, ebisu_logger_t*)</a> says: at EBISU_LOG_DEBUG, the request's and the response's lines and headers, credentials included, but not their bodies, and at EBISU_LOG_WARNING, a request that failed. And what the MQTT task tells the callback set by <a class="el" href="#a853c3e530701ed2821591d8e04572606" title="Set the callback the MQTT task tells why it reconnects, waits or drops a message.">kii_set_cb_mqtt_event()</a>, the event's name and its detail: at EBISU_LOG_INFO, a CONNACK or SUBACK that accepts, and at EBISU_LOG_WARNING every other event. <a class="el" href="#a7ba3ce1d86f6048b7b3fefba36056410" title="Initializes kii_t instance.">kii_init()</a> sets none. Set it before starting the task. Built with EBISU_NO_LOG, kii logs nothing.</p>
+<p>What khc logs of each request, as <a class="elRef" href="../../khc/html/khc_8h.html#a8c5f39e7a4cd90deff0ab097e61abd4b">khc_set_logger(khc_t*, ebisu_logger_t*)</a> says: at EBISU_LOG_DEBUG, the request's and the response's lines and headers, credentials included, but not their bodies, and at EBISU_LOG_WARNING, a request that failed. And what the MQTT task tells the callback set by <a class="el" href="#a853c3e530701ed2821591d8e04572606" title="Set the callback the MQTT task tells why it reconnects, waits or drops a message.">kii_set_cb_mqtt_event()</a>, the event's name and its detail: at EBISU_LOG_INFO, a CONNACK or SUBACK that accepts, and at EBISU_LOG_WARNING every other event. <a class="el" href="#a7ba3ce1d86f6048b7b3fefba36056410" title="Initializes kii_t instance.">kii_init()</a> sets none. Set it before starting the task. Built with EBISU_NO_LOG, kii logs nothing.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
@@ -3612,7 +3612,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 
 <p>Set the system: tasks, delays and a monotonic clock. </p>
 <p>The MQTT task is created with its task_create, and waits with its delay_ms. If it has a monotonic_ms, the task times the keep-alive by it. Otherwise it estimates the time by adding up its waits and receive timeouts, which misses the time spent elsewhere, such as in the push callback.</p>
-<p>Requests use it too, as <a class="elRef" href="../../khc/html/khc_8h.html#aa3441f9ae19ba2128b987c3b13571544">khc_set_system(khc*, ebisu_system_t*)</a> describes: a socket operation that returns EBISU_SOCK_AGAIN is called again after a delay of KHC_AGAIN_WAIT_MS, and the timeout set by <a class="el" href="#a2c2e5b7c2387af3311c7fada1d4e9974" title="Set how long a request may take.">kii_set_request_timeout()</a> is timed by its monotonic_ms.</p>
+<p>Requests use it too, as <a class="elRef" href="../../khc/html/khc_8h.html#ae310e3fc9866494b832a99fb6ab050e9">khc_set_system(khc_t*, ebisu_system_t*)</a> describes: a socket operation that returns EBISU_SOCK_AGAIN is called again after a delay of KHC_AGAIN_WAIT_MS, and the timeout set by <a class="el" href="#a2c2e5b7c2387af3311c7fada1d4e9974" title="Set how long a request may take.">kii_set_request_timeout()</a> is timed by its monotonic_ms.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>

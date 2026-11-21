@@ -1,13 +1,13 @@
 var searchData=
 [
-  ['khc_0',['khc',['../../../khc/html/structkhc.html',1,'']]],
-  ['khc_5fslist_1',['khc_slist',['../../../khc/html/structkhc__slist.html',1,'']]],
+  ['khc_5fslist_5ft_0',['khc_slist_t',['../../../khc/html/structkhc__slist__t.html',1,'']]],
+  ['khc_5ft_1',['khc_t',['../../../khc/html/structkhc__t.html',1,'']]],
   ['kii_5fauthor_5ft_2',['kii_author_t',['../../../kii/html/structkii__author__t.html',1,'']]],
   ['kii_5fbucket_5ft_3',['kii_bucket_t',['../../../kii/html/structkii__bucket__t.html',1,'']]],
   ['kii_5finstallation_5fid_5ft_4',['kii_installation_id_t',['../../../kii/html/structkii__installation__id__t.html',1,'']]],
   ['kii_5fmqtt_5fendpoint_5ft_5',['kii_mqtt_endpoint_t',['../../../kii/html/structkii__mqtt__endpoint__t.html',1,'']]],
   ['kii_5fmqtt_5fmessage_5ft_6',['kii_mqtt_message_t',['../../../kii/html/structkii__mqtt__message__t.html',1,'']]],
-  ['kii_5fmqtt_5ftask_5finfo_7',['kii_mqtt_task_info',['../../../kii/html/structkii__mqtt__task__info.html',1,'']]],
+  ['kii_5fmqtt_5ftask_5finfo_5ft_7',['kii_mqtt_task_info_t',['../../../kii/html/structkii__mqtt__task__info__t.html',1,'']]],
   ['kii_5fmqtt_5fwill_5ft_8',['kii_mqtt_will_t',['../../../kii/html/structkii__mqtt__will__t.html',1,'']]],
   ['kii_5fobject_5fid_5ft_9',['kii_object_id_t',['../../../kii/html/structkii__object__id__t.html',1,'']]],
   ['kii_5fserver_5fcode_5fresult_5ft_10',['kii_server_code_result_t',['../../../kii/html/structkii__server__code__result__t.html',1,'']]],

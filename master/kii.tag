@@ -17,7 +17,7 @@
     <class kind="struct">kii_t</class>
     <class kind="struct">kii_server_code_result_t</class>
     <class kind="struct">kii_ti_firmware_version_t</class>
-    <class kind="struct">kii_mqtt_task_info</class>
+    <class kind="struct">kii_mqtt_task_info_t</class>
     <member kind="define">
       <type>#define</type>
       <name>KII_TASK_NAME_MQTT</name>
@@ -557,130 +557,130 @@
     </member>
     <member kind="enumeration">
       <type></type>
-      <name>kii_mqtt_task_state</name>
+      <name>kii_mqtt_task_state_t</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ST_INSTALL_PUSH</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3a732682069159c445921e286c056aa6bb</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3a732682069159c445921e286c056aa6bb</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ST_GET_ENDPOINT</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3a10325842254cc0f24ec27ffb9798617d</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3a10325842254cc0f24ec27ffb9798617d</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ST_SOCK_CONNECT</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3a897362005afd9ec3e6ce2fe835270458</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3a897362005afd9ec3e6ce2fe835270458</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ST_SEND_CONNECT</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3aac800502452b8784f558e7cc2ee6cd54</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3aac800502452b8784f558e7cc2ee6cd54</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ST_RECV_CONNACK</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3a4a0552111077f56357b67824ed8728d8</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3a4a0552111077f56357b67824ed8728d8</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ST_SEND_SUBSCRIBE</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3af0fa7e3699a3b84da36f56c3461c9c2c</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3af0fa7e3699a3b84da36f56c3461c9c2c</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ST_RECV_SUBACK</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3ac64f894e9fa5128616926f5138f182e2</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3ac64f894e9fa5128616926f5138f182e2</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ST_RECV_READY</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3ac54a5a76afc0fd08cb39eb09bf600d44</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3ac54a5a76afc0fd08cb39eb09bf600d44</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ST_RECV_MSG</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3a133dbec03e4e77ddfd4df2f1abc988b3</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3a133dbec03e4e77ddfd4df2f1abc988b3</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ST_SEND_PINGREQ</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3ae28e87c388e298b2d6f575c0417b8a52</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3ae28e87c388e298b2d6f575c0417b8a52</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ST_SEND_PUBLISH</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3ac3f230f6a3930978688f379028496fcc</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3ac3f230f6a3930978688f379028496fcc</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ST_RECONNECT</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3adec6a548d8ad9577dc54cc1b3dda615f</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3adec6a548d8ad9577dc54cc1b3dda615f</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ST_ERR_EXIT</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3acddcf8a4f850063b9fe95f0f88800b24</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3acddcf8a4f850063b9fe95f0f88800b24</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ST_DISCONTINUED</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afbdebbbeb8812da258f2c985a2b10db3a82d610abc8b8d60b8aaabaa5c14df92d</anchor>
+      <anchor>a92d42b4373f7e7c5d889f080304792a3a82d610abc8b8d60b8aaabaa5c14df92d</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumeration">
       <type></type>
-      <name>kii_mqtt_error</name>
+      <name>kii_mqtt_error_t</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>ace11a8cf8764373a85c96643195289b2</anchor>
+      <anchor>a6ffa8dd3275c339455e224f432b4982f</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ERR_OK</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>ace11a8cf8764373a85c96643195289b2acbcfb4685d031175132599b1f925b798</anchor>
+      <anchor>a6ffa8dd3275c339455e224f432b4982facbcfb4685d031175132599b1f925b798</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ERR_INSTALLATION</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>ace11a8cf8764373a85c96643195289b2afde8aeb9b4525616e3c461412e54d726</anchor>
+      <anchor>a6ffa8dd3275c339455e224f432b4982fafde8aeb9b4525616e3c461412e54d726</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ERR_GET_ENDPOINT</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>ace11a8cf8764373a85c96643195289b2aa32ccee9cf4b58d75cdeb92b36eee6a8</anchor>
+      <anchor>a6ffa8dd3275c339455e224f432b4982faa32ccee9cf4b58d75cdeb92b36eee6a8</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ERR_INSUFFICIENT_BUFF</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>ace11a8cf8764373a85c96643195289b2a9cdad92c2105b2fc05f9264be83d59a9</anchor>
+      <anchor>a6ffa8dd3275c339455e224f432b4982fa9cdad92c2105b2fc05f9264be83d59a9</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KII_MQTT_ERR_CREDENTIALS</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>ace11a8cf8764373a85c96643195289b2ad0063cb9e8b7ec3ae2ed2241ad50115b</anchor>
+      <anchor>a6ffa8dd3275c339455e224f432b4982fad0063cb9e8b7ec3ae2ed2241ad50115b</anchor>
       <arglist></arglist>
     </member>
     <member kind="function">
@@ -1480,20 +1480,20 @@
     </member>
   </compound>
   <compound kind="struct">
-    <name>kii_mqtt_task_info</name>
-    <filename>structkii__mqtt__task__info.html</filename>
+    <name>kii_mqtt_task_info_t</name>
+    <filename>structkii__mqtt__task__info__t.html</filename>
     <member kind="variable">
-      <type>kii_mqtt_error</type>
+      <type>kii_mqtt_error_t</type>
       <name>error</name>
-      <anchorfile>structkii__mqtt__task__info.html</anchorfile>
-      <anchor>a92ee0b673e721c1deb760bb6853ec42e</anchor>
+      <anchorfile>structkii__mqtt__task__info__t.html</anchorfile>
+      <anchor>a332375799d02e2a3abf97ade30ebb025</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>kii_mqtt_task_state</type>
+      <type>kii_mqtt_task_state_t</type>
       <name>task_state</name>
-      <anchorfile>structkii__mqtt__task__info.html</anchorfile>
-      <anchor>a10dd846ce66170de1a124dc32cdc46b8</anchor>
+      <anchorfile>structkii__mqtt__task__info__t.html</anchorfile>
+      <anchor>aec8dfbd1619e661b1a05d6f7b2c2132e</anchor>
       <arglist></arglist>
     </member>
   </compound>

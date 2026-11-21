@@ -4,8 +4,8 @@
     <name>khc.h</name>
     <path>include/</path>
     <filename>khc_8h.html</filename>
-    <class kind="struct">khc_slist</class>
-    <class kind="struct">khc</class>
+    <class kind="struct">khc_slist_t</class>
+    <class kind="struct">khc_t</class>
     <member kind="define">
       <type>#define</type>
       <name>KHC_HOST_MAX_SIZE</name>
@@ -70,386 +70,386 @@
       <arglist>)(void *userdata)</arglist>
     </member>
     <member kind="typedef">
-      <type>struct khc_slist</type>
-      <name>khc_slist</name>
+      <type>struct khc_slist_t</type>
+      <name>khc_slist_t</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a4a194b9bfb06071b09552f46a2d36c72</anchor>
+      <anchor>a04a6f64e53531c4df7297f4f34388ff9</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
-      <type>khc_slist *(*</type>
+      <type>khc_slist_t *(*</type>
       <name>KHC_CB_SLIST_ALLOC</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a14e10ebf817cb0b1dc8dca9ce3794b9c</anchor>
+      <anchor>aea187d1c7ac23b27a0e544c3da8e0032</anchor>
       <arglist>)(const char *str, size_t str_length, void *data)</arglist>
     </member>
     <member kind="typedef">
       <type>void(*</type>
       <name>KHC_CB_SLIST_FREE</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a32bafb6cf1da963a57d8a167efe9f833</anchor>
-      <arglist>)(khc_slist *node, void *data)</arglist>
+      <anchor>aa3292ea4fbe63e8c4eb3af988047e92f</anchor>
+      <arglist>)(khc_slist_t *node, void *data)</arglist>
     </member>
     <member kind="typedef">
-      <type>enum khc_state</type>
-      <name>khc_state</name>
+      <type>enum khc_state_t</type>
+      <name>khc_state_t</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a1f0056ed7b4fc90f5a3159d5613418c8</anchor>
+      <anchor>afa8116f529173b1fd2b1372737499d05</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
-      <type>enum khc_code</type>
-      <name>khc_code</name>
+      <type>enum khc_code_t</type>
+      <name>khc_code_t</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a4ed30f721b5f5af350c4187f683964bb</anchor>
+      <anchor>abcf7a290f75b7ed3b52e55a2b285fc63</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
-      <type>struct khc</type>
-      <name>khc</name>
+      <type>struct khc_t</type>
+      <name>khc_t</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a610e0ad9827b3e1fb1303d42fe7c636c</anchor>
+      <anchor>a1ff50fdd5482a253d7c1431721a4b823</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumeration">
       <type></type>
-      <name>khc_state</name>
+      <name>khc_state_t</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a857caeeab83df303d0fe3a7d97601d0f</anchor>
+      <anchor>aed8253a06a7a9cf7688ce2c95504e704</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumeration">
       <type></type>
-      <name>khc_code</name>
+      <name>khc_code_t</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a90be23875108e9a39942c3af90a6d789</anchor>
+      <anchor>a238bb716e422ba9853f65b7860f9dd6c</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KHC_ERR_OK</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a90be23875108e9a39942c3af90a6d789ad362084b96bd996b692883323f38a71d</anchor>
+      <anchor>a238bb716e422ba9853f65b7860f9dd6cad362084b96bd996b692883323f38a71d</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KHC_ERR_SOCK_CONNECT</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a90be23875108e9a39942c3af90a6d789a63860890be328ec70b59ee94e6b3fa79</anchor>
+      <anchor>a238bb716e422ba9853f65b7860f9dd6ca63860890be328ec70b59ee94e6b3fa79</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KHC_ERR_SOCK_CLOSE</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a90be23875108e9a39942c3af90a6d789a8371726af4f71dd9286834d572befa8a</anchor>
+      <anchor>a238bb716e422ba9853f65b7860f9dd6ca8371726af4f71dd9286834d572befa8a</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KHC_ERR_SOCK_SEND</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a90be23875108e9a39942c3af90a6d789a23f70a0ca5536d5538cd259c0988a5d1</anchor>
+      <anchor>a238bb716e422ba9853f65b7860f9dd6ca23f70a0ca5536d5538cd259c0988a5d1</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KHC_ERR_SOCK_RECV</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a90be23875108e9a39942c3af90a6d789aa19da1c09bffcd5bf90a4a52295e8054</anchor>
+      <anchor>a238bb716e422ba9853f65b7860f9dd6caa19da1c09bffcd5bf90a4a52295e8054</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KHC_ERR_HEADER_CALLBACK</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a90be23875108e9a39942c3af90a6d789a87e69245b830da2d3cfee093ee5db0ee</anchor>
+      <anchor>a238bb716e422ba9853f65b7860f9dd6ca87e69245b830da2d3cfee093ee5db0ee</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KHC_ERR_WRITE_CALLBACK</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a90be23875108e9a39942c3af90a6d789af5c7c4c210efc30b9d3cf642a0342f52</anchor>
+      <anchor>a238bb716e422ba9853f65b7860f9dd6caf5c7c4c210efc30b9d3cf642a0342f52</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KHC_ERR_ALLOCATION</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a90be23875108e9a39942c3af90a6d789a312c4dc6d68bf167f83aedc8def54cb1</anchor>
+      <anchor>a238bb716e422ba9853f65b7860f9dd6ca312c4dc6d68bf167f83aedc8def54cb1</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KHC_ERR_TOO_LARGE_DATA</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a90be23875108e9a39942c3af90a6d789abdc61249fe00e89ee9f2d00f11561e13</anchor>
+      <anchor>a238bb716e422ba9853f65b7860f9dd6cabdc61249fe00e89ee9f2d00f11561e13</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KHC_ERR_READ_CALLBACK</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a90be23875108e9a39942c3af90a6d789a3612ca2692ccace4e8e11157cf04c6bb</anchor>
+      <anchor>a238bb716e422ba9853f65b7860f9dd6ca3612ca2692ccace4e8e11157cf04c6bb</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KHC_ERR_TIMEOUT</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a90be23875108e9a39942c3af90a6d789a257ea24324a4076f4020ca8348488592</anchor>
+      <anchor>a238bb716e422ba9853f65b7860f9dd6ca257ea24324a4076f4020ca8348488592</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
       <name>KHC_ERR_CANCELLED</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a90be23875108e9a39942c3af90a6d789a22c1ba4ceba113d4b6c4e025ce798f22</anchor>
+      <anchor>a238bb716e422ba9853f65b7860f9dd6ca22c1ba4ceba113d4b6c4e025ce798f22</anchor>
       <arglist></arglist>
     </member>
     <member kind="function">
-      <type>khc_slist *</type>
+      <type>khc_slist_t *</type>
       <name>khc_cb_slist_alloc</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a1cf6aced91a66a1e204724907a433975</anchor>
+      <anchor>aff4d7afad2f6353d40ac401eaacd3639</anchor>
       <arglist>(const char *str, size_t str_len, void *data)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_cb_slist_free</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>af8ee1aa7bad924b214164a031a63bcf8</anchor>
-      <arglist>(khc_slist *slist, void *data)</arglist>
+      <anchor>a5ceae058fc513f31a438f6d0b9154195</anchor>
+      <arglist>(khc_slist_t *slist, void *data)</arglist>
     </member>
     <member kind="function">
-      <type>khc_slist *</type>
+      <type>khc_slist_t *</type>
       <name>khc_slist_append</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a0c00d03901759308af4a906ad3a4bf57</anchor>
-      <arglist>(khc_slist *slist, const char *string, size_t length)</arglist>
+      <anchor>aab0dfa2fc0966fb7e519c22fd36d343a</anchor>
+      <arglist>(khc_slist_t *slist, const char *string, size_t length)</arglist>
     </member>
     <member kind="function">
-      <type>khc_slist *</type>
+      <type>khc_slist_t *</type>
       <name>khc_slist_append_using_cb_alloc</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>ae829b7d6c6b4adf4c43c5ce2084a1cfa</anchor>
-      <arglist>(khc_slist *slist, const char *string, size_t length, KHC_CB_SLIST_ALLOC cb_alloc, void *cb_alloc_data)</arglist>
+      <anchor>a32418761fc33eebc4e33c7cb4dd8091b</anchor>
+      <arglist>(khc_slist_t *slist, const char *string, size_t length, KHC_CB_SLIST_ALLOC cb_alloc, void *cb_alloc_data)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_slist_free_all</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a0697b94cf117f1e6475d4b6a281fdab6</anchor>
-      <arglist>(khc_slist *slist)</arglist>
+      <anchor>a4ecbf81dc3efbf5bce87b9ff6d93af60</anchor>
+      <arglist>(khc_slist_t *slist)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_slist_free_all_using_cb_free</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a601f7b3c5298824462683436df2807fa</anchor>
-      <arglist>(khc_slist *slist, KHC_CB_SLIST_FREE cb_free, void *cb_free_data)</arglist>
+      <anchor>ab7fb273b59942252a5d1481a8956be2f</anchor>
+      <arglist>(khc_slist_t *slist, KHC_CB_SLIST_FREE cb_free, void *cb_free_data)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_init</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a5cb75ed1f039e02286cacb8d097f233e</anchor>
-      <arglist>(khc *khc)</arglist>
+      <anchor>ad413a75131c9b3c9206949044dd1e7a9</anchor>
+      <arglist>(khc_t *khc)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_reset_except_cb</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>aea7b6dde93cd97fc303a90c1414dba21</anchor>
-      <arglist>(khc *khc)</arglist>
+      <anchor>ace4678e5617fad499c0f401bb9829ea0</anchor>
+      <arglist>(khc_t *khc)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_reset_except_request</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a652dba6d3ccda37a7c120fe479648504</anchor>
-      <arglist>(khc *khc)</arglist>
+      <anchor>ad48d9501d10ae35d377c9e29eb30cb8c</anchor>
+      <arglist>(khc_t *khc)</arglist>
     </member>
     <member kind="function">
-      <type>khc_code</type>
+      <type>khc_code_t</type>
       <name>khc_perform</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a75fd843af7f3de58bcba2d348878becc</anchor>
-      <arglist>(khc *khc)</arglist>
+      <anchor>ac2eccf72ab3ae08ee7aa026d47d0a34e</anchor>
+      <arglist>(khc_t *khc)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_set_system</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>aa3441f9ae19ba2128b987c3b13571544</anchor>
-      <arglist>(khc *khc, ebisu_system_t *system)</arglist>
+      <anchor>ae310e3fc9866494b832a99fb6ab050e9</anchor>
+      <arglist>(khc_t *khc, ebisu_system_t *system)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_set_logger</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a176015d9b2cad1a09e21f922da826730</anchor>
-      <arglist>(khc *khc, ebisu_logger_t *logger)</arglist>
+      <anchor>a8c5f39e7a4cd90deff0ab097e61abd4b</anchor>
+      <arglist>(khc_t *khc, ebisu_logger_t *logger)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_set_timeout_ms</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>afbc90a9006ee882364cfcf1790b5e4db</anchor>
-      <arglist>(khc *khc, uint32_t timeout_ms)</arglist>
+      <anchor>a9800528067f95cd677dca75ab5508364</anchor>
+      <arglist>(khc_t *khc, uint32_t timeout_ms)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_set_cb_continue</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>ad364d05cf1b54ef8a840e839fa2db308</anchor>
-      <arglist>(khc *khc, KHC_CB_CONTINUE cb, void *userdata)</arglist>
+      <anchor>a1e1874687a53076b6697ab05cd84840d</anchor>
+      <arglist>(khc_t *khc, KHC_CB_CONTINUE cb, void *userdata)</arglist>
     </member>
     <member kind="function">
-      <type>khc_code</type>
+      <type>khc_code_t</type>
       <name>khc_set_host</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a67fb3bf7ff0b65085e639aa5a1465cc3</anchor>
-      <arglist>(khc *khc, const char *host)</arglist>
+      <anchor>a1e20410fe644e36da420e505e400adf1</anchor>
+      <arglist>(khc_t *khc, const char *host)</arglist>
     </member>
     <member kind="function">
-      <type>khc_code</type>
+      <type>khc_code_t</type>
       <name>khc_set_path</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a66d6d377286feccbf320117f7ffa1692</anchor>
-      <arglist>(khc *khc, const char *path)</arglist>
+      <anchor>ae327e6a3b0b409031cd97c4f0b7b94cd</anchor>
+      <arglist>(khc_t *khc, const char *path)</arglist>
     </member>
     <member kind="function">
-      <type>khc_code</type>
+      <type>khc_code_t</type>
       <name>khc_set_method</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a3f16b241faeeb8e623e605fac9ed3901</anchor>
-      <arglist>(khc *khc, const char *method)</arglist>
+      <anchor>a0e392233d624405b991eab885cc706c3</anchor>
+      <arglist>(khc_t *khc, const char *method)</arglist>
     </member>
     <member kind="function">
-      <type>khc_code</type>
+      <type>khc_code_t</type>
       <name>khc_set_req_headers</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>ac28ce7ac10ab32d62f0bdc0c5f3915c2</anchor>
-      <arglist>(khc *khc, khc_slist *headers)</arglist>
+      <anchor>ad6eedc0d182c954d697ae41da281ea46</anchor>
+      <arglist>(khc_t *khc, khc_slist_t *headers)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_set_resp_header_buff</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>afd2065be9638acf043438ac9e020d3b8</anchor>
-      <arglist>(khc *khc, char *buffer, size_t buff_size)</arglist>
+      <anchor>a5461bcbb5b7da247bed5c0a3ee1fd47d</anchor>
+      <arglist>(khc_t *khc, char *buffer, size_t buff_size)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_set_stream_buff</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a59a8813c4c65fb2097b3461e5303d4fa</anchor>
-      <arglist>(khc *khc, char *buffer, size_t buff_size)</arglist>
+      <anchor>acd65a7b58f771603a15f972315e78614</anchor>
+      <arglist>(khc_t *khc, char *buffer, size_t buff_size)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_set_socket</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>aa873888c09db4188eadb6b4b1cb511db</anchor>
-      <arglist>(khc *khc, ebisu_socket_t *socket)</arglist>
+      <anchor>aae1eb51fb3d9df3f416955b0bbd3a73f</anchor>
+      <arglist>(khc_t *khc, ebisu_socket_t *socket)</arglist>
     </member>
     <member kind="function">
-      <type>khc_code</type>
+      <type>khc_code_t</type>
       <name>khc_set_cb_read</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a1ea30cbdfd91b2ba3bb156bfa693bcab</anchor>
-      <arglist>(khc *khc, KHC_CB_READ cb, void *userdata)</arglist>
+      <anchor>ab3092de311938f34922143408e4a36d3</anchor>
+      <arglist>(khc_t *khc, KHC_CB_READ cb, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_set_req_body_length</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>ab2a74fefe79e599b67ed3e2717c9f41d</anchor>
-      <arglist>(khc *khc, size_t length)</arglist>
+      <anchor>a736428a1e77b3369fe0e7e7b0a549710</anchor>
+      <arglist>(khc_t *khc, size_t length)</arglist>
     </member>
     <member kind="function">
-      <type>khc_code</type>
+      <type>khc_code_t</type>
       <name>khc_set_cb_write</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>ac6acc9ee82789a8986a4a2b7e586a6f0</anchor>
-      <arglist>(khc *khc, KHC_CB_WRITE cb, void *userdata)</arglist>
+      <anchor>ae49341971ce08a8226df6d003e11a3ca</anchor>
+      <arglist>(khc_t *khc, KHC_CB_WRITE cb, void *userdata)</arglist>
     </member>
     <member kind="function">
-      <type>khc_code</type>
+      <type>khc_code_t</type>
       <name>khc_set_cb_header</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>afe54c0defe07585305e7a5c52a772b7f</anchor>
-      <arglist>(khc *khc, KHC_CB_HEADER cb, void *userdata)</arglist>
+      <anchor>a1ce534b8e234038975581e93d75204d8</anchor>
+      <arglist>(khc_t *khc, KHC_CB_HEADER cb, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_enable_insecure</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>ab05e9076eb8e0e894603885d446499d9</anchor>
-      <arglist>(khc *khc, bool enable_insecure)</arglist>
+      <anchor>a52e531a218a49a7532af53e5087445de</anchor>
+      <arglist>(khc_t *khc, bool enable_insecure)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>khc_enable_absolute_target</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a3b0cd0780345cbf9f6631aaf1c626cbd</anchor>
-      <arglist>(khc *khc, bool enable_absolute_target)</arglist>
+      <anchor>ae52a7f9a211e4496cc49bf482fb19f82</anchor>
+      <arglist>(khc_t *khc, bool enable_absolute_target)</arglist>
     </member>
     <member kind="function">
       <type>uint16_t</type>
       <name>khc_get_status_code</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a566621dab015c69cb57dd1de88241c2a</anchor>
-      <arglist>(khc *khc)</arglist>
+      <anchor>a2a0636e5c349015914cf18a1e2226541</anchor>
+      <arglist>(khc_t *khc)</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
       <name>khc_get_close_failed</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a960e18dda03d60dded5c9a618138dd97</anchor>
-      <arglist>(khc *khc)</arglist>
+      <anchor>aaf6fce0c1d3a35e8ff4762238e3e5b5f</anchor>
+      <arglist>(khc_t *khc)</arglist>
     </member>
     <member kind="function">
       <type>ebisu_sock_error_t</type>
       <name>khc_get_sock_error</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a8ba60ff46c996714ab1d945a68bb7898</anchor>
-      <arglist>(khc *khc, long *out_detail)</arglist>
+      <anchor>a828574d36f71896b7d8751bd716b1153</anchor>
+      <arglist>(khc_t *khc, long *out_detail)</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
       <name>khc_get_resp_header_skipped</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a7f4889fa8b645d22e23e2336387512ea</anchor>
-      <arglist>(khc *khc)</arglist>
+      <anchor>a1d2510e5cc637515a7f3cc4da99e9ff5</anchor>
+      <arglist>(khc_t *khc)</arglist>
     </member>
     <member kind="function">
       <type>int64_t</type>
       <name>khc_get_resp_date</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a0e1ee79bbbbeefbbac3228cb5ef0d9d8</anchor>
-      <arglist>(khc *khc)</arglist>
+      <anchor>ae4d393d99631763e36e32294fea1b4e9</anchor>
+      <arglist>(khc_t *khc)</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
       <name>khc_method_can_have_body</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a1303a5750c70d26aa745b8b5a20b6635</anchor>
-      <arglist>(khc *khc)</arglist>
+      <anchor>a3230aadba14f21f809647a56149ed01a</anchor>
+      <arglist>(khc_t *khc)</arglist>
     </member>
   </compound>
   <compound kind="struct">
-    <name>khc</name>
-    <filename>structkhc.html</filename>
-  </compound>
-  <compound kind="struct">
-    <name>khc_slist</name>
-    <filename>structkhc__slist.html</filename>
+    <name>khc_slist_t</name>
+    <filename>structkhc__slist__t.html</filename>
     <member kind="variable">
       <type>char *</type>
       <name>data</name>
-      <anchorfile>structkhc__slist.html</anchorfile>
-      <anchor>afdc9bd8e86890913ee8949a9275bf0b6</anchor>
+      <anchorfile>structkhc__slist__t.html</anchorfile>
+      <anchor>ac5e667224606d7e7cdc4b15fb0590a8a</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>struct khc_slist *</type>
+      <type>struct khc_slist_t *</type>
       <name>next</name>
-      <anchorfile>structkhc__slist.html</anchorfile>
-      <anchor>ad2427c9cd37a7ef8cc829d8cc652a1fd</anchor>
+      <anchorfile>structkhc__slist__t.html</anchorfile>
+      <anchor>a1d850830ee78e1250746fc36504020eb</anchor>
       <arglist></arglist>
     </member>
+  </compound>
+  <compound kind="struct">
+    <name>khc_t</name>
+    <filename>structkhc__t.html</filename>
   </compound>
   <compound kind="page">
     <name>index</name>

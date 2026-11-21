@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.15.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>khc: khc_slist Struct Reference</title>
+<title>kii: kii_mqtt_task_info_t Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -23,9 +23,8 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">khc<span id="projectnumber">&#160;2.0.0</span>
+   <div id="projectname">kii<span id="projectnumber">&#160;2.0.0</span>
    </div>
-   <div id="projectbrief">khc is light-weight HTTP client written in C.</div>
   </td>
  </tr>
  </tbody>
@@ -74,34 +73,60 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-attribs">Data Fields</a>  </div>
-  <div class="headertitle"><div class="title">khc_slist Struct Reference</div></div>
+  <div class="headertitle"><div class="title">kii_mqtt_task_info_t Struct Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Linked list.  
+<p>Stores MQTT task information.  
  <a href="#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="khc_8h_source.html">khc.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="kii_8h_source.html">kii.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-attribs" class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Data Fields</h2></td></tr>
-<tr class="memitem:afdc9bd8e86890913ee8949a9275bf0b6" id="r_afdc9bd8e86890913ee8949a9275bf0b6"><td class="memItemLeft" align="right" valign="top"><a id="afdc9bd8e86890913ee8949a9275bf0b6" name="afdc9bd8e86890913ee8949a9275bf0b6"></a>
-char *&#160;</td><td class="memItemRight" valign="bottom"><b>data</b></td></tr>
-<tr class="memdesc:afdc9bd8e86890913ee8949a9275bf0b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Null terminated string. <br /></td></tr>
-<tr class="memitem:ad2427c9cd37a7ef8cc829d8cc652a1fd" id="r_ad2427c9cd37a7ef8cc829d8cc652a1fd"><td class="memItemLeft" align="right" valign="top"><a id="ad2427c9cd37a7ef8cc829d8cc652a1fd" name="ad2427c9cd37a7ef8cc829d8cc652a1fd"></a>
-struct <a class="el" href="structkhc__slist.html">khc_slist</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>next</b></td></tr>
-<tr class="memdesc:ad2427c9cd37a7ef8cc829d8cc652a1fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pointer to the next node. <br /></td></tr>
+<tr class="memitem:a332375799d02e2a3abf97ade30ebb025" id="r_a332375799d02e2a3abf97ade30ebb025"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a6ffa8dd3275c339455e224f432b4982f">kii_mqtt_error_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a332375799d02e2a3abf97ade30ebb025">error</a></td></tr>
+<tr class="memitem:aec8dfbd1619e661b1a05d6f7b2c2132e" id="r_aec8dfbd1619e661b1a05d6f7b2c2132e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a92d42b4373f7e7c5d889f080304792a3">kii_mqtt_task_state_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aec8dfbd1619e661b1a05d6f7b2c2132e">task_state</a></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Linked list. </p>
-<p>Linked list manages c string data. </p>
-</div><hr/>The documentation for this struct was generated from the following file:<ul>
-<li>include/<a class="el" href="khc_8h_source.html">khc.h</a></li>
+<div class="textblock"><p>Stores MQTT task information. </p>
+</div><a name="doc-variable-members" id="doc-variable-members"></a><h2 id="header-doc-variable-members" class="groupheader">Field Documentation</h2>
+<a id="a332375799d02e2a3abf97ade30ebb025" name="a332375799d02e2a3abf97ade30ebb025"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a332375799d02e2a3abf97ade30ebb025">&#9670;&#160;</a></span>error</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="kii_8h.html#a6ffa8dd3275c339455e224f432b4982f">kii_mqtt_error_t</a> kii_mqtt_task_info_t::error</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Last reported error. </p>
+
+</div>
+</div>
+<a id="aec8dfbd1619e661b1a05d6f7b2c2132e" name="aec8dfbd1619e661b1a05d6f7b2c2132e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aec8dfbd1619e661b1a05d6f7b2c2132e">&#9670;&#160;</a></span>task_state</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="kii_8h.html#a92d42b4373f7e7c5d889f080304792a3">kii_mqtt_task_state_t</a> kii_mqtt_task_info_t::task_state</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Current task state. </p>
+
+</div>
+</div>
+<hr/>The documentation for this struct was generated from the following file:<ul>
+<li>include/<a class="el" href="kii_8h_source.html">kii.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on <span class="timestamp"></span> for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.15.0
+Generated on <span class="timestamp"></span> for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.15.0
 </small></address>
 </div><!-- doc-content -->
 </body>

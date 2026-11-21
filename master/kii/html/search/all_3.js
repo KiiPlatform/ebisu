@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['data_0',['data',['../../../khc/html/structkhc__slist.html#afdc9bd8e86890913ee8949a9275bf0b6',1,'khc_slist']]],
+  ['data_0',['data',['../../../khc/html/structkhc__slist__t.html#ac5e667224606d7e7cdc4b15fb0590a8a',1,'khc_slist_t']]],
   ['day_1',['day',['../../../core/html/structebisu__civil__time__t.html#aeadd124b187fff8daa2c04b0831af49f',1,'ebisu_civil_time_t']]],
   ['delay_5fms_2',['delay_ms',['../../../core/html/structebisu__system__ops__t.html#a28038f19ac8ae6170f028a366571e505',1,'ebisu_system_ops_t']]],
   ['details_3',['details',['../structkii__server__code__result__t.html#a504d0b7cdbb92d0195b6f3ce56e58466',1,'kii_server_code_result_t']]],

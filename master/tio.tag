@@ -141,17 +141,17 @@
     <name>tio_handler_task_info_t</name>
     <filename>structtio__handler__task__info__t.html</filename>
     <member kind="variable">
-      <type>kii_mqtt_error</type>
+      <type>kii_mqtt_error_t</type>
       <name>error</name>
       <anchorfile>structtio__handler__task__info__t.html</anchorfile>
-      <anchor>a2b725069e1e91b1111e5ed37cce547a4</anchor>
+      <anchor>a4dc586f94e2cf2bda9becb63edefed40</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>kii_mqtt_task_state</type>
+      <type>kii_mqtt_task_state_t</type>
       <name>task_state</name>
       <anchorfile>structtio__handler__task__info__t.html</anchorfile>
-      <anchor>aec172492cb54a0cc922faf12b7a208d4</anchor>
+      <anchor>a48c5517f864b6d5ac1b625985c6e9757</anchor>
       <arglist></arglist>
     </member>
   </compound>

@@ -946,15 +946,15 @@
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
-      <name>EBISU_TASKC_OK</name>
+      <name>EBISU_TASK_OK</name>
       <anchorfile>ebisu__system_8h.html</anchorfile>
-      <anchor>a90188fadee3bc027156aa75ab532454aa21b207febbcc0f779b0754a6da63d0d4</anchor>
+      <anchor>a90188fadee3bc027156aa75ab532454aaf863eac8e63cbd311309257be98e8e4e</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
-      <name>EBISU_TASKC_FAIL</name>
+      <name>EBISU_TASK_FAIL</name>
       <anchorfile>ebisu__system_8h.html</anchorfile>
-      <anchor>a90188fadee3bc027156aa75ab532454aadb245d24463ad5c39c95dae216af46ea</anchor>
+      <anchor>a90188fadee3bc027156aa75ab532454aa1d6a0d6fc52460c0722a3fb108fe3957</anchor>
       <arglist></arglist>
     </member>
   </compound>
