@@ -153,6 +153,7 @@ ebisu_add_test_suite(small_test_core
         core/clock_test.cpp
         core/log_test.cpp
         core/mem_test.cpp
+        core/retry_test.cpp
         core/str_test.cpp
         core/system_test.cpp
         core/time_test.cpp

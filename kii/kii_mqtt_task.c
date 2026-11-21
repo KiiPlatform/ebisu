@@ -4,6 +4,7 @@
 
 #include "kii_mqtt_task.h"
 #include <ebisu_mem.h>
+#include <ebisu_retry.h>
 #include "kii.h"
 #include "kii_impl.h"
 #include "kii_session_impl.h"
@@ -794,23 +795,19 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
 
 /* Waits longer each time, so that devices do not keep at a cloud that is
  * refusing them or down, and part of the way at random, so that the ones that
- * lost it together do not come back together. Nothing here has a source of
- * randomness, but the thing's ID differs from device to device, and it is
- * mixed with the wait so that a device's share changes as it goes. */
+ * lost it together do not come back together: ebisu_retry.h's waits, with the
+ * thing's ID for the seed. The task keeps the wait and doubles it, where
+ * ebisu_retry_wait() counts the failures; the waits are the same. They are
+ * even, so each is spread over half to all of it. */
 static void _schedule_retry(mqtt_state_t* state)
 {
     const uint32_t max_ms = state->kii->_mqtt_retry_wait_max_ms != 0 ?
         state->kii->_mqtt_retry_wait_max_ms : RETRY_WAIT_MAX_MS;
     // A longest wait shorter than the first wait cuts that short too.
     uint32_t wait_ms = state->retry_wait_ms < max_ms ? state->retry_wait_ms : max_ms;
-    // FNV-1a.
-    uint32_t hash = 2166136261U;
-    for (const char* c = state->kii->_author.author_id; *c != '\0'; ++c) {
-        hash = (hash ^ (unsigned char)*c) * 16777619U;
-    }
-    hash = (hash ^ wait_ms) * 16777619U;
+    uint32_t seed = ebisu_retry_seed(state->kii->_author.author_id);
 
-    state->wait_left_ms = wait_ms / 2 + hash % (wait_ms / 2 + 1);
+    state->wait_left_ms = ebisu_retry_spread(wait_ms, seed);
     state->retry_wait_ms = (wait_ms > max_ms / 2) ? max_ms : wait_ms * 2;
 }
 

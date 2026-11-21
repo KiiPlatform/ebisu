@@ -4031,6 +4031,22 @@ TEST_CASE( "The waits between attempts" ) {
         }
     }
 
+    SECTION("the same waits as the task's own before ebisu_retry.h") {
+        uint32_t base_ms = 2000;
+        for (int attempt = 0; attempt < 12; ++attempt) {
+            INFO("attempt " << attempt);
+            // FNV-1a of the thing's ID, mixed with the wait.
+            uint32_t hash = 2166136261U;
+            for (const char* c = "th.1"; *c != '\0'; ++c) {
+                hash = (hash ^ (unsigned char)*c) * 16777619U;
+            }
+            hash = (hash ^ base_ms) * 16777619U;
+            _mqtt_state_reconnect(&state);
+            CHECK( state.wait_left_ms == base_ms / 2 + hash % (base_ms / 2 + 1) );
+            base_ms = base_ms * 2 > 300000 ? 300000 : base_ms * 2;
+        }
+    }
+
     SECTION("double up to the longest wait set") {
         REQUIRE( kii_set_mqtt_retry_wait_max(&kii, 30) == KII_ERR_OK );
         uint32_t base_ms = 2000;
