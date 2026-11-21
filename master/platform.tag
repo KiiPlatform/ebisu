@@ -395,6 +395,13 @@
       <anchor>ab9f3e76d7e9c40331d2c88e9ab8c933e</anchor>
       <arglist></arglist>
     </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_MBEDTLS_SUITES_MAX</name>
+      <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
+      <anchor>a8273415b3ec768401f03c79f9fe6022e</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="typedef">
       <type>struct ebisu_mbedtls_tls_t</type>
       <name>ebisu_mbedtls_tls_t</name>
@@ -596,6 +603,13 @@
       <name>EBISU_POLARSSL_SETS_RNG</name>
       <anchorfile>ebisu__polarssl_8h.html</anchorfile>
       <anchor>a21a3da78345972d22e0aadf2a967558d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_POLARSSL_SUITES_MAX</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>a8453a19ec38c5692e59a16ac6d0c5d32</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
