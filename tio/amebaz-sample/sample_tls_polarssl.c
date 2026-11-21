@@ -43,8 +43,8 @@ static void setup(ssl_context* ssl, void* userdata)
 void sample_tls_init(const char* ca, size_t ca_size)
 {
     /* PolarSSL's allocator, which random_init() set. */
-    int ret = ebisu_polarssl_tls_init(&tls_config, (const unsigned char*)ca, ca_size);
-    if (ret != 0) {
+    int ret = 0;
+    if (!ebisu_polarssl_tls_init(&tls_config, (const unsigned char*)ca, ca_size, &ret)) {
         sample_fatal("failed to set up TLS: -0x%04x", (unsigned int)-ret);
     }
     ebisu_polarssl_tls_set_setup(&tls_config, setup, NULL);

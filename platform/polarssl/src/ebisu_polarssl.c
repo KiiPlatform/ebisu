@@ -136,7 +136,8 @@ static void free_parts(ebisu_polarssl_tls_t* tls, bool locked)
     (void)locked;
 }
 
-int ebisu_polarssl_tls_init(ebisu_polarssl_tls_t* tls, const unsigned char* ca, size_t ca_size)
+/* 0, or PolarSSL's error, the configuration then holding nothing to free. */
+static int tls_init(ebisu_polarssl_tls_t* tls, const unsigned char* ca, size_t ca_size)
 {
     int ret = 0;
     memset(tls, 0, sizeof(*tls));
@@ -176,6 +177,16 @@ int ebisu_polarssl_tls_init(ebisu_polarssl_tls_t* tls, const unsigned char* ca, 
 fail:
     free_parts(tls, true);
     return ret;
+}
+
+bool ebisu_polarssl_tls_init(ebisu_polarssl_tls_t* tls, const unsigned char* ca, size_t ca_size,
+        int* out_error)
+{
+    int ret = tls_init(tls, ca, ca_size);
+    if (out_error != NULL) {
+        *out_error = ret;
+    }
+    return ret == 0;
 }
 
 void ebisu_polarssl_tls_set_setup(ebisu_polarssl_tls_t* tls, EBISU_POLARSSL_SETUP setup,

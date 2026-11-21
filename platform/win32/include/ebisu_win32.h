@@ -52,8 +52,10 @@ typedef struct ebisu_win32_lock_t {
  * \brief Initializes the SRWLOCK, and makes base a lock of it.
  *
  * \param [out] lock The lock.
+ * \return true: an SRWLOCK's initialization doesn't fail. A bool as the other
+ * ports' lock initializers return, for code that is the same over them.
  */
-void ebisu_win32_lock_init(ebisu_win32_lock_t* lock);
+bool ebisu_win32_lock_init(ebisu_win32_lock_t* lock);
 
 /**
  * \brief A TCP connection over a blocking Winsock 2 socket, without TLS.

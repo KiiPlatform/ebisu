@@ -108,10 +108,13 @@ typedef struct ebisu_mbedtls_tls_t {
  * configuration that pins the server's certificate or checks none, with
  * ebisu_mbedtls_tls_set_verify(): checked in full, no server's is taken.
  * \param [in] ca_size The size of ca, its NUL included for PEM.
- * \return 0, or mbedTLS's or PSA's error, in which case the configuration
- * holds nothing to free.
+ * \param [out] out_error MbedTLS's or PSA's error when it fails, and 0 when it doesn't:
+ * which certificate it couldn't read, or that it has no entropy source, for a
+ * log. NULL for none.
+ * \return Whether it did. If not, the configuration holds nothing to free.
  */
-int ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, size_t ca_size);
+bool ebisu_mbedtls_tls_init(ebisu_mbedtls_tls_t* tls, const unsigned char* ca, size_t ca_size,
+        int* out_error);
 
 /**
  * \brief mbedTLS's configuration, for settings of the application's.

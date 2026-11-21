@@ -191,7 +191,7 @@ struct Config {
     explicit Config(bool give_rng = true) : rng(give_rng), suites(nullptr) {
         std::string pem = to_pem(pki().ca);
         REQUIRE( ebisu_polarssl_tls_init(&tls, (const unsigned char*)pem.c_str(),
-                    pem.size() + 1) == 0 );
+                    pem.size() + 1, nullptr) );
         ebisu_polarssl_tls_set_setup(&tls, setup, this);
     }
     ~Config() {
@@ -450,7 +450,7 @@ namespace {
 struct NoCaConfig {
     ebisu_polarssl_tls_t tls;
     NoCaConfig() {
-        REQUIRE( ebisu_polarssl_tls_init(&tls, nullptr, 0) == 0 );
+        REQUIRE( ebisu_polarssl_tls_init(&tls, nullptr, 0, nullptr) );
         give_rng(&tls);
     }
     ~NoCaConfig() {
@@ -900,7 +900,9 @@ TEST_CASE( "The PolarSSL sockets of a configuration connect on several threads a
 TEST_CASE( "A TLS configuration whose CA certificates can't be parsed fails" ) {
     const unsigned char garbage[] = "-----BEGIN CERTIFICATE-----\nnot one\n-----END CERTIFICATE-----\n";
     ebisu_polarssl_tls_t tls;
-    CHECK( ebisu_polarssl_tls_init(&tls, garbage, sizeof(garbage)) != 0 );
+    int error = 0;
+    CHECK_FALSE( ebisu_polarssl_tls_init(&tls, garbage, sizeof(garbage), &error) );
+    CHECK( error < 0 );
 }
 
 namespace {

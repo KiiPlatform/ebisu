@@ -181,7 +181,7 @@ struct Config {
     explicit Config(bool rng = true) {
         std::string pem = to_pem(pki().ca);
         REQUIRE( ebisu_mbedtls_tls_init(&tls, (const unsigned char*)pem.c_str(),
-                    pem.size() + 1) == 0 );
+                    pem.size() + 1, nullptr) );
         if (rng) {
             give_rng(&tls);
         }
@@ -450,7 +450,7 @@ namespace {
 struct NoCaConfig {
     ebisu_mbedtls_tls_t tls;
     NoCaConfig() {
-        REQUIRE( ebisu_mbedtls_tls_init(&tls, nullptr, 0) == 0 );
+        REQUIRE( ebisu_mbedtls_tls_init(&tls, nullptr, 0, nullptr) );
         give_rng(&tls);
     }
     ~NoCaConfig() {
@@ -900,7 +900,9 @@ TEST_CASE( "The mbedTLS sockets of a configuration connect on several threads at
 TEST_CASE( "A TLS configuration whose CA certificates can't be parsed fails" ) {
     const unsigned char garbage[] = "-----BEGIN CERTIFICATE-----\nnot one\n-----END CERTIFICATE-----\n";
     ebisu_mbedtls_tls_t tls;
-    CHECK( ebisu_mbedtls_tls_init(&tls, garbage, sizeof(garbage)) != 0 );
+    int error = 0;
+    CHECK_FALSE( ebisu_mbedtls_tls_init(&tls, garbage, sizeof(garbage), &error) );
+    CHECK( error < 0 );
 }
 
 namespace {

@@ -132,14 +132,14 @@ static void run_suite(void* parameter)
 
     net_wait_until_up();
 #ifdef EBISU_LTEST_POLARSSL
-    int ret = ebisu_polarssl_tls_init(&tls, (const unsigned char*)ca_pem, ca_pem_size);
-    if (ret != 0) {
+    int ret = 0;
+    if (!ebisu_polarssl_tls_init(&tls, (const unsigned char*)ca_pem, ca_pem_size, &ret)) {
         board_fatal("failed to set up TLS: -0x%04x", (unsigned int)-ret);
     }
     ebisu_polarssl_tls_set_setup(&tls, setup_connection, NULL);
 #else
-    int ret = ebisu_mbedtls_tls_init(&tls, (const unsigned char*)ca_pem, ca_pem_size);
-    if (ret != 0) {
+    int ret = 0;
+    if (!ebisu_mbedtls_tls_init(&tls, (const unsigned char*)ca_pem, ca_pem_size, &ret)) {
         board_fatal("failed to set up TLS: -0x%04x", (unsigned int)-ret);
     }
 #endif

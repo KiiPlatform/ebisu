@@ -260,8 +260,7 @@ static void init_tls(void)
     int ret;
 
     mbedtls_platform_set_calloc_free(tls_calloc, vPortFree);
-    ret = ebisu_mbedtls_tls_init(&tls_config, (const unsigned char*)ca_pem, ca_pem_size);
-    if (ret != 0) {
+    if (!ebisu_mbedtls_tls_init(&tls_config, (const unsigned char*)ca_pem, ca_pem_size, &ret)) {
         sample_fatal("failed to set up TLS: -0x%04x", (unsigned int)-ret);
     }
     conf = ebisu_mbedtls_tls_config(&tls_config);

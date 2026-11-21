@@ -86,7 +86,7 @@ TEST_CASE( "The POSIX system's monotonic clock goes forward" ) {
 
 TEST_CASE( "The POSIX lock is a mutex" ) {
     ebisu_posix_lock_t lock;
-    REQUIRE( ebisu_posix_lock_init(&lock) == 0 );
+    REQUIRE( ebisu_posix_lock_init(&lock) );
     lock.base.ops->lock(&lock.base);
     CHECK( pthread_mutex_trylock(&lock.mutex) != 0 );
     lock.base.ops->unlock(&lock.base);

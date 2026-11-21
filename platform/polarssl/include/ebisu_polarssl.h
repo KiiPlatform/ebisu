@@ -131,10 +131,13 @@ typedef struct ebisu_polarssl_tls_t {
  * configuration that pins the server's certificate or checks none, with
  * ebisu_polarssl_tls_set_verify(): checked in full, no server's is taken.
  * \param [in] ca_size The size of ca, its NUL included for PEM.
- * \return 0, or PolarSSL's error, in which case the configuration holds
- * nothing to free.
+ * \param [out] out_error PolarSSL's error when it fails, and 0 when it doesn't:
+ * which certificate it couldn't read, or that it has no entropy source, for a
+ * log. NULL for none.
+ * \return Whether it did. If not, the configuration holds nothing to free.
  */
-int ebisu_polarssl_tls_init(ebisu_polarssl_tls_t* tls, const unsigned char* ca, size_t ca_size);
+bool ebisu_polarssl_tls_init(ebisu_polarssl_tls_t* tls, const unsigned char* ca, size_t ca_size,
+        int* out_error);
 
 /**
  * \brief Sets the application's settings for each connection.

@@ -333,8 +333,8 @@ static ebisu_posix_tcp_socket_t tcp;
 static ebisu_mbedtls_socket_t sock;
 
     /* ca_pem with its NUL, and its size counting it. */
-    int ret = ebisu_mbedtls_tls_init(&tls, (const unsigned char*)ca_pem, ca_pem_size);
-    if (ret != 0) {
+    int ret = 0;
+    if (!ebisu_mbedtls_tls_init(&tls, (const unsigned char*)ca_pem, ca_pem_size, &ret)) {
         /* mbedTLS's or PSA's error. */
     }
     ebisu_posix_tcp_socket_init(&tcp, 15, 15);
