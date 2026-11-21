@@ -1252,3 +1252,135 @@ TEST_CASE( "The mbedTLS socket says when the server sends a record longer than i
         CHECK_FALSE( client.logger.has("sent a record of") );
     }
 }
+
+namespace {
+
+// Says nothing, for as long as the client stays.
+void say_nothing(SSL*, int fd)
+{
+    char buffer[2048];
+    while (read(fd, buffer, sizeof(buffer)) > 0) {
+    }
+}
+
+// The start of a handshake record of 16384 bytes, then a byte of it every
+// 100 ms: each wait for the server is short, and there is no end to them.
+void drip(SSL*, int fd)
+{
+    const char header[] = { 0x16, 0x03, 0x03, 0x40, 0x00 };
+    (void)!write(fd, header, sizeof(header));
+    for (int i = 0; i < 100; ++i) {
+        const char byte = 0x02;
+        if (send(fd, &byte, 1, MSG_NOSIGNAL) != 1) {
+            return;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+double seconds_since(std::chrono::steady_clock::time_point start)
+{
+    return std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+}
+
+} // namespace
+
+// The socket under it bounds each wait for the server, and not how many of
+// them a handshake takes.
+TEST_CASE( "The mbedTLS socket gives up a handshake at the time set for it" ) {
+    Config config;
+    const char ran_out[] = "TLS handshake with localhost not done in the 1000 ms it has.";
+
+    SECTION("with a server that says nothing, and no receive timeout") {
+        TlsServer server(pki().server(), say_nothing, 1, 0, true);
+        Client client(&config.tls, 0, 0);
+        ebisu_mbedtls_socket_set_handshake_timeout(&client.tls, ebisu_posix_system(), 1);
+        auto start = std::chrono::steady_clock::now();
+        CHECK( client.connect(server.port) == EBISU_SOCK_FAIL );
+        CHECK( seconds_since(start) >= 0.9 );
+        CHECK( seconds_since(start) < 4 );
+        CHECK( client.error() == EBISU_SOCK_ERROR_TIMEOUT );
+#ifndef EBISU_NO_LOG
+        CHECK( client.logger.has(ran_out) );
+#endif
+    }
+
+    SECTION("with a server that sends a byte at a time") {
+        TlsServer server(pki().server(), drip, 1, 0, true);
+        Client client(&config.tls, 5, 5);
+        ebisu_mbedtls_socket_set_handshake_timeout(&client.tls, ebisu_posix_system(), 1);
+        auto start = std::chrono::steady_clock::now();
+        CHECK( client.connect(server.port) == EBISU_SOCK_FAIL );
+        CHECK( seconds_since(start) >= 0.9 );
+        CHECK( seconds_since(start) < 4 );
+        CHECK( client.error() == EBISU_SOCK_ERROR_TIMEOUT );
+    }
+
+    SECTION("over a socket without recv_wait, between its receives") {
+        TlsServer server(pki().server(), drip, 1, 0, true);
+        ebisu_posix_tcp_socket_t tcp;
+        ebisu_posix_tcp_socket_init(&tcp, 5, 5);
+        ebisu_socket_ops_t ops = *tcp.base.ops;
+        ops.recv_wait = nullptr;
+        tcp.base.ops = &ops;
+        ebisu_mbedtls_socket_t tls;
+        ebisu_mbedtls_socket_init(&tls, &tcp.base, &config.tls);
+        ebisu_mbedtls_socket_set_handshake_timeout(&tls, ebisu_posix_system(), 1);
+        auto start = std::chrono::steady_clock::now();
+        CHECK( tls.base.ops->connect(&tls.base, "localhost", server.port) == EBISU_SOCK_FAIL );
+        CHECK( seconds_since(start) >= 0.9 );
+        CHECK( seconds_since(start) < 4 );
+        long detail = 0;
+        CHECK( tls.base.ops->last_error(&tls.base, &detail) == EBISU_SOCK_ERROR_TIMEOUT );
+        tls.base.ops->close(&tls.base);
+    }
+
+    SECTION("and a handshake within it leaves the receive timeout as it was") {
+        std::atomic<bool> timed_out(false);
+        TlsServer server(pki().server(), [&timed_out](SSL* ssl, int) {
+            wait_for(timed_out);
+            SSL_write(ssl, "late", 4);
+            char buffer[16];
+            SSL_read(ssl, buffer, sizeof(buffer));
+        });
+        Client client(&config.tls, 1);
+        ebisu_mbedtls_socket_set_handshake_timeout(&client.tls, ebisu_posix_system(), 5);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+        auto start = std::chrono::steady_clock::now();
+        ebisu_sock_code_t code;
+        client.recv(64, &code);
+        CHECK( code == EBISU_SOCK_FAIL );
+        CHECK( client.error() == EBISU_SOCK_ERROR_TIMEOUT );
+        CHECK( seconds_since(start) >= 0.9 );
+        CHECK( seconds_since(start) < 4 );
+        CHECK_FALSE( client.logger.has("not done in") );
+        timed_out = true;
+        CHECK( client.recv(64) == "late" );
+    }
+
+    SECTION("unset, by the socket under it alone, as before") {
+        TlsServer server(pki().server(), say_nothing, 1, 0, true);
+        Client client(&config.tls, 1, 1);
+        auto start = std::chrono::steady_clock::now();
+        CHECK( client.connect(server.port) == EBISU_SOCK_FAIL );
+        CHECK( seconds_since(start) >= 0.9 );
+        CHECK( seconds_since(start) < 4 );
+        CHECK( client.error() == EBISU_SOCK_ERROR_TIMEOUT );
+        CHECK_FALSE( client.logger.has("not done in") );
+    }
+
+    SECTION("with no system, or one without a monotonic clock, or 0 seconds, there is none") {
+        Client client(&config.tls);
+        ebisu_mbedtls_socket_set_handshake_timeout(&client.tls, nullptr, 3);
+        CHECK( client.tls._handshake_ms == 0 );
+        ebisu_system_ops_t ops = *ebisu_posix_system()->ops;
+        ops.monotonic_ms = nullptr;
+        ebisu_system_t system = { &ops };
+        ebisu_mbedtls_socket_set_handshake_timeout(&client.tls, &system, 3);
+        CHECK( client.tls._handshake_ms == 0 );
+        ebisu_mbedtls_socket_set_handshake_timeout(&client.tls, ebisu_posix_system(), 0);
+        CHECK( client.tls._handshake_ms == 0 );
+        ebisu_mbedtls_socket_set_handshake_timeout(&client.tls, ebisu_posix_system(), 3);
+        CHECK( client.tls._handshake_ms == 3000 );
+    }
+}
