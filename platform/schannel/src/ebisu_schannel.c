@@ -373,12 +373,25 @@ static read_result_t read_some(ebisu_schannel_socket_t* ctx)
     fd_set readable;
     FD_ZERO(&readable);
     FD_SET(ctx->socket, &readable);
+    /* For to_recv, or, in a handshake with a time to take, for what is left
+       of that if it is less: the receive timeout bounds each wait for the
+       server, and not how many a handshake takes. */
+    bool bounded = ctx->to_recv > 0;
+    ULONGLONG wait_ms = (ULONGLONG)ctx->to_recv * 1000;
+    if (ctx->handshaking) {
+        const ULONGLONG limit_ms = (ULONGLONG)ctx->to_connect * 1000;
+        const ULONGLONG gone_ms = GetTickCount64() - ctx->handshake_start_ms;
+        const ULONGLONG left_ms = gone_ms >= limit_ms ? 0 : limit_ms - gone_ms;
+        if (!bounded || left_ms < wait_ms) {
+            wait_ms = left_ms;
+        }
+        bounded = true;
+    }
     struct timeval timeout;
-    timeout.tv_sec = ctx->to_recv > LONG_MAX ? LONG_MAX : (long)ctx->to_recv;
-    timeout.tv_usec = 0;
+    timeout.tv_sec = wait_ms / 1000 > LONG_MAX ? LONG_MAX : (long)(wait_ms / 1000);
+    timeout.tv_usec = (long)(wait_ms % 1000) * 1000;
     /* Winsock ignores the first argument. */
-    int ready = select(0, &readable, NULL, NULL,
-            ctx->to_recv > 0 ? &timeout : NULL);
+    int ready = select(0, &readable, NULL, NULL, bounded ? &timeout : NULL);
     if (ready == SOCKET_ERROR) {
         int code = WSAGetLastError();
         log_code(ctx, (unsigned long)code, "select failed");
@@ -764,7 +777,12 @@ static int tls_connect(ebisu_schannel_socket_t* ctx)
         return -1;
     }
 
-    if (handshake(ctx) != 0) {
+    /* The handshake has the connect timeout too, from here. */
+    ctx->handshake_start_ms = GetTickCount64();
+    ctx->handshaking = ctx->to_connect > 0;
+    int shaken = handshake(ctx);
+    ctx->handshaking = 0;
+    if (shaken != 0) {
         return -1;
     }
     if (ctx->verify != EBISU_TLS_VERIFY_NONE && verify_server_certificate(ctx) != 0) {

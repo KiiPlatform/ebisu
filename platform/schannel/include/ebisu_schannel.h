@@ -54,9 +54,13 @@ typedef struct ebisu_schannel_socket_t {
     /* Receive and send timeouts in seconds; 0 waits for ever. */
     unsigned int to_recv; /**< \private */
     unsigned int to_send; /**< \private */
-    /* Bounds looking up the host, and each attempt to connect to an address,
-       in seconds; 0 waits for ever. */
+    /* Bounds looking up the host, each attempt to connect to an address, and
+       the TLS handshake, in seconds; 0 waits for ever. */
     unsigned int to_connect; /**< \private */
+    /* Whether a handshake is under way, with a time to take, and when it
+       started, by GetTickCount64(). */
+    int handshaking; /**< \private */
+    unsigned long long handshake_start_ms; /**< \private */
     /* The time the server's certificate is checked at, or NULL for the
        system's. See ebisu_clock_t. */
     ebisu_clock_t* clock; /**< \private */
@@ -140,14 +144,18 @@ void ebisu_schannel_socket_init(
  *
  * The host is looked up with GetAddrInfoExW(), and its addresses tried in the
  * order it gives them, IPv6 and IPv4, until one connects. The timeout bounds
- * the lookup, and each attempt to connect to an address, but not the TLS
- * handshake, which the receive and send timeouts bound. A lookup the timeout
+ * the lookup, each attempt to connect to an address, and then the TLS
+ * handshake, each for as long. The receive timeout bounds each wait for the
+ * server within the handshake too, and not how many there are: by it alone,
+ * a server that says nothing to a socket with no receive timeout, or a
+ * little at a time, would keep connect from returning. A lookup the timeout
  * cuts short is cancelled, with GetAddrInfoExCancel(), and the connect fails
  * with EBISU_SOCK_ERROR_TIMEOUT.
  *
  * \param [out] sock The socket.
  * \param [in] seconds 0 for no bound: the lookup takes as long as the system's
- * resolver does, and an attempt as long as the system's TCP does.
+ * resolver does, an attempt as long as the system's TCP does, and the
+ * handshake as long as the server does within the receive timeout.
  */
 void ebisu_schannel_socket_set_connect_timeout(ebisu_schannel_socket_t* sock,
         unsigned int seconds);
