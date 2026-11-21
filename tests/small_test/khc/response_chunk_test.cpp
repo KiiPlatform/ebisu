@@ -10,7 +10,7 @@
 #include <vector>
 
 TEST_CASE( "HTTP chunked response test" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
 
@@ -96,7 +96,7 @@ TEST_CASE( "HTTP chunked response test" ) {
         return EBISU_SOCK_OK;
     };
 
-    khc_code res = khc_perform(&http);
+    khc_code_t res = khc_perform(&http);
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
@@ -120,7 +120,7 @@ TEST_CASE( "HTTP chunked response test" ) {
 }
 
 TEST_CASE( "small buffer size test" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
     const size_t buff_size = 10;
     char buff[buff_size];
@@ -201,7 +201,7 @@ TEST_CASE( "small buffer size test" ) {
         return EBISU_SOCK_OK;
     };
 
-    khc_code res = khc_perform(&http);
+    khc_code_t res = khc_perform(&http);
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
@@ -225,7 +225,7 @@ TEST_CASE( "small buffer size test" ) {
 }
 
 TEST_CASE( "random buffer size test" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
     random_device rd;
     mt19937 mt(rd());
@@ -310,7 +310,7 @@ TEST_CASE( "random buffer size test" ) {
         return EBISU_SOCK_OK;
     };
 
-    khc_code res = khc_perform(&http);
+    khc_code_t res = khc_perform(&http);
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
@@ -334,7 +334,7 @@ TEST_CASE( "random buffer size test" ) {
 }
 
 TEST_CASE( "random chunk body test" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
 
     ifstream ifs;
@@ -422,7 +422,7 @@ TEST_CASE( "random chunk body test" ) {
         return EBISU_SOCK_OK;
     };
 
-    khc_code res = khc_perform(&http);
+    khc_code_t res = khc_perform(&http);
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
@@ -438,7 +438,7 @@ TEST_CASE( "random chunk body test" ) {
 }
 
 TEST_CASE( "HTTP response 400 test(chunked)" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
 
     string expectBody = "dummy body.";
@@ -517,7 +517,7 @@ TEST_CASE( "HTTP response 400 test(chunked)" ) {
         return EBISU_SOCK_OK;
     };
 
-    khc_code res = khc_perform(&http);
+    khc_code_t res = khc_perform(&http);
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 400 );
     REQUIRE( on_connect_called == 1 );
@@ -534,7 +534,7 @@ TEST_CASE( "HTTP response 400 test(chunked)" ) {
 namespace {
 
 struct ChunkedResult {
-    khc_code res;
+    khc_code_t res;
     string body;
     int on_close_called;
 };
@@ -546,7 +546,7 @@ ChunkedResult perform_chunked(
         const string& chunked_body,
         size_t max_recv,
         size_t stream_buff_size = DEFAULT_STREAM_BUFF_SIZE) {
-    khc http;
+    khc_t http;
     khc_init(&http);
 
     // Stale bytes in the stream buffer are hex digits, so that a size read

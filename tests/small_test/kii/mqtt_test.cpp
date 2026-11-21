@@ -777,11 +777,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     SECTION("a failure on the network is tried again") {
         enum FailAt { CONNECT, SEND, RECV };
         const FailAt fail_ats[] = { CONNECT, SEND, RECV };
-        const kii_mqtt_task_state task_states[] = {
+        const kii_mqtt_task_state_t task_states[] = {
             KII_MQTT_ST_INSTALL_PUSH, KII_MQTT_ST_GET_ENDPOINT
         };
         for (FailAt fail_at : fail_ats) {
-            for (kii_mqtt_task_state task_state : task_states) {
+            for (kii_mqtt_task_state_t task_state : task_states) {
                 INFO("fail at " << fail_at << ", state " << task_state);
                 http_ctx.on_connect = [=](void* socket_context, const char* host, uint16_t port) {
                     return fail_at == CONNECT ? EBISU_SOCK_FAIL : EBISU_SOCK_OK;
@@ -3057,7 +3057,7 @@ TEST_CASE( "QoS 1 and a session the broker keeps" ) {
         serve_stream(mqtt_ctx, publish_qos1_packet("dummyTopic", 7, "{\"kept\":1}") +
                 publish_packet("dummyTopic", "{\"kept\":2}") + suback, served);
         state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
-        std::vector<kii_mqtt_task_state> states;
+        std::vector<kii_mqtt_task_state_t> states;
         for (int i = 0; i < 8 && state.info.task_state != KII_MQTT_ST_RECV_READY &&
                 state.info.task_state != KII_MQTT_ST_RECONNECT; ++i) {
             if (state.info.task_state == KII_MQTT_ST_RECV_SUBACK) {
@@ -3068,7 +3068,7 @@ TEST_CASE( "QoS 1 and a session the broker keeps" ) {
             }
             states.push_back(state.info.task_state);
         }
-        CHECK( states == std::vector<kii_mqtt_task_state>({
+        CHECK( states == std::vector<kii_mqtt_task_state_t>({
                 KII_MQTT_ST_RECV_MSG, KII_MQTT_ST_RECV_SUBACK,
                 KII_MQTT_ST_RECV_MSG, KII_MQTT_ST_RECV_SUBACK,
                 KII_MQTT_ST_RECV_READY }) );
@@ -3096,7 +3096,7 @@ TEST_CASE( "kii_start_push_task reports a task it could not create" ) {
     khct::set_push_needs(&kii, buff, sizeof(buff));
 
     SECTION("task created") {
-        TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
+        TaskCreateCtx ctx = { EBISU_TASK_OK, 0 };
         khct::cb::SystemCtx kii_sys;
         kii_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
             return mock_task_create(name, entry, entry_param, &ctx);
@@ -3109,7 +3109,7 @@ TEST_CASE( "kii_start_push_task reports a task it could not create" ) {
     }
 
     SECTION("task not created") {
-        TaskCreateCtx ctx = { EBISU_TASKC_FAIL, 0 };
+        TaskCreateCtx ctx = { EBISU_TASK_FAIL, 0 };
         khct::cb::SystemCtx kii_sys;
         kii_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
             return mock_task_create(name, entry, entry_param, &ctx);
@@ -3131,7 +3131,7 @@ TEST_CASE( "kii_start_push_task needs what the task uses" ) {
     kii_t kii;
     kii_init(&kii);
     khct::set_push_needs(&kii, buff, sizeof(buff));
-    TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
+    TaskCreateCtx ctx = { EBISU_TASK_OK, 0 };
     khct::cb::SystemCtx kii_sys;
     kii_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
         return mock_task_create(name, entry, entry_param, &ctx);
@@ -3202,7 +3202,7 @@ TEST_CASE( "kii_start_push_task refuses while its task is running" ) {
     kii_init(&kii);
     khct::set_push_needs(&kii, buff, sizeof(buff));
     kii_set_cb_task_continue(&kii, stop_task, NULL);
-    TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
+    TaskCreateCtx ctx = { EBISU_TASK_OK, 0 };
     khct::cb::SystemCtx kii_sys;
     kii_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
         return mock_task_create(name, entry, entry_param, &ctx);
@@ -3233,10 +3233,10 @@ TEST_CASE( "kii_start_push_task refuses while its task is running" ) {
     }
 
     SECTION("but not after a task that could not be created") {
-        ctx.result = EBISU_TASKC_FAIL;
+        ctx.result = EBISU_TASK_FAIL;
         REQUIRE( kii_start_push_task(&kii, 300) == KII_ERR_CREATE_TASK );
 
-        ctx.result = EBISU_TASKC_OK;
+        ctx.result = EBISU_TASK_OK;
         CHECK( kii_start_push_task(&kii, 300) == KII_ERR_OK );
     }
 
@@ -3355,7 +3355,7 @@ TEST_CASE( "MQTT endpoint values out of range" ) {
 static ebisu_task_code_t count_task_create(const char* name, EBISU_TASK_ENTRY entry, void* entry_param, void* userdata)
 {
     ++*(int*)userdata;
-    return EBISU_TASKC_OK;
+    return EBISU_TASK_OK;
 }
 
 // CONNECT carries the keep-alive in 16 bits, and it was written there with no
@@ -3606,17 +3606,17 @@ namespace {
 
 struct ExitCtx {
     // Whether the task is to go on in the state it is about to handle.
-    std::function<bool(kii_mqtt_task_state)> keep_going;
+    std::function<bool(kii_mqtt_task_state_t)> keep_going;
     int closes = 0;
     bool exited = false;
     int closes_at_exit = -1;
-    kii_mqtt_task_info exit_info;
+    kii_mqtt_task_info_t exit_info;
 };
 
 bool exit_test_continue(void* task_info, void* userdata)
 {
     ExitCtx* ctx = (ExitCtx*)userdata;
-    kii_mqtt_task_state state = ((kii_mqtt_task_info*)task_info)->task_state;
+    kii_mqtt_task_state_t state = ((kii_mqtt_task_info_t*)task_info)->task_state;
     return ctx->keep_going(state);
 }
 
@@ -3625,7 +3625,7 @@ void exit_test_exit(void* task_info, void* userdata)
     ExitCtx* ctx = (ExitCtx*)userdata;
     ctx->exited = true;
     ctx->closes_at_exit = ctx->closes;
-    ctx->exit_info = *(kii_mqtt_task_info*)task_info;
+    ctx->exit_info = *(kii_mqtt_task_info_t*)task_info;
 }
 
 std::string http_response(const std::string& status_line, const std::string& body)
@@ -3732,7 +3732,7 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
 
     SECTION("discontinued while connected") {
         int timeouts = 0;
-        ctx.keep_going = [&timeouts](kii_mqtt_task_state state) {
+        ctx.keep_going = [&timeouts](kii_mqtt_task_state_t state) {
             // Ready, and a receive has timed out.
             return !(state == KII_MQTT_ST_RECV_READY && ++timeouts > 1);
         };
@@ -3753,7 +3753,7 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
     }
 
     SECTION("discontinued before connecting") {
-        ctx.keep_going = [](kii_mqtt_task_state state) {
+        ctx.keep_going = [](kii_mqtt_task_state_t state) {
             return state != KII_MQTT_ST_SOCK_CONNECT;
         };
 
@@ -3771,7 +3771,7 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
     SECTION("discontinued while connecting again after closing") {
         served = 0;
         serve_stream(mqtt_ctx, "", served); // no CONNACK
-        ctx.keep_going = [&connects, &connect_ok](kii_mqtt_task_state state) {
+        ctx.keep_going = [&connects, &connect_ok](kii_mqtt_task_state_t state) {
             connect_ok = connects == 0;
             return connects < 2;
         };
@@ -3797,7 +3797,7 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
             served += *out_actual_length;
             return EBISU_SOCK_OK;
         };
-        ctx.keep_going = [&connects](kii_mqtt_task_state state) {
+        ctx.keep_going = [&connects](kii_mqtt_task_state_t state) {
             return !(connects == 2 && state == KII_MQTT_ST_SEND_CONNECT);
         };
 
@@ -3815,7 +3815,7 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
     SECTION("exiting on an error while connected") {
         // Too small for CONNECT, which SEND_CONNECT finds once connected.
         kii_set_mqtt_buff(&kii, mqtt_buff, 16);
-        ctx.keep_going = [](kii_mqtt_task_state) { return true; };
+        ctx.keep_going = [](kii_mqtt_task_state_t) { return true; };
 
         mqtt_start_task(&kii);
 
@@ -4312,7 +4312,7 @@ TEST_CASE( "The MQTT task with an endpoint of the application's" ) {
     khct::cb::SystemCtx sys;
     sys.on_task_create = [&tasks](const char*, EBISU_TASK_ENTRY, void*) {
         ++tasks;
-        return EBISU_TASKC_OK;
+        return EBISU_TASK_OK;
     };
     kii_set_system(&kii, sys.system());
     std::string sent;
@@ -5565,7 +5565,7 @@ TEST_CASE( "The message callback gets what the PUBLISH carried" ) {
     _init_mqtt_state(&kii, &state);
     // A message as it comes while the task waits, read to its end, or while it
     // waits for SUBACK.
-    auto receive = [&](const std::string& packet, kii_mqtt_task_state waiting) {
+    auto receive = [&](const std::string& packet, kii_mqtt_task_state_t waiting) {
         got.clear();
         sent.clear();
         served = 0;
@@ -5583,7 +5583,7 @@ TEST_CASE( "The message callback gets what the PUBLISH carried" ) {
         REQUIRE( got.size() == 1 );
         return got[0];
     };
-    const kii_mqtt_task_state ready = KII_MQTT_ST_RECV_READY;
+    const kii_mqtt_task_state_t ready = KII_MQTT_ST_RECV_READY;
 
     SECTION("at QoS 0") {
         Got g = receive(publish_packet("devices/1", "{\"a\":1}"), ready);
@@ -5730,7 +5730,7 @@ TEST_CASE( "kii_mqtt_publish() has the task publish, one message at a time" ) {
     uint64_t now_ms = 0;
     int task_waits_of_a_second = 0;
     khct::cb::SystemCtx sys;
-    sys.on_task_create = [](const char*, EBISU_TASK_ENTRY, void*) { return EBISU_TASKC_OK; };
+    sys.on_task_create = [](const char*, EBISU_TASK_ENTRY, void*) { return EBISU_TASK_OK; };
     sys.on_monotonic_ms = [&now_ms]() { return now_ms; };
     sys.on_delay_ms = [&](uint32_t ms) {
         now_ms += ms;

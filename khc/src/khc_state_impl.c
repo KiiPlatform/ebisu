@@ -6,13 +6,13 @@
 #include <ebisu_str.h>
 
 
-void khc_set_socket(khc* khc, ebisu_socket_t* socket)
+void khc_set_socket(khc_t* khc, ebisu_socket_t* socket)
 {
     khc->_socket = socket;
 }
 
-khc_code khc_set_cb_read(
-        khc* khc,
+khc_code_t khc_set_cb_read(
+        khc_t* khc,
         KHC_CB_READ cb,
         void* userdata)
 {
@@ -21,8 +21,8 @@ khc_code khc_set_cb_read(
     return KHC_ERR_OK;
 }
 
-khc_code khc_set_cb_write(
-        khc* khc,
+khc_code_t khc_set_cb_write(
+        khc_t* khc,
         KHC_CB_WRITE cb,
         void* userdata)
 {
@@ -31,8 +31,8 @@ khc_code khc_set_cb_write(
     return KHC_ERR_OK;
 }
 
-khc_code khc_set_cb_header(
-        khc* khc,
+khc_code_t khc_set_cb_header(
+        khc_t* khc,
         KHC_CB_HEADER cb,
         void* userdata)
 {
@@ -41,7 +41,7 @@ khc_code khc_set_cb_header(
     return KHC_ERR_OK;
 }
 
-khc_code khc_set_host(khc* khc, const char* host) {
+khc_code_t khc_set_host(khc_t* khc, const char* host) {
     size_t len = strlen(host);
     size_t buff_len = sizeof(khc->_host);
     if (buff_len < len + 1) {
@@ -51,7 +51,7 @@ khc_code khc_set_host(khc* khc, const char* host) {
     return KHC_ERR_OK;
 }
 
-khc_code khc_set_path(khc* khc, const char* path) {
+khc_code_t khc_set_path(khc_t* khc, const char* path) {
     size_t len = strlen(path);
     size_t buff_len = sizeof(khc->_path);
     if (buff_len < len + 1) {
@@ -61,7 +61,7 @@ khc_code khc_set_path(khc* khc, const char* path) {
     return KHC_ERR_OK;
 }
 
-khc_code khc_set_method(khc* khc, const char* method) {
+khc_code_t khc_set_method(khc_t* khc, const char* method) {
     size_t len = strlen(method);
     size_t buff_len = sizeof(khc->_method);
     if (buff_len < len + 1) {
@@ -71,7 +71,7 @@ khc_code khc_set_method(khc* khc, const char* method) {
     return KHC_ERR_OK;
 }
 
-bool khc_method_can_have_body(khc* khc) {
+bool khc_method_can_have_body(khc_t* khc) {
     if(khc->_method[0]==0) {
         return true; // undefined method.
     }
@@ -87,12 +87,12 @@ bool khc_method_can_have_body(khc* khc) {
     return true;
 }
 
-khc_code khc_set_req_headers(khc* khc, khc_slist* headers) {
+khc_code_t khc_set_req_headers(khc_t* khc, khc_slist_t* headers) {
     khc->_req_headers = headers;
     return KHC_ERR_OK;
 }
 
-void khc_state_idle(khc* khc) {
+void khc_state_idle(khc_t* khc) {
     if (strlen(khc->_host) == 0) {
         // Fallback to localhost
         strncpy(khc->_host, "localhost", sizeof(khc->_host));
@@ -107,7 +107,7 @@ void khc_state_idle(khc* khc) {
 
 // Asks the socket why its operation failed, before anything else is done
 // with it, closing it included.
-static void _record_sock_error(khc* khc) {
+static void _record_sock_error(khc_t* khc) {
     const ebisu_socket_ops_t* ops = khc->_socket->ops;
     khc->_sock_error_detail = 0;
     khc->_sock_error = (ops->last_error != NULL) ?
@@ -116,12 +116,12 @@ static void _record_sock_error(khc* khc) {
 }
 
 // The connection closed before the response ended.
-static void _closed_early(khc* khc) {
+static void _closed_early(khc_t* khc) {
     khc->_sock_error = EBISU_SOCK_ERROR_CLOSED;
     khc->_sock_error_detail = 0;
 }
 
-void khc_state_connect(khc* khc) {
+void khc_state_connect(khc_t* khc) {
     const uint16_t port = khc->_enable_insecure ? 80:443;
     ebisu_sock_code_t con_res = khc->_socket->ops->connect(khc->_socket, khc->_host, port);
     if (con_res == EBISU_SOCK_OK) {
@@ -147,7 +147,7 @@ static const char schema_http[] = "http://";
 static const char http_version[] = "HTTP/1.1\r\n";
 
 // The path, as an empty one has to go out as "/".
-static const char* request_path(khc* khc) {
+static const char* request_path(khc_t* khc) {
     // Path must be started with '/'
     return khc->_path[0] != '\0' ? khc->_path : "/";
 }
@@ -161,7 +161,7 @@ static const char* request_path(khc* khc) {
      + sizeof(schema_https) - 1 + KHC_HOST_MAX_SIZE - 1 + KHC_PATH_MAX_SIZE - 1 + 1 \
      + sizeof(http_version) - 1)
 
-void khc_state_req_line(khc* khc) {
+void khc_state_req_line(khc_t* khc) {
     char request_line[REQUEST_LINE_MAX_LEN + 1];
 
     request_line[0] = '\0';
@@ -204,7 +204,7 @@ void khc_state_req_line(khc* khc) {
     }
 }
 
-void khc_state_req_host_header(khc* khc) {
+void khc_state_req_host_header(khc_t* khc) {
     const char hdr_key[] = "HOST: ";
     // The key, the longest host khc_set_host() takes, the CRLF and the NUL.
     char buff[sizeof(hdr_key) - 1 + KHC_HOST_MAX_SIZE - 1 + 2 + 1];
@@ -240,7 +240,7 @@ void khc_state_req_host_header(khc* khc) {
     }
 }
 
-void khc_state_req_header(khc* khc) {
+void khc_state_req_header(khc_t* khc) {
     if (khc->_current_req_header == NULL) {
         khc->_state = KHC_STATE_REQ_HEADER_END;
         return;
@@ -260,7 +260,7 @@ void khc_state_req_header(khc* khc) {
     khc->_state = KHC_STATE_REQ_HEADER_SEND;
 }
 
-void khc_state_req_header_send(khc* khc) {
+void khc_state_req_header_send(khc_t* khc) {
     char* line = khc->_current_req_header->data;
     char* send_pos = &line[khc->_sent_length];
     size_t send_len = strlen(send_pos);
@@ -290,7 +290,7 @@ void khc_state_req_header_send(khc* khc) {
     }
 }
 
-void khc_state_req_header_send_crlf(khc* khc) {
+void khc_state_req_header_send_crlf(khc_t* khc) {
     char crlf[] = "\r\n";
     char* send_pos = &crlf[khc->_sent_length];
     size_t send_len = strlen(send_pos);
@@ -321,7 +321,7 @@ void khc_state_req_header_send_crlf(khc* khc) {
 }
 
 // Whether the request has a body to read from the read callback.
-static bool _has_req_body(khc* khc) {
+static bool _has_req_body(khc_t* khc) {
     return khc_method_can_have_body(khc) && khc->_cb_read != NULL &&
         khc->_req_body_length != 0;
 }
@@ -342,7 +342,7 @@ static size_t _decimal(size_t value, char* out) {
     return len;
 }
 
-void khc_state_req_header_end(khc* khc) {
+void khc_state_req_header_end(khc_t* khc) {
     static const char connection_close[] = "Connection: Close\r\n\r\n";
     char text[sizeof("Content-Length: \r\n") + sizeof(size_t) * 3 + sizeof(connection_close)];
     text[0] = '\0';
@@ -398,7 +398,7 @@ void khc_state_req_header_end(khc* khc) {
     }
 }
 
-static void _fail_req_body(khc* khc, khc_code result) {
+static void _fail_req_body(khc_t* khc, khc_code_t result) {
     khc->_state = KHC_STATE_CLOSE;
     khc->_result = result;
 }
@@ -415,7 +415,7 @@ static size_t _hex_digits(size_t size) {
 // Reads the next part of the body into the stream buffer, framed as it is to
 // be sent, so that each part goes out in one send: over TLS, one record rather
 // than three for each chunk.
-void khc_state_req_body_read(khc* khc) {
+void khc_state_req_body_read(khc_t* khc) {
     if (khc->_req_body_length != KHC_REQ_BODY_LENGTH_UNKNOWN) {
         size_t want = khc->_req_body_left < khc->_stream_buff_size ?
             khc->_req_body_left : khc->_stream_buff_size;
@@ -483,7 +483,7 @@ size_t _khc_chunk_size_line(size_t size, char out[KHC_CHUNK_SIZE_LINE_SIZE]) {
     return len;
 }
 
-void khc_state_req_body_send(khc* khc) {
+void khc_state_req_body_send(khc_t* khc) {
     char* send_pos = &khc->_stream_buff[khc->_req_frame_start + khc->_sent_length];
     size_t send_len = khc->_req_frame_size - khc->_sent_length;
     size_t sent_len = 0;
@@ -529,7 +529,7 @@ static const char* _find_crlf(const char* buff, size_t len) {
     return NULL;
 }
 
-void khc_state_resp_status_read(khc* khc) {
+void khc_state_resp_status_read(khc_t* khc) {
     size_t read_size = 0;
     size_t read_req_size = khc->_resp_header_buff_size - khc->_resp_header_read_size - 1;
     ebisu_sock_code_t read_res =
@@ -568,7 +568,7 @@ void khc_state_resp_status_read(khc* khc) {
     }
 }
 
-void khc_state_resp_status_parse(khc* khc) {
+void khc_state_resp_status_parse(khc_t* khc) {
     const char* line_end = _find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size);
     // Check the line itself: past it, the buffer may hold what an earlier
     // response left there.
@@ -593,7 +593,7 @@ void khc_state_resp_status_parse(khc* khc) {
     return;
 }
 
-void khc_state_resp_header_callback(khc* khc) {
+void khc_state_resp_header_callback(khc_t* khc) {
     const char* header_boundary = _find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size);
     if (header_boundary == NULL) {
         if (khc->_resp_header_buff_size == khc->_resp_header_read_size + 1) {
@@ -696,7 +696,7 @@ void khc_state_resp_header_callback(khc* khc) {
     }
 }
 
-void khc_state_resp_header_read(khc* khc) {
+void khc_state_resp_header_read(khc_t* khc) {
     size_t read_size = 0;
     size_t read_req_size = khc->_resp_header_buff_size - khc->_resp_header_read_size - 1;
     ebisu_sock_code_t read_res =
@@ -726,7 +726,7 @@ void khc_state_resp_header_read(khc* khc) {
     }
 }
 
-void khc_state_resp_header_skip(khc* khc) {
+void khc_state_resp_header_skip(khc_t* khc) {
     // check required http headers.
     if (_is_header_present("Content-Length", khc->_resp_header_buff, khc->_resp_header_read_size) == 1 ||
             _is_header_present("Transfer-Encoding", khc->_resp_header_buff, khc->_resp_header_read_size) == 1) {
@@ -802,7 +802,7 @@ void khc_state_resp_header_skip(khc* khc) {
 /* A body that isn't chunked ends at the response's Content-Length, or without
  * one when the connection closes. If it closes short of that length, the body
  * ended early. */
-static void _end_resp_body(khc* khc) {
+static void _end_resp_body(khc_t* khc) {
     khc->_state = KHC_STATE_CLOSE;
     if (khc->_resp_body_received < khc->_resp_content_length) {
         khc->_result = KHC_ERR_SOCK_RECV;
@@ -810,14 +810,14 @@ static void _end_resp_body(khc* khc) {
     }
 }
 
-static bool _resp_body_complete(const khc* khc) {
+static bool _resp_body_complete(const khc_t* khc) {
     return khc->_resp_has_content_length &&
         khc->_resp_body_received >= khc->_resp_content_length;
 }
 
 /* How much of size bytes just read is body: what comes after Content-Length
  * isn't. */
-static size_t _resp_body_part(const khc* khc, size_t size) {
+static size_t _resp_body_part(const khc_t* khc, size_t size) {
     if (!khc->_resp_has_content_length) {
         return size;
     }
@@ -828,7 +828,7 @@ static size_t _resp_body_part(const khc* khc, size_t size) {
     return size < remain ? size : remain;
 }
 
-void khc_state_resp_body_fragment(khc* khc) {
+void khc_state_resp_body_fragment(khc_t* khc) {
     size_t size = _resp_body_part(khc, khc->_resp_header_read_size);
     if (size > 0) {
         size_t written = khc->_cb_write(khc->_resp_header_buff, size, khc->_write_data);
@@ -849,7 +849,7 @@ void khc_state_resp_body_fragment(khc* khc) {
     }
 }
 
-int _move_resp_header_to_stream(khc* khc) {
+int _move_resp_header_to_stream(khc_t* khc) {
     long remain = khc->_stream_buff_size - khc->_body_read_size;
     if (remain <= 0) {
         return 1;
@@ -868,7 +868,7 @@ int _move_resp_header_to_stream(khc* khc) {
     return 0;
 }
 
-void khc_state_read_chunk_size_from_header_buff(khc* khc) {
+void khc_state_read_chunk_size_from_header_buff(khc_t* khc) {
     if (_move_resp_header_to_stream(khc) == 0) {
         khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
     } else {
@@ -877,7 +877,7 @@ void khc_state_read_chunk_size_from_header_buff(khc* khc) {
     }
 }
 
-void khc_state_read_chunk_body_from_header_buff(khc* khc) {
+void khc_state_read_chunk_body_from_header_buff(khc_t* khc) {
     if (_move_resp_header_to_stream(khc) == 0) {
         khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
     } else {
@@ -886,7 +886,7 @@ void khc_state_read_chunk_body_from_header_buff(khc* khc) {
     }
 }
 
-void khc_state_resp_body_read(khc* khc) {
+void khc_state_resp_body_read(khc_t* khc) {
     size_t read_size = 0;
     ebisu_sock_code_t read_res =
         khc->_socket->ops->recv(khc->_socket, khc->_stream_buff, khc->_stream_buff_size, &read_size);
@@ -912,7 +912,7 @@ void khc_state_resp_body_read(khc* khc) {
     }
 }
 
-void khc_state_resp_body_callback(khc* khc) {
+void khc_state_resp_body_callback(khc_t* khc) {
     size_t size = _resp_body_part(khc, khc->_body_read_size);
     size_t written = khc->_cb_write(khc->_stream_buff, size, khc->_write_data);
     if (written < size) { // Error in write callback.
@@ -929,7 +929,7 @@ void khc_state_resp_body_callback(khc* khc) {
     return;
 }
 
-void khc_state_resp_body_parse_chunk_size(khc* khc) {
+void khc_state_resp_body_parse_chunk_size(khc_t* khc) {
     size_t chunk_size = 0;
     int has_chunk_size = _read_chunk_size(khc->_stream_buff, khc->_body_read_size, &chunk_size);
     if (has_chunk_size == 1) {
@@ -962,7 +962,7 @@ void khc_state_resp_body_parse_chunk_size(khc* khc) {
     }
 }
 
-void khc_state_resp_body_read_chunk_size(khc* khc) {
+void khc_state_resp_body_read_chunk_size(khc_t* khc) {
     size_t read_size = 0;
     long remain = khc->_stream_buff_size - khc->_body_read_size;
     if (remain <= 0) {
@@ -998,7 +998,7 @@ void khc_state_resp_body_read_chunk_size(khc* khc) {
     }
 }
 
-void khc_state_resp_body_parse_chunk_body(khc* khc) {
+void khc_state_resp_body_parse_chunk_body(khc_t* khc) {
     size_t chunk_remain = khc->_chunk_size - khc->_chunk_size_written;
     size_t target_size =
         chunk_remain > khc->_body_read_size ?
@@ -1029,7 +1029,7 @@ void khc_state_resp_body_parse_chunk_body(khc* khc) {
     return;
 }
 
-void khc_state_resp_body_read_chunk_body(khc* khc) {
+void khc_state_resp_body_read_chunk_body(khc_t* khc) {
     size_t read_size = 0;
     ebisu_sock_code_t read_res = khc->_socket->ops->recv(
             khc->_socket,
@@ -1065,7 +1065,7 @@ static bool _is_chunk_data_end(const char* data, size_t size) {
     return memcmp(data, "\r\n", size) == 0;
 }
 
-void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
+void khc_state_resp_body_skip_chunk_body_crlf(khc_t* khc) {
     if (!_is_chunk_data_end(khc->_stream_buff, khc->_body_read_size < 2 ? khc->_body_read_size : 2)) {
         // Something else after the data: the chunk's size didn't say where
         // it ended.
@@ -1130,7 +1130,7 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
 }
 
 /* Whether data has the empty line that ends the trailers. */
-static bool _find_trailer_end(khc* khc, const char* data, size_t size) {
+static bool _find_trailer_end(khc_t* khc, const char* data, size_t size) {
     const char trailer_end[] = "\r\n\r\n";
     for (size_t i = 0; i < size; ++i) {
         if (data[i] == trailer_end[khc->_trailer_end_matched]) {
@@ -1145,7 +1145,7 @@ static bool _find_trailer_end(khc* khc, const char* data, size_t size) {
     return false;
 }
 
-void khc_state_resp_body_skip_trailers(khc* khc) {
+void khc_state_resp_body_skip_trailers(khc_t* khc) {
     // What was read along with the last chunk comes first.
     if (_find_trailer_end(khc, khc->_stream_buff, khc->_body_read_size) ||
             _find_trailer_end(khc, khc->_resp_header_buff, khc->_resp_header_read_size)) {
@@ -1181,7 +1181,7 @@ void khc_state_resp_body_skip_trailers(khc* khc) {
     }
 }
 
-void khc_state_close(khc* khc) {
+void khc_state_close(khc_t* khc) {
     ebisu_sock_code_t close_res = khc->_socket->ops->close(khc->_socket);
     if (close_res == EBISU_SOCK_OK) {
         khc->_state = KHC_STATE_FINISHED;

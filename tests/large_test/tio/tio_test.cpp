@@ -158,7 +158,7 @@ struct Device {
     ebisu::ltest::mutex mutex;
     ebisu::ltest::condition_variable changed;
     // Guarded by mutex.
-    std::vector<kii_mqtt_task_state> handler_states;
+    std::vector<kii_mqtt_task_state_t> handler_states;
     std::vector<Action> actions;
     std::vector<std::string> errors;
     // What the updater uploads, and what its current upload reads from.
@@ -185,7 +185,7 @@ void forget_sent(Device& d)
 bool cb_handler_continue(void* task_info, void* userdata)
 {
     Device* d = (Device*)userdata;
-    kii_mqtt_task_state state = ((tio_handler_task_info_t*)task_info)->task_state;
+    kii_mqtt_task_state_t state = ((tio_handler_task_info_t*)task_info)->task_state;
     std::lock_guard<ebisu::ltest::mutex> lock(d->mutex);
     if (d->handler_states.empty() || d->handler_states.back() != state) {
         d->handler_states.push_back(state);
@@ -348,9 +348,9 @@ void init_device(Device& d)
     tio_updater_set_system(u, d.system.get());
     tio_updater_set_cb_task_continue(u, cb_updater_continue, &d);
     tio_updater_set_cb_task_exit(u, cb_exit, &d);
-    tio_updater_set_cb_error(u, cb_err, &d);
-    tio_updater_set_socket(u, d.updater_sent.get());
-    tio_updater_set_buff(u, d.updater_buff, sizeof(d.updater_buff));
+    tio_updater_set_cb_err(u, cb_err, &d);
+    tio_updater_set_http_socket(u, d.updater_sent.get());
+    tio_updater_set_http_buff(u, d.updater_buff, sizeof(d.updater_buff));
     tio_updater_set_interval(u, UPDATE_INTERVAL);
 
     kii_session_init(&d.session);
@@ -383,7 +383,7 @@ std::string states_of(Device& d)
 {
     std::lock_guard<ebisu::ltest::mutex> lock(d.mutex);
     std::string states;
-    for (kii_mqtt_task_state state : d.handler_states) {
+    for (kii_mqtt_task_state_t state : d.handler_states) {
         states += (states.empty() ? "" : " ") + std::to_string((int)state);
     }
     return states.empty() ? "none" : states;

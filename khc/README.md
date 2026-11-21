@@ -80,7 +80,7 @@ callbacks and a buffer of fixed size, so neither has to fit in memory.
 
 ## Memory management
 
-A `khc` instance holds its request line fields and state, and otherwise uses
+A `khc_t` instance holds its request line fields and state, and otherwise uses
 two buffers:
 
 - **Stream buffer**: holds each chunk of the request body and of the response
@@ -96,7 +96,7 @@ two buffers:
   enough. Set it with `khc_set_resp_header_buff()`. Otherwise `khc_perform()`
   allocates 256 bytes with `malloc()` and frees them before returning.
 
-Request headers are a `khc_slist`, which belongs to the application and must
+Request headers are a `khc_slist_t`, which belongs to the application and must
 stay valid until `khc_perform()` returns. `khc_slist_append()` allocates each
 node with `malloc()`, and `khc_slist_free_all()` frees the list.
 `khc_slist_append_using_cb_alloc()` and `khc_slist_free_all_using_cb_free()`
@@ -131,7 +131,7 @@ static size_t on_write(char* buffer, size_t size, void* userdata)
 A `GET` request:
 
 ```c
-    khc http;
+    khc_t http;
     char stream_buff[1024];
     char header_buff[256];
 
@@ -141,7 +141,7 @@ A `GET` request:
     khc_set_method(&http, "GET");
 
     const char accept[] = "Accept: application/json";
-    khc_slist* headers = khc_slist_append(NULL, accept, strlen(accept));
+    khc_slist_t* headers = khc_slist_append(NULL, accept, strlen(accept));
     khc_set_req_headers(&http, headers);
 
     khc_set_stream_buff(&http, stream_buff, sizeof(stream_buff));
@@ -151,7 +151,7 @@ A `GET` request:
     khc_set_cb_header(&http, on_header, NULL);
     khc_set_cb_write(&http, on_write, NULL);
 
-    khc_code res = khc_perform(&http);
+    khc_code_t res = khc_perform(&http);
     if (res == KHC_ERR_OK) {
         printf("status: %u\n", (unsigned)khc_get_status_code(&http));
     }
@@ -349,7 +349,7 @@ connected to api-jp.kii.com:443
 The headers are logged as they are, the credentials of `Authorization` and
 cookies included, so a logger that takes `EBISU_LOG_DEBUG` should write only
 where those would be safe. What a body holds is never logged. At
-`EBISU_LOG_WARNING`, a request that failed, with its `khc_code`, and a
+`EBISU_LOG_WARNING`, a request that failed, with its `khc_code_t`, and a
 connection that didn't close. kii's and tio's setters give their khc the logger.
 Built with `EBISU_NO_LOG`, khc logs nothing.
 

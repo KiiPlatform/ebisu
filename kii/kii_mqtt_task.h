@@ -17,7 +17,7 @@ typedef struct {
     kii_t* kii;
     kii_installation_id_t ins_id;
     kii_mqtt_endpoint_t endpoint;
-    kii_mqtt_task_info info;
+    kii_mqtt_task_info_t info;
     /** \private
      * The time since the last packet that counts for the keep-alive, in
      * milliseconds, as estimated by adding up the task's waits and receive

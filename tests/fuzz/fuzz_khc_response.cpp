@@ -57,7 +57,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     size_t max_read = 1 + input.take();
     const char* method = (input.take() & 1) ? "HEAD" : "GET";
 
-    khc http;
+    khc_t http;
     khc_init(&http);
     khc_set_stream_buff(&http, stream_buff.data(), stream_buff.size());
     khc_set_resp_header_buff(&http, resp_header_buff.data(), resp_header_buff.size());

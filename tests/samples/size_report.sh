@@ -118,7 +118,7 @@ int main(void)
     tio_handler_start(&handler, &author, action, NULL);
     tio_updater_init(&updater);
     tio_updater_set_app(&updater, "app", "api.example.com");
-    tio_updater_set_buff(&updater, updater_buff, sizeof(updater_buff));
+    tio_updater_set_http_buff(&updater, updater_buff, sizeof(updater_buff));
     tio_updater_set_stream_buff(&updater, updater_stream_buff, sizeof(updater_stream_buff));
     tio_updater_set_resp_header_buff(&updater, updater_resp_header_buff,
             sizeof(updater_resp_header_buff));

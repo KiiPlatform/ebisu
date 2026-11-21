@@ -6,36 +6,36 @@
 #include <ebisu_socket.h>
 #include "ebisu_version.h"
 
-void khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size) {
+void khc_set_resp_header_buff(khc_t* khc, char* buffer, size_t buff_size) {
     khc->_resp_header_buff = buffer;
     khc->_resp_header_buff_size = buff_size;
 }
 
-void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
+void khc_set_stream_buff(khc_t* khc, char* buffer, size_t buff_size) {
     khc->_stream_buff = buffer;
     khc->_stream_buff_size = buff_size;
 }
 
-void khc_set_system(khc* khc, ebisu_system_t* system) {
+void khc_set_system(khc_t* khc, ebisu_system_t* system) {
     khc->_system = system;
 }
 
-void khc_set_timeout_ms(khc* khc, uint32_t timeout_ms) {
+void khc_set_timeout_ms(khc_t* khc, uint32_t timeout_ms) {
     khc->_timeout_ms = timeout_ms;
 }
 
-void khc_set_cb_continue(khc* khc, KHC_CB_CONTINUE cb, void* userdata) {
+void khc_set_cb_continue(khc_t* khc, KHC_CB_CONTINUE cb, void* userdata) {
     khc->_cb_continue = cb;
     khc->_continue_data = userdata;
 }
 
-static uint64_t _now_ms(khc* khc) {
+static uint64_t _now_ms(khc_t* khc) {
     return khc->_system->ops->monotonic_ms(khc->_system);
 }
 
 // Why the request is to stop before its next step, if it is: it took too long,
 // or the continue callback cancelled it. KHC_ERR_OK if it goes on.
-static khc_code _stop_reason(khc* khc) {
+static khc_code_t _stop_reason(khc_t* khc) {
     if (khc->_timeout_ms > 0 &&
             _now_ms(khc) - khc->_started_ms >= khc->_timeout_ms) {
         return KHC_ERR_TIMEOUT;
@@ -48,7 +48,7 @@ static khc_code _stop_reason(khc* khc) {
 
 // Stops the request for reason, closing the connection if one is open, as any
 // failure does.
-static void _stop(khc* khc, khc_code reason) {
+static void _stop(khc_t* khc, khc_code_t reason) {
     switch (khc->_state) {
         case KHC_STATE_IDLE:
         case KHC_STATE_CONNECT:
@@ -70,7 +70,7 @@ static void _stop(khc* khc, khc_code reason) {
     }
 }
 
-khc_code khc_perform(khc* khc) {
+khc_code_t khc_perform(khc_t* khc) {
     // Called without checking from here on. The read callback is left out of
     // this: a request need not have a body.
     const ebisu_socket_ops_t* ops = khc->_socket != NULL ? khc->_socket->ops : NULL;
@@ -123,7 +123,7 @@ khc_code khc_perform(khc* khc) {
     }
 
     while(khc->_state != KHC_STATE_FINISHED) {
-        khc_code reason = _stop_reason(khc);
+        khc_code_t reason = _stop_reason(khc);
         if (reason != KHC_ERR_OK) {
             _stop(khc, reason);
             // Closing the connection, if there is one, is this step. Should
@@ -156,7 +156,7 @@ khc_code khc_perform(khc* khc) {
         khc->_resp_header_buff_allocated = false;
     }
 
-    khc_code res = khc->_result;
+    khc_code_t res = khc->_result;
     if (res != KHC_ERR_OK) {
         _khc_log(khc, EBISU_LOG_WARNING, "%s %s%s failed: %s", khc->_method, khc->_host,
                 khc->_path, _khc_code_name(res));
@@ -173,7 +173,7 @@ khc_code khc_perform(khc* khc) {
     return res;
 }
 
-void khc_init(khc* khc) {
+void khc_init(khc_t* khc) {
     // Callbacks.
     khc->_cb_write = NULL;
     khc->_write_data = NULL;
@@ -201,7 +201,7 @@ void khc_init(khc* khc) {
     khc_reset_except_cb(khc);
 }
 
-void khc_reset_except_cb(khc* khc) {
+void khc_reset_except_cb(khc_t* khc) {
     khc->_req_headers = NULL;
     khc->_host[0] = '\0';
     khc->_path[0] = '\0';
@@ -220,7 +220,7 @@ void khc_reset_except_cb(khc* khc) {
     khc->_stream_buff_allocated = false;
 }
 
-void khc_reset_except_request(khc* khc) {
+void khc_reset_except_request(khc_t* khc) {
     // Internal states.
     khc->_state = KHC_STATE_IDLE;
     khc->_current_req_header = NULL;
@@ -254,43 +254,43 @@ void khc_reset_except_request(khc* khc) {
     khc->_sock_error_detail = 0;
 }
 
-ebisu_sock_error_t khc_get_sock_error(khc* khc, long* out_detail) {
+ebisu_sock_error_t khc_get_sock_error(khc_t* khc, long* out_detail) {
     if (out_detail != NULL) {
         *out_detail = khc->_sock_error_detail;
     }
     return khc->_sock_error;
 }
 
-void khc_set_req_body_length(khc* khc, size_t length) {
+void khc_set_req_body_length(khc_t* khc, size_t length) {
     khc->_req_body_length = length;
 }
 
 void khc_enable_insecure(
-        khc* khc,
+        khc_t* khc,
         bool enable_insecure) {
     khc->_enable_insecure = enable_insecure;
 }
 
 void khc_enable_absolute_target(
-        khc* khc,
+        khc_t* khc,
         bool enable_absolute_target) {
     khc->_absolute_target = enable_absolute_target;
 }
 
 uint16_t khc_get_status_code(
-        khc* khc
+        khc_t* khc
 ) {
     return khc->_status_code;
 }
 
-bool khc_get_close_failed(khc* khc) {
+bool khc_get_close_failed(khc_t* khc) {
     return khc->_close_failed;
 }
 
-bool khc_get_resp_header_skipped(khc* khc) {
+bool khc_get_resp_header_skipped(khc_t* khc) {
     return khc->_resp_header_skipped;
 }
 
-int64_t khc_get_resp_date(khc* khc) {
+int64_t khc_get_resp_date(khc_t* khc) {
     return (khc->_resp_date >= 0) ? khc->_resp_date : -1;
 }

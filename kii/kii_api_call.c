@@ -196,7 +196,7 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_slist* list = khc_slist_append_using_cb_alloc(kii->_req_headers, buff, header.len, kii->_cb_slist_alloc, kii->_slist_alloc_data);
+    khc_slist_t* list = khc_slist_append_using_cb_alloc(kii->_req_headers, buff, header.len, kii->_cb_slist_alloc, kii->_slist_alloc_data);
     // An Authorization header carries a token.
     ebisu_secure_zero(buff, buff_size);
     if (list == NULL) {
@@ -225,7 +225,7 @@ kii_code_t _req_send(kii_t* kii)
     if (kii->_khc._cb_read == _cb_read_buff) {
         khc_set_req_body_length(&kii->_khc, kii->_rw_buff_req_size);
     }
-    khc_code code = _kii_perform(kii);
+    khc_code_t code = _kii_perform(kii);
     _kii_clock_record(kii);
     _req_headers_free_all(kii);
 

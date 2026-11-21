@@ -10,7 +10,7 @@
 namespace {
 
 struct Fixture {
-    khc http;
+    khc_t http;
     khct::HttpScript script;
     khct::cb::IOCtx io;
     int closes = 0;

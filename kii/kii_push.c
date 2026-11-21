@@ -356,7 +356,7 @@ static kii_code_t _start_task(kii_t* kii, uint32_t keep_alive_interval,
             KII_TASK_NAME_MQTT,
             mqtt_start_task,
             (void*)kii);
-    if (res != EBISU_TASKC_OK) {
+    if (res != EBISU_TASK_OK) {
         _kii_mqtt_publish_open(kii, false);
         kii->_push_task_running = false;
         return KII_ERR_CREATE_TASK;

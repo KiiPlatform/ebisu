@@ -5,15 +5,14 @@
 #include "tio_impl.h"
 #include "command_parser.h"
 
-const char TIO_TASK_NAME_UPDATE_STATE[] = "task_update_state";
 
-void _convert_task_info(kii_mqtt_task_info* mqtt_info, tio_handler_task_info_t* task_info) {
+void _convert_task_info(kii_mqtt_task_info_t* mqtt_info, tio_handler_task_info_t* task_info) {
     task_info->error = mqtt_info->error;
     task_info->task_state = mqtt_info->task_state;
 }
 
 void _task_exit(void* task_info, void* userdata) {
-    kii_mqtt_task_info* mqtt_info = (kii_mqtt_task_info*) task_info;
+    kii_mqtt_task_info_t* mqtt_info = (kii_mqtt_task_info_t*) task_info;
     tio_handler_task_info_t tio_task_info;
     _convert_task_info(mqtt_info, &tio_task_info);
     tio_handler_t* handler = (tio_handler_t*)userdata;
@@ -23,7 +22,7 @@ void _task_exit(void* task_info, void* userdata) {
 }
 
 bool _task_continue(void* task_info, void* userdata) {
-    kii_mqtt_task_info* mqtt_info = (kii_mqtt_task_info*) task_info;
+    kii_mqtt_task_info_t* mqtt_info = (kii_mqtt_task_info_t*) task_info;
     tio_handler_task_info_t tio_task_info;
     _convert_task_info(mqtt_info, &tio_task_info);
     tio_handler_t* handler = (tio_handler_t*)userdata;
@@ -354,7 +353,7 @@ void tio_updater_init(tio_updater_t* updater)
     updater->_task_running = false;
 }
 
-void tio_updater_set_socket(tio_updater_t* updater, ebisu_socket_t* socket)
+void tio_updater_set_http_socket(tio_updater_t* updater, ebisu_socket_t* socket)
 {
     kii_set_http_socket(&updater->_kii, socket);
 }
@@ -382,7 +381,7 @@ void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_CB_TASK_EXIT cb_ex
 }
 
 
-void tio_updater_set_cb_error(
+void tio_updater_set_cb_err(
         tio_updater_t* updater,
         TIO_CB_ERR cb_err,
         void* userdata)
@@ -396,7 +395,7 @@ void tio_updater_set_logger(tio_updater_t* updater, ebisu_logger_t* logger)
     kii_set_logger(&updater->_kii, logger);
 }
 
-void tio_updater_set_buff(
+void tio_updater_set_http_buff(
         tio_updater_t* updater,
         char* buff,
         size_t buff_size)
@@ -631,7 +630,7 @@ tio_code_t tio_updater_start(
             _update_state,
             (void*)updater);
 
-    if (res != EBISU_TASKC_OK) {
+    if (res != EBISU_TASK_OK) {
         updater->_task_running = false;
         return TIO_ERR_CREATE_TASK;
     }

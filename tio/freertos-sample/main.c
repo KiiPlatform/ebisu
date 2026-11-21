@@ -113,8 +113,8 @@ static void author_updated(const kii_author_t* author, void* userdata)
 
 static bool handler_continue(void* task_info, void* userdata)
 {
-    static kii_mqtt_task_state last = KII_MQTT_ST_DISCONTINUED;
-    kii_mqtt_task_state task_state = ((tio_handler_task_info_t*)task_info)->task_state;
+    static kii_mqtt_task_state_t last = KII_MQTT_ST_DISCONTINUED;
+    kii_mqtt_task_state_t task_state = ((tio_handler_task_info_t*)task_info)->task_state;
     if (task_state != last && task_state == KII_MQTT_ST_RECV_READY) {
         sample_log("handler ready: waiting for commands");
     }
@@ -203,11 +203,11 @@ static void init_updater(void)
     tio_updater_set_system(&updater, &sample_system.base);
     tio_updater_set_cb_task_continue(&updater, updater_continue, NULL);
     tio_updater_set_cb_task_exit(&updater, task_exit, "updater");
-    tio_updater_set_cb_error(&updater, task_error, "updater");
+    tio_updater_set_cb_err(&updater, task_error, "updater");
 
-    tio_updater_set_socket(&updater, &updater_http_socket.tls.base);
+    tio_updater_set_http_socket(&updater, &updater_http_socket.tls.base);
 
-    tio_updater_set_buff(&updater, updater_http_buff, sizeof(updater_http_buff));
+    tio_updater_set_http_buff(&updater, updater_http_buff, sizeof(updater_http_buff));
     tio_updater_set_stream_buff(&updater, updater_stream_buff, sizeof(updater_stream_buff));
     tio_updater_set_resp_header_buff(&updater, updater_resp_header_buff,
             sizeof(updater_resp_header_buff));

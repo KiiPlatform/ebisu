@@ -268,7 +268,7 @@ static void test_task_create(void)
     int marker = 0;
     const size_t heap = heap_free();
     CHECK(test_system.base.ops->task_create(&test_system.base, "ebisu task", record, &marker) ==
-            EBISU_TASKC_OK);
+            EBISU_TASK_OK);
     CHECK(wait_for(&seen.ran, 1000));
     CHECK(seen.param == &marker);
     CHECK(seen.handle != NULL && seen.handle != xTaskGetCurrentTaskHandle());
@@ -296,7 +296,7 @@ static void test_task_create_fails(void)
     seen.ran = false;
     const size_t heap = heap_free();
     CHECK(greedy.base.ops->task_create(&greedy.base, "greedy", record, NULL) ==
-            EBISU_TASKC_FAIL);
+            EBISU_TASK_FAIL);
     CHECK_EQ(heap_free(), heap);
     CHECK(!seen.ran);
 #endif

@@ -13,11 +13,11 @@ static ebisu_task_code_t task_create(
 {
     pthread_t pthid;
     if (pthread_create(&pthid, NULL, entry, param) != 0) {
-        return EBISU_TASKC_FAIL;
+        return EBISU_TASK_FAIL;
     }
     /* Nothing joins a task, so its thread has to go by itself when it ends. */
     pthread_detach(pthid);
-    return EBISU_TASKC_OK;
+    return EBISU_TASK_OK;
 }
 
 static void delay_ms(ebisu_system_t* self, uint32_t msec)

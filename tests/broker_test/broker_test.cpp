@@ -235,7 +235,7 @@ struct ThreadSystem {
         static const ebisu_system_ops_t ops = {
             [](ebisu_system_t* self, const char*, EBISU_TASK_ENTRY entry, void* entry_param) {
                 ((Link*)self)->owner->keep(std::thread(entry, entry_param));
-                return EBISU_TASKC_OK;
+                return EBISU_TASK_OK;
             },
             [](ebisu_system_t*, uint32_t msec) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(msec));
@@ -297,13 +297,13 @@ struct Task {
     std::condition_variable changed;
     // Guarded by mutex.
     // The task's states, each time it entered one other than the last.
-    std::vector<kii_mqtt_task_state> states;
+    std::vector<kii_mqtt_task_state_t> states;
     std::vector<std::pair<kii_mqtt_event_t, uint32_t>> events;
     std::vector<Received> received;
     int credentials_asked = 0;
     bool stop = false;
     bool exited = false;
-    kii_mqtt_task_info exit_info;
+    kii_mqtt_task_info_t exit_info;
 
     std::atomic<int> connects{0};
     // The start of each CONNECT it sent, up to the protocol's level: the rest
@@ -410,7 +410,7 @@ struct Task {
         return changed.wait_for(lock, std::chrono::seconds(seconds), done);
     }
 
-    int count(kii_mqtt_task_state state) {
+    int count(kii_mqtt_task_state_t state) {
         return (int)std::count(states.begin(), states.end(), state);
     }
 
@@ -524,7 +524,7 @@ struct Task {
 
     static bool cb_continue(void* task_info, void* userdata) {
         Task* t = (Task*)userdata;
-        kii_mqtt_task_state state = ((kii_mqtt_task_info*)task_info)->task_state;
+        kii_mqtt_task_state_t state = ((kii_mqtt_task_info_t*)task_info)->task_state;
         std::lock_guard<std::mutex> lock(t->mutex);
         if (t->states.empty() || t->states.back() != state) {
             t->states.push_back(state);
@@ -536,7 +536,7 @@ struct Task {
     static void cb_exit(void* task_info, void* userdata) {
         Task* t = (Task*)userdata;
         std::lock_guard<std::mutex> lock(t->mutex);
-        t->exit_info = *(kii_mqtt_task_info*)task_info;
+        t->exit_info = *(kii_mqtt_task_info_t*)task_info;
         t->exited = true;
         t->changed.notify_all();
     }

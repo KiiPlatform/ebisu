@@ -28,7 +28,7 @@ static ebisu_task_code_t task_create(
 {
     task_start_t* start = (task_start_t*)malloc(sizeof(*start));
     if (start == NULL) {
-        return EBISU_TASKC_FAIL;
+        return EBISU_TASK_FAIL;
     }
     start->entry = entry;
     start->param = param;
@@ -39,13 +39,13 @@ static ebisu_task_code_t task_create(
     uintptr_t thread = _beginthreadex(NULL, 0, task_main, start, 0, NULL);
     if (thread == 0) {
         free(start);
-        return EBISU_TASKC_FAIL;
+        return EBISU_TASK_FAIL;
     }
     /* The task runs on; the handle is only needed to wait for it, which
        nothing does. The tasks tell the application they have ended through
        their exit callbacks. */
     CloseHandle((HANDLE)thread);
-    return EBISU_TASKC_OK;
+    return EBISU_TASK_OK;
 }
 
 /* Sleep() counts in the system clock's ticks, of 1 to 15.6 ms, and can end

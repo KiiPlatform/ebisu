@@ -3,13 +3,13 @@
 
 #include <string.h>
 
-void khc_set_logger(khc* khc, ebisu_logger_t* logger)
+void khc_set_logger(khc_t* khc, ebisu_logger_t* logger)
 {
     khc->_logger = logger;
 }
 
 #ifndef EBISU_NO_LOG
-void _khc_log_lines(khc* khc, char direction, const char* lines)
+void _khc_log_lines(khc_t* khc, char direction, const char* lines)
 {
     const char* end;
     if (khc->_logger == NULL) {
@@ -21,7 +21,7 @@ void _khc_log_lines(khc* khc, char direction, const char* lines)
     }
 }
 
-const char* _khc_code_name(khc_code code)
+const char* _khc_code_name(khc_code_t code)
 {
     switch (code) {
     case KHC_ERR_OK: return "KHC_ERR_OK";
@@ -39,6 +39,6 @@ const char* _khc_code_name(khc_code code)
     case KHC_ERR_CANCELLED: return "KHC_ERR_CANCELLED";
     case KHC_ERR_INVALID_RESPONSE: return "KHC_ERR_INVALID_RESPONSE";
     }
-    return "an unknown khc_code";
+    return "an unknown khc_code_t";
 }
 #endif

@@ -22,7 +22,7 @@
 #define HEADER_POOL_TEXT_SIZE 1024
 
 typedef struct {
-    khc_slist nodes[HEADER_POOL_NODES];
+    khc_slist_t nodes[HEADER_POOL_NODES];
     char text[HEADER_POOL_TEXT_SIZE];
     size_t nodes_used;
     size_t text_used;
@@ -32,7 +32,7 @@ typedef struct {
 void header_pool_init(header_pool_t* pool);
 
 /* KHC_CB_SLIST_ALLOC and KHC_CB_SLIST_FREE, the pool their data. */
-khc_slist* header_pool_alloc(const char* str, size_t str_length, void* pool);
-void header_pool_free(khc_slist* node, void* pool);
+khc_slist_t* header_pool_alloc(const char* str, size_t str_length, void* pool);
+void header_pool_free(khc_slist_t* node, void* pool);
 
 #endif

@@ -252,7 +252,7 @@ void message_cb(const kii_mqtt_message_t* message, void* userdata)
   whose `delay_ms` it waits with. Both are required.
   `kii_set_cb_task_continue()` lets the application stop the task, and
   `kii_set_cb_task_exit()` is called as it exits, to free what it used. Both
-  receive a `kii_mqtt_task_info*` saying what the task was doing and why it
+  receive a `kii_mqtt_task_info_t*` saying what the task was doing and why it
   stopped. The [tio README](https://github.com/KiiPlatform/ebisu/blob/master/tio/README.md)
   has implementations for `pthread`.
 - **Events**: optional, `kii_set_cb_mqtt_event()` sets a callback the task tells
@@ -271,7 +271,7 @@ After onboarding, the task connects with the MQTT endpoint onboarding returned.
 Otherwise it installs push and gets an endpoint from Kii Cloud first. A request
 that fails on the network, or with a `5xx` or `429` response, is tried again, so
 a device can start the task before it has a network. Any other response ends
-the task, with the reason in `kii_mqtt_task_info`. The task uses the `kii_t` it
+the task, with the reason in `kii_mqtt_task_info_t`. The task uses the `kii_t` it
 was started with until it exits: make requests from other tasks with another
 `kii_t`.
 
@@ -380,7 +380,7 @@ What `kii` leaves to the system and the task callbacks, with
 [khc README](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks)
 has what socket callbacks have to do.
 
-- **Creating the task**: `task_create` returns `EBISU_TASKC_OK` only if it started. Nothing joins
+- **Creating the task**: `task_create` returns `EBISU_TASK_OK` only if it started. Nothing joins
   a task, so a thread has to be detached, or it stays behind when the task ends.
 - **Delaying**: `delay_ms` waits the whole time asked for, a signal or not. `msec` is a
   `uint32_t`, so `usleep(msec * 1000)` overflows above about 71 minutes.

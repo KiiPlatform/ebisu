@@ -529,7 +529,7 @@ static bool _has_session_token(kii_t* kii)
         return false;
     }
     size_t prefix_len = strlen(_AUTH_HEADER_PREFIX);
-    for (khc_slist* node = kii->_req_headers; node != NULL; node = node->next) {
+    for (khc_slist_t* node = kii->_req_headers; node != NULL; node = node->next) {
         if (strncmp(node->data, _AUTH_HEADER_PREFIX, prefix_len) == 0 &&
                 strcmp(node->data + prefix_len, kii->_author.access_token) == 0) {
             return true;
@@ -549,7 +549,7 @@ static kii_code_t _replace_auth_header(kii_t* kii)
         ebisu_secure_zero(line, sizeof(line));
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_slist* node = kii->_cb_slist_alloc(line, sb.len, kii->_slist_alloc_data);
+    khc_slist_t* node = kii->_cb_slist_alloc(line, sb.len, kii->_slist_alloc_data);
     ebisu_secure_zero(line, sizeof(line));
     if (node == NULL) {
         return KII_ERR_ALLOCATION;
@@ -557,12 +557,12 @@ static kii_code_t _replace_auth_header(kii_t* kii)
     node->next = NULL;
 
     const char name[] = "Authorization:";
-    khc_slist** link = &kii->_req_headers;
+    khc_slist_t** link = &kii->_req_headers;
     while (*link != NULL && strncmp((*link)->data, name, strlen(name)) != 0) {
         link = &(*link)->next;
     }
     if (*link != NULL) {
-        khc_slist* old = *link;
+        khc_slist_t* old = *link;
         node->next = old->next;
         /* With the token it replaces, as khc_slist_free_all() would. */
         if (old->data != NULL) {
@@ -606,8 +606,8 @@ static kii_code_t _renew_and_restore(
 
     /* The renewal is a request of its own through the same khc, which is
      * copied whole to be put back afterwards. */
-    khc request = kii->_khc;
-    khc_slist* headers = kii->_req_headers;
+    khc_t request = kii->_khc;
+    khc_slist_t* headers = kii->_req_headers;
     kii->_req_headers = NULL;
     kii->_req_streamed = false;
     kii->_rw_buff = buff + keep;
@@ -697,7 +697,7 @@ static bool _token_refused(kii_t* kii)
             strcmp(error_code, _WRONG_TOKEN) == 0);
 }
 
-khc_code _kii_perform(kii_t* kii)
+khc_code_t _kii_perform(kii_t* kii)
 {
     kii->_session_refused = false;
     if (kii->_session == NULL || !_has_session_token(kii)) {
@@ -712,7 +712,7 @@ khc_code _kii_perform(kii_t* kii)
     }
 
     kii->_session_request = true;
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code_t code = khc_perform(&kii->_khc);
     kii->_session_request = false;
     if (code != KHC_ERR_OK || !_token_refused(kii)) {
         _kii_resp_to_start(kii);
@@ -766,7 +766,7 @@ size_t _kii_session_resp_offset(kii_t* kii)
     return 0;
 }
 
-khc_code _kii_perform(kii_t* kii)
+khc_code_t _kii_perform(kii_t* kii)
 {
     kii->_session_refused = false;
     return khc_perform(&kii->_khc);

@@ -5,8 +5,8 @@
 #include <vector>
 
 TEST_CASE( "slist append (1)" ) {
-    khc_slist* list = NULL;
-    khc_slist* appended = khc_slist_append(list, "aaaaa", 5);
+    khc_slist_t* list = NULL;
+    khc_slist_t* appended = khc_slist_append(list, "aaaaa", 5);
     REQUIRE( appended != nullptr );
     REQUIRE( strlen(appended->data) == 5 );
     REQUIRE( strncmp(appended->data, "aaaaa", 5) == 0 );
@@ -15,13 +15,13 @@ TEST_CASE( "slist append (1)" ) {
 }
 
 TEST_CASE( "slist append (2)" ) {
-    khc_slist* list = NULL;
-    khc_slist* appended = khc_slist_append(list, "aaaaa", 5);
+    khc_slist_t* list = NULL;
+    khc_slist_t* appended = khc_slist_append(list, "aaaaa", 5);
     REQUIRE( appended != nullptr );
     REQUIRE( strlen(appended->data) == 5 );
     REQUIRE( strncmp(appended->data, "aaaaa", 5) == 0 );
     appended = khc_slist_append(appended, "bbbb", 4);
-    khc_slist* next = appended->next;
+    khc_slist_t* next = appended->next;
     REQUIRE ( next != nullptr );
     REQUIRE( strlen(next->data) == 4 );
     REQUIRE( strncmp(next->data, "bbbb", 4) == 0 );
@@ -32,10 +32,10 @@ TEST_CASE( "slist append (2)" ) {
 typedef struct {
     const char* alloc_requested_str;
     size_t alloc_requested_str_len;
-    khc_slist* free_requested_node;
+    khc_slist_t* free_requested_node;
 } slist_alloc_ctx;
 
-khc_slist* cb_alloc(const char* str, size_t len, void* data) {
+khc_slist_t* cb_alloc(const char* str, size_t len, void* data) {
     slist_alloc_ctx* ctx = (slist_alloc_ctx*)data;
     ctx->alloc_requested_str = str;
     ctx->alloc_requested_str_len = len;
@@ -44,7 +44,7 @@ khc_slist* cb_alloc(const char* str, size_t len, void* data) {
     if (copy == NULL) {
         return NULL;
     }
-    khc_slist* node = (khc_slist*)malloc(sizeof(khc_slist));
+    khc_slist_t* node = (khc_slist_t*)malloc(sizeof(khc_slist_t));
     if (node == NULL) {
         free(copy);
         return NULL;
@@ -56,7 +56,7 @@ khc_slist* cb_alloc(const char* str, size_t len, void* data) {
     return node;
 }
 
-void cb_free(khc_slist* node, void* data) {
+void cb_free(khc_slist_t* node, void* data) {
     slist_alloc_ctx* ctx = (slist_alloc_ctx*)data;
     ctx->free_requested_node = node;
     free(node->data);
@@ -64,11 +64,11 @@ void cb_free(khc_slist* node, void* data) {
 }
 
 TEST_CASE( "slist append (3)" ) {
-    khc_slist* list = NULL;
+    khc_slist_t* list = NULL;
     slist_alloc_ctx ctx;
     memset(&ctx, 0, sizeof(slist_alloc_ctx));
     const char str[] = "aaaaa";
-    khc_slist* appended = khc_slist_append_using_cb_alloc(list, str, 5, cb_alloc, &ctx);
+    khc_slist_t* appended = khc_slist_append_using_cb_alloc(list, str, 5, cb_alloc, &ctx);
     REQUIRE( appended != nullptr );
     REQUIRE( strlen(appended->data) == 5 );
     REQUIRE( strncmp(appended->data, str, 5) == 0 );
@@ -90,12 +90,12 @@ struct FreedCtx {
     std::vector<std::string> at_free;
 };
 
-khc_slist* cb_alloc_recording(const char* str, size_t len, void* data) {
+khc_slist_t* cb_alloc_recording(const char* str, size_t len, void* data) {
     ((FreedCtx*)data)->lengths.push_back(len);
     return khc_cb_slist_alloc(str, len, NULL);
 }
 
-void cb_free_recording(khc_slist* node, void* data) {
+void cb_free_recording(khc_slist_t* node, void* data) {
     FreedCtx* ctx = (FreedCtx*)data;
     size_t len = ctx->lengths[ctx->at_free.size()];
     ctx->at_free.push_back(std::string(node->data, len));
@@ -108,7 +108,7 @@ void cb_free_recording(khc_slist* node, void* data) {
 // callback may leave it where it was.
 TEST_CASE( "slist strings are cleared before they are freed" ) {
     FreedCtx ctx;
-    khc_slist* list = khc_slist_append_using_cb_alloc(NULL, "Authorization: Bearer at1", 25,
+    khc_slist_t* list = khc_slist_append_using_cb_alloc(NULL, "Authorization: Bearer at1", 25,
             cb_alloc_recording, &ctx);
     list = khc_slist_append_using_cb_alloc(list, "X-Other: v", 10, cb_alloc_recording, &ctx);
     REQUIRE( list != nullptr );

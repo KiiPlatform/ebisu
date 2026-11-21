@@ -8,7 +8,7 @@
 #include <string>
 
 TEST_CASE( "HTTP Post with error" ) {
-    khc http;
+    khc_t http;
     khc_init(&http);
 
     std::string app_id = "random_app";
@@ -30,7 +30,7 @@ TEST_CASE( "HTTP Post with error" ) {
     std::string req_body = v.serialize();
 
     // Prepare Req Headers.
-    khc_slist* headers = NULL;
+    khc_slist_t* headers = NULL;
     headers = khc_slist_append(headers, content_type.c_str(), content_type.length());
 
     khc_set_req_headers(&http, headers);
@@ -72,7 +72,7 @@ TEST_CASE( "HTTP Post with error" ) {
         return size;
     };
 
-    khc_code res = khc_perform(&http);
+    khc_code_t res = khc_perform(&http);
     khc_slist_free_all(headers);
     REQUIRE( khc_get_status_code(&http) == 401 );
 

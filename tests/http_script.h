@@ -86,7 +86,7 @@ struct HttpScript {
         return (i < responses.size()) ? responses[i] : none;
     }
 
-    void attach(khc* http) {
+    void attach(khc_t* http) {
         khc_set_socket(http, ctx.socket());
     }
 

@@ -26,10 +26,10 @@ extern "C"
 
 /* Logs each of lines, each ending with CRLF, up to an empty one or the end, as
    _khc_log_header() does. */
-void _khc_log_lines(khc* khc, char direction, const char* lines);
+void _khc_log_lines(khc_t* khc, char direction, const char* lines);
 
-/* The name of a khc_code, such as "KHC_ERR_SOCK_CONNECT". */
-const char* _khc_code_name(khc_code code);
+/* The name of a khc_code_t, such as "KHC_ERR_SOCK_CONNECT". */
+const char* _khc_code_name(khc_code_t code);
 #endif
 
 int _is_chunked_encoding(const char* header, size_t header_length);
