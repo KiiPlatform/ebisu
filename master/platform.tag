@@ -446,6 +446,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>ebisu_mbedtls_socket_set_handshake_timeout</name>
+      <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
+      <anchor>a4c7400447203aad107f53996283486dd</anchor>
+      <arglist>(ebisu_mbedtls_socket_t *sock, ebisu_system_t *system, unsigned int seconds)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>ebisu_mbedtls_socket_set_clock</name>
       <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
       <anchor>a5a585d6e421c64c646b6ffb83fa5b2bc</anchor>
@@ -646,6 +653,13 @@
       <anchorfile>ebisu__polarssl_8h.html</anchorfile>
       <anchor>a13867e35e860bf56706c27594da78317</anchor>
       <arglist>(ebisu_polarssl_socket_t *sock, ebisu_socket_t *transport, ebisu_polarssl_tls_t *tls)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_polarssl_socket_set_handshake_timeout</name>
+      <anchorfile>ebisu__polarssl_8h.html</anchorfile>
+      <anchor>ad544b7355ba7da1a80c7274154804ba1</anchor>
+      <arglist>(ebisu_polarssl_socket_t *sock, ebisu_system_t *system, unsigned int seconds)</arglist>
     </member>
     <member kind="function">
       <type>void</type>

@@ -90,6 +90,7 @@ $(function() {
 <div class="textblock"><code>#include &lt;<a class="elRef" href="../../core/html/ebisu__clock_8h.html">ebisu_clock.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a>&gt;</code><br />
 <code>#include &lt;<a class="elRef" href="../../core/html/ebisu__socket_8h.html">ebisu_socket.h</a>&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="../../core/html/ebisu__system_8h.html">ebisu_system.h</a>&gt;</code><br />
 <code>#include &lt;mbedtls/ssl.h&gt;</code><br />
 <code>#include &lt;mbedtls/x509_crt.h&gt;</code><br />
 <code>#include &lt;mbedtls/version.h&gt;</code><br />
@@ -130,6 +131,8 @@ Functions</h2></td></tr>
 <tr class="memdesc:ab86dbd0f0ac75ceb587fd8b19128aaa0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Frees a TLS configuration, which no connection may use any more.  <br /></td></tr>
 <tr class="memitem:a01d7f2e770693bad198923c60da99a51" id="r_a01d7f2e770693bad198923c60da99a51"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a01d7f2e770693bad198923c60da99a51">ebisu_mbedtls_socket_init</a> (<a class="el" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a> *sock, <a class="elRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a> *transport, <a class="el" href="structebisu__mbedtls__tls__t.html">ebisu_mbedtls_tls_t</a> *tls)</td></tr>
 <tr class="memdesc:a01d7f2e770693bad198923c60da99a51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the socket, over the socket under it and with the configuration, and makes base a socket of it.  <br /></td></tr>
+<tr class="memitem:a4c7400447203aad107f53996283486dd" id="r_a4c7400447203aad107f53996283486dd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4c7400447203aad107f53996283486dd">ebisu_mbedtls_socket_set_handshake_timeout</a> (<a class="el" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a> *sock, <a class="elRef" href="../../core/html/structebisu__system__t.html">ebisu_system_t</a> *system, unsigned int seconds)</td></tr>
+<tr class="memdesc:a4c7400447203aad107f53996283486dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets how long the TLS handshake may take.  <br /></td></tr>
 <tr class="memitem:a5a585d6e421c64c646b6ffb83fa5b2bc" id="r_a5a585d6e421c64c646b6ffb83fa5b2bc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5a585d6e421c64c646b6ffb83fa5b2bc">ebisu_mbedtls_socket_set_clock</a> (<a class="el" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a> *sock, <a class="elRef" href="../../core/html/structebisu__clock__t.html">ebisu_clock_t</a> *clock)</td></tr>
 <tr class="memdesc:a5a585d6e421c64c646b6ffb83fa5b2bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the clock the server's certificate is checked at the time of.  <br /></td></tr>
 <tr class="memitem:a96077bf9eb7956f90a0a92643fe6c2c3" id="r_a96077bf9eb7956f90a0a92643fe6c2c3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a96077bf9eb7956f90a0a92643fe6c2c3">ebisu_mbedtls_socket_set_logger</a> (<a class="el" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a> *sock, <a class="elRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a> *logger)</td></tr>
@@ -299,6 +302,45 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">clock</td><td>The clock, which has to outlive the socket, or NULL, as the socket starts, for the system's time. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a4c7400447203aad107f53996283486dd" name="a4c7400447203aad107f53996283486dd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4c7400447203aad107f53996283486dd">&#9670;&#160;</a></span>ebisu_mbedtls_socket_set_handshake_timeout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_mbedtls_socket_set_handshake_timeout </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a> *</td>          <td class="paramname"><span class="paramname"><em>sock</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="elRef" href="../../core/html/structebisu__system__t.html">ebisu_system_t</a> *</td>          <td class="paramname"><span class="paramname"><em>system</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int</td>          <td class="paramname"><span class="paramname"><em>seconds</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets how long the TLS handshake may take. </p>
+<p>The socket under it bounds each wait for the server with its receive timeout, and not how many there are in a handshake: a server that takes the connection and says nothing to a socket with no receive timeout, or sends a little at a time, keeps connect from returning. With this set, the handshake fails as a timeout, EBISU_SOCK_ERROR_TIMEOUT, once it has taken this long, by the system's monotonic_ms.</p>
+<p>It waits for the server with the recv_wait of the socket under it, for what is left of the time, where that socket has one, as platform's have: its receive timeout doesn't bound a wait of the handshake's then. Without recv_wait, the time is looked at before each receive and send, so a wait lasts as long as the socket under it lets it, and the handshake ends once that wait does.</p>
+<p>Unset, as the socket starts, the handshake is bounded by the socket under it alone. Set it before connecting.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">system</td><td>The system, for its monotonic_ms, which has to outlive the socket. With NULL, or one without monotonic_ms, there is no bound. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">seconds</td><td>How long, in seconds, or 0 for no bound. </td></tr>
   </table>
   </dd>
 </dl>
