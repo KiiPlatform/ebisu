@@ -10,6 +10,13 @@ on:
   schedule:
     - cron: '17 5 * * 1'
 
+# A push to a pull request's branch cancels the analysis of the earlier push,
+# as build.yml cancels its run. Every analysis of master, pushed or scheduled,
+# finishes, each in a group of its own.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

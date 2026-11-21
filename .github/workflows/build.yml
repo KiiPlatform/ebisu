@@ -3,6 +3,16 @@ on:
   workflow_dispatch:
   push:
 
+# A push to a branch cancels the run of an earlier push to it, which there is
+# no point in finishing: the repository runs only so many jobs at a time, and
+# the runs share them. Every run of master and of a tag finishes, each in a
+# group of its own, as each merge is checked, and master's docs published, on
+# its own. A large test cancelled midway leaves what it made in the test
+# application, as one that fails can; cleanapp.yml deletes it.
+concurrency:
+  group: ${{ github.workflow }}-${{ startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/master' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
 # What a job needs beyond reading the repository it asks for itself, and the
 # application's secrets go only to the steps that use them: the large tests and
 # the samples' live runs. Everything else here runs third-party actions and
