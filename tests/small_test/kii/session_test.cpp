@@ -6,6 +6,7 @@
 
 #include <atomic>
 #include <mutex>
+#include <set>
 #include <string>
 #include <thread>
 #include <vector>
@@ -131,6 +132,15 @@ std::string refreshed(const char* access_token, const char* refresh_token, int64
 const std::string REFUSED = http_response(403, "{\"errorCode\":\"WRONG_TOKEN\"}");
 const std::string INVALID_GRANT = http_response(400, "{\"errorCode\":\"invalid_grant\"}");
 const std::string DONE = http_response(200, "{\"done\":true}");
+
+// How long after it was issued to thing th.1 a token of this lifetime is
+// renewed: from a fifth of its lifetime, or 5 minutes if that is less, down
+// to half of that before it expires, as the thing's ID has it.
+uint64_t renew_after_ms(uint64_t lifetime_s, const char* thing_id = "th.1") {
+    uint64_t lifetime_ms = lifetime_s * 1000;
+    uint64_t margin_ms = lifetime_ms / 5 < 300000 ? lifetime_ms / 5 : 300000;
+    return lifetime_ms - ebisu_retry_spread((uint32_t)margin_ms, ebisu_retry_seed(thing_id));
+}
 
 }
 
@@ -501,7 +511,10 @@ TEST_CASE( "The token is refreshed ahead of expiry" ) {
     Client c;
     REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
 
-    // A 100 second token, renewed at 80% of its lifetime.
+    // A 100 second token, renewed between 80% and 90% of its lifetime.
+    const uint64_t after_ms = renew_after_ms(100);
+    CHECK( after_ms >= 80000 );
+    CHECK( after_ms <= 90000 );
     platform.now_ms = 1000;
     c.http.responses = {
         http_response(200, "{\"id\":\"th.1\",\"access_token\":\"at1\",\"refresh_token\":\"rt1\",\"expires_in\":100}")
@@ -511,7 +524,7 @@ TEST_CASE( "The token is refreshed ahead of expiry" ) {
     REQUIRE( std::string(held(&session).refresh_token) == "rt1" );
 
     SECTION("not yet") {
-        platform.now_ms = 1000 + 80000 - 1;
+        platform.now_ms = 1000 + after_ms - 1;
         c.http.responses.push_back(DONE);
         REQUIRE( c.put(BODY) == KII_ERR_OK );
         REQUIRE( c.http.requests.size() == 2 );
@@ -519,7 +532,7 @@ TEST_CASE( "The token is refreshed ahead of expiry" ) {
     }
 
     SECTION("due") {
-        platform.now_ms = 1000 + 80000;
+        platform.now_ms = 1000 + after_ms;
         c.http.responses.push_back(refreshed("at2", "rt2", 100));
         c.http.responses.push_back(DONE);
         REQUIRE( c.put(BODY) == KII_ERR_OK );
@@ -531,7 +544,7 @@ TEST_CASE( "The token is refreshed ahead of expiry" ) {
         REQUIRE( platform.updates.size() == 2 );
 
         // Timed from the renewal now.
-        platform.now_ms = 1000 + 80000 + 80000 - 1;
+        platform.now_ms = 1000 + after_ms + after_ms - 1;
         c.http.responses.push_back(DONE);
         REQUIRE( c.put(BODY) == KII_ERR_OK );
         REQUIRE( c.http.requests.size() == 4 );
@@ -554,11 +567,11 @@ TEST_CASE( "A renewal ahead of expiry that fails is tried again after a wait" ) 
     Client c;
     REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
 
-    // A 1000 second token, due at 80% of its lifetime.
+    // A 1000 second token, now due.
     platform.now_ms = 1000;
     c.http.responses = { refreshed("at1", "rt1", 1000) };
     REQUIRE( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_OK );
-    platform.now_ms = 1000 + 800000;
+    platform.now_ms = 1000 + renew_after_ms(1000);
 
     // The renewal can't connect, and the request goes with the token it has.
     c.http.requests.clear();
@@ -603,7 +616,7 @@ TEST_CASE( "A renewal ahead of expiry that fails is tried again after a wait" ) 
         REQUIRE( contains(c.http.requests[1], "Authorization: Bearer at2\r\n") );
 
         // So the next renewal that fails waits as long as after a first.
-        platform.now_ms += 800000;
+        platform.now_ms += renew_after_ms(1000);
         c.http.requests.clear();
         c.http.responses = { "", DONE };
         REQUIRE( c.put(BODY) == KII_ERR_OK );
@@ -1097,7 +1110,7 @@ TEST_CASE( "A renewal ahead of expiry by onboarding again that fails waits too" 
     c.http.responses = { refreshed("at1", "rt1", 1000) };
     REQUIRE( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_OK );
     kii_session_set_renew_mode(&session, KII_RENEW_BY_ONBOARDING);
-    platform.now_ms = 1000 + 800000;
+    platform.now_ms = 1000 + renew_after_ms(1000);
 
     c.http.requests.clear();
     c.http.responses = { http_response(503, "{}"), DONE };
@@ -1204,9 +1217,9 @@ TEST_CASE( "Token lifetimes are read as 64-bit integers" ) {
         const char* text;
         uint64_t renew_after_ms;
     } cases[] = {
-        { "2147483647", UINT64_C(2147483647000) - 300000 },
-        { "2147483648", UINT64_C(2147483648000) - 300000 },
-        { "4294967295", UINT64_C(4294967295000) - 300000 },
+        { "2147483647", renew_after_ms(UINT64_C(2147483647)) },
+        { "2147483648", renew_after_ms(UINT64_C(2147483648)) },
+        { "4294967295", renew_after_ms(UINT64_C(4294967295)) },
     };
     for (const auto& c : cases) {
         INFO("expires_in " << c.text);
@@ -1216,6 +1229,29 @@ TEST_CASE( "Token lifetimes are read as 64-bit integers" ) {
         CHECK( login.session._stored_at_ms == 1000 );
         CHECK( login.session._renew_after_ms == c.renew_after_ms );
     }
+}
+
+TEST_CASE( "Things whose tokens were issued together don't renew them together" ) {
+    const char* ids[] = { "th.1", "th.2" };
+    std::set<uint64_t> after;
+    for (const char* id : ids) {
+        INFO("thing " << id);
+        Platform platform;
+        kii_session_t session;
+        init_session(&session, &platform);
+        Client c;
+        REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+        platform.now_ms = 1000;
+        c.http.responses = { http_response(200, std::string("{\"id\":\"") + id +
+                "\",\"access_token\":\"at1\",\"expires_in\":3600}") };
+        REQUIRE( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_OK );
+        CHECK( session._renew_at_known == true );
+        CHECK( session._renew_after_ms == renew_after_ms(3600, id) );
+        CHECK( session._renew_after_ms >= 3600000 - 300000 );
+        CHECK( session._renew_after_ms <= 3600000 - 150000 );
+        after.insert(session._renew_after_ms);
+    }
+    CHECK( after.size() == 2 );
 }
 
 TEST_CASE( "A lifetime that cannot be scheduled keeps the token until refused" ) {
@@ -1278,7 +1314,8 @@ TEST_CASE( "A refresh whose lifetime cannot be scheduled still keeps its tokens"
 
 TEST_CASE( "Renewal ahead of expiry does not depend on the clock's origin" ) {
     // The origin is arbitrary. This close to the top of the range, a deadline
-    // of the time stored plus 80 seconds would wrap around and be due at once.
+    // of the time stored plus 80 to 90 seconds would wrap around and be due at
+    // once.
     const uint64_t origin = UINT64_MAX - 1000;
     Login login("100", origin);
     REQUIRE( login.res == KII_ERR_OK );
@@ -1291,8 +1328,8 @@ TEST_CASE( "Renewal ahead of expiry does not depend on the clock's origin" ) {
     REQUIRE( contains(login.c.http.requests[1], "Authorization: Bearer at1\r\n") );
     REQUIRE( login.platform.updates.size() == 1 );
 
-    // Even a clock that wraps around has it renewed 80 seconds on.
-    login.platform.now_ms = origin + 80000;
+    // Even a clock that wraps around has it renewed when due.
+    login.platform.now_ms = origin + renew_after_ms(100);
     login.c.http.responses.push_back(refreshed("at2", "rt2", 100));
     login.c.http.responses.push_back(DONE);
     REQUIRE( login.c.put(BODY) == KII_ERR_OK );
