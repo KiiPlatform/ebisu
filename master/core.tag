@@ -363,6 +363,32 @@
     </member>
   </compound>
   <compound kind="file">
+    <name>ebisu_retry.h</name>
+    <path>include/</path>
+    <filename>ebisu__retry_8h.html</filename>
+    <member kind="function">
+      <type>uint32_t</type>
+      <name>ebisu_retry_seed</name>
+      <anchorfile>ebisu__retry_8h.html</anchorfile>
+      <anchor>a44432e8b7b28b390b3b90c4f8ddf03a0</anchor>
+      <arglist>(const char *id)</arglist>
+    </member>
+    <member kind="function">
+      <type>uint32_t</type>
+      <name>ebisu_retry_spread</name>
+      <anchorfile>ebisu__retry_8h.html</anchorfile>
+      <anchor>a4f2f9065a6948f25024f04b7ccff954b</anchor>
+      <arglist>(uint32_t wait, uint32_t seed)</arglist>
+    </member>
+    <member kind="function">
+      <type>uint32_t</type>
+      <name>ebisu_retry_wait</name>
+      <anchorfile>ebisu__retry_8h.html</anchorfile>
+      <anchor>a2636ddd6a6178a7f48cddc7317d5a070</anchor>
+      <arglist>(uint32_t first, uint32_t max, uint32_t n, uint32_t seed)</arglist>
+    </member>
+  </compound>
+  <compound kind="file">
     <name>ebisu_server_clock.h</name>
     <path>include/</path>
     <filename>ebisu__server__clock_8h.html</filename>
