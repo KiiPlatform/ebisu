@@ -294,6 +294,28 @@ bool wait_for(const std::atomic<bool>& flag)
 }
 
 // A logger that keeps the lines it is given.
+// Whether mbedTLS is built with a suite that has forward secrecy and
+// authenticated encryption, by the suites' names.
+bool has_strict_suite()
+{
+    for (const int* id = mbedtls_ssl_list_ciphersuites(); *id != 0; ++id) {
+        std::string name(mbedtls_ssl_get_ciphersuite_name(*id));
+        bool forward = name.find("TLS1-3-") == 0 || name.find("TLS-ECDHE-") == 0 ||
+            name.find("TLS-DHE-") == 0;
+        bool aead = name.find("-GCM-") != std::string::npos ||
+            name.find("-CHACHA20-") != std::string::npos ||
+            (name.find("-CCM") != std::string::npos && name.find("-CCM-8") == std::string::npos);
+        if (forward && aead && name.find("PSK") == std::string::npos) {
+            return true;
+        }
+    }
+    return false;
+}
+
+const char CBC_SUITE[] = "TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA256";
+const char SUITE_WARNING[] = "a cipher suite without forward secrecy or without";
+const char NO_STRICT_SUITE[] = "is built with none that has both";
+
 struct Captured {
     ebisu_logger_t base;
     std::mutex lock;
@@ -320,6 +342,33 @@ struct Captured {
             }
         }
         return false;
+    }
+
+    // Whether nothing was logged, but, by a library without a suite of
+    // forward secrecy and authenticated encryption, the warning of the suite
+    // a connection has.
+    bool quiet() {
+        std::lock_guard<std::mutex> guard(lock);
+        if (has_strict_suite()) {
+            return lines.empty();
+        }
+        for (const std::string& line : lines) {
+            if (line.find(SUITE_WARNING) == std::string::npos) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    int count(const std::string& text) {
+        std::lock_guard<std::mutex> guard(lock);
+        int found = 0;
+        for (const std::string& line : lines) {
+            if (line.find(text) != std::string::npos) {
+                ++found;
+            }
+        }
+        return found;
     }
 };
 
@@ -387,7 +436,7 @@ TEST_CASE( "The mbedTLS socket connects, sends and receives over TLS" ) {
     client.send("hello");
     CHECK( client.recv(64) == "hello" );
     CHECK( client.error() == EBISU_SOCK_ERROR_NONE );
-    CHECK( client.logger.lines.empty() );
+    CHECK( client.logger.quiet() );
 }
 
 #if MBEDTLS_VERSION_MAJOR < 4 && defined(MBEDTLS_SSL_SESSION_TICKETS) && \
@@ -716,7 +765,7 @@ TEST_CASE( "The mbedTLS socket's receive times out, and the connection goes on" 
     CHECK( client.sock->ops->recv_timed_out(client.sock) );
     CHECK( client.error() == EBISU_SOCK_ERROR_TIMEOUT );
     // Not a failure to log.
-    CHECK( client.logger.lines.empty() );
+    CHECK( client.logger.quiet() );
     timed_out = true;
     CHECK( client.recv(64) == "late" );
     CHECK_FALSE( client.sock->ops->recv_timed_out(client.sock) );
@@ -975,7 +1024,7 @@ TEST_CASE( "The mbedTLS socket says when the server has no TLS version or suite 
             CHECK( client.error(&detail) == EBISU_SOCK_ERROR_TLS_MISMATCH );
             CHECK( detail < 0 );
 #ifdef EBISU_NO_LOG
-            CHECK( client.logger.lines.empty() );
+            CHECK( client.logger.quiet() );
 #else
             CHECK( client.logger.has("TLS handshake failed with localhost") );
             CHECK( client.logger.has(MISMATCH_HINT) );
@@ -1056,6 +1105,76 @@ TEST_CASE( "The mbedTLS socket takes a host's commonName for its name without a 
     CHECK( refused.error() == EBISU_SOCK_ERROR_VERIFY );
 }
 
+TEST_CASE( "The mbedTLS socket offers the suites with forward secrecy and authenticated encryption, if mbedTLS has any" ) {
+    Config config;
+    bool strict = has_strict_suite();
+    CAPTURE( strict );
+    SECTION("a server of AES in CBC mode alone is refused, or, by an mbedTLS without the others, taken with a warning, once") {
+        TlsServer server(pki().server(), echo, 2, TLS1_2_VERSION);
+        REQUIRE( SSL_CTX_set_cipher_list(server.ctx, "ECDHE-ECDSA-AES128-SHA256:@SECLEVEL=0") == 1 );
+        Client client(&config.tls);
+        if (strict) {
+            REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+            CHECK( client.error() == EBISU_SOCK_ERROR_TLS_MISMATCH );
+            CHECK( client.logger.count(SUITE_WARNING) == 0 );
+        } else {
+            REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+            CHECK( std::string(ebisu_mbedtls_socket_get_cipher(&client.tls)) == CBC_SUITE );
+            REQUIRE( client.sock->ops->close(client.sock) == EBISU_SOCK_OK );
+            REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+#ifndef EBISU_NO_LOG
+            CHECK( client.logger.count(SUITE_WARNING) == 1 );
+            CHECK( client.logger.count(std::string(CBC_SUITE) + ", " + SUITE_WARNING) == 1 );
+            CHECK( client.logger.count(NO_STRICT_SUITE) == 1 );
+#endif
+        }
+    }
+    SECTION("a server of a cipher other than AES alone is refused, whichever mbedTLS it is") {
+        // Camellia in CBC mode, which mbedTLS has by default.
+        TlsServer server(pki().server(), nothing, 1, TLS1_2_VERSION);
+        REQUIRE( SSL_CTX_set_cipher_list(server.ctx,
+                    "ECDHE-ECDSA-CAMELLIA128-SHA256:@SECLEVEL=0") == 1 );
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        CHECK( client.error() == EBISU_SOCK_ERROR_TLS_MISMATCH );
+    }
+    // Only where mbedTLS has one of them.
+    if (strict) SECTION("a server of both kinds gives one of them, without a warning") {
+        TlsServer server(pki().server(), echo, 1, TLS1_2_VERSION);
+        // The server's order, the one without first.
+        REQUIRE( SSL_CTX_set_cipher_list(server.ctx,
+                    "ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:@SECLEVEL=0") == 1 );
+        SSL_CTX_set_options(server.ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+        CHECK( std::string(ebisu_mbedtls_socket_get_cipher(&client.tls)) ==
+                "TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256" );
+        CHECK( client.logger.count(SUITE_WARNING) == 0 );
+    }
+    SECTION("the application's suites are taken, with the warning, once a socket, for one without") {
+        // One every build the tests run with has.
+        static const int suites[] = { MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, 0 };
+        const int* has = mbedtls_ssl_list_ciphersuites();
+        while (*has != 0 && *has != suites[0]) {
+            ++has;
+        }
+        REQUIRE( *has == suites[0] );
+        mbedtls_ssl_conf_ciphersuites(ebisu_mbedtls_tls_config(&config.tls), suites);
+        TlsServer server(pki().server(), echo, 2, TLS1_2_VERSION);
+        REQUIRE( SSL_CTX_set_cipher_list(server.ctx,
+                    "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-SHA256:@SECLEVEL=0") == 1 );
+        Client client(&config.tls);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+        CHECK( std::string(ebisu_mbedtls_socket_get_cipher(&client.tls)) == CBC_SUITE );
+        REQUIRE( client.sock->ops->close(client.sock) == EBISU_SOCK_OK );
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+#ifndef EBISU_NO_LOG
+        CHECK( client.logger.count(SUITE_WARNING) == 1 );
+        CHECK( client.logger.count(NO_STRICT_SUITE) == (strict ? 0 : 1) );
+#endif
+    }
+}
+
 TEST_CASE( "The mbedTLS socket gives the TLS version and cipher suite its connection negotiated" ) {
     Config config;
     {
@@ -1066,14 +1185,16 @@ TEST_CASE( "The mbedTLS socket gives the TLS version and cipher suite its connec
     SECTION("TLS 1.2") {
         TlsServer server(pki().server(), echo, 1, TLS1_2_VERSION);
         // The tests' keys are of P-256.
-        REQUIRE( SSL_CTX_set_cipher_list(server.ctx, "ECDHE-ECDSA-AES128-GCM-SHA256") == 1 );
+        bool strict = has_strict_suite();
+        REQUIRE( SSL_CTX_set_cipher_list(server.ctx, strict ? "ECDHE-ECDSA-AES128-GCM-SHA256" :
+                    "ECDHE-ECDSA-AES128-SHA256:@SECLEVEL=0") == 1 );
         Client client(&config.tls);
         REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
         REQUIRE( ebisu_mbedtls_socket_get_protocol(&client.tls) != nullptr );
         CHECK( std::string(ebisu_mbedtls_socket_get_protocol(&client.tls)) == "TLSv1.2" );
         REQUIRE( ebisu_mbedtls_socket_get_cipher(&client.tls) != nullptr );
         CHECK( std::string(ebisu_mbedtls_socket_get_cipher(&client.tls)) ==
-                "TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256" );
+                (strict ? "TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256" : CBC_SUITE) );
         client.send("hello");
         CHECK( client.recv(64) == "hello" );
         REQUIRE( client.sock->ops->close(client.sock) == EBISU_SOCK_OK );
@@ -1156,7 +1277,7 @@ TEST_CASE( "The mbedTLS socket says when the server sends a record longer than i
         // From 2.28, as more input than mbedTLS has room for.
         CHECK( (detail == MBEDTLS_ERR_SSL_INVALID_RECORD || detail == MBEDTLS_ERR_SSL_BAD_INPUT_DATA) );
 #ifdef EBISU_NO_LOG
-        CHECK( client.logger.lines.empty() );
+        CHECK( client.logger.quiet() );
 #else
         CHECK( client.logger.has("localhost sent a record of 18432 bytes, " + more_than) );
 #endif

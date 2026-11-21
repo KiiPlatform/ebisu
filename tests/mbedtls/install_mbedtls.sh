@@ -3,11 +3,14 @@
 # installs it into a prefix, with threads, as the mbedTLS port's sockets of a
 # configuration need when they are used on more than one task at once.
 #
-# Usage: tests/mbedtls/install_mbedtls.sh <version> <prefix> [no-drbg]
+# Usage: tests/mbedtls/install_mbedtls.sh <version> <prefix> [no-drbg|no-aead]
 #   version: 2.4.0, 2.16.12, 2.28.10, 3.6.7 or 4.2.0
 #   no-drbg: for mbedTLS 2, built without MBEDTLS_CTR_DRBG_C and
 #     MBEDTLS_ENTROPY_C, as some of vendors' SDKs configure it, where the
 #     application gives TLS its random generator.
+#   no-aead: for mbedTLS 2.4.0, built without MBEDTLS_GCM_C and MBEDTLS_CCM_C,
+#     as some of vendors' SDKs configure it, where no cipher suite has
+#     authenticated encryption.
 #
 # mbedTLS 2 installs no CMake package, which ebisu's CMake finds mbedTLS by:
 # this writes one, of the libraries it installs, as an application would name
@@ -22,6 +25,12 @@ case "$variant" in
         case "$version" in
             2.*) ;;
             *) echo "no-drbg is for mbedTLS 2" >&2; exit 2 ;;
+        esac
+        ;;
+    no-aead)
+        case "$version" in
+            2.4.0) ;;
+            *) echo "no-aead is for mbedTLS 2.4.0" >&2; exit 2 ;;
         esac
         ;;
     *) echo "no variant $variant" >&2; exit 2 ;;
@@ -69,6 +78,12 @@ if [ "$variant" = no-drbg ]; then
     # And PSA's, from 2.16, which needs them, and what needs it.
     for option in MBEDTLS_CTR_DRBG_C MBEDTLS_ENTROPY_C MBEDTLS_PSA_CRYPTO_C \
             MBEDTLS_PSA_CRYPTO_STORAGE_C MBEDTLS_PSA_ITS_FILE_C; do
+        perl "$src/scripts/config.pl" -f "$src/include/mbedtls/config.h" unset "$option"
+    done
+fi
+if [ "$variant" = no-aead ]; then
+    # And the server's session tickets, which it needs one to seal.
+    for option in MBEDTLS_GCM_C MBEDTLS_CCM_C MBEDTLS_SSL_TICKET_C; do
         perl "$src/scripts/config.pl" -f "$src/include/mbedtls/config.h" unset "$option"
     done
 fi

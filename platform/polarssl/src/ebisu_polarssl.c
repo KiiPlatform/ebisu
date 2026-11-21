@@ -136,6 +136,43 @@ static void free_parts(ebisu_polarssl_tls_t* tls, bool locked)
     (void)locked;
 }
 
+/* The cipher suites a configuration offers, by the numbers TLS gives them,
+   which every version of PolarSSL shares, the most wanted first. Those with
+   forward secrecy and authenticated encryption: TLS 1.3's, and TLS 1.2's with
+   an ECDHE or DHE key exchange and AES-GCM, ChaCha20-Poly1305 or AES-CCM. */
+static const uint16_t STRICT_SUITES[] = {
+    0x1301, 0x1302, 0x1303,
+    0xC02B, 0xC02F, 0xC02C, 0xC030, 0xCCA9, 0xCCA8,
+    0x009E, 0x009F, 0xCCAA,
+    0xC0AC, 0xC0AD, 0xC09E, 0xC09F,
+};
+/* Those of a PolarSSL built with none of the above, as some of vendors' SDKs
+   build it: AES alone, in CBC or with an RSA key exchange. Neither list has
+   RC4, 3DES, Camellia or ARIA, a NULL cipher, or a pre-shared key. */
+static const uint16_t LEGACY_SUITES[] = {
+    0xC023, 0xC027, 0xC024, 0xC028, 0xC009, 0xC013, 0xC00A, 0xC014,
+    0x0067, 0x006B, 0x0033, 0x0039,
+    0x009C, 0x009D, 0x003C, 0x003D, 0x002F, 0x0035,
+};
+#define COUNT_OF(array) (sizeof(array) / sizeof((array)[0]))
+
+/* Those of wanted that PolarSSL is built with, in wanted's order, ended by a
+   0, as PolarSSL takes a list. How many. */
+static size_t pick_suites(const uint16_t* wanted, size_t count, int* out)
+{
+    size_t picked = 0;
+    for (size_t i = 0; i < count; ++i) {
+        for (const int* has = ssl_list_ciphersuites(); *has != 0; ++has) {
+            if (*has == wanted[i]) {
+                out[picked++] = wanted[i];
+                break;
+            }
+        }
+    }
+    out[picked] = 0;
+    return picked;
+}
+
 /* 0, or PolarSSL's error, the configuration then holding nothing to free. */
 static int tls_init(ebisu_polarssl_tls_t* tls, const unsigned char* ca, size_t ca_size)
 {
@@ -171,6 +208,10 @@ static int tls_init(ebisu_polarssl_tls_t* tls, const unsigned char* ca, size_t c
     }
     if (ret != 0) {
         goto fail;
+    }
+    /* None, and PolarSSL's own left, only if it is built with none of either. */
+    if (pick_suites(STRICT_SUITES, COUNT_OF(STRICT_SUITES), tls->_suites) == 0) {
+        pick_suites(LEGACY_SUITES, COUNT_OF(LEGACY_SUITES), tls->_suites);
     }
     return 0;
 
@@ -517,6 +558,9 @@ static int set_up(ebisu_polarssl_socket_t* sock, const char* host)
     ssl_set_endpoint(ssl, SSL_IS_CLIENT);
     ssl_set_authmode(ssl, SSL_VERIFY_REQUIRED);
     ssl_set_min_version(ssl, SSL_MAJOR_VERSION_3, SSL_MINOR_VERSION_3);
+    if (tls->_suites[0] != 0) {
+        ssl_set_ciphersuites(ssl, tls->_suites);
+    }
     /* The name to check the server's certificate for, in full only. */
     ssl_set_ca_chain(ssl, &tls->_ca, NULL, tls->_verify == EBISU_TLS_VERIFY_FULL ? host : NULL);
     ssl_set_verify(ssl, verify, sock);
@@ -535,6 +579,37 @@ static int set_up(ebisu_polarssl_socket_t* sock, const char* host)
     }
     return 0;
 }
+
+#ifndef EBISU_NO_LOG
+static bool is_among(const uint16_t* suites, size_t count, int id)
+{
+    for (size_t i = 0; i < count; ++i) {
+        if (suites[i] == id) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/* Says, once for a socket, that its connection's suite is none of the strict
+   ones: the library has none, or the application set others. */
+static void warn_of_suite(ebisu_polarssl_socket_t* sock, const char* host)
+{
+    const char* name = ssl_get_ciphersuite(&sock->_ssl);
+    if (sock->_suite_warned || name == NULL ||
+            is_among(STRICT_SUITES, COUNT_OF(STRICT_SUITES), ssl_get_ciphersuite_id(name))) {
+        return;
+    }
+    sock->_suite_warned = true;
+    log_to(sock->_logger, EBISU_LOG_WARNING,
+            "connected to %s with %s, a cipher suite without forward secrecy or without "
+            "authenticated encryption%s", host, name,
+            is_among(STRICT_SUITES, COUNT_OF(STRICT_SUITES), sock->_tls->_suites[0]) ? "." :
+            ": PolarSSL is built with none that has both.");
+}
+#else
+#define warn_of_suite(sock, host) ((void)0)
+#endif
 
 static ebisu_sock_code_t polarssl_connect(ebisu_socket_t* self, const char* host, uint16_t port)
 {
@@ -644,6 +719,7 @@ static ebisu_sock_code_t polarssl_connect(ebisu_socket_t* self, const char* host
         log_to(sock->_logger, EBISU_LOG_WARNING,
                 "connected to %s without verifying its certificate.", host);
     }
+    warn_of_suite(sock, host);
     return EBISU_SOCK_OK;
 
 fail:
