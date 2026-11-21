@@ -166,7 +166,8 @@ first, `0x08100000` as the chip maps the flash, with the SDK's
 mbedTLS is the SDK's, configured as the SDK configures it, with its
 `config_rsa.h`: TLS 1.2, which ebisu's port asks for at the least, with RSA key
 exchange and AES in CBC mode, and no other cipher suites, ECDHE's or GCM's among
-them; and records of 4096 bytes at the most, where a server may send 16384. The
+them, so the port offers these, and warns in the log that a connection has
+neither forward secrecy nor authenticated encryption; and records of 4096 bytes at the most, where a server may send 16384. The
 sample asks the server for records no larger, with the maximum fragment length
 extension, which a server that doesn't take it ignores: a record larger than
 mbedTLS takes fails the connection, which the port logs with the record's

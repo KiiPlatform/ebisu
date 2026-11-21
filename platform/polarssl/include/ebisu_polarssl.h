@@ -73,15 +73,27 @@ extern "C" {
  */
 typedef void (*EBISU_POLARSSL_SETUP)(ssl_context* ssl, void* userdata);
 
+/** \brief The most cipher suites a configuration of the port's offers. */
+#define EBISU_POLARSSL_SUITES_MAX 18
+
 /**
  * \brief The TLS configuration connections share.
  *
- * TLS 1.2, with PolarSSL's default cipher suites, which a server picks one of.
- * The server's certificate has to chain to one of the configuration's CA
+ * TLS 1.2. The server's certificate has to chain to one of the configuration's CA
  * certificates, and be issued for the host connected to, unless
  * ebisu_polarssl_tls_set_verify() says otherwise. PolarSSL 1.3 has no
  * configuration shared by connections, as mbedTLS 2 on has: the port keeps
  * this one, and sets each connection's context from it as it connects.
+ *
+ * It offers the cipher suites with forward secrecy and authenticated
+ * encryption that PolarSSL is built with: those with an ECDHE or DHE key
+ * exchange and AES-GCM or AES-CCM. A PolarSSL built with none of them, as some
+ * of vendors' SDKs build it, offers those it has of AES in CBC mode or with an
+ * RSA key exchange instead, and the socket's logger warns of the suite a
+ * connection then has, once a socket. Nothing else is offered in either case:
+ * no RC4, 3DES or Camellia, no NULL cipher, and no pre-shared key. Other
+ * suites are the application's to set, with ssl_set_ciphersuites() in its
+ * setup, and a connection with one that lacks either gets the same warning.
  *
  * Random numbers come from a CTR_DRBG of the configuration's own, which
  * ebisu_polarssl_tls_init() seeds from PolarSSL's entropy sources, the
@@ -107,6 +119,8 @@ typedef struct ebisu_polarssl_tls_t {
     x509_crt _ca; /**< \private */
     ebisu_tls_verify_t _verify; /**< \private */
     unsigned char _pin[EBISU_TLS_PIN_SIZE]; /**< \private */
+    /** \private The cipher suites it offers, ended by a 0. */
+    int _suites[EBISU_POLARSSL_SUITES_MAX + 1];
     EBISU_POLARSSL_SETUP _setup; /**< \private */
     void* _setup_userdata; /**< \private */
 #if EBISU_POLARSSL_SETS_RNG
@@ -255,6 +269,9 @@ typedef struct ebisu_polarssl_socket_t {
     uint64_t _handshake_start_ms;
     bool _handshaking; /**< \private */
     bool _handshake_ran_out; /**< \private */
+    /** \private Whether it has said that a connection's cipher suite is
+     * none of those the port would have. */
+    bool _suite_warned;
     /** \private Why the last operation that returned EBISU_SOCK_FAIL failed,
      * for last_error, and more of it. */
     ebisu_sock_error_t _error;

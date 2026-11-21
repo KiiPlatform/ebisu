@@ -45,6 +45,9 @@
 extern "C" {
 #endif
 
+/** \brief The most cipher suites a configuration of the port's offers. */
+#define EBISU_MBEDTLS_SUITES_MAX 18
+
 /**
  * \brief The TLS configuration connections share.
  *
@@ -74,6 +77,17 @@ extern "C" {
  * application's generator has to take calls from more than one task at
  * once.
  *
+ * It offers the cipher suites with forward secrecy and authenticated
+ * encryption that mbedTLS is built with: TLS 1.3's, and TLS 1.2's with an
+ * ECDHE or DHE key exchange and AES-GCM, ChaCha20-Poly1305 or AES-CCM. An
+ * mbedTLS built with none of them, as some of vendors' SDKs build it, offers
+ * those it has of AES in CBC mode or with an RSA key exchange instead, and the
+ * socket's logger warns of the suite a connection then has, once a socket.
+ * Nothing else is offered in either case: no RC4, 3DES, Camellia or ARIA, no
+ * NULL cipher, and no pre-shared key. Other suites are the application's to
+ * set, with mbedtls_ssl_conf_ciphersuites() on ebisu_mbedtls_tls_config(),
+ * and a connection with one that lacks either gets the same warning.
+ *
  * mbedTLS 3.6 and 4.x, and mbedTLS 2 from 2.4, as vendors' SDKs ship it,
  * which has TLS 1.2 at the most. mbedTLS 2 is past its end of life: its last
  * release, 2.28.10, came in March 2025, and an earlier 2 lacks the fixes
@@ -86,6 +100,8 @@ typedef struct ebisu_mbedtls_tls_t {
     mbedtls_x509_crt _ca; /**< \private */
     ebisu_tls_verify_t _verify; /**< \private */
     unsigned char _pin[EBISU_TLS_PIN_SIZE]; /**< \private */
+    /** \private The cipher suites it offers, ended by a 0. */
+    int _suites[EBISU_MBEDTLS_SUITES_MAX + 1];
 #if MBEDTLS_VERSION_MAJOR < 3 && EBISU_MBEDTLS_SETS_RNG
     mbedtls_entropy_context _entropy; /**< \private */
     mbedtls_ctr_drbg_context _drbg; /**< \private */
@@ -244,6 +260,9 @@ typedef struct ebisu_mbedtls_socket_t {
     uint64_t _handshake_start_ms;
     bool _handshaking; /**< \private */
     bool _handshake_ran_out; /**< \private */
+    /** \private Whether it has said that a connection's cipher suite is
+     * none of those the port would have. */
+    bool _suite_warned;
     /** \private Why the last operation that returned EBISU_SOCK_FAIL failed,
      * for last_error, and more of it. */
     ebisu_sock_error_t _error;

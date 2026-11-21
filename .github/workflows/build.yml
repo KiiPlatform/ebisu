@@ -387,6 +387,8 @@ jobs:
         include:
           - mbedtls: 2.4.0
             variant: no-drbg
+          - mbedtls: 2.4.0
+            variant: no-aead
     steps:
       - name: Checkout
         uses: actions/checkout@v7

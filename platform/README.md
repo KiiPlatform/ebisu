@@ -187,7 +187,10 @@ of the application's own, as the
   `ebisu_mbedtls_tls_t`: the CA certificates the server's has to chain to, PEM
   or DER, from memory, and mbedTLS's configuration, which
   `ebisu_mbedtls_tls_config()` gives the application for settings of its own,
-  such as the cipher suites. It checks the server's certificate chain and host
+  such as the cipher suites: the port offers those with forward secrecy and
+  authenticated encryption, or, of an mbedTLS built with none, as some of
+  vendors' SDKs build it, those of AES it has, with a warning in the log. It
+  checks the server's certificate chain and host
   name, and each certificate's dates at an `ebisu_clock_t`'s time, in place of
   mbedTLS's own check at the system's, or at the system's time without one, as
   mbedTLS has it with `MBEDTLS_HAVE_TIME_DATE`: a device without a real-time
@@ -231,8 +234,8 @@ of the application's own, as the
   the verification and a CTR_DRBG of its own, seeded from PolarSSL's entropy
   sources, and sets each connection's context from them as it connects, then
   calls the application's setup, set with `ebisu_polarssl_tls_set_setup()`,
-  for settings of its own, such as the cipher suites or the maximum fragment
-  length, and the random generator, a cryptographically secure one, where
+  for settings of its own, such as the cipher suites, which the port sets as
+  the mbedTLS port does, or the maximum fragment length, and the random generator, a cryptographically secure one, where
   PolarSSL is built without `POLARSSL_CTR_DRBG_C` or `POLARSSL_ENTROPY_C` and
   `EBISU_POLARSSL_SETS_RNG` is 0. Built where CMake finds PolarSSL as
   `PolarSSL::polarssl`, which an application names its library, as
