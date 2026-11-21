@@ -253,7 +253,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Sets where the socket's diagnostics go. </p>
-<p>Why an operation failed, at EBISU_LOG_ERROR: a host that didn't resolve or connect, a send or a receive that failed. A receive that times out isn't one.</p>
+<p>Why an operation failed, at EBISU_LOG_ERROR: a host that didn't resolve or connect, a send or a receive that failed. A receive that times out isn't one, and nor is a send once the peer has closed its side, which FreeRTOS-Plus-TCP refuses, where TCP would send: it fails as closed.</p>
 <p>Built with EBISU_NO_LOG, as -DEBISU_LOG=OFF builds it, the socket logs nothing.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
