@@ -32,7 +32,7 @@ function(ebisu_check_headers lib)
 endfunction()
 
 # What each library installs.
-ebisu_check_headers(ebisu_core ebisu_object.h ebisu_socket.h ebisu_system.h ebisu_clock.h ebisu_server_clock.h ebisu_log.h ebisu_str.h ebisu_mem.h ebisu_time.h ebisu_dns.h)
+ebisu_check_headers(ebisu_core ebisu_object.h ebisu_socket.h ebisu_system.h ebisu_clock.h ebisu_server_clock.h ebisu_log.h ebisu_str.h ebisu_mem.h ebisu_time.h ebisu_dns.h ebisu_retry.h)
 # The headers with format attributes, with printf defined as a macro, as an
 # SDK that wraps printf has it.
 add_library(ebisu_header_check_printf_macro OBJECT printf_macro.c)
