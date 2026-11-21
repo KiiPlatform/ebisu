@@ -992,6 +992,13 @@
       <arglist>(kii_t *kii, ebisu_lock_t *lock)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>kii_set_http_lock</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a5a271ed07a56d8de93a3f26b9f900992</anchor>
+      <arglist>(kii_t *kii, ebisu_lock_t *lock)</arglist>
+    </member>
+    <member kind="function">
       <type>kii_code_t</type>
       <name>kii_execute_server_code_version</name>
       <anchorfile>kii_8h.html</anchorfile>

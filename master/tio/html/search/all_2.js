@@ -7,7 +7,8 @@ var searchData=
   ['callbacks_20sockets_4',['The system, task callbacks, sockets',['../index.html#autotoc_md25',1,'']]],
   ['clock_5',['clock',['../../../core/html/structebisu__system__ops__t.html#ad813b06ac9cd4cb07ea051160cd83ae6',1,'ebisu_system_ops_t::clock'],['../index.html#autotoc_md18',1,'The system&apos;s monotonic clock']]],
   ['close_6',['close',['../../../core/html/structebisu__socket__ops__t.html#afab911ce1025829b38f7df1096e67e7b',1,'ebisu_socket_ops_t']]],
-  ['condition_7',['Avoiding race condition',['../index.html#autotoc_md35',1,'']]],
-  ['connect_8',['connect',['../../../core/html/structebisu__socket__ops__t.html#ad7c954a124d7f7029c24052e1fbdc2c2',1,'ebisu_socket_ops_t']]],
-  ['continue_20callback_9',['Task continue callback',['../index.html#autotoc_md4',1,'']]]
+  ['command_20later_7',['Handling a command later',['../index.html#autotoc_md35',1,'']]],
+  ['condition_8',['Avoiding race condition',['../index.html#autotoc_md36',1,'']]],
+  ['connect_9',['connect',['../../../core/html/structebisu__socket__ops__t.html#ad7c954a124d7f7029c24052e1fbdc2c2',1,'ebisu_socket_ops_t']]],
+  ['continue_20callback_10',['Task continue callback',['../index.html#autotoc_md4',1,'']]]
 ];

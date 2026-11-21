@@ -589,6 +589,35 @@ Tasks executed by <span class="tt">tio_updater_t</span>.</h2>
 </li>
 </ul>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md35"></a>
+Handling a command later</h2>
+<p>A command whose actions take long, moving a motor or writing a firmware, keeps the handler's task from the MQTT connection for as long: it answers no ping meanwhile. Such a command can be taken in the push callback, set by <span class="tt">tio_handler_set_cb_push()</span>, handled on a task of the application's, and answered from there with <span class="tt">tio_handler_handle_command()</span>. Two things are the application's to do:</p>
+<ul>
+<li><b>Copy the command in the push callback.</b> It is given in the handler's MQTT buffer, which the next packet overwrites, so it is the command only until the callback returns. It has no terminating NUL.</li>
+<li><b>Set a lock with <span class="tt">tio_handler_set_http_lock()</span>,</b> before starting the handler. <span class="tt">tio_handler_handle_command()</span> sends the results with the handler's HTTP socket and buffers, which the handler's task uses too, for the next command and to get the MQTT endpoint again. Each holds the lock while it does, so one waits for the other: without it nothing keeps the two apart, and <span class="tt">tio_handler_handle_command()</span> is for the handler's own task alone.</li>
+</ul>
+<div class="fragment"><div class="line"><span class="comment">/* At set-up, before tio_handler_start(): tio_handler_set_http_lock(&amp;handler,</span></div>
+<div class="line"><span class="comment">   &amp;http_lock.base), an ebisu_lock_t as the session&#39;s. */</span></div>
+<div class="line"><span class="keyword">static</span> <span class="keywordtype">char</span> pending[1024];</div>
+<div class="line"><span class="keyword">static</span> <span class="keywordtype">size_t</span> pending_length;</div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">static</span> <span class="keywordtype">bool</span> push_cb(<span class="keyword">const</span> <span class="keywordtype">char</span>* message, <span class="keywordtype">size_t</span> message_length, <span class="keywordtype">void</span>* userdata)</div>
+<div class="line">{</div>
+<div class="line">    <span class="keywordflow">if</span> (message_length &gt; <span class="keyword">sizeof</span>(pending)) {</div>
+<div class="line">        <span class="keywordflow">return</span> <span class="keyword">false</span>; <span class="comment">/* No room to keep it: handled now, on the handler&#39;s task. */</span></div>
+<div class="line">    }</div>
+<div class="line">    memcpy(pending, message, message_length);</div>
+<div class="line">    pending_length = message_length;</div>
+<div class="line">    wake_worker();</div>
+<div class="line">    <span class="keywordflow">return</span> <span class="keyword">true</span>; <span class="comment">/* The application&#39;s to handle. */</span></div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">/* On the application&#39;s task, when the work is done. */</span></div>
+<div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span> worker_answers(<span class="keywordtype">void</span>)</div>
+<div class="line">{</div>
+<div class="line">    tio_handler_handle_command(&amp;handler, pending, pending_length, action_cb, NULL);</div>
+<div class="line">}</div>
+</div><!-- fragment --><p>A message that isn't a command reaches the push callback too: one the application doesn't recognize it returns <span class="tt">false</span> for, and the handler ignores what isn't a command.</p>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md36"></a>
 Avoiding race condition</h2>
 <ul>
 <li>Above 2 tasks <span class="tt"><a class="elRef" href="../../kii/html/kii_8h.html#a48f058506a462a68bdf8fbd4c661accf">KII_TASK_NAME_MQTT</a></span> and <span class="tt">TIO_TASK_NAME_UPDATE_STATE</span> would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access control mechanism.</li>

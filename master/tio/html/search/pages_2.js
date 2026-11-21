@@ -6,6 +6,7 @@ var searchData=
   ['callbacks_3',['State read callbacks',['../index.html#autotoc_md26',1,'']]],
   ['callbacks_20sockets_4',['The system, task callbacks, sockets',['../index.html#autotoc_md25',1,'']]],
   ['clock_5',['The system&apos;s monotonic clock',['../index.html#autotoc_md18',1,'']]],
-  ['condition_6',['Avoiding race condition',['../index.html#autotoc_md35',1,'']]],
-  ['continue_20callback_7',['Task continue callback',['../index.html#autotoc_md4',1,'']]]
+  ['command_20later_6',['Handling a command later',['../index.html#autotoc_md35',1,'']]],
+  ['condition_7',['Avoiding race condition',['../index.html#autotoc_md36',1,'']]],
+  ['continue_20callback_8',['Task continue callback',['../index.html#autotoc_md4',1,'']]]
 ];

@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['race_20condition_0',['Avoiding race condition',['../index.html#autotoc_md35',1,'']]],
+  ['race_20condition_0',['Avoiding race condition',['../index.html#autotoc_md36',1,'']]],
   ['read_20callback_1',['Read callback',['../index.html#autotoc_md28',1,'']]],
   ['read_20callbacks_2',['State read callbacks',['../index.html#autotoc_md26',1,'']]],
   ['recv_3',['recv',['../../../core/html/structebisu__socket__ops__t.html#a28417969117e077e747944faac38efa8',1,'ebisu_socket_ops_t']]],
