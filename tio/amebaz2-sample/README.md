@@ -104,15 +104,15 @@ commands `ATW0=<ssid>`, `ATW1=<passphrase>` and `ATWC`.
 ## TLS
 
 mbedTLS is the SDK's, configured as the SDK configures it, with its
-`config_rsa.h`: TLS 1.2, which ebisu's port asks for at the least, with RSA
-key exchange and AES in CBC mode, and no other cipher suites, ECDHE's or
-GCM's among them; and records of 4096 bytes at
-the most, where a server may send 16384. The sample asks the server for
-records no larger, with the maximum fragment length extension, which a server
-that doesn't take it ignores: a record larger than mbedTLS takes fails the
-connection. mbedTLS is built without `MBEDTLS_THREADING_C`: the tasks'
-connections share the TLS configuration, which none changes, and the sample's
-random generator, which has a lock of its own.
+`config_rsa.h`: TLS 1.2, which ebisu's port asks for at the least, with RSA key
+exchange and AES in CBC mode, and no other cipher suites, ECDHE's or GCM's among
+them; and records of 4096 bytes at the most, where a server may send 16384. The
+sample asks the server for records no larger, with the maximum fragment length
+extension, which a server that doesn't take it ignores: a record larger than
+mbedTLS takes fails the connection, which the port logs with the record's
+length. mbedTLS is built without `MBEDTLS_THREADING_C`: the tasks' connections
+share the TLS configuration, which none changes, and the sample's random
+generator, which has a lock of its own.
 
 ### The server's certificate
 
