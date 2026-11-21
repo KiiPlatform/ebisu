@@ -553,6 +553,9 @@ typedef struct kii_t {
     uint32_t _mqtt_retry_wait_max_ms;
     /** \private Guards what kii_mqtt_publish() and the task share, below. */
     ebisu_lock_t* _mqtt_lock;
+    /** \private Held by the push task for each HTTP request of its own, or
+     * NULL. */
+    ebisu_lock_t* _http_lock;
     /** \private Whether kii_mqtt_publish() may give the task a message: from
      * when the task is started until it ends. */
     bool _mqtt_pub_open;
@@ -1413,6 +1416,33 @@ kii_code_t kii_mqtt_publish(
  * kii_mqtt_publish().
  */
 void kii_set_mqtt_lock(kii_t* kii, ebisu_lock_t* lock);
+
+/**
+ * \brief Set the lock the push task holds for each HTTP request of its own.
+ *
+ * The push task makes requests with the kii_t's HTTP socket, buffer and
+ * response: to install push and get the MQTT endpoint when it starts, and
+ * again when the broker refuses its credentials or can't be reached. An
+ * application that calls an API on the same kii_t from another task while the
+ * push task runs would have the two write one buffer. With this lock set, the
+ * task holds it from each such request until it has read the response, and
+ * the application holds it likewise, with ebisu_lock_acquire() and
+ * ebisu_lock_release(), around each API it calls on the kii_t and what it
+ * reads of the response after.
+ *
+ * Unset, as it is by default, the task takes no lock, and the application
+ * keeps its calls from the task's another way: a kii_t of its own, sharing
+ * the session.
+ *
+ * It is not held during the task's waits, nor by the task while it receives.
+ * It need not be recursive: don't call an API on the kii_t holding it from the
+ * task's callbacks, which the task may call holding it. Set it before starting
+ * the task.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] lock The lock, or NULL for none. It has to outlive the task.
+ */
+void kii_set_http_lock(kii_t* kii, ebisu_lock_t* lock);
 
 /**
  * \brief Execute a specific version of server code.

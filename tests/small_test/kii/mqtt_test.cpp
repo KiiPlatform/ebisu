@@ -4009,6 +4009,85 @@ TEST_CASE( "A request of the push task that times out is tried again" ) {
     CHECK( state.wait_left_ms > 0 );
 }
 
+// Another task may call an API on the kii_t while the push task runs: the
+// task's own requests are made under the lock the two share.
+TEST_CASE( "The push task holds the HTTP lock for each request of its own, and not for a wait" ) {
+    char buff[1024];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, buff, sizeof(buff));
+    strcpy(kii._author.author_id, "th.1");
+    strcpy(kii._author.access_token, "tok");
+    int depth = 0;
+    int taken = 0;
+    khct::cb::LockCtx lock;
+    lock.on_lock = [&]() { ++depth; ++taken; };
+    lock.on_unlock = [&]() { --depth; };
+    std::vector<int> depth_at_delay;
+    khct::cb::SystemCtx sys;
+    sys.on_delay_ms = [&](uint32_t) { depth_at_delay.push_back(depth); };
+    kii_set_system(&kii, sys.system());
+    khct::HttpScript script;
+    script.attach(&kii);
+    std::vector<int> depth_at_connect;
+    script.on_connect = [&](size_t) { depth_at_connect.push_back(depth); };
+    std::vector<int> depth_at_event;
+    struct Events { std::vector<int>* depths; int* depth; } events = { &depth_at_event, &depth };
+    kii_set_cb_mqtt_event(&kii, [](kii_mqtt_event_t, uint32_t, void* userdata) {
+        Events* e = (Events*)userdata;
+        e->depths->push_back(*e->depth);
+    }, &events);
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_INSTALL_PUSH );
+    const std::string installed = khct::http_response(201, "{\"installationID\":\"ins.1\"}");
+    const std::string endpoint = khct::http_response(200,
+            "{\"installationID\":\"ins.1\",\"username\":\"u\",\"password\":\"p\",\"mqttTopic\":\"t\","
+            "\"host\":\"broker.example.com\",\"portTCP\":1883,\"portSSL\":8883,\"X-MQTT-TTL\":1}");
+
+    SECTION("with the lock set") {
+        kii_set_http_lock(&kii, lock.get());
+        script.responses = { installed, endpoint };
+        _mqtt_state_install_push(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );
+        CHECK( depth == 0 );
+        CHECK( taken == 1 );
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+        CHECK( depth == 0 );
+        CHECK( taken == 2 );
+        CHECK( depth_at_connect == std::vector<int>({ 1, 1 }) );
+        // The wait before the endpoint is asked for.
+        CHECK( depth_at_delay == std::vector<int>({ 0 }) );
+    }
+
+    SECTION("released when the request fails, its status read under it") {
+        kii_set_http_lock(&kii, lock.get());
+        script.responses = { khct::http_response(503, "{}"), khct::http_response(404, "{}") };
+        _mqtt_state_install_push(&state);
+        CHECK( depth == 0 );
+        // As after an installation, which this one wasn't.
+        strcpy(state.ins_id.id, "ins.1");
+        state.info.task_state = KII_MQTT_ST_GET_ENDPOINT;
+        _mqtt_state_get_endpoint(&state);
+        CHECK( depth == 0 );
+        CHECK( taken == 2 );
+        CHECK( depth_at_connect == std::vector<int>({ 1, 1 }) );
+        CHECK( depth_at_event == std::vector<int>({ 1, 1 }) );
+    }
+
+    SECTION("without one, as before") {
+        script.responses = { installed, endpoint };
+        _mqtt_state_install_push(&state);
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+        CHECK( taken == 0 );
+    }
+}
+
 TEST_CASE( "The waits between attempts" ) {
     kii_t kii;
     kii_init(&kii);
