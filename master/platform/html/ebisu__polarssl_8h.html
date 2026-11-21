@@ -157,7 +157,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Settings of the application's for each connection. </p>
-<p>Called with each connection's context, after the port's own settings and before the handshake, for those of the application's: cipher suites, with ssl_set_ciphersuites(), or, for PolarSSL built with SSL_MAX_CONTENT_LEN smaller than the 16 KB a server may send, the maximum fragment length to ask the server for, with ssl_set_max_frag_len(), which a server that doesn't take the extension ignores; and the random generator, with ssl_set_rng(), where EBISU_POLARSSL_SETS_RNG is 0. What the port set, the verification, the CA certificates, the host name, the lowest version and the generator where EBISU_POLARSSL_SETS_RNG is 1, are the port's to keep.</p>
+<p>Called with each connection's context, after the port's own settings and before the handshake, for those of the application's: cipher suites, with ssl_set_ciphersuites(), or, for PolarSSL built with SSL_MAX_CONTENT_LEN smaller than the 16 KB a server may send, the maximum fragment length to ask the server for, with ssl_set_max_frag_len(), which a server that doesn't take the extension ignores, where a record longer than PolarSSL takes fails the connection, as the socket's logger says, with the record's length; and the random generator, with ssl_set_rng(), where EBISU_POLARSSL_SETS_RNG is 0. What the port set, the verification, the CA certificates, the host name, the lowest version and the generator where EBISU_POLARSSL_SETS_RNG is 1, are the port's to keep.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">ssl</td><td>The connection's context. </td></tr>
