@@ -15,9 +15,9 @@ all:
 	cp ../../kii/*.c custom/tio
 	cp ../../kii/*.h custom/tio
 	cp ../../kii/include/*.h custom/tio
-	cp ../*.c custom/tio
-	cp ../*.h custom/tio
-	cp ../include/*.h custom/tio
+	cp ../../tio/*.c custom/tio
+	cp ../../tio/*.h custom/tio
+	cp ../../tio/include/*.h custom/tio
 	sh ../../version/ebisu_version.sh custom/tio/ebisu_version.h
 	cp ./*.c custom
 	cp ./*.h custom

@@ -17,7 +17,7 @@ sockets of platform's [OpenSSL](../../platform/openssl/src/ebisu_openssl.c),
 [Schannel](../../platform/schannel/src/ebisu_schannel.c) and
 [mbedTLS](../../platform/mbedtls/src/ebisu_mbedtls.c) ports, which the Linux,
 Windows and FreeRTOS samples use, and the
-[ESP32](../esp32-sample/main/sock_cb_esp32.c) sample's socket callbacks do so,
+[ESP32](../../tio/esp32-sample/main/sock_cb_esp32.c) sample's socket callbacks do so,
 the last two with mbedTLS.
 
 ### Preparation

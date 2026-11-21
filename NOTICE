@@ -36,5 +36,5 @@ notice:
 
 - Catch, in tests/catch.hpp, used to build the tests: Boost Software License 1.0.
 - picojson, in tests/picojson.h, used to build the tests: BSD 2-Clause.
-- Texas Instruments' pin configuration and linker files in tio/cc3200-sample:
+- Texas Instruments' pin configuration and linker files in legacy/cc3200-sample:
   pinmux.c, pinmux.h and ccs/cc3200v1p32.cmd: BSD 3-Clause.

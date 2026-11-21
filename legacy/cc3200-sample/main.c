@@ -63,11 +63,11 @@ typedef enum{
 #define OSI_STACK_SIZE          2048
 #define APP_NAME                "ThingSDK Demo"
 #define MAX_MSG_LENGTH			16
-#define KII_APP_ID              "2wdpfjzj70b3"
+#define KII_APP_ID              "your-app-id"
 #define KII_APP_KEY             "dummy"
 #define KII_APP_HOST            "api-jp.kii.com"
-#define VENDOR_THING_ID         "test2"
-#define THING_PASSWORD          "1234"
+#define VENDOR_THING_ID         "your-vendor-thing-id"
+#define THING_PASSWORD          "your-thing-password"
 #define TO_RECV_SEC             15
 #define TO_SEND_SEC             15
 #define HANDLER_KEEP_ALIVE_SEC  300

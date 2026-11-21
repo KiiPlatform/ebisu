@@ -19,10 +19,10 @@ extern int_32 __END_RODATA;
 extern int_32 __START_RODATA;
 #endif
 
-const char KII_APP_ID[] = "fj9xy2fsp0ld";
+const char KII_APP_ID[] = "your-app-id";
 const char KII_APP_HOST[] = "api-jp.kii.com";
-const char VENDOR_ID[] = "test-gt202";
-const char VENDOR_PASS[] = "1234";
+const char VENDOR_ID[] = "your-vendor-thing-id";
+const char VENDOR_PASS[] = "your-thing-password";
 
 #define HANDLER_HTTP_BUFF_SIZE 2048
 #define HANDLER_MQTT_BUFF_SIZE 2048
