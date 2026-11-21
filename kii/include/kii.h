@@ -2019,7 +2019,9 @@ void kii_set_mqtt_to_sock_recv(kii_t* kii, uint32_t to_sock_recv_sec);
  * at 2 seconds and doubles with each failure in a row, up to this, and what
  * the task waits is half to all of it, a share that depends on the thing, so
  * that devices that lost the cloud together don't come back together. A
- * subscribed connection starts it over.
+ * connection that stays subscribed for 30 seconds starts it over; one lost
+ * sooner is one more failure, so that a broker that closes connections as
+ * soon as they are made isn't reconnected to every few seconds.
  *
  * A shorter one brings a device back sooner after an outage, and has more
  * devices try during it. Set it before starting the task.

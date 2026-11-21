@@ -276,10 +276,13 @@ attempts: from about a second to at most five minutes, doubling each time, and
 for a share of that which depends on the thing, so that devices that lost their
 connection together don't all come back together.
 `kii_set_mqtt_retry_wait_max()` sets another longest wait. The wait goes back to
-the start once a connection is subscribed. The continue callback is still called
-every second, so the application can stop the task during a wait. A broker it
-can't reach after 8 attempts may have moved, so it then asks for the endpoint
-again.
+the start once a connection has stayed subscribed for 30 seconds. One lost
+sooner counts as one more failure, so that a broker that closes connections as
+soon as they are made, as it does when another client connects with the same
+client ID, isn't reconnected to every few seconds. The continue callback is
+still called every second, so the application can stop the task during a wait. A
+broker it can't reach after 8 attempts may have moved, so it then asks for the
+endpoint again.
 
 The task subscribes at QoS 0 by default, so a message sent while it is
 reconnecting is lost. With `kii_set_mqtt_qos(&kii, KII_MQTT_QOS_1)`, a message

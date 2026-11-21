@@ -322,7 +322,8 @@ The push task:
   too slow to answer within the keep-alive interval now reconnects.
 - Failed attempts back off, from about a second up to five minutes, where 1.x
   tried every second or two. A device can take up to five minutes to come back
-  after a long outage. Reaching a subscribed connection starts the waits again.
+  after a long outage. A connection that stays subscribed for 30 seconds starts
+  the waits again; one lost sooner counts as one more failure.
   After 8 failures in a row the task asks for the endpoint again.
   `kii_set_mqtt_retry_wait_max()` and `tio_handler_set_mqtt_retry_wait_max()`
   set another longest wait.
