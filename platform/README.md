@@ -59,7 +59,12 @@ of the application's own, as the
   without the system's. The `SSL_CTX` keeps the TLS sessions of the last
   connections to a few hosts, and a connection offers the server the one for its
   host and port to resume, which saves most of the handshake when the server
-  takes it. Its `last_error` says why an operation failed, which also goes to
+  takes it. A send to a peer that has gone fails rather than raise `SIGPIPE`,
+  as the POSIX TCP socket's does: OpenSSL writes with `write()`, so the socket
+  sets `SO_NOSIGPIPE` where there is one, and elsewhere blocks the signal on
+  the calling thread for the length of each call and takes off the one the
+  call raised, leaving the application's handler, its mask and any `SIGPIPE`
+  pending before as they were. Its `last_error` says why an operation failed, which also goes to
   the logger set with `ebisu_openssl_socket_set_logger()`, if any, unless it is
   built with `-DEBISU_LOG=OFF`, and its `recv_wait` waits with `poll()`, after
   what OpenSSL has decrypted. `ebisu_openssl_socket_get_protocol()` and
