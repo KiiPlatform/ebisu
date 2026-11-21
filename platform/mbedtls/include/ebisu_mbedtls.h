@@ -8,6 +8,7 @@
 #include <ebisu_clock.h>
 #include <ebisu_log.h>
 #include <ebisu_socket.h>
+#include <ebisu_system.h>
 
 #include <mbedtls/ssl.h>
 #include <mbedtls/x509_crt.h>
@@ -234,6 +235,15 @@ typedef struct ebisu_mbedtls_socket_t {
     /** \private What the socket under it said of its last failure. */
     ebisu_sock_error_t _transport_error;
     long _transport_detail; /**< \private */
+    /** \private The system whose monotonic_ms times the handshake, and how
+     * long it may take, in milliseconds, or 0 for no bound of its own. */
+    ebisu_system_t* _system;
+    uint32_t _handshake_ms; /**< \private */
+    /** \private When the handshake under way started, whether one is, and
+     * whether the last ran out of its time. */
+    uint64_t _handshake_start_ms;
+    bool _handshaking; /**< \private */
+    bool _handshake_ran_out; /**< \private */
     /** \private Why the last operation that returned EBISU_SOCK_FAIL failed,
      * for last_error, and more of it. */
     ebisu_sock_error_t _error;
@@ -261,6 +271,34 @@ void ebisu_mbedtls_socket_init(
         ebisu_mbedtls_socket_t* sock,
         ebisu_socket_t* transport,
         ebisu_mbedtls_tls_t* tls);
+
+/**
+ * \brief Sets how long the TLS handshake may take.
+ *
+ * The socket under it bounds each wait for the server with its receive
+ * timeout, and not how many there are in a handshake: a server that takes
+ * the connection and says nothing to a socket with no receive timeout, or
+ * sends a little at a time, keeps connect from returning. With this set, the
+ * handshake fails as a timeout, EBISU_SOCK_ERROR_TIMEOUT, once it has taken
+ * this long, by the system's monotonic_ms.
+ *
+ * It waits for the server with the recv_wait of the socket under it, for
+ * what is left of the time, where that socket has one, as platform's have:
+ * its receive timeout doesn't bound a wait of the handshake's then. Without
+ * recv_wait, the time is looked at before each receive and send, so a wait
+ * lasts as long as the socket under it lets it, and the handshake ends once
+ * that wait does.
+ *
+ * Unset, as the socket starts, the handshake is bounded by the socket under
+ * it alone. Set it before connecting.
+ *
+ * \param [out] sock The socket.
+ * \param [in] system The system, for its monotonic_ms, which has to outlive
+ * the socket. With NULL, or one without monotonic_ms, there is no bound.
+ * \param [in] seconds How long, in seconds, or 0 for no bound.
+ */
+void ebisu_mbedtls_socket_set_handshake_timeout(ebisu_mbedtls_socket_t* sock,
+        ebisu_system_t* system, unsigned int seconds);
 
 /**
  * \brief Sets the clock the server's certificate is checked at the time of.

@@ -254,11 +254,31 @@ static void take_transport_error(ebisu_mbedtls_socket_t* sock)
    block: _timed_out and _again tell them apart, and from mbedTLS's wanting to
    be called again with neither, having taken a record with nothing for the
    caller, as mbedTLS 4 does with a TLS 1.3 server's session ticket. */
+/* Whether the handshake under way has a time it may take, set by
+   ebisu_mbedtls_socket_set_handshake_timeout(), and how much is left of it, 0
+   once it has run out. The time gone by as a difference, never a deadline
+   added to now. */
+static bool handshake_bounded(const ebisu_mbedtls_socket_t* sock, uint32_t* out_left_ms)
+{
+    if (!sock->_handshaking || sock->_handshake_ms == 0) {
+        return false;
+    }
+    uint64_t gone_ms = ebisu_system_monotonic_ms(sock->_system) - sock->_handshake_start_ms;
+    *out_left_ms = gone_ms >= sock->_handshake_ms ? 0 : (uint32_t)(sock->_handshake_ms - gone_ms);
+    return true;
+}
+
 static int bio_send(void* arg, const unsigned char* buffer, size_t length)
 {
     ebisu_mbedtls_socket_t* sock = (ebisu_mbedtls_socket_t*)arg;
     ebisu_socket_t* transport = sock->_transport;
     size_t sent = 0;
+    uint32_t left_ms = 0;
+    if (handshake_bounded(sock, &left_ms) && left_ms == 0) {
+        sock->_timed_out = true;
+        sock->_handshake_ran_out = true;
+        return MBEDTLS_ERR_SSL_WANT_WRITE;
+    }
     switch (transport->ops->send(transport, (const char*)buffer, length, &sent)) {
         case EBISU_SOCK_OK:
             if (sent > 0) {
@@ -284,6 +304,17 @@ static int bio_recv(void* arg, unsigned char* buffer, size_t length)
     ebisu_mbedtls_socket_t* sock = (ebisu_mbedtls_socket_t*)arg;
     ebisu_socket_t* transport = sock->_transport;
     size_t received = 0;
+    uint32_t left_ms = 0;
+    /* In a handshake with a time to take, a wait for the server lasts what
+       is left of it at the most: with the socket under it's recv_wait, where
+       it has one, as its recv waits for its own timeout, or without end. */
+    if (handshake_bounded(sock, &left_ms) &&
+            (left_ms == 0 || (transport->ops->recv_wait != NULL &&
+                              !transport->ops->recv_wait(transport, left_ms)))) {
+        sock->_timed_out = true;
+        sock->_handshake_ran_out = true;
+        return MBEDTLS_ERR_SSL_WANT_READ;
+    }
     switch (transport->ops->recv(transport, (char*)buffer, length, &received)) {
         case EBISU_SOCK_OK:
             /* 0, the end of the stream, as mbedTLS takes it. */
@@ -549,6 +580,11 @@ static ebisu_sock_code_t mbedtls_connect(ebisu_socket_t* self, const char* host,
 #endif
     mbedtls_ssl_set_bio(&sock->_ssl, sock, bio_send, bio_recv, NULL);
 
+    sock->_handshake_ran_out = false;
+    if (sock->_handshake_ms != 0) {
+        sock->_handshake_start_ms = ebisu_system_monotonic_ms(sock->_system);
+        sock->_handshaking = true;
+    }
     for (;;) {
         sock->_timed_out = false;
         sock->_again = false;
@@ -560,6 +596,12 @@ static ebisu_sock_code_t mbedtls_connect(ebisu_socket_t* self, const char* host,
             continue;
         }
         break;
+    }
+    sock->_handshaking = false;
+    if (sock->_handshake_ran_out) {
+        log_to(sock->_logger, EBISU_LOG_ERROR,
+                "TLS handshake with %s not done in the %lu ms it has.", host,
+                (unsigned long)sock->_handshake_ms);
     }
     if (ret == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED) {
         uint32_t flags = mbedtls_ssl_get_verify_result(&sock->_ssl);
@@ -763,6 +805,16 @@ void ebisu_mbedtls_socket_init(
     sock->base.ops = transport->ops->recv_wait != NULL ? &ops_waiting : &ops;
     sock->_transport = transport;
     sock->_tls = tls;
+}
+
+void ebisu_mbedtls_socket_set_handshake_timeout(ebisu_mbedtls_socket_t* sock,
+        ebisu_system_t* system, unsigned int seconds)
+{
+    if (system == NULL || system->ops == NULL || system->ops->monotonic_ms == NULL) {
+        seconds = 0;
+    }
+    sock->_system = system;
+    sock->_handshake_ms = seconds > UINT32_MAX / 1000 ? UINT32_MAX : (uint32_t)seconds * 1000;
 }
 
 void ebisu_mbedtls_socket_set_clock(ebisu_mbedtls_socket_t* sock, ebisu_clock_t* clock)

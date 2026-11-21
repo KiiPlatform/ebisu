@@ -342,8 +342,19 @@ static ebisu_mbedtls_socket_t sock;
     /* The system's time. A device without a real-time clock has an
        ebisu_server_clock_t's instead. */
     ebisu_mbedtls_socket_set_clock(&sock, ebisu_system_clock(ebisu_posix_system()));
+    /* The handshake in 30 seconds, whatever the server does. */
+    ebisu_mbedtls_socket_set_handshake_timeout(&sock, ebisu_posix_system(), 30);
     tio_handler_set_http_socket(&handler, &sock.base);
 ```
+
+The socket under the TLS one bounds each wait for the server with its receive
+timeout, and not how many of them a handshake takes: a server that takes the
+connection and then says nothing to a socket with no receive timeout, or sends
+a byte at a time, would keep `connect` from returning.
+`ebisu_mbedtls_socket_set_handshake_timeout()`, and
+`ebisu_polarssl_socket_set_handshake_timeout()`, bound the handshake as a
+whole, by the system's `monotonic_ms`. The OpenSSL and Schannel sockets, which
+connect themselves, bound theirs by their connect timeout.
 
 
 ## Servers whose certificates no CA issued
