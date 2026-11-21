@@ -2,6 +2,7 @@
 #include "kii.h"
 #include "kii_mqtt_task.h"
 #include "http_script.h"
+#include <ebisu_retry.h>
 
 #include <atomic>
 #include <mutex>
@@ -336,13 +337,23 @@ TEST_CASE( "A refresh that gets no answer does not fall back to the password" ) 
 const uint64_t MINUTE_MS = 60 * 1000;
 const char PASSWORD_GRANT[] = "\"grant_type\":\"password\"";
 
+// How long a thing with this vendor thing ID waits after the n-th refusal of
+// its credentials in a row: its share of 10 minutes doubled up to 2 hours.
+uint64_t password_wait_ms(const char* vendor_thing_id, uint32_t n) {
+    return ebisu_retry_wait(10 * 60 * 1000, 120 * 60 * 1000, n,
+            ebisu_retry_seed(vendor_thing_id));
+}
+
 // Where the application limits login attempts, trying a wrong password on every
 // refused request would lock the thing out.
 TEST_CASE( "A refused password is not tried again until the session has waited" ) {
+    // Two things, which wait differently.
+    const char* vendor_thing_id = GENERATE(as<const char*>{}, "vid", "vid2");
+    REQUIRE( password_wait_ms("vid", 1) != password_wait_ms("vid2", 1) );
     Platform platform;
     kii_session_t session;
     init_session(&session, &platform);
-    kii_session_set_password(&session, "vid", "pw");
+    kii_session_set_password(&session, vendor_thing_id, "pw");
     // No refresh token: a renewal logs in straight away.
     kii_author_t author = make_author("th.1", "at1", "");
     kii_session_set_author(&session, &author);
@@ -350,10 +361,13 @@ TEST_CASE( "A refused password is not tried again until the session has waited" 
     REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
 
     // 5 minutes after the first refusal, twice as long after each further one,
-    // up to an hour.
-    const uint64_t waits[] = { 5, 10, 20, 40, 60, 60 };
-    for (uint64_t wait : waits) {
-        INFO("wait " << wait);
+    // up to an hour, and as much again at most.
+    const uint64_t least[] = { 5, 10, 20, 40, 60, 60 };
+    for (uint32_t n = 1; n <= 6; ++n) {
+        uint64_t wait_ms = password_wait_ms(vendor_thing_id, n);
+        INFO("vendor thing ID " << vendor_thing_id << ", refusal " << n << ", wait " << wait_ms);
+        CHECK( wait_ms >= least[n - 1] * MINUTE_MS );
+        CHECK( wait_ms <= 2 * least[n - 1] * MINUTE_MS );
         c.http.requests.clear();
         c.http.responses = { REFUSED, INVALID_GRANT };
         REQUIRE( c.put(BODY) == KII_ERR_OK );
@@ -362,7 +376,7 @@ TEST_CASE( "A refused password is not tried again until the session has waited" 
         REQUIRE( contains(c.http.requests[1], PASSWORD_GRANT) );
 
         // Meanwhile a refused request is only reported.
-        platform.now_ms += wait * MINUTE_MS - 1;
+        platform.now_ms += wait_ms - 1;
         c.http.requests.clear();
         c.http.responses = { REFUSED };
         REQUIRE( c.put(BODY) == KII_ERR_OK );
@@ -380,12 +394,17 @@ TEST_CASE( "A refused password is not tried again until the session has waited" 
     REQUIRE( contains(c.http.requests[2], "Authorization: Bearer at2\r\n") );
     REQUIRE( platform.updates.size() == 1 );
 
-    // So a refusal after that waits 5 minutes again.
+    // So a refusal after that waits as long as the first again.
     c.http.requests.clear();
     c.http.responses = { REFUSED, INVALID_GRANT };
     REQUIRE( c.put(BODY) == KII_ERR_OK );
     REQUIRE( c.http.requests.size() == 2 );
-    platform.now_ms += 5 * MINUTE_MS;
+    platform.now_ms += password_wait_ms(vendor_thing_id, 1) - 1;
+    c.http.requests.clear();
+    c.http.responses = { REFUSED };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 1 );
+    platform.now_ms += 1;
     c.http.requests.clear();
     c.http.responses = { REFUSED, INVALID_GRANT };
     REQUIRE( c.put(BODY) == KII_ERR_OK );
@@ -404,12 +423,31 @@ TEST_CASE( "Setting the credentials again ends the wait" ) {
     Client c;
     REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
 
+    // Refused twice.
+    c.http.responses = { REFUSED, INVALID_GRANT };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 2 );
+    platform.now_ms += password_wait_ms("vid", 1);
+    c.http.requests.clear();
     c.http.responses = { REFUSED, INVALID_GRANT };
     REQUIRE( c.put(BODY) == KII_ERR_OK );
     REQUIRE( c.http.requests.size() == 2 );
 
+    // Tried at once, and refused, they wait as long as after a first refusal.
     kii_session_set_password(&session, "vid", "pw2");
     REQUIRE( platform.depth == 0 );
+    c.http.requests.clear();
+    c.http.responses = { REFUSED, INVALID_GRANT };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 2 );
+    REQUIRE( contains(c.http.requests[1], "\"password\":\"pw2\"") );
+    platform.now_ms += password_wait_ms("vid", 1) - 1;
+    c.http.requests.clear();
+    c.http.responses = { REFUSED };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 1 );
+
+    platform.now_ms += 1;
     c.http.requests.clear();
     c.http.responses = { REFUSED, http_response(200, "{\"id\":\"th.1\",\"access_token\":\"at2\"}"), DONE };
     REQUIRE( c.put(BODY) == KII_ERR_OK );
@@ -922,7 +960,7 @@ TEST_CASE( "A refused onboarding is not tried again until the session has waited
     REQUIRE( c.http.requests.size() == 3 );
     REQUIRE( onboarding_again(c.http.requests[2]) );
 
-    platform.now_ms += 5 * MINUTE_MS - 1;
+    platform.now_ms += password_wait_ms("vid", 1) - 1;
     c.http.responses.push_back(REFUSED);
     REQUIRE( c.put(BODY) == KII_ERR_OK );
     REQUIRE( kii_get_resp_status(&c.kii) == 403 );
@@ -1429,7 +1467,7 @@ TEST_CASE( "Refused MQTT credentials are renewed by onboarding again" ) {
         CHECK( state.info.task_state != KII_MQTT_ST_SOCK_CONNECT );
         CHECK( c.http.requests.size() == 2 );
 
-        platform.now_ms += 5 * MINUTE_MS;
+        platform.now_ms += password_wait_ms("vid", 1);
         c.http.responses.push_back(onboarded_with_endpoint("at2", "2"));
         state.info.task_state = KII_MQTT_ST_GET_ENDPOINT;
         state.info.error = KII_MQTT_ERR_OK;
