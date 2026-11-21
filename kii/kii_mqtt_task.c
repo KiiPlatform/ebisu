@@ -867,6 +867,10 @@ void _mqtt_state_install_push(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii_mqtt_task_info_t* task_info = &state->info;
+    // The task's own request, with kii's HTTP socket, buffer and response,
+    // which another task may use under the lock set by kii_set_http_lock():
+    // held until the response is read, and not for a wait.
+    ebisu_lock_acquire(kii->_http_lock);
     kii_code_t res = kii_install_push(kii, false, &state->ins_id);
     if (res != KII_ERR_OK) {
         _event(kii, KII_MQTT_EVENT_INSTALL_FAILED, khc_get_status_code(&kii->_khc));
@@ -881,6 +885,7 @@ void _mqtt_state_install_push(mqtt_state_t* state)
     } else {
         task_info->task_state = KII_MQTT_ST_GET_ENDPOINT;
     }
+    ebisu_lock_release(kii->_http_lock);
 }
 
 /* Gets new MQTT credentials the way the thing's token is renewed: by onboarding
@@ -907,6 +912,8 @@ void _mqtt_state_get_endpoint(mqtt_state_t* state)
     kii_t* kii = state->kii;
     kii_mqtt_task_info_t* task_info = &state->info;
     _delay_ms(kii, WAIT_MS);
+    // As in _mqtt_state_install_push(), after the wait.
+    ebisu_lock_acquire(kii->_http_lock);
     kii_code_t res = (_kii_session_renews_by_onboarding(kii)) ?
         _onboard_for_endpoint(state) :
         kii_get_mqtt_endpoint(kii, state->ins_id.id, &state->endpoint);
@@ -922,6 +929,7 @@ void _mqtt_state_get_endpoint(mqtt_state_t* state)
     } else {
         task_info->task_state = KII_MQTT_ST_SOCK_CONNECT;
     }
+    ebisu_lock_release(kii->_http_lock);
 }
 
 void _mqtt_state_sock_connect(mqtt_state_t* state)

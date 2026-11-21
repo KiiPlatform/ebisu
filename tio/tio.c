@@ -327,6 +327,11 @@ tio_code_t tio_handler_start(
     return _tio_convert_code(res);
 }
 
+void tio_handler_set_http_lock(tio_handler_t* handler, ebisu_lock_t* lock)
+{
+    kii_set_http_lock(&handler->_kii, lock);
+}
+
 tio_code_t tio_handler_handle_command(
         tio_handler_t* handler,
         const char* command,

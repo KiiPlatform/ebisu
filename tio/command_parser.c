@@ -371,7 +371,32 @@ static tio_code_t _append_action_result(
 //    {setPower : {succeeded : true}},
 //    {setTemp : {succeeded : false, message : "com err"}},
 // ]
+static tio_code_t _handle_command_locked(
+        tio_handler_t* handler,
+        const char* command,
+        size_t command_length,
+        TIO_CB_ACTION cb_action,
+        void* cb_action_data);
+
+/* With the lock set by tio_handler_set_http_lock() held, from the first
+ * of the results written to the handler's HTTP buffer to their response: the
+ * handler's task makes requests of its own with them, and this may be another
+ * task. */
 tio_code_t _handle_command(
+        tio_handler_t* handler,
+        const char* command,
+        size_t command_length,
+        TIO_CB_ACTION cb_action,
+        void* cb_action_data)
+{
+    ebisu_lock_acquire(handler->_kii._http_lock);
+    tio_code_t res = _handle_command_locked(handler, command, command_length, cb_action,
+            cb_action_data);
+    ebisu_lock_release(handler->_kii._http_lock);
+    return res;
+}
+
+static tio_code_t _handle_command_locked(
         tio_handler_t* handler,
         const char* command,
         size_t command_length,

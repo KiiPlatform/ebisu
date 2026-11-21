@@ -293,6 +293,14 @@ still called every second, so the application can stop the task during a wait. A
 broker it can't reach after 8 attempts may have moved, so it then asks for the
 endpoint again.
 
+Those requests of the task's, to install push and get the endpoint, are made
+with the `kii_t`'s HTTP socket and buffer. An application that calls an API on
+the same `kii_t` from another task while the push task runs would have the two
+use them at once. `kii_set_http_lock()` sets a lock the task holds for each
+such request, and the application holds around its own calls, with
+`ebisu_lock_acquire()` and `ebisu_lock_release()`; or the application calls on
+a `kii_t` of its own, sharing the session.
+
 The task subscribes at QoS 0 by default, so a message sent while it is
 reconnecting is lost. With `kii_set_mqtt_qos(&kii, KII_MQTT_QOS_1)`, a message
 sent at QoS 1, such as a push message whose `"mqtt"` object has `"qos": 1`, is

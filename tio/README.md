@@ -778,6 +778,54 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
     - `tio_updater_set_http_buff()`
 
+## Handling a command later
+
+A command whose actions take long, moving a motor or writing a firmware, keeps
+the handler's task from the MQTT connection for as long: it answers no ping
+meanwhile. Such a command can be taken in the push callback, set by
+`tio_handler_set_cb_push()`, handled on a task of the application's, and
+answered from there with `tio_handler_handle_command()`. Two things are the
+application's to do:
+
+- **Copy the command in the push callback.** It is given in the handler's MQTT
+  buffer, which the next packet overwrites, so it is the command only until the
+  callback returns. It has no terminating NUL.
+- **Set a lock with `tio_handler_set_http_lock()`,** before starting the
+  handler. `tio_handler_handle_command()` sends the results with the
+  handler's HTTP socket and buffers, which the handler's task uses too, for
+  the next command and to get the MQTT endpoint again. Each holds the lock
+  while it does, so one waits for the other: without it nothing keeps the two
+  apart, and `tio_handler_handle_command()` is for the handler's own task
+  alone.
+
+```c
+/* At set-up, before tio_handler_start(): tio_handler_set_http_lock(&handler,
+   &http_lock.base), an ebisu_lock_t as the session's. */
+static char pending[1024];
+static size_t pending_length;
+
+static bool push_cb(const char* message, size_t message_length, void* userdata)
+{
+    if (message_length > sizeof(pending)) {
+        return false; /* No room to keep it: handled now, on the handler's task. */
+    }
+    memcpy(pending, message, message_length);
+    pending_length = message_length;
+    wake_worker();
+    return true; /* The application's to handle. */
+}
+
+/* On the application's task, when the work is done. */
+static void worker_answers(void)
+{
+    tio_handler_handle_command(&handler, pending, pending_length, action_cb, NULL);
+}
+```
+
+A message that isn't a command reaches the push callback too: one the
+application doesn't recognize it returns `false` for, and the handler ignores
+what isn't a command.
+
 ## Avoiding race condition
 
 - Above 2 tasks `KII_TASK_NAME_MQTT` and `TIO_TASK_NAME_UPDATE_STATE` would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access control mechanism.

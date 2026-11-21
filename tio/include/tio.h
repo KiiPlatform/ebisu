@@ -204,6 +204,11 @@ typedef void (*TIO_CB_ERR)(tio_code_t code, const char* err_message, void* userd
  *
  * \param [in] message Push message received from cloud.
  * Could be remote controll command or other message sent by Kii Topic/ Kii Bucket subscription.
+ * It is in the buffer set by tio_handler_set_mqtt_buff(), which the next
+ * packet received overwrites: it is the message only until the callback
+ * returns, and has no terminating NUL. To use it later, as to handle a command
+ * with tio_handler_handle_command() from another task, copy its
+ * message_length bytes before returning.
  * \param [in] message_length Length of the message.
  * \param [in,out] userdata Context object pointer passed to tio_handler_set_cb_push().
  * \return true results skip handling message as remote controll command, false results try to handle message as remote controll command.
@@ -824,6 +829,30 @@ tio_code_t tio_handler_start(
         void* userdata);
 
 /**
+ * \brief Set the lock that keeps the handler's HTTP requests apart.
+ *
+ * Needed to call tio_handler_handle_command() from another task than the
+ * handler's while the handler runs. The handler's task handles a command, and
+ * makes the requests of its own, holding it, and tio_handler_handle_command()
+ * holds it from the first result it writes to the response to them, the
+ * action callbacks included. So while one task handles a command the other
+ * waits to make a request: the handler's task, which answers no MQTT ping
+ * meanwhile, for as long as the actions and the request take.
+ *
+ * Unset, as it is by default, the handler takes no lock, and
+ * tio_handler_handle_command() is for the handler's own task alone, in the
+ * TIO_CB_PUSH callback.
+ *
+ * It need not be recursive: don't call tio_handler_handle_command() on the
+ * handler from an action callback. Set it before tio_handler_start().
+ *
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] lock The lock, or NULL for none. It has to outlive the
+ * handler's task.
+ */
+void tio_handler_set_http_lock(tio_handler_t* handler, ebisu_lock_t* lock);
+
+/**
  * \brief Handle the command.
  *
  * Basically, your app doesn't need to use this method. Since tio_handler
@@ -842,6 +871,16 @@ tio_code_t tio_handler_start(
  *
  * A malformed command is refused whole: it returns TIO_ERR_PARSE_JSON before
  * the callback is invoked for any action, and sends nothing.
+ *
+ * Called later, from another task than the handler's, it needs two things of
+ * the app:
+ * - The command copied in the TIO_CB_PUSH callback, which is given it in the
+ *   handler's MQTT buffer, where it lasts only until that callback returns.
+ * - A lock set by tio_handler_set_http_lock(). It sends the results with the
+ *   handler's HTTP socket and buffers, which the handler's task uses too, for
+ *   the next command and to get the MQTT endpoint again when the broker
+ *   refuses its credentials or can't be reached: without the lock nothing
+ *   keeps the two tasks apart.
  *
  * \param [in] handler tio_handler_t instance.
  * \param [in] command received command.

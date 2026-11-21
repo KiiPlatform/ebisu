@@ -300,6 +300,85 @@ TEST_CASE( "tio refuses a session without the lock or the clock" ) {
     REQUIRE( tio_updater_set_session(&updater, &session) == TIO_ERR_FAIL );
 }
 
+namespace {
+
+struct LockedAction {
+    int* depth;
+    std::vector<int> depths;
+};
+
+bool cb_action_noting_lock(
+        tio_action_t* action,
+        tio_action_err_t* err,
+        tio_action_result_data_t* data,
+        void* userdata) {
+    LockedAction* noted = (LockedAction*)userdata;
+    err->err_message[0] = '\0';
+    data->json[0] = '\0';
+    noted->depths.push_back(*noted->depth);
+    return true;
+}
+
+}
+
+// tio_handler_handle_command() may be another task's, while the handler's
+// makes requests of its own with the same socket and buffers.
+TEST_CASE( "A command is handled, and its results sent, holding the handler's HTTP lock" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    char buff[2048];
+    tio_handler_set_app(&handler, "app", "api.kii.com");
+    tio_handler_set_http_buff(&handler, buff, sizeof(buff));
+    tio_handler_set_system(&handler, khct::cb::delay_only_system());
+    strcpy(handler._kii._author.author_id, "th.1");
+    strcpy(handler._kii._author.access_token, "at1");
+    khct::HttpScript http;
+    http.attach(&handler._kii);
+    int depth = 0;
+    int taken = 0;
+    khct::cb::LockCtx lock;
+    lock.on_lock = [&]() { ++depth; ++taken; };
+    lock.on_unlock = [&]() { --depth; };
+    std::vector<int> depth_at_connect;
+    http.on_connect = [&](size_t) { depth_at_connect.push_back(depth); };
+    LockedAction noted = { &depth, {} };
+    const std::string command =
+        "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+
+    SECTION("with the lock set") {
+        tio_handler_set_http_lock(&handler, lock.get());
+        CHECK( handler._kii._http_lock == lock.get() );
+        http.responses = { NO_CONTENT };
+        REQUIRE( tio_handler_handle_command(&handler, command.c_str(), command.length(),
+                    cb_action_noting_lock, &noted) == TIO_ERR_OK );
+        CHECK( depth == 0 );
+        CHECK( taken == 1 );
+        CHECK( noted.depths == std::vector<int>({ 1 }) );
+        CHECK( depth_at_connect == std::vector<int>({ 1 }) );
+    }
+
+    SECTION("released for a command refused, and for results that couldn't be sent") {
+        tio_handler_set_http_lock(&handler, lock.get());
+        const std::string malformed = "{\"commandID\":1}";
+        CHECK( tio_handler_handle_command(&handler, malformed.c_str(), malformed.length(),
+                    cb_action_noting_lock, &noted) == TIO_ERR_PARSE_JSON );
+        CHECK( depth == 0 );
+        http.responses = { "" };
+        CHECK( tio_handler_handle_command(&handler, command.c_str(), command.length(),
+                    cb_action_noting_lock, &noted) != TIO_ERR_OK );
+        CHECK( depth == 0 );
+        CHECK( taken == 2 );
+    }
+
+    SECTION("without one, as before") {
+        http.responses = { NO_CONTENT };
+        REQUIRE( tio_handler_handle_command(&handler, command.c_str(), command.length(),
+                    cb_action_noting_lock, &noted) == TIO_ERR_OK );
+        CHECK( taken == 0 );
+        CHECK( noted.depths == std::vector<int>({ 0 }) );
+    }
+}
+
 TEST_CASE( "A response tio can't read is TIO_ERR_INVALID_RESPONSE" ) {
     CHECK( _tio_convert_code(KII_ERR_INVALID_RESPONSE) == TIO_ERR_INVALID_RESPONSE );
 
