@@ -2239,6 +2239,11 @@ void kii_set_cb_slist_resource(
  * KII_ERR_TOO_LARGE_DATA for a 2xx response whose ETag isn't kept, or that had
  * a header skipped and no ETag kept, though they read or wrote the object.
  *
+ * It is kii_t's, and stays as it is until the next request is sent: it can be
+ * given as it is to kii_put_object() or kii_patch_object(), or to
+ * kii_api_call_append_header() after kii_api_call_start(), for the If-Match of
+ * that request. Then it is that response's.
+ *
  * \param [in] kii kii_t instance.
  * \return The ETag, or "" if the response had none, or none kii kept.
  */
