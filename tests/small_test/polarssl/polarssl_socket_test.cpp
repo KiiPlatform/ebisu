@@ -687,6 +687,44 @@ TEST_CASE( "The PolarSSL socket checks the certificates' dates at the clock's ti
         int64_t time_now = 0;
         CHECK_FALSE( ebisu_clock_get_time(&clock.base, &time_now) );
     }
+    SECTION("one not valid yet that the CA doesn't lead to is refused, and the clock keeps its time") {
+        REQUIRE( ebisu_server_clock_set_time(&clock, now) );
+        TlsServer server(pki().server("localhost", now + 30 * DAY, now + 60 * DAY, true), nothing);
+        Client client(&config.tls);
+        ebisu_polarssl_socket_set_clock(&client.tls, &clock.base);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        long detail = 0;
+        CHECK( client.error(&detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( (detail & BADCERT_FUTURE) != 0 );
+        CHECK( (detail & BADCERT_NOT_TRUSTED) != 0 );
+        int64_t time_now = 0;
+        CHECK( ebisu_clock_get_time(&clock.base, &time_now) );
+    }
+    SECTION("one not valid yet for another host is refused, and the clock keeps its time") {
+        REQUIRE( ebisu_server_clock_set_time(&clock, now) );
+        TlsServer server(pki().server("other.example", now + 30 * DAY, now + 60 * DAY), nothing);
+        Client client(&config.tls);
+        ebisu_polarssl_socket_set_clock(&client.tls, &clock.base);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        long detail = 0;
+        CHECK( client.error(&detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( (detail & BADCERT_FUTURE) != 0 );
+        CHECK( (detail & BADCERT_CN_MISMATCH) != 0 );
+        int64_t time_now = 0;
+        CHECK( ebisu_clock_get_time(&clock.base, &time_now) );
+    }
+    SECTION("one not valid yet for another host, with the host not checked, is refused, and the time forgotten") {
+        REQUIRE( ebisu_polarssl_tls_set_verify(&config.tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
+        REQUIRE( ebisu_server_clock_set_time(&clock, now) );
+        TlsServer server(pki().server("other.example", now + 30 * DAY, now + 60 * DAY), nothing);
+        Client client(&config.tls);
+        ebisu_polarssl_socket_set_clock(&client.tls, &clock.base);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_FAIL );
+        long detail = 0;
+        CHECK( client.error(&detail) == EBISU_SOCK_ERROR_VERIFY );
+        int64_t time_now = 0;
+        CHECK_FALSE( ebisu_clock_get_time(&clock.base, &time_now) );
+    }
     SECTION("one not valid yet, with only the clock's floor, which it may have been issued since, is taken") {
         ebisu_server_clock_set_floor(&clock, now);
         TlsServer server(not_yet(), echo);
