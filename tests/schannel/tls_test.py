@@ -130,6 +130,20 @@ def make_certificates(d):
     issue('otheraddress', 'other.invalid', ['-days', '2'], ['IP:127.0.0.2'])
     issue('addressname', '127.0.0.1', ['-days', '2'])
     issue('expired', 'localhost', ['-startdate', '20200101000000Z', '-enddate', '20200201000000Z'])
+    # Not valid for 12 hours yet, and for a day then, within the CA's two: by
+    # itself, for another name, and self-signed.
+    def stamp(hours):
+        return time.strftime('%Y%m%d%H%M%SZ', time.gmtime(time.time() + hours * 3600))
+    not_yet = ['-startdate', stamp(12), '-enddate', stamp(36)]
+    issue('notyet', 'localhost', not_yet)
+    issue('notyetwrongname', 'wrong.example', not_yet)
+    with open(os.path.join(d, 'notyetself.ext'), 'w') as f:
+        f.write(SERVER_EXTENSIONS + 'DNS.0 = localhost\n')
+    openssl(d, 'req', '-newkey', 'rsa:2048', '-nodes', '-keyout', 'notyetself.key', '-out', 'notyetself.csr',
+            '-subj', '/CN=localhost')
+    openssl(d, 'ca', '-batch', '-config', 'ca.cnf', '-selfsign', '-keyfile', 'notyetself.key',
+            '-in', 'notyetself.csr', '-out', 'notyetself.pem', '-extfile', 'notyetself.ext',
+            '-extensions', 'server', '-notext', *not_yet)
     openssl(d, 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', 'self.key', '-out', 'self.pem',
             '-days', '2', '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost')
 
@@ -741,6 +755,64 @@ def run_tests(t, d):
     out, steps = t.run(servers['self'].port, 10, 'verify:none', 'verify:full', 'connect', 'close')
     t.check('in full again once set to',
             result_code(steps, 2) == ('connect', 'FAIL') and last_error(steps, 2) == ('VERIFY', '800b0109'), out)
+
+    # ebisu_schannel_socket_set_clock(): the certificates' dates checked at a
+    # clock's time. While the clock has only a lower bound, one not valid yet
+    # is taken, as it may have been issued since. One not valid yet at a time
+    # the clock had is refused and the time forgotten, the time more likely
+    # having fallen behind, unless it is refused for more than its dates:
+    # anyone can make a certificate of any dates.
+    HOUR = 3600
+    for name in ('notyet', 'notyetwrongname', 'notyetself', 'good'):
+        servers[name] = Server(os.path.join(d, name + '.pem'), os.path.join(d, name + '.key'))
+
+    def clocked(name, *before):
+        out, steps = t.run(servers[name].port, 10, *before, 'connect', 'clockstate', 'close',
+                           'connect', 'close')
+        n = len(before)
+        return out, result_code(steps, n), last_error(steps, n), step(steps, n + 1)[1], result_code(steps, n + 3)
+
+    out, first, error, state, second = clocked('notyet', 'clock:exact:0')
+    t.check('clock: a certificate not valid yet at its time refused, and the time forgotten',
+            first == ('connect', 'FAIL') and error == ('VERIFY', '800b0101') and state == 'bound', out)
+    t.check('clock: the next connection, at the lower bound that leaves, goes through',
+            second == ('connect', 'OK'), out)
+    out, first, error, state, second = clocked('notyet', 'clock:floor:0')
+    t.check('clock: a certificate not valid yet taken at a lower bound',
+            first == ('connect', 'OK') and state == 'bound', out)
+    out, first, error, state, second = clocked('notyet', 'clock:exact:%d' % (24 * HOUR))
+    t.check("clock: a certificate not valid yet at the system's time, valid at the clock's, taken",
+            first == ('connect', 'OK') and state == 'exact', out)
+    out, first, error, state, second = clocked('notyet', 'clock:system')
+    t.check("clock: a certificate not valid yet refused at the system's clock's time, which it keeps",
+            first == ('connect', 'FAIL') and error == ('VERIFY', '800b0101') and state == 'exact' and
+            second == ('connect', 'FAIL'), out)
+    out, first, error, state, second = clocked('expired', 'clock:exact:0')
+    t.check('clock: an expired certificate refused at its time, which it keeps',
+            first == ('connect', 'FAIL') and error == ('VERIFY', '800b0101') and state == 'exact', out)
+    out, first, error, state, second = clocked('expired', 'clock:floor:0')
+    t.check('clock: a certificate expired before a lower bound refused',
+            first == ('connect', 'FAIL') and error == ('VERIFY', '800b0101') and state == 'bound', out)
+    out, first, error, state, second = clocked('good', 'clock:exact:%d' % (72 * HOUR))
+    t.check("clock: a certificate valid at the system's time, expired at the clock's, refused",
+            first == ('connect', 'FAIL') and error == ('VERIFY', '800b0101') and state == 'exact', out)
+    out, first, error, state, second = clocked('notyetself', 'clock:exact:0')
+    t.check("clock: a certificate not valid yet that no CA leads to refused, and the time kept",
+            first == ('connect', 'FAIL') and error[0] == 'VERIFY' and state == 'exact' and
+            second == ('connect', 'FAIL'), out)
+    out, first, error, state, second = clocked('notyetwrongname', 'clock:exact:0')
+    t.check('clock: a certificate not valid yet for another name refused, and the time kept',
+            first == ('connect', 'FAIL') and error[0] == 'VERIFY' and state == 'exact' and
+            second == ('connect', 'FAIL'), out)
+    out, first, error, state, second = clocked('notyetwrongname', 'verify:chain', 'clock:exact:0')
+    t.check('clock: a certificate not valid yet for another name, the name not checked, refused, and the time forgotten',
+            first == ('connect', 'FAIL') and error == ('VERIFY', '800b0101') and state == 'bound' and
+            second == ('connect', 'OK'), out)
+    out, steps = t.run(servers['notyet'].port, 10, 'clock:exact:0', 'connect', 'clockstate', 'close',
+                       host='127.0.0.1')
+    t.check('clock: a certificate not valid yet, and not issued for the address connected to, refused, and the time kept',
+            result_code(steps, 1) == ('connect', 'FAIL') and last_error(steps, 1)[0] == 'VERIFY' and
+            step(steps, 2)[1] == 'exact', out)
 
     # ebisu_schannel_socket_set_keepalive() and _set_nodelay(): neither as the
     # socket starts, both from the next connect once set, and neither again

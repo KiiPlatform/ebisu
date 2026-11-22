@@ -141,6 +141,10 @@ bool ebisu_clock_get_time(ebisu_clock_t* clock, int64_t* out_now);
  * callbacks do not refuse a certificate for not having started by, so the next
  * connection goes through, and its response gives the clock the time again.
  *
+ * The sockets call it only when the dates are all the certificate is refused
+ * for. One that the CA certificates don't lead to, or for another host, says
+ * nothing of the time: anyone can make a certificate of any dates.
+ *
  * A clock without doubt, the system's, is left as it is.
  *
  * \param [in] clock The clock.
