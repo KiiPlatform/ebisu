@@ -57,6 +57,9 @@ void _kii_resp_to_start(kii_t* kii);
  * copied when present and otherwise left as it is. *out_expires_in_sec is set
  * from "expires_in" as it is, or to 0 when absent or not an integer that fits
  * an int64_t. */
+/* Whether _kii_parse_token_response() would read the response in the buffer
+ * whole, keeping nothing of it: KII_ERR_OK, or what it would return. */
+kii_code_t _kii_check_token_response(kii_t* kii, bool id_required);
 kii_code_t _kii_parse_token_response(
         kii_t* kii,
         kii_author_t* author,

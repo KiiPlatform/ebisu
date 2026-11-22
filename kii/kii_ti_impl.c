@@ -94,10 +94,6 @@ static kii_code_t _onboard_and_read(
         return KII_ERR_FAIL;
     }
 
-    // Onboarding issues no refresh token: one held belongs to the tokens this
-    // replaces, and is cleared whole.
-    ebisu_secure_zero(kii->_author.refresh_token, sizeof(kii->_author.refresh_token));
-
     // Where MQTT is enabled, the response also carries the endpoint of the
     // installation onboarding made.
     kii_mqtt_endpoint_t endpoint;
@@ -111,14 +107,8 @@ static kii_code_t _onboard_and_read(
     memset(fields, 0, sizeof(fields));
     fields[0].name = "accessToken";
     fields[0].type = JKII_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = kii->_author.access_token;
-    fields[0].field_copy_buff_size = sizeof(kii->_author.access_token) /
-        sizeof(kii->_author.access_token[0]);
     fields[1].name = "thingID";
     fields[1].type = JKII_FIELD_TYPE_STRING;
-    fields[1].field_copy.string = kii->_author.author_id;
-    fields[1].field_copy_buff_size = sizeof(kii->_author.author_id) /
-        sizeof(kii->_author.author_id[0]);
     fields[2].path = "/mqttEndpoint/installationID";
     fields[2].type = JKII_FIELD_TYPE_STRING;
     fields[2].field_copy.string = installation_id.id;
@@ -145,15 +135,37 @@ static kii_code_t _onboard_and_read(
     fields[8].type = JKII_FIELD_TYPE_INTEGER;
     fields[9].name = NULL;
 
+    // Read through once with nothing of the token or the thing's ID kept: a
+    // response that can't be read whole leaves the author as it was.
     result = jkii_parse(buff, buff_size, fields);
     if ((result == JKII_ERR_OK || result == JKII_ERR_PARTIAL) &&
-            _kii_field_too_long(kii, &fields[0], "access token", "KII_TOKEN_MAX_SIZE")) {
+            !_kii_field_fits(kii, &fields[0], KII_TOKEN_MAX_SIZE, "access token",
+                "KII_TOKEN_MAX_SIZE")) {
         ebisu_secure_zero(&endpoint, sizeof(endpoint));
         return KII_ERR_TOO_LARGE_DATA;
     }
     if ((result != JKII_ERR_OK && result != JKII_ERR_PARTIAL) ||
             fields[0].result != JKII_FIELD_ERR_OK ||
+            fields[1].result != JKII_FIELD_ERR_OK ||
+            fields[1].end - fields[1].start >= KII_AUTHOR_ID_MAX_SIZE) {
+        ebisu_secure_zero(&endpoint, sizeof(endpoint));
+        return KII_ERR_PARSE_JSON;
+    }
+
+    // Onboarding issues no refresh token: one held belongs to the tokens this
+    // replaces, and is cleared whole.
+    ebisu_secure_zero(kii->_author.refresh_token, sizeof(kii->_author.refresh_token));
+    fields[0].field_copy.string = kii->_author.access_token;
+    fields[0].field_copy_buff_size = sizeof(kii->_author.access_token) /
+        sizeof(kii->_author.access_token[0]);
+    fields[1].field_copy.string = kii->_author.author_id;
+    fields[1].field_copy_buff_size = sizeof(kii->_author.author_id) /
+        sizeof(kii->_author.author_id[0]);
+    result = jkii_parse(buff, buff_size, fields);
+    if ((result != JKII_ERR_OK && result != JKII_ERR_PARTIAL) ||
+            fields[0].result != JKII_FIELD_ERR_OK ||
             fields[1].result != JKII_FIELD_ERR_OK) {
+        // Not after the check, which is the same.
         ebisu_secure_zero(&endpoint, sizeof(endpoint));
         return KII_ERR_PARSE_JSON;
     }
