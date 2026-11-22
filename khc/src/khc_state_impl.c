@@ -735,8 +735,10 @@ void khc_state_resp_header_skip(khc_t* khc) {
         return;
     }
 
-    // check and leave CR at last.
-    if (khc->_resp_header_buff[khc->_resp_header_read_size - 1] == '\r') {
+    // check and leave CR at last. There may be nothing left of the last
+    // read: this is called again when the socket had nothing to read yet.
+    if (khc->_resp_header_read_size > 0 &&
+            khc->_resp_header_buff[khc->_resp_header_read_size - 1] == '\r') {
         khc->_resp_header_buff[0] = '\r';
         khc->_resp_header_read_size = 1;
     } else {
