@@ -31,9 +31,12 @@ static kii_code_t _execute_server_code(
 
     // The version and the endpoint's name come from the application. Too long
     // for khc, the request would go without its path.
-    if (!ebisu_strbuf_ok(&path) ||
-            khc_set_path(&kii->_khc, kii->_rw_buff) != KHC_ERR_OK) {
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
+    }
+    khc_code_t path_res = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (path_res != KHC_ERR_OK) {
+        return _convert_code(path_res);
     }
 
     // Request headers

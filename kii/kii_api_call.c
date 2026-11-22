@@ -77,11 +77,14 @@ kii_code_t kii_api_call_start(
     _resource_cleanup(kii);
     
     khc_set_host(&kii->_khc, kii->_app_host);
-    // Both come from the application. Too long for khc, the request would go
-    // without them.
-    if (khc_set_method(&kii->_khc, http_method) != KHC_ERR_OK ||
-            khc_set_path(&kii->_khc, resource_path) != KHC_ERR_OK) {
-        return KII_ERR_TOO_LARGE_DATA;
+    // Both come from the application. Too long for khc, or with what would
+    // break the request line, the request would go without them.
+    khc_code_t k_res = khc_set_method(&kii->_khc, http_method);
+    if (k_res == KHC_ERR_OK) {
+        k_res = khc_set_path(&kii->_khc, resource_path);
+    }
+    if (k_res != KHC_ERR_OK) {
+        return _convert_code(k_res);
     }
 
     kii_code_t res = _set_app_id_header(kii);
@@ -171,6 +174,13 @@ kii_code_t kii_api_call_append_header_or_default(
 
 kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* value)
 {
+    // A line end in either would make it two headers, or the end of them.
+    // khc_perform() would refuse it; refused here, the call fails where the
+    // header was given.
+    if (strpbrk(key, "\r\n") != NULL || strpbrk(value, "\r\n") != NULL) {
+        _req_headers_free_all(kii);
+        return KII_ERR_FAIL;
+    }
     size_t key_len = strlen(key);
     size_t val_len = strlen(value);
     size_t buff_size = key_len + val_len + 3;
