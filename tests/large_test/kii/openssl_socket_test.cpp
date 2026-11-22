@@ -1344,7 +1344,12 @@ TEST_CASE( "The OpenSSL socket says why it failed to its logger, and nowhere wit
             CHECK_FALSE( has(err, "failed to") );
             REQUIRE( log.messages.size() == 1 );
             CHECK( log.messages[0].first == EBISU_LOG_ERROR );
-            CHECK( starts_with(log.messages[0].second, "failed to look up ebisu-test.invalid: ") );
+            // With the resolver's reason, or, where its answer took longer
+            // than the connect timeout, as on a runner whose name server is
+            // slow to say there is no such name, without one.
+            const std::string& message = log.messages[0].second;
+            CHECK( (starts_with(message, "failed to look up ebisu-test.invalid: ") ||
+                    (timeout > 0 && message == "failed to look up ebisu-test.invalid in time.")) );
             CHECK( log.messages[0].second.find('\n') == std::string::npos );
         }
     }
