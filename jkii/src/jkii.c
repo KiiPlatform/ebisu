@@ -983,7 +983,12 @@ static jkii_parse_err_t _jkii_convert_value_to_field(
             }
             break;
         case JKII_FIELD_TYPE_DOUBLE:
-            if (type != JKII_FIELD_TYPE_DOUBLE) {
+            /* A number of any form: JSON has one kind of number, and a
+             * value that happens to be whole comes without a fraction, as
+             * 25 for 25.0. jkii_member_double() takes them alike. */
+            if (type != JKII_FIELD_TYPE_DOUBLE &&
+                    type != JKII_FIELD_TYPE_INTEGER &&
+                    type != JKII_FIELD_TYPE_LONG) {
                 field->type = type;
                 field->result = JKII_FIELD_ERR_TYPE_MISMATCH;
                 retval = JKII_ERR_PARTIAL;
