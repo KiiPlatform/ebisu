@@ -631,6 +631,14 @@ typedef struct kii_t {
      * callbacks of the caller's rather than through _rw_buff, so that it
      * cannot be sent again from here. */
     bool _req_streamed;
+    /** \private The callback kii_download_object_body() was given, and its
+     * context: kii's own stands before it, and hands it a 2xx response's body
+     * alone. */
+    KII_CB_WRITE _download_cb;
+    void* _download_data; /**< \private */
+    /** \private Whether an error's body had more than _rw_buff has room for,
+     * and the rest of it is left out. */
+    bool _download_cut;
 
     /** \private The installation of the endpoint onboarding returned. */
     kii_installation_id_t _onboarded_installation_id;
@@ -1072,6 +1080,14 @@ kii_code_t kii_upload_object_body(
 
 /**
  * \brief Download object body.
+ *
+ * write_cb is given the object's body: that of a 2xx response alone. The body
+ * of any other response, an error's, is read into kii's buffer, as for the
+ * calls without a callback, cut short if the buffer has no room for it all:
+ * kii_get_resp_body_length() bytes of the buffer set by kii_set_buff(). The
+ * call then returns KII_ERR_RESP_STATUS. With a session,
+ * a response refusing the token has it renewed and the request sent again,
+ * write_cb not having been called.
 
  * \param [in,out] kii kii_t instance.
  * \param [in] bucket Specify the bucket to which the object is stored.

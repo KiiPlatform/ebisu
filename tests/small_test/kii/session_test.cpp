@@ -820,6 +820,87 @@ TEST_CASE( "A streamed body is not sent again, but the token is renewed" ) {
     REQUIRE( contains(c.http.requests[2], reader.state) );
 }
 
+namespace {
+
+size_t append_to_string(char* buffer, size_t size, void* userdata) {
+    ((std::string*)userdata)->append(buffer, size);
+    return size;
+}
+
+}
+
+// A download handed every response's body to the caller's callback: an
+// error's went where the object's body was to go, and a refusal of the token,
+// unseen by the session, was never followed by a renewal.
+TEST_CASE( "A download gives its callback the object's body alone" ) {
+    kii_bucket_t bucket = { KII_SCOPE_THING, "th.1", "b" };
+    std::string sink;
+
+    SECTION("an error's is read into kii's buffer") {
+        Client c;
+        const std::string error = "{\"errorCode\":\"OBJECT_BODY_NOT_FOUND\"}";
+        c.http.responses = { http_response(404, error) };
+        CHECK( kii_download_object_body(&c.kii, &bucket, "o", append_to_string, &sink) ==
+                KII_ERR_RESP_STATUS );
+        CHECK( kii_get_resp_status(&c.kii) == 404 );
+        CHECK( sink == "" );
+        CHECK( std::string(c.buff, kii_get_resp_body_length(&c.kii)) == error );
+    }
+    SECTION("an error's longer than the buffer is cut, and still an error") {
+        Client c;
+        c.http.responses = { http_response(500, std::string(3 * sizeof(c.buff), 'e')) };
+        CHECK( kii_download_object_body(&c.kii, &bucket, "o", append_to_string, &sink) ==
+                KII_ERR_RESP_STATUS );
+        CHECK( kii_get_resp_status(&c.kii) == 500 );
+        CHECK( sink == "" );
+        CHECK( kii_get_resp_body_length(&c.kii) < sizeof(c.buff) );
+    }
+    SECTION("the object's goes to the callback, whatever its length") {
+        Client c;
+        const std::string body(3 * sizeof(c.buff), 'o');
+        c.http.responses = { http_response(200, body) };
+        CHECK( kii_download_object_body(&c.kii, &bucket, "o", append_to_string, &sink) == KII_ERR_OK );
+        CHECK( sink == body );
+        // And kii's own callback is back for the next call.
+        c.http.responses.push_back(DONE);
+        CHECK( c.put(BODY) == KII_ERR_OK );
+        CHECK( sink == body );
+    }
+    SECTION("a refused token is renewed, and the download made again") {
+        Platform platform;
+        kii_session_t session;
+        init_session(&session, &platform);
+        kii_author_t author = make_author("th.1", "at1", "rt1");
+        kii_session_set_author(&session, &author);
+        Client c;
+        REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+        c.http.responses = { REFUSED, refreshed("at2", "rt2", 3600), http_response(200, "the body") };
+        CHECK( kii_download_object_body(&c.kii, &bucket, "o", append_to_string, &sink) == KII_ERR_OK );
+        CHECK( sink == "the body" );
+        REQUIRE( c.http.requests.size() == 3 );
+        CHECK( contains(c.http.requests[0], "Authorization: Bearer at1\r\n") );
+        CHECK( contains(c.http.requests[2], "GET /api/apps/app/things/th.1/buckets/b/objects/o/body HTTP/1.1") );
+        CHECK( contains(c.http.requests[2], "Authorization: Bearer at2\r\n") );
+        CHECK( std::string(held(&session).access_token) == "at2" );
+        CHECK( platform.depth == 0 );
+    }
+    SECTION("a token refused again leaves the 403, and nothing in the callback") {
+        Platform platform;
+        kii_session_t session;
+        init_session(&session, &platform);
+        kii_author_t author = make_author("th.1", "at1", "rt1");
+        kii_session_set_author(&session, &author);
+        Client c;
+        REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+        c.http.responses = { REFUSED, refreshed("at2", "rt2", 3600), REFUSED };
+        CHECK( kii_download_object_body(&c.kii, &bucket, "o", append_to_string, &sink) ==
+                KII_ERR_RESP_STATUS );
+        CHECK( kii_get_resp_status(&c.kii) == 403 );
+        CHECK( sink == "" );
+        CHECK( c.http.requests.size() == 3 );
+    }
+}
+
 TEST_CASE( "A body leaving no room to renew is not sent again" ) {
     Platform platform;
     kii_session_t session;
