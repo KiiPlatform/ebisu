@@ -707,6 +707,49 @@ TEST_CASE( "A token renewed through another kii_t is taken, not renewed again" )
     REQUIRE( platform.depth == 0 );
 }
 
+// A kii_t took the session's author as it was given the session, and again
+// for each request's Authorization header: after the request's path was made.
+// So its first request after another kii_t logged in went to a path of the
+// thing it had before, or of none, with the new thing's token.
+TEST_CASE( "A path has the thing another kii_t of the session logged in as" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    Client a;
+    Client b;
+    REQUIRE( kii_set_session(&a.kii, &session) == KII_ERR_OK );
+    REQUIRE( kii_set_session(&b.kii, &session) == KII_ERR_OK );
+    a.http.responses = { http_response(200, "{\"id\":\"th.1\",\"access_token\":\"at1\"}") };
+    REQUIRE( kii_auth_thing(&a.kii, "vid", "pw") == KII_ERR_OK );
+    b.http.responses = { DONE };
+
+    SECTION("of Thing-IF") {
+        kii_ti_put_firmware_version(&b.kii, "1.0");
+        REQUIRE( b.http.requests.size() == 1 );
+        CHECK( contains(b.http.requests[0], "PUT /thing-if/apps/app/things/th.1/firmware-version HTTP/1.1") );
+        CHECK( contains(b.http.requests[0], "Authorization: Bearer at1\r\n") );
+    }
+    SECTION("of a subscription to a bucket") {
+        kii_bucket_t bucket;
+        bucket.scope = KII_SCOPE_APP;
+        bucket.bucket_name = "b";
+        bucket.scope_id = NULL;
+        kii_subscribe_bucket(&b.kii, &bucket);
+        REQUIRE( b.http.requests.size() == 1 );
+        CHECK( contains(b.http.requests[0], "/buckets/b/filters/all/push/subscriptions/things/th.1 HTTP/1.1") );
+    }
+    SECTION("of a subscription to a topic") {
+        kii_topic_t topic;
+        topic.scope = KII_SCOPE_APP;
+        topic.topic_name = "t";
+        topic.scope_id = NULL;
+        kii_subscribe_topic(&b.kii, &topic);
+        REQUIRE( b.http.requests.size() == 1 );
+        CHECK( contains(b.http.requests[0], "/topics/t/push/subscriptions/things/th.1 HTTP/1.1") );
+    }
+    REQUIRE( platform.depth == 0 );
+}
+
 TEST_CASE( "kii_get_author gives the session's author, renewed through any kii_t" ) {
     Platform platform;
     kii_session_t session;

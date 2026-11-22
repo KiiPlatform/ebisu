@@ -217,7 +217,7 @@ kii_code_t _put_firmware_version(
 
     ebisu_strbuf_t path;
     ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
-    ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/things/%s/firmware-version", kii->_app_id, kii->_author.author_id);
+    ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/things/%s/firmware-version", kii->_app_id, _kii_thing_id(kii));
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
@@ -270,7 +270,7 @@ kii_code_t _get_firmware_version(
 
     ebisu_strbuf_t path;
     ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
-    ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/things/%s/firmware-version", kii->_app_id, kii->_author.author_id);
+    ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/things/%s/firmware-version", kii->_app_id, _kii_thing_id(kii));
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
@@ -340,7 +340,7 @@ kii_code_t _upload_state(
 
     ebisu_strbuf_t path;
     ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
-    ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/targets/thing:%s/%s", kii->_app_id, kii->_author.author_id, last_path_segment);
+    ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/targets/thing:%s/%s", kii->_app_id, _kii_thing_id(kii), last_path_segment);
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
