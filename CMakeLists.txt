@@ -8,7 +8,13 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/version ${CMAKE_CURRENT_
 include(EbisuVersion)
 set_git_version_and_generate_header()
 
-option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+# Shared libraries by default, where ebisu is what is being built. Inside
+# another project, with add_subdirectory(), the choice is that project's, for
+# its own libraries too: declared here, the option would make those shared as
+# well. Unset, CMake builds static ones.
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+endif()
 # What ebisu logs itself: the ports' diagnostics, khc's requests, kii's MQTT
 # events and tio's failures, to the logger set on each, and nowhere without
 # one. OFF leaves all of it out of the libraries, messages and all, for a device
