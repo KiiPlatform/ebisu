@@ -210,6 +210,10 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
 
 kii_code_t _req_send(kii_t* kii)
 {
+    /* Here, with the request made, rather than as the call starts: the ETag
+     * of the last response is what the application gives this one for its
+     * If-Match, straight from kii_get_etag(). */
+    _kii_clear_resp_headers(kii);
     kii_code_t res = kii_api_call_append_header(kii, "X-Kii-SDK", _SDK_INFO);
     if (res == KII_ERR_OK && kii->_use_m_0_header) {
         res = _set_m_0_header(kii);
