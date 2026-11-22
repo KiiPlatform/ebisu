@@ -27,7 +27,10 @@ static kii_code_t _onboard_and_read(
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
+    // khc keeps a path shorter than the buffer may hold one.
+    if (khc_set_path(&kii->_khc, kii->_rw_buff) != KHC_ERR_OK) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
 
     // Request headers.
     ret = _set_auth_basic_app(kii);
@@ -221,7 +224,10 @@ kii_code_t _put_firmware_version(
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
+    // khc keeps a path shorter than the buffer may hold one.
+    if (khc_set_path(&kii->_khc, kii->_rw_buff) != KHC_ERR_OK) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
 
     // Request headers.
     ret = _set_auth_header(kii);
@@ -274,7 +280,10 @@ kii_code_t _get_firmware_version(
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
+    // khc keeps a path shorter than the buffer may hold one.
+    if (khc_set_path(&kii->_khc, kii->_rw_buff) != KHC_ERR_OK) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
 
     // Request headers.
     ret = _set_auth_header(kii);
@@ -331,10 +340,11 @@ kii_code_t _upload_state(
     _reset_khc(kii);
     _reset_buff(kii);
 
-    if (opt_normalizer_host != NULL) {
-        khc_set_host(&kii->_khc, opt_normalizer_host);
-    } else {
-        khc_set_host(&kii->_khc, kii->_app_host);
+    // The application's host fits, set by kii_set_site(). The caller's may
+    // not.
+    if (khc_set_host(&kii->_khc, opt_normalizer_host != NULL ?
+                opt_normalizer_host : kii->_app_host) != KHC_ERR_OK) {
+        return KII_ERR_TOO_LARGE_DATA;
     }
     khc_set_method(&kii->_khc, method);
 
@@ -344,7 +354,10 @@ kii_code_t _upload_state(
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
+    // khc keeps a path shorter than the buffer may hold one.
+    if (khc_set_path(&kii->_khc, kii->_rw_buff) != KHC_ERR_OK) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
 
     // Request headers.
     ret = _set_auth_header(kii);
