@@ -275,17 +275,30 @@ jkii_parse_err_t _validate_json(
     return jkii_validate_root_object(json_string, json_string_size);
 }
 
+// Appends text to the body of the result request being prepared, unless an
+// append before it failed.
+static void _append_to_result(tio_handler_t* handler, kii_code_t* res, const char* text,
+        size_t length)
+{
+    if (*res == KII_ERR_OK) {
+        *res = kii_api_call_append_body(&handler->_kii, text, length);
+    }
+}
+
+// An action's result is written piece by piece to the request's body, in the
+// buffer the application gave kii. It was put together first in a buffer of
+// 256 bytes on the stack, the failure's message in one of 128 inside it: a
+// name, a message and data of lengths the callback's own types allow didn't
+// fit in them, and the command's results were given up, its actions done.
 static tio_code_t _append_action_result(
         tio_handler_t* handler,
         size_t index,
         bool succeeded,
         tio_action_t* action,
         const char* err_message,
-        const char* json_data,
-        char* work_buff,
-        size_t work_buff_size)
+        const char* json_data)
 {
-    int json_data_len = strlen(json_data);
+    size_t json_data_len = strlen(json_data);
     if (json_data_len > 0) {
         // Validate json_data.
         jkii_parse_err_t json_res = _validate_json(handler, json_data, json_data_len);
@@ -295,69 +308,50 @@ static tio_code_t _append_action_result(
             return TIO_ERR_PARSE_JSON;
         }
     }
-    char *comma = ",";
-    if (index == 0)
-    {
-        comma = "";
-    }
-    // The action name is a slice of the parsed command, so its length comes
-    // from the network. Copying it to the stack first sized the array by that
-    // length, letting whoever publishes a command choose how much stack to
-    // consume -- bounded only by the buffer passed to kii_set_mqtt_buff(), on
-    // targets whose whole stack may be smaller than that. It is printed with a
-    // precision instead, which needs no copy and no allocation.
-    if (action->action_name_length >= work_buff_size) {
-        return TIO_ERR_TOO_LARGE_DATA;
-    }
-    const int action_name_length = (int)action->action_name_length;
-    ebisu_strbuf_t result;
-    ebisu_strbuf_init(&result, work_buff, work_buff_size);
-    if (succeeded)
-    {
-        ebisu_strbuf_appendf(&result, "%s{\"%.*s\":{\"succeeded\":true",
-                comma, action_name_length, action->action_name);
-    }
-    else
-    {
-        char *err_part = "";
-        char temp_err[128];
-        size_t msg_len = strlen(err_message);
-        if (msg_len > 0)
-        {
-            // Escaping can double the message, so this holds the longest
-            // tio_action_err_t::err_message can be. Sizing it from msg_len made
-            // it a variable length array whose bound depended on a caller the
-            // parameter type does not constrain.
-            char esc_msg[TIO_ACTION_ERR_MESSAGE_MAX_SIZE * 2 - 1];
-            if (msg_len * 2 + 1 > sizeof(esc_msg)) {
-                return TIO_ERR_TOO_LARGE_DATA;
-            }
-            int esc_len = jkii_escape_str(err_message, esc_msg, sizeof(esc_msg)/sizeof(esc_msg[0]));
-            if (esc_len < 0) {
-                return TIO_ERR_TOO_LARGE_DATA;
-            }
-            ebisu_strbuf_t err;
-            ebisu_strbuf_init(&err, temp_err, sizeof(temp_err));
-            ebisu_strbuf_appendf(&err, ",\"errorMessage\":\"%s\"", esc_msg);
-            if (!ebisu_strbuf_ok(&err))
-            {
-                return TIO_ERR_TOO_LARGE_DATA;
-            }
-            err_part = temp_err;
+    // Escaping can double the message, so this holds the longest
+    // tio_action_err_t::err_message can be.
+    char esc_msg[TIO_ACTION_ERR_MESSAGE_MAX_SIZE * 2 - 1];
+    int esc_len = 0;
+    size_t msg_len = succeeded ? 0 : strlen(err_message);
+    if (msg_len > 0) {
+        if (msg_len * 2 + 1 > sizeof(esc_msg)) {
+            return TIO_ERR_TOO_LARGE_DATA;
         }
-        ebisu_strbuf_appendf(&result, "%s{\"%.*s\":{\"succeeded\":false%s",
-                comma, action_name_length, action->action_name, err_part);
+        esc_len = jkii_escape_str(err_message, esc_msg, sizeof(esc_msg)/sizeof(esc_msg[0]));
+        if (esc_len < 0) {
+            return TIO_ERR_TOO_LARGE_DATA;
+        }
+    }
+
+    // The action name is a slice of the parsed command, so its length comes
+    // from the network: it is appended as it is there, with no copy of it.
+    kii_code_t res = KII_ERR_OK;
+    const char open[] = ",{\"";
+    const char succeeded_true[] = "\":{\"succeeded\":true";
+    const char succeeded_false[] = "\":{\"succeeded\":false";
+    const char message_open[] = ",\"errorMessage\":\"";
+    const char data_open[] = ",\"data\":";
+    if (index == 0) {
+        _append_to_result(handler, &res, open + 1, sizeof(open) - 2);
+    } else {
+        _append_to_result(handler, &res, open, sizeof(open) - 1);
+    }
+    _append_to_result(handler, &res, action->action_name, action->action_name_length);
+    if (succeeded) {
+        _append_to_result(handler, &res, succeeded_true, sizeof(succeeded_true) - 1);
+    } else {
+        _append_to_result(handler, &res, succeeded_false, sizeof(succeeded_false) - 1);
+        if (msg_len > 0) {
+            _append_to_result(handler, &res, message_open, sizeof(message_open) - 1);
+            _append_to_result(handler, &res, esc_msg, (size_t)esc_len);
+            _append_to_result(handler, &res, "\"", 1);
+        }
     }
     if (json_data_len > 0) {
-        ebisu_strbuf_append(&result, ",\"data\":");
-        ebisu_strbuf_append(&result, json_data);
+        _append_to_result(handler, &res, data_open, sizeof(data_open) - 1);
+        _append_to_result(handler, &res, json_data, json_data_len);
     }
-    ebisu_strbuf_append(&result, "}}");
-    if (!ebisu_strbuf_ok(&result))
-    {
-        return TIO_ERR_TOO_LARGE_DATA;
-    }
-    kii_code_t res = kii_api_call_append_body(&handler->_kii, work_buff, result.len);
+    _append_to_result(handler, &res, "}}", 2);
     return _tio_convert_code(res);
 }
 
@@ -489,7 +483,6 @@ static tio_code_t _handle_command_locked(
                     tio_action_result_data_t action_result_data;
                     action_result_data.json[0] = '\0';
                     bool succeeded = cb_action(&action, &action_err, &action_result_data, cb_action_data);
-                    char work_buff[256];
                     // The index within the alias, whose results are an array
                     // of their own: counted across the command, the first
                     // result of every alias after the first was written with
@@ -500,9 +493,7 @@ static tio_code_t _handle_command_locked(
                             succeeded,
                             &action,
                             action_err.err_message,
-                            action_result_data.json,
-                            work_buff,
-                            sizeof(work_buff)/sizeof(work_buff[0]));
+                            action_result_data.json);
                     if (app_res != TIO_ERR_OK) {
                         _log_step(handler, "_append_action_result", app_res);
                         kii_cancel_request_being_prepared(&handler->_kii);
