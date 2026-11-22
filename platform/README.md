@@ -408,7 +408,7 @@ static ebisu_openssl_socket_t sock;
 
     /* The server's public key's SHA-256, as the second command prints it. */
     static const unsigned char pin[EBISU_TLS_PIN_SIZE] = { 0x5c, 0x1f, /* ... */ };
-    if (!ebisu_openssl_tls_init(&tls, NULL, NULL) ||
+    if (!ebisu_openssl_tls_init(&tls, NULL, NULL, NULL) ||
             !ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_PIN, pin)) {
         /* OpenSSL failed, or memory ran out. */
     }
@@ -525,7 +525,7 @@ static ebisu_log_fanout_t logger;
     /* NULL for the host's name, as gethostname() gives it. A server that can't
        be looked up leaves a logger that drops everything. */
     ebisu_syslog_udp_logger_init(&to_server, "logs.example.com", 514, NULL, "my-device", 3,
-            EBISU_LOG_DEBUG);
+            EBISU_LOG_DEBUG, NULL);
     ebisu_log_fanout_init(&logger, loggers, 3);
 
     ebisu_openssl_socket_set_logger(&sock, &logger.base);
@@ -560,7 +560,7 @@ static ebisu_syslog_udp_logger_t servers[2];
     /* Later, from any task. */
     ebisu_log_level_filter_set_level(&filtered, EBISU_LOG_DEBUG);
     ebisu_syslog_udp_logger_init(&servers[1], "logs.example.com", 514, host_name, "my-device",
-            3, EBISU_LOG_DEBUG);
+            3, EBISU_LOG_DEBUG, NULL);
     ebisu_logger_t* old = ebisu_log_slot_set(&remote, &servers[1].base);
     if (old != NULL) {
         ebisu_syslog_udp_logger_close(&servers[0]);

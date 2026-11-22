@@ -121,11 +121,15 @@ typedef struct ebisu_openssl_tls_t {
  * \param [in] ca_file File of PEM CA certificates, or NULL.
  * \param [in] ca_path Directory of CA certificates named by their hash, as
  * openssl rehash or c_rehash names them, or NULL.
- * \return true, or false if the certificates couldn't be loaded or OpenSSL
- * failed, which OpenSSL's error queue on the calling thread says more of, as
- * ERR_get_error() reads it.
+ * \param [out] out_error OpenSSL's error when it fails, and 0 when it doesn't:
+ * the first of this call's in OpenSSL's error queue on the calling thread,
+ * which ERR_error_string_n() gives the text of, for a log. The queue is left
+ * with the rest, for ERR_get_error(). NULL for none.
+ * \return Whether it did: false if the certificates couldn't be loaded or
+ * OpenSSL failed.
  */
-bool ebisu_openssl_tls_init(ebisu_openssl_tls_t* tls, const char* ca_file, const char* ca_path);
+bool ebisu_openssl_tls_init(ebisu_openssl_tls_t* tls, const char* ca_file, const char* ca_path,
+        unsigned long* out_error);
 
 /**
  * \brief Frees a TLS configuration.

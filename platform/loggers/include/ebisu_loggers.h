@@ -66,6 +66,22 @@ void ebisu_stdio_logger_init(
  */
 #define EBISU_FILE_LOGGER_PATH_MAX 256
 
+/** \brief Why a logger couldn't be initialized, for
+ * ebisu_file_logger_init() and ebisu_syslog_udp_logger_init(). */
+typedef enum ebisu_logger_init_error_t {
+    /** \brief It was. */
+    EBISU_LOGGER_INIT_ERROR_NONE,
+    /** \brief An argument is none it takes: a path that is empty or too
+     * long, a facility out of range, a HOSTNAME or an application's name
+     * RFC 5424 can't carry. */
+    EBISU_LOGGER_INIT_ERROR_ARGUMENT,
+    /** \brief The server's host couldn't be looked up. */
+    EBISU_LOGGER_INIT_ERROR_LOOKUP,
+    /** \brief The system didn't open the file, or a socket to any of the
+     * server's addresses. */
+    EBISU_LOGGER_INIT_ERROR_OPEN
+} ebisu_logger_init_error_t;
+
 /**
  * \brief A logger to a file it keeps under a size, on POSIX and on Windows.
  *
@@ -117,16 +133,20 @@ typedef struct ebisu_file_logger_t {
  * writes errors and warnings.
  * \param [in] lock The lock each line's write takes, which has to outlive the
  * logger, or NULL for a logger one task logs to at a time.
- * \return true if the file is open, false if the path is too long, when the
- * logger drops every message until closed, or the file can't be opened, when
- * it tries again with each message.
+ * \param [out] out_error Why it failed, or EBISU_LOGGER_INIT_ERROR_NONE if it
+ * didn't: EBISU_LOGGER_INIT_ERROR_ARGUMENT for a path empty or too long, when
+ * the logger drops every message until closed, or
+ * EBISU_LOGGER_INIT_ERROR_OPEN for a file that can't be opened, when it tries
+ * again with each message. NULL for none.
+ * \return true if the file is open.
  */
 bool ebisu_file_logger_init(
         ebisu_file_logger_t* logger,
         const char* path,
         size_t max_bytes,
         ebisu_log_level_t level,
-        ebisu_lock_t* lock);
+        ebisu_lock_t* lock,
+        ebisu_logger_init_error_t* out_error);
 
 /**
  * \brief Sets whether each line starts with the time it is written.
@@ -263,8 +283,11 @@ typedef struct ebisu_syslog_udp_logger_t {
  * user-level messages, 3 system daemons, and 16 to 23 local use 0 to 7.
  * \param [in] level The least important level sent: EBISU_LOG_WARNING sends
  * errors and warnings.
- * \return true if the socket is open, false if an argument isn't valid, the
- * host can't be looked up or no socket opens to it.
+ * \param [out] out_error Why it failed, or EBISU_LOGGER_INIT_ERROR_NONE if it
+ * didn't: EBISU_LOGGER_INIT_ERROR_ARGUMENT for an argument that isn't valid,
+ * EBISU_LOGGER_INIT_ERROR_LOOKUP for a host that can't be looked up, or
+ * EBISU_LOGGER_INIT_ERROR_OPEN if no socket opens to it. NULL for none.
+ * \return true if the socket is open.
  */
 bool ebisu_syslog_udp_logger_init(
         ebisu_syslog_udp_logger_t* logger,
@@ -273,7 +296,8 @@ bool ebisu_syslog_udp_logger_init(
         const char* hostname,
         const char* app_name,
         int facility,
-        ebisu_log_level_t level);
+        ebisu_log_level_t level,
+        ebisu_logger_init_error_t* out_error);
 
 /**
  * \brief Closes a logger to a syslog server, which drops every message after.

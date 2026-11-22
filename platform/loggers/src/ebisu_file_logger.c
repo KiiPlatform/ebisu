@@ -121,8 +121,10 @@ bool ebisu_file_logger_init(
         const char* path,
         size_t max_bytes,
         ebisu_log_level_t level,
-        ebisu_lock_t* lock)
+        ebisu_lock_t* lock,
+        ebisu_logger_init_error_t* out_error)
 {
+    ebisu_logger_init_error_t ignored;
     size_t length = path != NULL ? strlen(path) : EBISU_FILE_LOGGER_PATH_MAX;
     logger->base.ops = &file_logger_ops;
     logger->_file = NULL;
@@ -132,12 +134,18 @@ bool ebisu_file_logger_init(
     logger->_lock = lock;
     logger->_timestamps = false;
     logger->_path[0] = '\0';
+    if (out_error == NULL) {
+        out_error = &ignored;
+    }
     /* Room for ".1" after it. */
     if (length == 0 || length + 2 >= sizeof(logger->_path)) {
+        *out_error = EBISU_LOGGER_INIT_ERROR_ARGUMENT;
         return false;
     }
     memcpy(logger->_path, path, length + 1);
     open_file(logger, "ab");
+    *out_error = logger->_file != NULL ? EBISU_LOGGER_INIT_ERROR_NONE :
+        EBISU_LOGGER_INIT_ERROR_OPEN;
     return logger->_file != NULL;
 }
 

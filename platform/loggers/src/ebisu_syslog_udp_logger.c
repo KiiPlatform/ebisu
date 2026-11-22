@@ -105,8 +105,10 @@ bool ebisu_syslog_udp_logger_init(
         const char* hostname,
         const char* app_name,
         int facility,
-        ebisu_log_level_t level)
+        ebisu_log_level_t level,
+        ebisu_logger_init_error_t* out_error)
 {
+    ebisu_logger_init_error_t ignored;
     char own_hostname[EBISU_SYSLOG_HOSTNAME_MAX + 1];
     char service[6];
     unsigned long pid;
@@ -123,6 +125,10 @@ bool ebisu_syslog_udp_logger_init(
     logger->_facility = facility;
     logger->_level = level;
     logger->_fields[0] = '\0';
+    if (out_error == NULL) {
+        out_error = &ignored;
+    }
+    *out_error = EBISU_LOGGER_INIT_ERROR_ARGUMENT;
     if (host == NULL || facility < 0 || facility > 23) {
         return false;
     }
@@ -137,6 +143,7 @@ bool ebisu_syslog_udp_logger_init(
 
 #ifdef _WIN32
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+        *out_error = EBISU_LOGGER_INIT_ERROR_OPEN;
         return false;
     }
     pid = (unsigned long)GetCurrentProcessId();
@@ -166,7 +173,9 @@ bool ebisu_syslog_udp_logger_init(
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
+    *out_error = EBISU_LOGGER_INIT_ERROR_LOOKUP;
     if (getaddrinfo(host, service, &hints, &addrs) == 0) {
+        *out_error = EBISU_LOGGER_INIT_ERROR_OPEN;
         /* Connected, so that a send needs no address, and the system picks
            the address to send from. */
         for (addr = addrs; addr != NULL && !logger->_open; addr = addr->ai_next) {
@@ -178,6 +187,7 @@ bool ebisu_syslog_udp_logger_init(
                     configure_socket(sock)) {
                 logger->_socket = (uintptr_t)sock;
                 logger->_open = true;
+                *out_error = EBISU_LOGGER_INIT_ERROR_NONE;
             } else {
                 close_socket(sock);
             }

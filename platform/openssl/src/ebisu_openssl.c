@@ -346,9 +346,15 @@ static SSL_CTX* shared_ssl_ctx(ebisu_openssl_socket_t* sock)
     return default_ssl_ctx;
 }
 
-bool ebisu_openssl_tls_init(ebisu_openssl_tls_t* tls, const char* ca_file, const char* ca_path)
+bool ebisu_openssl_tls_init(ebisu_openssl_tls_t* tls, const char* ca_file, const char* ca_path,
+        unsigned long* out_error)
 {
+    /* For the first error left to be this call's. */
+    ERR_clear_error();
     tls->ssl_ctx = new_ssl_ctx(ca_file, ca_path);
+    if (out_error != NULL) {
+        *out_error = tls->ssl_ctx != NULL ? 0 : ERR_peek_error();
+    }
     return tls->ssl_ctx != NULL;
 }
 
