@@ -1,4 +1,5 @@
 #include "kii_req_impl.h"
+#include "kii_impl.h"
 #include "kii_session_impl.h"
 #include <ebisu_mem.h>
 #include <ebisu_str.h>
@@ -49,7 +50,7 @@ kii_code_t _set_bucket_path(
         if (ret == KHC_ERR_OK) {
             return KII_ERR_OK;
         } else {
-            return KII_ERR_TOO_LARGE_DATA;
+            return _convert_code(ret);
         }
     }
 }
@@ -80,7 +81,7 @@ kii_code_t _set_bucket_subscription_path(kii_t* kii, const kii_bucket_t* bucket)
     }
     khc_code_t kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
     if (kcode != KHC_ERR_OK) {
-        return KII_ERR_TOO_LARGE_DATA;
+        return _convert_code(kcode);
     }
     return KII_ERR_OK;
 }
@@ -113,7 +114,7 @@ kii_code_t _set_topic_path(
     }
     khc_code_t kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
     if (kcode != KHC_ERR_OK) {
-        return KII_ERR_TOO_LARGE_DATA;
+        return _convert_code(kcode);
     }
     return KII_ERR_OK;
 }
@@ -144,7 +145,7 @@ kii_code_t _set_topic_subscription_path(kii_t* kii, const kii_topic_t* topic) {
     }
     khc_code_t kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
     if (kcode != KHC_ERR_OK) {
-        return KII_ERR_TOO_LARGE_DATA;
+        return _convert_code(kcode);
     }
     return KII_ERR_OK;
 }
@@ -174,7 +175,7 @@ kii_code_t _set_topic_push_message_path(kii_t* kii, const kii_topic_t* topic) {
     }
     khc_code_t kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
     if (kcode != KHC_ERR_OK) {
-        return KII_ERR_TOO_LARGE_DATA;
+        return _convert_code(kcode);
     }
     return KII_ERR_OK;
 }
@@ -188,7 +189,7 @@ kii_code_t _set_thing_push_message_path(kii_t* kii, const char* thing_id) {
     }
     khc_code_t kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
     if (kcode != KHC_ERR_OK) {
-        return KII_ERR_TOO_LARGE_DATA;
+        return _convert_code(kcode);
     }
     return KII_ERR_OK;
 }

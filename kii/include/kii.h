@@ -1782,7 +1782,10 @@ kii_code_t kii_ti_patch_bulk_states(
  * \param [in] resource_path Resource path of http request.
  * \param [in] content_type Content-Type of request body.
  * \param [in] set_authentication_header A flag determines whether to send authentication header.
- * \return kii_code_t.
+ * \return kii_code_t. KII_ERR_TOO_LARGE_DATA for a method or a path too long
+ * for khc, and KII_ERR_FAIL for one with a space or a control character in it,
+ * which would break the request line: what a path can't have as it is, the
+ * caller percent-encodes.
  */
 kii_code_t kii_api_call_start(
         kii_t* kii,
@@ -1851,7 +1854,8 @@ kii_code_t kii_api_call_set_body_reader(
  * \param [in] value Value of http header.
  * \return kii_code_t. KII_ERR_TOO_LARGE_DATA if the header is longer than the
  * buffer set by kii_set_buff(). It is put together on the stack of the task
- * calling this, which has to have room for it.
+ * calling this, which has to have room for it. KII_ERR_FAIL if the key or the
+ * value has a CR or an LF in it, which would make it two headers.
  */
 kii_code_t
 kii_api_call_append_header(

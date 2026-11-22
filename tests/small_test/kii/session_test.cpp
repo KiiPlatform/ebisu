@@ -1514,6 +1514,54 @@ TEST_CASE( "A path or a host khc has no room for fails the call, sending nothing
     CHECK( c.http.requests.empty() );
 }
 
+// What goes into a request's path or a header is sent as it is. A space in a
+// bucket's or a topic's name, a CR and an LF in a header's value, made the
+// request another one: one whose path ended early, or with a header of the
+// caller's choosing, or two requests.
+TEST_CASE( "What would break a request's line or a header fails the call, sending nothing" ) {
+    Client c;
+    kii_set_app_id(&c.kii, "app");
+    c.kii._author = make_author("th.1", "at1", "");
+    c.http.responses = { DONE };
+
+    SECTION("a path of the application's") {
+        CHECK( kii_api_call_start(&c.kii, "GET", "/api/apps/app/x HTTP/1.1\r\nX: y\r\n\r\nGET /z", NULL, false) ==
+                KII_ERR_FAIL );
+        CHECK( kii_api_call_start(&c.kii, "GET", "/api/apps/app/a b", NULL, false) == KII_ERR_FAIL );
+        CHECK( kii_api_call_start(&c.kii, "GET X", "/api/apps/app/x", NULL, false) == KII_ERR_FAIL );
+        // Too long is still that.
+        const std::string long_path(KHC_PATH_MAX_SIZE, 'p');
+        CHECK( kii_api_call_start(&c.kii, "GET", long_path.c_str(), NULL, false) == KII_ERR_TOO_LARGE_DATA );
+    }
+    SECTION("a header of the application's") {
+        REQUIRE( kii_api_call_start(&c.kii, "GET", "/api/apps/app/x", NULL, false) == KII_ERR_OK );
+        CHECK( kii_api_call_append_header(&c.kii, "X-A", "1\r\nAuthorization: Bearer other") == KII_ERR_FAIL );
+        CHECK( kii_api_call_append_header(&c.kii, "X-A\n", "1") == KII_ERR_FAIL );
+        CHECK( kii_api_call_append_header(&c.kii, "X-A", "1\r") == KII_ERR_FAIL );
+        CHECK( c.kii._req_headers == nullptr );
+    }
+    SECTION("a bucket's name") {
+        kii_bucket_t bucket = { KII_SCOPE_APP, NULL, "b HTTP/1.1" };
+        CHECK( kii_get_object(&c.kii, &bucket, "o.1") == KII_ERR_FAIL );
+        CHECK( kii_subscribe_bucket(&c.kii, &bucket) == KII_ERR_FAIL );
+    }
+    SECTION("a topic's name") {
+        kii_topic_t topic = { KII_SCOPE_APP, NULL, "t\r\nX: y" };
+        CHECK( kii_subscribe_topic(&c.kii, &topic) == KII_ERR_FAIL );
+    }
+    SECTION("a normalizer's host") {
+        StateReader reader = { "{}", 0 };
+        CHECK( kii_ti_put_state(&c.kii, read_state, &reader, NULL, NULL, "h.example\r\nX: y") ==
+                KII_ERR_FAIL );
+    }
+    CHECK( c.http.requests.empty() );
+    // And the next call goes as it should.
+    c.http.responses = { DONE };
+    CHECK( kii_ti_put_firmware_version(&c.kii, "1.0") == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 1 );
+    CHECK( contains(c.http.requests[0], "PUT /thing-if/apps/app/things/th.1/firmware-version HTTP/1.1\r\n") );
+}
+
 TEST_CASE( "Token lifetimes are read as 64-bit integers" ) {
     // A 32-bit long, as on Cortex-M, with -m32 and on 64-bit Windows, used to
     // turn the second into a negative lifetime, left unscheduled.

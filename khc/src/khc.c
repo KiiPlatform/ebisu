@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "khc.h"
 #include "khc_impl.h"
 #include "khc_state_impl.h"
@@ -87,6 +88,12 @@ khc_code_t khc_perform(khc_t* khc) {
     if (khc->_timeout_ms > 0 && (khc->_system == NULL ||
             khc->_system->ops == NULL || khc->_system->ops->monotonic_ms == NULL)) {
         return KHC_ERR_FAIL;
+    }
+    // A header with a line end in it would be two, or the end of the headers.
+    for (const khc_slist_t* header = khc->_req_headers; header != NULL; header = header->next) {
+        if (header->data != NULL && strpbrk(header->data, "\r\n") != NULL) {
+            return KHC_ERR_FAIL;
+        }
     }
     const bool can_wait = khc->_system != NULL && khc->_system->ops != NULL &&
         khc->_system->ops->delay_ms != NULL;

@@ -532,15 +532,24 @@ void khc_set_cb_continue(khc_t* khc, KHC_CB_CONTINUE cb, void* userdata);
  * Host consists of URL in request line.
  * \param [out] khc instance.
  * \param [in] host must be null terminated.
+ * \return KHC_ERR_OK. KHC_ERR_TOO_LARGE_DATA for a host of KHC_HOST_MAX_SIZE
+ * bytes or more, and KHC_ERR_FAIL for one with a space or a control character,
+ * a CR or LF among them, which would end the header it is sent in: the host
+ * is then left as it was.
  */
 khc_code_t khc_set_host(khc_t* khc, const char* host);
 
 /**
  * \brief Set path.
  *
- * Path consists of URL in request line.
+ * Path consists of URL in request line. It is sent as given: what a URL can't
+ * have as it is, the caller has percent-encoded.
  * \param [out] khc instance.
  * \param [in] path must be null terminated.
+ * \return KHC_ERR_OK. KHC_ERR_TOO_LARGE_DATA for a path of KHC_PATH_MAX_SIZE
+ * bytes or more, and KHC_ERR_FAIL for one with a space or a control character,
+ * a CR or LF among them, which would end the path or the request line: the
+ * path is then left as it was.
  */
 khc_code_t khc_set_path(khc_t* khc, const char* path);
 
@@ -549,11 +558,18 @@ khc_code_t khc_set_path(khc_t* khc, const char* path);
  *
  * \param [out] khc instance.
  * \param [in] method must be null terminated.
+ * \return KHC_ERR_OK. KHC_ERR_TOO_LARGE_DATA for a method of
+ * KHC_METHOD_MAX_SIZE bytes or more, and KHC_ERR_FAIL for one with a space or
+ * a control character: the method is then left as it was.
  */
 khc_code_t khc_set_method(khc_t* khc, const char* method);
 
 /**
  * \brief Set request headers.
+ *
+ * Each is a line, "Name: value", sent as given. khc_perform(khc_t*) returns
+ * KHC_ERR_FAIL without connecting if one has a CR or LF in it, which would
+ * make it two headers, or the end of them.
  *
  * \param [out] khc instance.
  * \param [in] headers list of request headers.

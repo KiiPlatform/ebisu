@@ -1,6 +1,7 @@
 #include "catch.hpp"
 #include <khc.h>
 #include "test_callbacks.h"
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -241,4 +242,61 @@ TEST_CASE( "The request body's length is part of the request" ) {
     CHECK( http._req_body_length == 42 );
     khc_reset_except_cb(&http);
     CHECK( http._req_body_length == KHC_REQ_BODY_LENGTH_UNKNOWN );
+}
+
+// The host, the path and the method are sent as given, in the request line and
+// the Host header, and each header as its own line. A space, or a CR and LF,
+// in one of them made the request another: a path that ended early, a header
+// that wasn't meant, or a second request after the first.
+TEST_CASE( "khc refuses what would break the request line or a header" ) {
+    khc_t http;
+    khc_init(&http);
+    REQUIRE( khc_set_host(&http, "api.kii.com") == KHC_ERR_OK );
+    REQUIRE( khc_set_method(&http, "GET") == KHC_ERR_OK );
+    REQUIRE( khc_set_path(&http, "/api/apps?x=%20y") == KHC_ERR_OK );
+
+    SECTION("in the host, the path or the method, which stay as they were") {
+        for (const char* bad : { "a b", "a\tb", "a\rb", "a\nb", "a\r\nX: y", "a\x7f", "a\x01" }) {
+            CAPTURE( std::string(bad) );
+            CHECK( khc_set_host(&http, bad) == KHC_ERR_FAIL );
+            CHECK( khc_set_path(&http, bad) == KHC_ERR_FAIL );
+            CHECK( khc_set_method(&http, bad) == KHC_ERR_FAIL );
+        }
+        CHECK( std::string(http._host) == "api.kii.com" );
+        CHECK( std::string(http._path) == "/api/apps?x=%20y" );
+        CHECK( std::string(http._method) == "GET" );
+        // Bytes from 0x80 up, as of UTF-8, are sent as they are.
+        CHECK( khc_set_path(&http, "/caf\xc3\xa9") == KHC_ERR_OK );
+        // Still too large before anything else.
+        const std::string long_path(KHC_PATH_MAX_SIZE, ' ');
+        CHECK( khc_set_path(&http, long_path.c_str()) == KHC_ERR_TOO_LARGE_DATA );
+    }
+
+    SECTION("in a header, without connecting") {
+        khct::cb::SockCtx s_ctx;
+        khct::cb::IOCtx io_ctx;
+        int connects = 0;
+        s_ctx.on_connect = [&connects](void*, const char*, uint16_t) {
+            ++connects;
+            return EBISU_SOCK_FAIL;
+        };
+        khc_set_socket(&http, s_ctx.socket());
+        khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
+        khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+        for (const char* bad : { "X-A: 1\r\nX-B: 2", "X-A: 1\nX-B: 2", "X-A: 1\r", "X-A: 1\r\n\r\nGET / HTTP/1.1" }) {
+            CAPTURE( std::string(bad) );
+            khc_slist_t* headers = khc_slist_append(NULL, "X-Good: 1", 9);
+            headers = khc_slist_append(headers, bad, strlen(bad));
+            khc_set_req_headers(&http, headers);
+            CHECK( khc_perform(&http) == KHC_ERR_FAIL );
+            khc_slist_free_all(headers);
+        }
+        CHECK( connects == 0 );
+        // Ones without go on to connect.
+        khc_slist_t* headers = khc_slist_append(NULL, "X-Good: a b\tc", 13);
+        khc_set_req_headers(&http, headers);
+        CHECK( khc_perform(&http) == KHC_ERR_SOCK_CONNECT );
+        khc_slist_free_all(headers);
+        CHECK( connects == 1 );
+    }
 }

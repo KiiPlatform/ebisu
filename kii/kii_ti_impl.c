@@ -27,9 +27,11 @@ static kii_code_t _onboard_and_read(
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    // khc keeps a path shorter than the buffer may hold one.
-    if (khc_set_path(&kii->_khc, kii->_rw_buff) != KHC_ERR_OK) {
-        return KII_ERR_TOO_LARGE_DATA;
+    // khc keeps a path shorter than the buffer may hold one, and refuses
+    // one that would break the request line.
+    khc_code_t path_res = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (path_res != KHC_ERR_OK) {
+        return _convert_code(path_res);
     }
 
     // Request headers.
@@ -224,9 +226,11 @@ kii_code_t _put_firmware_version(
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    // khc keeps a path shorter than the buffer may hold one.
-    if (khc_set_path(&kii->_khc, kii->_rw_buff) != KHC_ERR_OK) {
-        return KII_ERR_TOO_LARGE_DATA;
+    // khc keeps a path shorter than the buffer may hold one, and refuses
+    // one that would break the request line.
+    khc_code_t path_res = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (path_res != KHC_ERR_OK) {
+        return _convert_code(path_res);
     }
 
     // Request headers.
@@ -280,9 +284,11 @@ kii_code_t _get_firmware_version(
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    // khc keeps a path shorter than the buffer may hold one.
-    if (khc_set_path(&kii->_khc, kii->_rw_buff) != KHC_ERR_OK) {
-        return KII_ERR_TOO_LARGE_DATA;
+    // khc keeps a path shorter than the buffer may hold one, and refuses
+    // one that would break the request line.
+    khc_code_t path_res = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (path_res != KHC_ERR_OK) {
+        return _convert_code(path_res);
     }
 
     // Request headers.
@@ -341,10 +347,11 @@ kii_code_t _upload_state(
     _reset_buff(kii);
 
     // The application's host fits, set by kii_set_site(). The caller's may
-    // not.
-    if (khc_set_host(&kii->_khc, opt_normalizer_host != NULL ?
-                opt_normalizer_host : kii->_app_host) != KHC_ERR_OK) {
-        return KII_ERR_TOO_LARGE_DATA;
+    // not, or may not be a host at all.
+    khc_code_t host_res = khc_set_host(&kii->_khc, opt_normalizer_host != NULL ?
+            opt_normalizer_host : kii->_app_host);
+    if (host_res != KHC_ERR_OK) {
+        return _convert_code(host_res);
     }
     khc_set_method(&kii->_khc, method);
 
@@ -354,9 +361,11 @@ kii_code_t _upload_state(
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    // khc keeps a path shorter than the buffer may hold one.
-    if (khc_set_path(&kii->_khc, kii->_rw_buff) != KHC_ERR_OK) {
-        return KII_ERR_TOO_LARGE_DATA;
+    // khc keeps a path shorter than the buffer may hold one, and refuses
+    // one that would break the request line.
+    khc_code_t path_res = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (path_res != KHC_ERR_OK) {
+        return _convert_code(path_res);
     }
 
     // Request headers.

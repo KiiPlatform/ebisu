@@ -41,11 +41,28 @@ khc_code_t khc_set_cb_header(
     return KHC_ERR_OK;
 }
 
+// Whether text can stand in the request line, or be the Host header's value,
+// and leave the request as it was meant: with no space, which ends a part of
+// the request line, no CR or LF, which end the line, and no other control
+// character.
+static bool _is_request_text(const char* text, size_t len) {
+    for (size_t i = 0; i < len; ++i) {
+        const unsigned char c = (unsigned char)text[i];
+        if (c <= 0x20 || c == 0x7f) {
+            return false;
+        }
+    }
+    return true;
+}
+
 khc_code_t khc_set_host(khc_t* khc, const char* host) {
     size_t len = strlen(host);
     size_t buff_len = sizeof(khc->_host);
     if (buff_len < len + 1) {
         return KHC_ERR_TOO_LARGE_DATA;
+    }
+    if (!_is_request_text(host, len)) {
+        return KHC_ERR_FAIL;
     }
     memcpy(khc->_host, host, len + 1);
     return KHC_ERR_OK;
@@ -57,6 +74,9 @@ khc_code_t khc_set_path(khc_t* khc, const char* path) {
     if (buff_len < len + 1) {
         return KHC_ERR_TOO_LARGE_DATA;
     }
+    if (!_is_request_text(path, len)) {
+        return KHC_ERR_FAIL;
+    }
     memcpy(khc->_path, path, len + 1);
     return KHC_ERR_OK;
 }
@@ -66,6 +86,9 @@ khc_code_t khc_set_method(khc_t* khc, const char* method) {
     size_t buff_len = sizeof(khc->_method);
     if (buff_len < len + 1) {
         return KHC_ERR_TOO_LARGE_DATA;
+    }
+    if (!_is_request_text(method, len)) {
+        return KHC_ERR_FAIL;
     }
     memcpy(khc->_method, method, len + 1);
     return KHC_ERR_OK;

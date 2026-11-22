@@ -438,6 +438,14 @@ kii:
   `kii_execute_server_code()` and `kii_execute_server_code_version()` for an
   endpoint whose path, with the application's ID and the version, comes to 256
   bytes or more. 1.x sent the request all the same, to the wrong path.
+- A path, a method or a host with a space or a control character in it, a CR
+  or LF among them, fails the call with `KII_ERR_FAIL`, sending nothing: one
+  passed to `kii_api_call_start()`, a normalizer's host, or what kii puts in a
+  path from the application: a bucket's or topic's name, an object's ID, a
+  server code endpoint and its version. So does a header given to
+  `kii_api_call_append_header()` with a CR or LF in its key or value. A path
+  that has to carry such a byte percent-encodes it. 1.x sent the request with
+  its line, or its headers, broken where the byte was.
 - A response's body can be at most one byte shorter than the buffer set by
   `kii_set_buff()`. One that fills the buffer exactly, which 1.x took, is too
   large. The body is still read by `kii_get_resp_body_length()`, not as a
@@ -515,6 +523,10 @@ khc, which kii and tio report in their own codes:
 - `khc_perform()` returns `KHC_ERR_FAIL`, without connecting, if a socket
   callback, the write callback or the header callback isn't set. 1.x crashed on
   reaching it.
+- `khc_set_host()`, `khc_set_path()` and `khc_set_method()` return
+  `KHC_ERR_FAIL` for a space or a control character, leaving what was set, and
+  `khc_perform()` returns `KHC_ERR_FAIL`, without connecting, for a request
+  header with a CR or LF in it. 1.x sent them as they were.
 - GET, HEAD and DELETE send no body, and don't call the read callback.
 - Each chunk of a request body is sent in one send, with its size line and CRLF,
   from the stream buffer. 1.x sent the three separately. The read callback is
