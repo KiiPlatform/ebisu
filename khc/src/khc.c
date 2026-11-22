@@ -57,11 +57,15 @@ static void _stop(khc_t* khc, khc_code_t reason) {
             khc->_state = KHC_STATE_FINISHED;
             break;
         case KHC_STATE_CLOSE:
-            // Closing, after the response or a failure, or after stopping, and
-            // the close returned EBISU_SOCK_AGAIN: it is given up on. The
-            // request keeps its result.
-            khc->_close_failed = true;
-            khc->_state = KHC_STATE_FINISHED;
+            // Closing, after the response or a failure, or after stopping.
+            // The request keeps its result. If the close was called, and
+            // returned EBISU_SOCK_AGAIN, it is given up on. If it wasn't yet,
+            // the state reached in the step before, it is this step, once:
+            // the connection is not left open.
+            if (khc->_again) {
+                khc->_close_failed = true;
+                khc->_state = KHC_STATE_FINISHED;
+            }
             break;
         default:
             khc->_result = reason;
@@ -91,6 +95,7 @@ khc_code_t khc_perform(khc_t* khc) {
     }
     khc->_state = KHC_STATE_IDLE;
     khc->_result = KHC_ERR_OK;
+    khc->_again = false;
     khc->_close_failed = false;
     khc->_resp_header_skipped = false;
     // Only this request's response may set it.

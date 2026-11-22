@@ -223,6 +223,64 @@ TEST_CASE( "A request the continue callback cancels" ) {
     }
 }
 
+namespace {
+
+// Stops the request once it is about to close its connection.
+bool continue_until_closing(void* userdata)
+{
+    return ((khc_t*)userdata)->_state != KHC_STATE_CLOSE;
+}
+
+}
+
+// A stop that came as the request was about to close its connection, the
+// response read or the request failed in the step before, finished the request
+// without the close: the connection was left open, and reported as one whose
+// close failed.
+TEST_CASE( "A request stopped as it is about to close its connection closes it" ) {
+    Fixture f;
+
+    SECTION("cancelled, with its response read") {
+        khc_set_cb_continue(&f.http, continue_until_closing, &f.http);
+        CHECK( khc_perform(&f.http) == KHC_ERR_OK );
+        CHECK( f.body == "{}" );
+        CHECK( f.closes == 1 );
+        CHECK_FALSE( khc_get_close_failed(&f.http) );
+    }
+
+    SECTION("cancelled, having failed") {
+        f.s_ctx.on_recv = [](void*, char*, size_t, size_t*) { return EBISU_SOCK_FAIL; };
+        khc_set_cb_continue(&f.http, continue_until_closing, &f.http);
+        CHECK( khc_perform(&f.http) == KHC_ERR_SOCK_RECV );
+        CHECK( f.closes == 1 );
+        CHECK_FALSE( khc_get_close_failed(&f.http) );
+    }
+
+    SECTION("timed out, with its response read") {
+        khc_set_system(&f.http, f.sys.system());
+        khc_set_timeout_ms(&f.http, 5000);
+        // Its time is up as the last of the response is read.
+        f.sys.on_monotonic_ms = [&f]() {
+            return f.http._state == KHC_STATE_CLOSE ? f.now_ms + 10000 : f.now_ms;
+        };
+        CHECK( khc_perform(&f.http) == KHC_ERR_OK );
+        CHECK( f.body == "{}" );
+        CHECK( f.closes == 1 );
+        CHECK_FALSE( khc_get_close_failed(&f.http) );
+    }
+
+    SECTION("with a close that isn't ready, which is called once and given up on") {
+        f.s_ctx.on_close = [&f](void*) {
+            ++f.closes;
+            return EBISU_SOCK_AGAIN;
+        };
+        khc_set_cb_continue(&f.http, continue_until_closing, &f.http);
+        CHECK( khc_perform(&f.http) == KHC_ERR_OK );
+        CHECK( f.closes == 1 );
+        CHECK( khc_get_close_failed(&f.http) );
+    }
+}
+
 TEST_CASE( "The resets keep the system, the timeout and the continue callback" ) {
     Fixture f;
     int steps_left = 1000;
