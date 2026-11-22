@@ -1435,6 +1435,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 </div><div class="memdoc">
 
 <p>Download object body. </p>
+<p>write_cb is given the object's body: that of a 2xx response alone. The body of any other response, an error's, is read into kii's buffer, as for the calls without a callback, cut short if the buffer has no room for it all: <a class="el" href="#acc772d67b6d4f9cf53e0c5ea864ceb5d" title="Get response body length. If the response is chunked, decoded response body length is returned.">kii_get_resp_body_length()</a> bytes of the buffer set by <a class="el" href="#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a>. The call then returns KII_ERR_RESP_STATUS. With a session, a response refusing the token has it renewed and the request sent again, write_cb not having been called.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
