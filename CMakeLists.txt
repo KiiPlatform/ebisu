@@ -183,6 +183,10 @@ add_subdirectory(tio)
 
 include(EbisuPackage)
 
+# The licence, and the notices of what ebisu includes of others', which their
+# licences ask to go with every copy: with the libraries, as with the source.
+install(FILES LICENSE NOTICE DESTINATION ${CMAKE_INSTALL_DOCDIR})
+
 # Tests and docs are for developing ebisu itself. Skipped when ebisu is embedded
 # in another project, which is how the vendor SDK builds consume it.
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)

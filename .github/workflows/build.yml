@@ -631,6 +631,12 @@ jobs:
         run: git fetch --unshallow --tags --force
       - name: build, install and build against it
         run: tests/samples/package_consumer.sh
+      # The oldest CMake the project asks for, from PyPI, which still has it.
+      - name: the same with CMake 3.15
+        run: |
+          python3 -m venv "$RUNNER_TEMP/cmake315"
+          "$RUNNER_TEMP/cmake315/bin/pip" install --quiet cmake==3.15.3
+          EBISU_CMAKE="$RUNNER_TEMP/cmake315/bin/cmake" tests/samples/package_consumer.sh
 
   # The large tests, against the live Kii application the secrets name, on
   # 64-bit Linux under valgrind. The msvc job runs them on Windows itself, over
