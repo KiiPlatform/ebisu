@@ -575,6 +575,11 @@ typedef struct kii_t {
     kii_code_t _mqtt_pub_result;
     /** \private The packet identifier the last message at QoS 1 was given. */
     uint16_t _mqtt_pub_last_id;
+    /** \private The packet identifier of the first message at QoS 1 whose
+     * caller stopped waiting for its PUBACK on this connection, or 0 for none:
+     * a PUBACK of it, or of one given since, may still come, and is no
+     * surprise. */
+    uint16_t _mqtt_pub_unacked_from;
 
     char* _rw_buff; /**< \private */
     size_t _rw_buff_size; /**< \private */
@@ -1388,7 +1393,10 @@ void kii_set_cb_mqtt_credentials(kii_t* kii, KII_CB_MQTT_CREDENTIALS cb, void* u
  * or close the connection. The same with MQTT 3.1 and 3.1.1.
  *
  * The task has one message at a time. A call made while another's message is
- * not yet done waits for it first, within its own timeout_ms.
+ * not yet done waits for it first, within its own timeout_ms. A message at
+ * QoS 1 whose call timed out before its PUBACK came is done with: the next
+ * message doesn't wait for that PUBACK, which the task takes, and logs, if it
+ * comes later on the same connection.
  *
  * Not to be called from the task, such as from its callbacks: it would wait for
  * the task, which waits for the callback to return, until timeout_ms ran out.

@@ -379,6 +379,10 @@ task starts:
   waits, up to the call's timeout.
 - **One at a time**: a call made while another's message isn't done waits for
   it, within its own timeout.
+- **No PUBACK in time, at QoS 1**: the call returns `KII_ERR_TIMEOUT`, with a
+  warning to the logger, and the message is done with, though the broker may
+  have it. The next message doesn't wait for that PUBACK. If it comes later on
+  the same connection, the task takes it and logs it.
 - **Twice, at QoS 1**: a message whose PUBACK a lost connection took is sent
   again, with DUP, on the next connection, so the broker can get it twice.
 - **Not from the task**: a call from the task's callbacks would wait for the

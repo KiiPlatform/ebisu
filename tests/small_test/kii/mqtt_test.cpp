@@ -6123,32 +6123,140 @@ TEST_CASE( "kii_mqtt_publish() has the task publish, one message at a time" ) {
         CHECK( sent == publish_packet("t", "x") );
     }
 
-    SECTION("timed out awaiting its PUBACK, the next waits for that PUBACK, or the next connection") {
+    // The next message waited for that PUBACK, or for the next connection: a
+    // broker that never acknowledged one message kept every one after it
+    // from being sent for as long as the connection lasted.
+    SECTION("timed out awaiting its PUBACK, it is done with, and the next doesn't wait for it") {
+        khct::cb::LoggerCtx log;
+        kii_set_logger(&kii, log.get());
+        auto logged = [&log](ebisu_log_level_t level, const std::string& text) {
+#ifdef EBISU_NO_LOG
+            (void)level;
+            (void)text;
+            return log.lines.empty();
+#else
+            for (const auto& line : log.lines) {
+                if (line.first == level && line.second.find(text) != std::string::npos) {
+                    return true;
+                }
+            }
+            return false;
+#endif
+        };
+        // The task's states, a few at most, with no call waiting on it.
+        auto run_task_until = [&](const std::function<bool()>& done) {
+            in_task = true;
+            for (int i = 0; i < 20 && !done(); ++i) {
+                mqtt_state_handlers[state.info.task_state](&state);
+            }
+            in_task = false;
+        };
         CHECK( kii_mqtt_publish(&kii, "t", "x", 1, KII_MQTT_QOS_1, false, 500) == KII_ERR_TIMEOUT );
         CHECK( sent == publish_qos1_packet("t", 2, "x") );
-        CHECK( kii._mqtt_pub_state == KII_MQTT_PUB_ABANDONED );
+        CHECK( kii._mqtt_pub_state == KII_MQTT_PUB_FREE );
+        CHECK( kii._mqtt_pub_unacked_from == 2 );
         CHECK( kii._mqtt_pub.topic == nullptr );
         CHECK( kii._mqtt_pub.payload == nullptr );
-
+        CHECK( logged(EBISU_LOG_WARNING, "no PUBACK of message 2 within 500 ms") );
         sent.clear();
-        CHECK( kii_mqtt_publish(&kii, "t", "y", 1, KII_MQTT_QOS_0, false, 500) == KII_ERR_TIMEOUT );
-        CHECK( sent.empty() );
 
-        SECTION("a PUBACK that comes late frees it, and is no surprise") {
-            to_task.push_back(puback(2));
+        SECTION("the next is sent at once") {
             CHECK( kii_mqtt_publish(&kii, "t", "y", 1, KII_MQTT_QOS_0, false, 500) == KII_ERR_OK );
             CHECK( sent == publish_packet("t", "y") );
             CHECK( events.empty() );
         }
 
-        SECTION("a new connection drops it, and the message isn't sent again") {
+        SECTION("its PUBACK, coming late, is no surprise, and is logged") {
+            to_task.push_back(puback(2));
+            CHECK( kii_mqtt_publish(&kii, "t", "y", 1, KII_MQTT_QOS_0, false, 500) == KII_ERR_OK );
+            CHECK( sent == publish_packet("t", "y") );
+            // Read by the task, in a turn of its own.
+            run_task_until([&] { return to_task.empty(); });
+            CHECK( to_task.empty() );
+            CHECK( events.empty() );
+            CHECK( state.info.task_state == KII_MQTT_ST_RECV_READY );
+            CHECK( logged(EBISU_LOG_INFO, "the PUBACK of message 2 came after") );
+        }
+
+        SECTION("nor is it one while the next awaits its own") {
+            to_task.push_back(puback(2));
+            to_task.push_back(puback(3));
+            CHECK( kii_mqtt_publish(&kii, "t", "z", 1, KII_MQTT_QOS_1, false, 60000) == KII_ERR_OK );
+            CHECK( sent == publish_qos1_packet("t", 3, "z") );
+            CHECK( events.empty() );
+            CHECK( kii._mqtt_pub_state == KII_MQTT_PUB_FREE );
+        }
+
+        SECTION("several in a row leave the first to tell from") {
+            CHECK( kii_mqtt_publish(&kii, "t", "z", 1, KII_MQTT_QOS_1, false, 500) == KII_ERR_TIMEOUT );
+            CHECK( kii._mqtt_pub_unacked_from == 2 );
+            to_task.push_back(puback(3));
+            to_task.push_back(puback(2));
+            to_task.push_back(puback(4));
+            sent.clear();
+            CHECK( kii_mqtt_publish(&kii, "t", "w", 1, KII_MQTT_QOS_1, false, 60000) == KII_ERR_OK );
+            CHECK( sent == publish_qos1_packet("t", 4, "w") );
+            CHECK( events.empty() );
+        }
+
+        SECTION("a PUBACK of no message given is still a surprise") {
+            to_task.push_back(puback(9));
+            to_task.push_back(connack);
+            to_task.push_back(suback);
+            to_task.push_back(puback(3));
+            CHECK( kii_mqtt_publish(&kii, "t", "z", 1, KII_MQTT_QOS_1, false, 60000) == KII_ERR_OK );
+            CHECK( events.front() == std::make_pair(KII_MQTT_EVENT_UNEXPECTED_PACKET, (uint32_t)0x40) );
+        }
+
+        SECTION("a new connection forgets it, and the message isn't sent again") {
             to_task.push_back("");
             to_task.push_back(connack);
             to_task.push_back(suback);
-            CHECK( kii_mqtt_publish(&kii, "t", "y", 1, KII_MQTT_QOS_0, false, 60000) == KII_ERR_OK );
+            run_task_until([&] {
+                return to_task.empty() && state.info.task_state == KII_MQTT_ST_RECV_READY;
+            });
+            REQUIRE( to_task.empty() );
             CHECK( subscribe_sent() );
             CHECK( sent.find(publish_qos1_packet("t", 2, "x", 0x3a)) == std::string::npos );
+            CHECK( kii._mqtt_pub_unacked_from == 0 );
+            CHECK( kii_mqtt_publish(&kii, "t", "y", 1, KII_MQTT_QOS_0, false, 500) == KII_ERR_OK );
             CHECK( ends_with(sent, publish_packet("t", "y")) );
+            // Its PUBACK on this one would be of nothing sent on it.
+            events.clear();
+            to_task.push_back(puback(2));
+            run_task_until([&] { return !events.empty(); });
+            REQUIRE_FALSE( events.empty() );
+            CHECK( events.front() == std::make_pair(KII_MQTT_EVENT_UNEXPECTED_PACKET, (uint32_t)0x40) );
+        }
+    }
+
+    SECTION("a late PUBACK is told from the identifiers given, round from 65535 to 2") {
+        kii._mqtt_pub_last_id = 65533;
+        CHECK( kii_mqtt_publish(&kii, "t", "a", 1, KII_MQTT_QOS_1, false, 500) == KII_ERR_TIMEOUT );
+        CHECK( kii_mqtt_publish(&kii, "t", "b", 1, KII_MQTT_QOS_1, false, 500) == KII_ERR_TIMEOUT );
+        CHECK( kii._mqtt_pub_unacked_from == 65534 );
+        // Both late ones, then its own.
+        to_task.push_back(puback(65535));
+        to_task.push_back(puback(65534));
+        to_task.push_back(puback(2));
+        sent.clear();
+        CHECK( kii_mqtt_publish(&kii, "t", "c", 1, KII_MQTT_QOS_1, false, 60000) == KII_ERR_OK );
+        CHECK( sent == publish_qos1_packet("t", 2, "c") );
+        CHECK( events.empty() );
+        // One not given yet, and the two MQTT and SUBSCRIBE keep, are none of them.
+        for (uint16_t id : { (uint16_t)3, (uint16_t)0, (uint16_t)1, (uint16_t)65533 }) {
+            CAPTURE( id );
+            events.clear();
+            state.info.task_state = KII_MQTT_ST_RECV_READY;
+            to_task.clear();
+            to_task.push_back(puback(id));
+            in_task = true;
+            mqtt_state_handlers[state.info.task_state](&state);
+            in_task = false;
+            REQUIRE_FALSE( events.empty() );
+            CHECK( events.front() == std::make_pair(KII_MQTT_EVENT_UNEXPECTED_PACKET, (uint32_t)0x40) );
+            // On the connection it was on, still.
+            kii._mqtt_pub_unacked_from = 65534;
         }
     }
 
