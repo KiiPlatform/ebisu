@@ -110,8 +110,8 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a0cd7e01753d8d4c89fd6e4fb791ef517" id="r_a0cd7e01753d8d4c89fd6e4fb791ef517"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0cd7e01753d8d4c89fd6e4fb791ef517">ebisu_openssl_tls_init</a> (<a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> *tls, const char *ca_file, const char *ca_path)</td></tr>
-<tr class="memdesc:a0cd7e01753d8d4c89fd6e4fb791ef517"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets up a TLS configuration.  <br /></td></tr>
+<tr class="memitem:a84f158d5a9df8cdf84c1da5f627e0ca1" id="r_a84f158d5a9df8cdf84c1da5f627e0ca1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a84f158d5a9df8cdf84c1da5f627e0ca1">ebisu_openssl_tls_init</a> (<a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> *tls, const char *ca_file, const char *ca_path, unsigned long *out_error)</td></tr>
+<tr class="memdesc:a84f158d5a9df8cdf84c1da5f627e0ca1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets up a TLS configuration.  <br /></td></tr>
 <tr class="memitem:af15941ca02f6af688cce18ee10115528" id="r_af15941ca02f6af688cce18ee10115528"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af15941ca02f6af688cce18ee10115528">ebisu_openssl_tls_free</a> (<a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> *tls)</td></tr>
 <tr class="memdesc:af15941ca02f6af688cce18ee10115528"><td class="mdescLeft">&#160;</td><td class="mdescRight">Frees a TLS configuration.  <br /></td></tr>
 <tr class="memitem:aba563d2537454c08028164a09a93ddd0" id="r_aba563d2537454c08028164a09a93ddd0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aba563d2537454c08028164a09a93ddd0">ebisu_openssl_tls_set_verify</a> (<a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> *tls, <a class="elRef" href="../../core/html/ebisu__socket_8h.html#a87249a7f26fd09c560c84470dd9cf721">ebisu_tls_verify_t</a> verify, const unsigned char *pin)</td></tr>
@@ -488,8 +488,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a0cd7e01753d8d4c89fd6e4fb791ef517" name="a0cd7e01753d8d4c89fd6e4fb791ef517"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0cd7e01753d8d4c89fd6e4fb791ef517">&#9670;&#160;</a></span>ebisu_openssl_tls_init()</h2>
+<a id="a84f158d5a9df8cdf84c1da5f627e0ca1" name="a84f158d5a9df8cdf84c1da5f627e0ca1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a84f158d5a9df8cdf84c1da5f627e0ca1">&#9670;&#160;</a></span>ebisu_openssl_tls_init()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -507,7 +507,12 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>ca_path</em></span>&#160;)</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>ca_path</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned long *</td>          <td class="paramname"><span class="paramname"><em>out_error</em></span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -520,10 +525,11 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">tls</td><td>The configuration. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">ca_file</td><td>File of PEM CA certificates, or NULL. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">ca_path</td><td>Directory of CA certificates named by their hash, as openssl rehash or c_rehash names them, or NULL. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_error</td><td>OpenSSL's error when it fails, and 0 when it doesn't: the first of this call's in OpenSSL's error queue on the calling thread, which ERR_error_string_n() gives the text of, for a log. The queue is left with the rest, for ERR_get_error(). NULL for none. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true, or false if the certificates couldn't be loaded or OpenSSL failed, which OpenSSL's error queue on the calling thread says more of, as ERR_get_error() reads it. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Whether it did: false if the certificates couldn't be loaded or OpenSSL failed. </dd></dl>
 
 </div>
 </div>

@@ -257,6 +257,13 @@
       <arglist></arglist>
     </member>
     <member kind="typedef">
+      <type>enum ebisu_logger_init_error_t</type>
+      <name>ebisu_logger_init_error_t</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>a97cf514cf8d511dc92c82005db753c6e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
       <type>struct ebisu_file_logger_t</type>
       <name>ebisu_file_logger_t</name>
       <anchorfile>ebisu__loggers_8h.html</anchorfile>
@@ -277,6 +284,37 @@
       <anchor>a6a4e3d7e2e384662726b1bd3e1ec003a</anchor>
       <arglist></arglist>
     </member>
+    <member kind="enumeration">
+      <type></type>
+      <name>ebisu_logger_init_error_t</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>ad06a45264c57e68b24181de97da8bb94</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_LOGGER_INIT_ERROR_NONE</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>ad06a45264c57e68b24181de97da8bb94aa6455adec57ecc3614ea607e601926a3</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_LOGGER_INIT_ERROR_ARGUMENT</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>ad06a45264c57e68b24181de97da8bb94a9c1848edb29023230b6a677180fcdc99</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_LOGGER_INIT_ERROR_LOOKUP</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>ad06a45264c57e68b24181de97da8bb94a73dd021ebc968a9fb8d118bab653aaec</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_LOGGER_INIT_ERROR_OPEN</name>
+      <anchorfile>ebisu__loggers_8h.html</anchorfile>
+      <anchor>ad06a45264c57e68b24181de97da8bb94ad522fd521b237424d78a66e4f75e8686</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="function">
       <type>void</type>
       <name>ebisu_stdio_logger_init</name>
@@ -288,8 +326,8 @@
       <type>bool</type>
       <name>ebisu_file_logger_init</name>
       <anchorfile>ebisu__loggers_8h.html</anchorfile>
-      <anchor>ae6b220b35699812d6d8796a6b986bb9b</anchor>
-      <arglist>(ebisu_file_logger_t *logger, const char *path, size_t max_bytes, ebisu_log_level_t level, ebisu_lock_t *lock)</arglist>
+      <anchor>a02839ea72f80c38b497a285151a75f80</anchor>
+      <arglist>(ebisu_file_logger_t *logger, const char *path, size_t max_bytes, ebisu_log_level_t level, ebisu_lock_t *lock, ebisu_logger_init_error_t *out_error)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -316,8 +354,8 @@
       <type>bool</type>
       <name>ebisu_syslog_udp_logger_init</name>
       <anchorfile>ebisu__loggers_8h.html</anchorfile>
-      <anchor>ac5cf73166b0a15f592c7d9e22ba749b1</anchor>
-      <arglist>(ebisu_syslog_udp_logger_t *logger, const char *host, uint16_t port, const char *hostname, const char *app_name, int facility, ebisu_log_level_t level)</arglist>
+      <anchor>a5e5a99b8980545e40ef76a38360b84ea</anchor>
+      <arglist>(ebisu_syslog_udp_logger_t *logger, const char *host, uint16_t port, const char *hostname, const char *app_name, int facility, ebisu_log_level_t level, ebisu_logger_init_error_t *out_error)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -511,8 +549,8 @@
       <type>bool</type>
       <name>ebisu_openssl_tls_init</name>
       <anchorfile>ebisu__openssl_8h.html</anchorfile>
-      <anchor>a0cd7e01753d8d4c89fd6e4fb791ef517</anchor>
-      <arglist>(ebisu_openssl_tls_t *tls, const char *ca_file, const char *ca_path)</arglist>
+      <anchor>a84f158d5a9df8cdf84c1da5f627e0ca1</anchor>
+      <arglist>(ebisu_openssl_tls_t *tls, const char *ca_file, const char *ca_path, unsigned long *out_error)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
