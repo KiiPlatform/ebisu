@@ -26,12 +26,19 @@ kii_code_t kii_auth_thing(
         goto exit;
     }
 
+    // Read through once before anything of it is kept: a response that can't
+    // be read whole leaves the author as it was.
+    ret = _kii_check_token_response(kii, true);
+    if (ret != KII_ERR_OK) {
+        goto exit;
+    }
     // A login starts a new pair, which has no refresh token unless the server
     // issues one. Cleared whole, not just cut short.
     ebisu_secure_zero(kii->_author.refresh_token, sizeof(kii->_author.refresh_token));
     int64_t expires_in_sec = 0;
     ret = _kii_parse_token_response(kii, &kii->_author, true, &expires_in_sec);
     if (ret != KII_ERR_OK) {
+        // Not after the check, which is the same.
         goto exit;
     }
     if (kii->_session != NULL) {
@@ -74,29 +81,41 @@ kii_code_t kii_register_thing(
         goto exit;
     }
 
-    ebisu_secure_zero(kii->_author.refresh_token, sizeof(kii->_author.refresh_token));
     jkii_field_t fields[3];
     jkii_parse_err_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "_accessToken";
     fields[0].type = JKII_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = kii->_author.access_token;
-    fields[0].field_copy_buff_size = sizeof(kii->_author.access_token) /
-        sizeof(kii->_author.access_token[0]);
     fields[1].name = "_thingID";
     fields[1].type = JKII_FIELD_TYPE_STRING;
-    fields[1].field_copy.string = kii->_author.author_id;
-    fields[1].field_copy_buff_size = sizeof(kii->_author.author_id) /
-        sizeof(kii->_author.author_id[0]);
     fields[2].name = NULL;
 
+    // Read through once before anything of it is kept: a response that can't
+    // be read whole leaves the author as it was.
     result = jkii_parse(buff, buff_size, fields);
-    if (result == JKII_ERR_PARTIAL &&
-            _kii_field_too_long(kii, &fields[0], "access token", "KII_TOKEN_MAX_SIZE")) {
+    if ((result == JKII_ERR_OK || result == JKII_ERR_PARTIAL) &&
+            !_kii_field_fits(kii, &fields[0], KII_TOKEN_MAX_SIZE, "access token",
+                "KII_TOKEN_MAX_SIZE")) {
         ret = KII_ERR_TOO_LARGE_DATA;
         goto exit;
     }
+    if (result != JKII_ERR_OK ||
+            fields[1].end - fields[1].start >= KII_AUTHOR_ID_MAX_SIZE) {
+        ret = KII_ERR_PARSE_JSON;
+        goto exit;
+    }
+
+    // A registration issues no refresh token: none is left of one held.
+    ebisu_secure_zero(kii->_author.refresh_token, sizeof(kii->_author.refresh_token));
+    fields[0].field_copy.string = kii->_author.access_token;
+    fields[0].field_copy_buff_size = sizeof(kii->_author.access_token) /
+        sizeof(kii->_author.access_token[0]);
+    fields[1].field_copy.string = kii->_author.author_id;
+    fields[1].field_copy_buff_size = sizeof(kii->_author.author_id) /
+        sizeof(kii->_author.author_id[0]);
+    result = jkii_parse(buff, buff_size, fields);
     if (result != JKII_ERR_OK) {
+        // Not after the check, which is the same.
         ret = KII_ERR_PARSE_JSON;
         goto exit;
     }

@@ -22,6 +22,11 @@ void _reset_buff(kii_t* kii);
  * what sets it, as nothing else says why the token wasn't taken. */
 bool _kii_field_too_long(kii_t* kii, const jkii_field_t* field, const char* what,
         const char* size_name);
+/* Whether a string field jkii found, without copying it, fits a buffer of size
+ * bytes: for a response read through once before anything of it is kept, so
+ * that one that can't be read whole changes nothing. Logged if it doesn't. */
+bool _kii_field_fits(kii_t* kii, const jkii_field_t* field, size_t size, const char* what,
+        const char* size_name);
 
 /* Resets khc for a new request, keeping the buffers set by
  * kii_set_stream_buff() and kii_set_resp_header_buff(). Use it rather than

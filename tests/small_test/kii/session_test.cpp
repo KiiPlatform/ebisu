@@ -1200,6 +1200,77 @@ TEST_CASE( "A token longer than kii has room for fails the call that got it as t
     }
 }
 
+// The response was read straight into kii's author: what it had of an ID and
+// tokens before the one it couldn't read, or couldn't keep, replaced kii's,
+// and the refresh token was gone, with the call failed.
+TEST_CASE( "A login, registration or onboarding that can't be read whole leaves the author as it was" ) {
+    Client c;
+    c.kii._author = make_author("th.0", "at0", "rt0");
+    const std::string too_long(KII_TOKEN_MAX_SIZE, 'a');
+    auto unchanged = [&c] {
+        return std::string(c.kii._author.author_id) == "th.0" &&
+            std::string(c.kii._author.access_token) == "at0" &&
+            std::string(c.kii._author.refresh_token) == "rt0";
+    };
+
+    SECTION("a login without the ID") {
+        c.http.responses = { http_response(200, "{\"access_token\":\"at1\",\"refresh_token\":\"rt1\"}") };
+        CHECK( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_PARSE_JSON );
+        CHECK( unchanged() );
+    }
+    SECTION("a login with a token too long, after the ID") {
+        c.http.responses = { http_response(200, "{\"id\":\"th.1\",\"access_token\":\"" + too_long + "\"}") };
+        CHECK( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_TOO_LARGE_DATA );
+        CHECK( unchanged() );
+    }
+    SECTION("a login refused") {
+        c.http.responses = { http_response(400, "{\"errorCode\":\"invalid_grant\"}") };
+        CHECK( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_RESP_STATUS );
+        CHECK( unchanged() );
+    }
+    SECTION("a registration without the token") {
+        c.http.responses = { http_response(201, "{\"_thingID\":\"th.1\"}") };
+        CHECK( kii_register_thing(&c.kii, "vid", "type", "pw") == KII_ERR_PARSE_JSON );
+        CHECK( unchanged() );
+    }
+    SECTION("a registration with a token too long") {
+        c.http.responses = { http_response(201, "{\"_thingID\":\"th.1\",\"_accessToken\":\"" + too_long + "\"}") };
+        CHECK( kii_register_thing(&c.kii, "vid", "type", "pw") == KII_ERR_TOO_LARGE_DATA );
+        CHECK( unchanged() );
+    }
+    SECTION("onboarding without the thing's ID") {
+        c.http.responses = { http_response(200, "{\"accessToken\":\"at1\"}") };
+        CHECK( kii_ti_onboard(&c.kii, "vid", "pw", NULL, NULL, NULL, NULL) == KII_ERR_PARSE_JSON );
+        CHECK( unchanged() );
+    }
+    SECTION("onboarding with a token too long") {
+        c.http.responses = { onboarded(too_long.c_str()) };
+        CHECK( kii_ti_onboard(&c.kii, "vid", "pw", NULL, NULL, NULL, NULL) == KII_ERR_TOO_LARGE_DATA );
+        CHECK( unchanged() );
+    }
+    SECTION("and a login read whole replaces it all, the refresh token with none") {
+        c.http.responses = { http_response(200, "{\"id\":\"th.1\",\"access_token\":\"at1\"}") };
+        CHECK( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_OK );
+        CHECK( std::string(c.kii._author.author_id) == "th.1" );
+        CHECK( std::string(c.kii._author.access_token) == "at1" );
+        CHECK( std::string(c.kii._author.refresh_token) == "" );
+    }
+    SECTION("as does a registration") {
+        c.http.responses = { http_response(201, "{\"_thingID\":\"th.2\",\"_accessToken\":\"at2\"}") };
+        CHECK( kii_register_thing(&c.kii, "vid", "type", "pw") == KII_ERR_OK );
+        CHECK( std::string(c.kii._author.author_id) == "th.2" );
+        CHECK( std::string(c.kii._author.access_token) == "at2" );
+        CHECK( std::string(c.kii._author.refresh_token) == "" );
+    }
+    SECTION("and onboarding") {
+        c.http.responses = { onboarded("at3") };
+        CHECK( kii_ti_onboard(&c.kii, "vid", "pw", NULL, NULL, NULL, NULL) == KII_ERR_OK );
+        CHECK( std::string(c.kii._author.author_id) == "th.1" );
+        CHECK( std::string(c.kii._author.access_token) == "at3" );
+        CHECK( std::string(c.kii._author.refresh_token) == "" );
+    }
+}
+
 TEST_CASE( "How the token was obtained decides how it is renewed" ) {
     Platform platform;
     kii_session_t session;

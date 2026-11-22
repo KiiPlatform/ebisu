@@ -320,6 +320,53 @@ static void _renew_failed_locked(kii_session_t* session)
 }
 #endif /* EBISU_NO_SESSION */
 
+kii_code_t _kii_check_token_response(kii_t* kii, bool id_required)
+{
+    char* buff = kii->_rw_buff;
+    size_t buff_size = kii->_rw_buff_written;
+    if (buff == NULL) {
+        return KII_ERR_FAIL;
+    }
+
+    /* As _kii_parse_token_response() reads it, with nothing copied. */
+    jkii_field_t fields[4];
+    memset(fields, 0, sizeof(fields));
+    fields[0].name = "id";
+    fields[0].type = JKII_FIELD_TYPE_STRING;
+    fields[1].name = "access_token";
+    fields[1].type = JKII_FIELD_TYPE_STRING;
+    fields[2].name = "refresh_token";
+    fields[2].type = JKII_FIELD_TYPE_STRING;
+    fields[3].name = NULL;
+
+    jkii_parse_err_t result = jkii_parse(buff, buff_size, fields);
+    if (result != JKII_ERR_OK && result != JKII_ERR_PARTIAL) {
+        return KII_ERR_PARSE_JSON;
+    }
+    if (!_kii_field_fits(kii, &fields[1], KII_TOKEN_MAX_SIZE, "access token",
+                "KII_TOKEN_MAX_SIZE") ||
+            !_kii_field_fits(kii, &fields[2], KII_REFRESH_TOKEN_MAX_SIZE, "refresh token",
+                "KII_REFRESH_TOKEN_MAX_SIZE")) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    if (fields[1].result != JKII_FIELD_ERR_OK) {
+        return KII_ERR_PARSE_JSON;
+    }
+    if (fields[0].result != JKII_FIELD_ERR_OK &&
+            (id_required || fields[0].result != JKII_FIELD_ERR_NOT_FOUND)) {
+        return KII_ERR_PARSE_JSON;
+    }
+    if (fields[0].result == JKII_FIELD_ERR_OK &&
+            fields[0].end - fields[0].start >= KII_AUTHOR_ID_MAX_SIZE) {
+        return KII_ERR_PARSE_JSON;
+    }
+    if (fields[2].result != JKII_FIELD_ERR_OK &&
+            fields[2].result != JKII_FIELD_ERR_NOT_FOUND) {
+        return KII_ERR_PARSE_JSON;
+    }
+    return KII_ERR_OK;
+}
+
 kii_code_t _kii_parse_token_response(
         kii_t* kii,
         kii_author_t* author,
