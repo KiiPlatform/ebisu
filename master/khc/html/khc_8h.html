@@ -1048,6 +1048,7 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>KHC_ERR_OK. KHC_ERR_TOO_LARGE_DATA for a host of KHC_HOST_MAX_SIZE bytes or more, and KHC_ERR_FAIL for one with a space or a control character, a CR or LF among them, which would end the header it is sent in: the host is then left as it was. </dd></dl>
 
 </div>
 </div>
@@ -1109,6 +1110,7 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>KHC_ERR_OK. KHC_ERR_TOO_LARGE_DATA for a method of KHC_METHOD_MAX_SIZE bytes or more, and KHC_ERR_FAIL for one with a space or a control character: the method is then left as it was. </dd></dl>
 
 </div>
 </div>
@@ -1132,13 +1134,14 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
 </div><div class="memdoc">
 
 <p>Set path. </p>
-<p>Path consists of URL in request line. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Path consists of URL in request line. It is sent as given: what a URL can't have as it is, the caller has percent-encoded. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">khc</td><td>instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">path</td><td>must be null terminated. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>KHC_ERR_OK. KHC_ERR_TOO_LARGE_DATA for a path of KHC_PATH_MAX_SIZE bytes or more, and KHC_ERR_FAIL for one with a space or a control character, a CR or LF among them, which would end the path or the request line: the path is then left as it was. </dd></dl>
 
 </div>
 </div>
@@ -1194,6 +1197,7 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
 </div><div class="memdoc">
 
 <p>Set request headers. </p>
+<p>Each is a line, "Name: value", sent as given. <a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a> returns KHC_ERR_FAIL without connecting if one has a CR or LF in it, which would make it two headers, or the end of them.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">khc</td><td>instance. </td></tr>

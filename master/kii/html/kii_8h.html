@@ -1138,7 +1138,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a>. KII_ERR_TOO_LARGE_DATA if the header is longer than the buffer set by <a class="el" href="#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a>. It is put together on the stack of the task calling this, which has to have room for it. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a>. KII_ERR_TOO_LARGE_DATA if the header is longer than the buffer set by <a class="el" href="#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a>. It is put together on the stack of the task calling this, which has to have room for it. KII_ERR_FAIL if the key or the value has a CR or an LF in it, which would make it two headers. </dd></dl>
 
 </div>
 </div>
@@ -1266,7 +1266,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a>. KII_ERR_TOO_LARGE_DATA for a method or a path too long for khc, and KII_ERR_FAIL for one with a space or a control character in it, which would break the request line: what a path can't have as it is, the caller percent-encodes. </dd></dl>
 
 </div>
 </div>
