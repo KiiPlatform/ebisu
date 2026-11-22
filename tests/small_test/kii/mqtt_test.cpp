@@ -3352,6 +3352,68 @@ TEST_CASE( "MQTT endpoint values out of range" ) {
     }
 }
 
+// kii_mqtt_endpoint_t::ttl is obsolete, to be ignored, and nothing of kii's
+// uses it. But an endpoint without it in the response was one kii couldn't
+// read, so the day the service stops sending it, no thing would connect.
+TEST_CASE( "An MQTT endpoint without the obsolete TTL is an endpoint" ) {
+    char kii_buff[1024];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    khct::cb::SockCtx http_ctx;
+    kii_set_http_socket(&kii, http_ctx.socket());
+    http_ctx.on_connect = [](void*, const char*, uint16_t) { return EBISU_SOCK_OK; };
+    http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
+    std::string resp;
+    size_t resp_pos = 0;
+    http_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
+        resp_pos += *out_actual_length;
+        return EBISU_SOCK_OK;
+    };
+    auto get = [&](const std::string& body, kii_mqtt_endpoint_t* endpoint) {
+        resp = "HTTP/1.1 200 OK\r\nContent-Length: " + std::to_string(body.size()) + "\r\n\r\n" + body;
+        resp_pos = 0;
+        memset(endpoint, 0xff, sizeof(*endpoint));
+        return kii_get_mqtt_endpoint(&kii, "dummyInstallationID", endpoint);
+    };
+    const std::string rest =
+        "\"username\":\"user\",\"password\":\"pass\",\"mqttTopic\":\"topic\","
+        "\"host\":\"mqtt.example.com\",\"portTCP\":1883,\"portSSL\":8883";
+    kii_mqtt_endpoint_t endpoint;
+
+    SECTION("with a TTL of 0") {
+        REQUIRE( get("{" + rest + "}", &endpoint) == KII_ERR_OK );
+        CHECK( std::string(endpoint.username) == "user" );
+        CHECK( std::string(endpoint.password) == "pass" );
+        CHECK( std::string(endpoint.topic) == "topic" );
+        CHECK( std::string(endpoint.host) == "mqtt.example.com" );
+        CHECK( endpoint.port_tcp == 1883 );
+        CHECK( endpoint.port_ssl == 8883 );
+        CHECK( endpoint.ttl == 0 );
+    }
+    SECTION("and one with it has it, as before") {
+        REQUIRE( get("{" + rest + ",\"X-MQTT-TTL\":3600}", &endpoint) == KII_ERR_OK );
+        CHECK( endpoint.ttl == 3600 );
+    }
+    SECTION("but not without anything else") {
+        CHECK( get("{\"username\":\"user\",\"password\":\"pass\",\"mqttTopic\":\"topic\","
+                    "\"portTCP\":1883,\"portSSL\":8883}", &endpoint) == KII_ERR_PARSE_JSON );
+        CHECK( get("{\"username\":\"user\",\"password\":\"pass\",\"mqttTopic\":\"topic\","
+                    "\"host\":\"mqtt.example.com\",\"portTCP\":1883}", &endpoint) == KII_ERR_PARSE_JSON );
+    }
+    SECTION("nor with a TTL that isn't one") {
+        CHECK( get("{" + rest + ",\"X-MQTT-TTL\":\"soon\"}", &endpoint) == KII_ERR_PARSE_JSON );
+        CHECK( get("{" + rest + ",\"X-MQTT-TTL\":-1}", &endpoint) == KII_ERR_PARSE_JSON );
+    }
+}
+
 static ebisu_task_code_t count_task_create(const char* name, EBISU_TASK_ENTRY entry, void* entry_param, void* userdata)
 {
     ++*(int*)userdata;
