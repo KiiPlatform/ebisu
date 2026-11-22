@@ -380,6 +380,26 @@ static bool cb_action_with_data(
     return !fails;
 }
 
+// A JSON object as long as tio_action_result_data_t::json has room for.
+static std::string longest_data() {
+    const size_t size = sizeof(((tio_action_result_data_t*)0)->json);
+    return "{\"k\":\"" + std::string(size - 1 - 8, 'v') + "\"}";
+}
+
+// Fails, with the longest message and data the types allow.
+static bool cb_action_longest(
+        tio_action_t* action,
+        tio_action_err_t* err,
+        tio_action_result_data_t* data,
+        void* userdata) {
+    (void)action;
+    (void)userdata;
+    strcpy(data->json, longest_data().c_str());
+    memset(err->err_message, '"', sizeof(err->err_message) - 1);
+    err->err_message[sizeof(err->err_message) - 1] = '\0';
+    return false;
+}
+
 TEST_CASE( "_handle_command action name length" ) {
     tio_handler_t handler;
     tio_handler_init(&handler);
@@ -470,9 +490,10 @@ TEST_CASE( "_handle_command action name length" ) {
                 != std::string::npos );
     }
 
-    // The result body is built in a 256 byte work buffer, so a name at least
-    // that long is rejected rather than sized onto the stack.
-    SECTION("an action name longer than the work buffer is rejected") {
+    // The result was put together in 256 bytes on the stack, and a failure's
+    // message in 128 inside them, so what the callback's own types allow
+    // didn't fit: the command's results were given up, its actions done.
+    SECTION("a long action name is written to the result body whole") {
         int called = 0;
         std::string long_name(300, 'a');
         std::string command =
@@ -481,7 +502,42 @@ TEST_CASE( "_handle_command action name length" ) {
         tio_code_t res = _handle_command(
                 &handler, command.c_str(), command.length(), cb_action_ok, &called);
 
-        REQUIRE( res == TIO_ERR_TOO_LARGE_DATA );
+        REQUIRE( res == TIO_ERR_OK );
+        REQUIRE( called == 1 );
+        CHECK( sent.find("[{\"" + long_name + "\":{\"succeeded\":true}}]") != std::string::npos );
+    }
+
+    SECTION("the longest message and data a callback can give are written whole") {
+        std::string name(100, 'n');
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"" +
+            name + "\":true},{\"" + name + "\":false}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_longest, nullptr);
+
+        REQUIRE( res == TIO_ERR_OK );
+        // Every character of the message escaped.
+        std::string message;
+        for (int i = 0; i < TIO_ACTION_ERR_MESSAGE_MAX_SIZE - 1; ++i) {
+            message += "\\\"";
+        }
+        const std::string result = "{\"" + name + "\":{\"succeeded\":false,\"errorMessage\":\"" +
+            message + "\",\"data\":" + longest_data() + "}}";
+        CHECK( sent.find("{\"actionResults\":[{\"alias1\":[" + result + "," + result + "]}]}")
+                != std::string::npos );
+    }
+
+    SECTION("results the application's buffer has no room for are too large") {
+        char small_buff[512];
+        kii_set_buff(&handler._kii, small_buff, sizeof(small_buff));
+        std::string name(100, 'n');
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"" +
+            name + "\":true},{\"" + name + "\":false}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_longest, nullptr);
+        CHECK( res == TIO_ERR_TOO_LARGE_DATA );
+        CHECK( sent.empty() );
     }
 }
 
