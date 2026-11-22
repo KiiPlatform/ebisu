@@ -337,7 +337,9 @@ void ebisu_mbedtls_socket_set_handshake_timeout(ebisu_mbedtls_socket_t* sock,
  * refused, and the clock's time forgotten, so that the next connection is
  * checked at a lower bound and its response gives the clock the time again:
  * more likely than a certificate from the future, the time fell behind. See
- * ebisu_clock_forget_time().
+ * ebisu_clock_forget_time(). The clock keeps its time if the certificate is
+ * refused for anything else too, as one that the CA certificates don't lead to
+ * or that is for another host: such a certificate says nothing of the time.
  *
  * \param [out] sock The socket.
  * \param [in] clock The clock, which has to outlive the socket, or NULL, as the
