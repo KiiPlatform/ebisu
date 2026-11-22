@@ -34,7 +34,10 @@ extern "C" {
  * issued for the host, and in date at the time of the clock set by
  * ebisu_schannel_socket_set_clock(), or the system's without one, unless
  * ebisu_schannel_socket_set_verify() says otherwise. Revocation
- * isn't checked. A receive that times out is EBISU_SOCK_FAIL, which
+ * isn't checked. A host given as an IPv4 or IPv6 address, in any form
+ * ebisu_dns_parse_address() takes, is checked against the addresses the
+ * certificate is issued for, by the socket itself, and not against its names,
+ * and the server is sent no server name then. A receive that times out is EBISU_SOCK_FAIL, which
  * recv_timed_out tells from a lost connection, and leaves the connection as it
  * was. One serves one connection at a time, and is used again for the next once
  * closed. Why an operation failed, its last_error says: a host that didn't

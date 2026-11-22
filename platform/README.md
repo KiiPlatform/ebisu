@@ -363,12 +363,12 @@ connect themselves, bound theirs by their connect timeout.
 ## Hosts given as addresses
 
 A certificate names the IP addresses it's issued for separately from its DNS
-names. The OpenSSL, mbedTLS and PolarSSL sockets check a host given as an IPv4
-or IPv6 address against those addresses, and a host name against the names. A
-certificate that has the address's text as a name doesn't pass. The mbedTLS and
-PolarSSL sockets make the check themselves, so it's the same with every version
-of the libraries. For an address, the server is sent no server name, which TLS
-allows for names only.
+names. The TLS sockets check a host given as an IPv4 or IPv6 address against
+those addresses, and a host name against the names. A certificate that has the
+address's text as a name doesn't pass. The mbedTLS, PolarSSL and Schannel
+sockets make the check themselves, so it's the same with every version of the
+libraries and of Windows. For an address, the server is sent no server name,
+which TLS allows for names only.
 
 
 ## Servers whose certificates no CA issued

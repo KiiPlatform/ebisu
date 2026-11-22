@@ -110,7 +110,8 @@ def make_certificates(d):
         with open(os.path.join(d, name + '.ext'), 'w') as f:
             f.write(SERVER_EXTENSIONS)
             for i, n in enumerate([dns] + list(more_names)):
-                f.write('DNS.%d = %s\n' % (i, n))
+                # An address, after "IP:", or a name.
+                f.write('IP.%d = %s\n' % (i, n[3:]) if n.startswith('IP:') else 'DNS.%d = %s\n' % (i, n))
         openssl(d, 'req', '-newkey', 'rsa:2048', '-nodes', '-keyout', name + '.key', '-out', name + '.csr',
                 '-subj', '/CN=' + dns)
         # openssl ca rather than x509 -req, which cannot backdate.
@@ -123,6 +124,11 @@ def make_certificates(d):
     # Schannel refuses one larger than 32 kB unless told otherwise.
     issue('big', 'localhost', ['-days', '2'], ['name%04d.some-long-subdomain.example.org' % i for i in range(540)])
     issue('wrongname', 'wrong.example', ['-days', '2'])
+    # For a host given as an address: issued for it, for another, and for a
+    # name of the address's text.
+    issue('address', 'other.invalid', ['-days', '2'], ['IP:127.0.0.1'])
+    issue('otheraddress', 'other.invalid', ['-days', '2'], ['IP:127.0.0.2'])
+    issue('addressname', '127.0.0.1', ['-days', '2'])
     issue('expired', 'localhost', ['-startdate', '20200101000000Z', '-enddate', '20200201000000Z'])
     openssl(d, 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', 'self.key', '-out', 'self.pem',
             '-days', '2', '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost')
@@ -320,6 +326,7 @@ class Server:
         if cert:
             self.ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
             self.ctx.load_cert_chain(cert, key)
+            self.ctx.sni_callback = lambda sslobj, name, ctx: self.server_names.append(name)
         self.silent = silent
         self.canned = canned
         self.drip = drip
@@ -327,6 +334,8 @@ class Server:
         self.listener.bind(('127.0.0.1', 0))
         self.listener.listen(16)
         self.port = self.listener.getsockname()[1]
+        # The server name of each ClientHello, None for one without.
+        self.server_names = []
         self.ends = []
         self.versions = []
         self.lock = threading.Lock()
@@ -658,6 +667,31 @@ def run_tests(t, d):
                 'LOG error server certificate for localhost rejected' in out and error in out, out)
         t.check('certificate %s refused: last_error VERIFY, %s' % (name, error),
                 last_error(steps, 0) == ('VERIFY', error[2:]), out)
+
+    # A host given as an address: checked against the addresses the
+    # certificate is issued for, not its names, and sent as no server name.
+    address = {name: Server(os.path.join(d, name + '.pem'), os.path.join(d, name + '.key'))
+               for name in ('address', 'otheraddress', 'addressname', 'good')}
+    out, steps = t.run(address['address'].port, 10, 'connect', 'close', host='127.0.0.1')
+    t.check('address: a certificate issued for it taken, with no server name sent',
+            result_code(steps, 0) == ('connect', 'OK') and address['address'].server_names[-1:] == [None],
+            out + '\nserver names: %s' % address['address'].server_names)
+    for name, what in (('otheraddress', 'another address'), ('addressname', "a name of the address's text"),
+                       ('good', 'the name alone')):
+        out, steps = t.run(address[name].port, 10, 'connect', 'close', host='127.0.0.1')
+        t.check('address: a certificate issued for %s refused with 0x800b010f, logged' % what,
+                result_code(steps, 0) == ('connect', 'FAIL') and last_error(steps, 0) == ('VERIFY', '800b010f')
+                and 'LOG error server certificate for 127.0.0.1 rejected' in out and
+                address[name].server_names[-1:] == [None],
+                out + '\nserver names: %s' % address[name].server_names)
+    out, steps = t.run(address['otheraddress'].port, 10, 'verify:chain', 'connect', 'close', host='127.0.0.1')
+    t.check('address: any certificate of the chain taken without the name',
+            result_code(steps, 1) == ('connect', 'OK'), out)
+    out, steps = t.run(address['address'].port, 10, 'connect', 'close')
+    t.check('a name is still checked against the names, and sent',
+            result_code(steps, 0) == ('connect', 'FAIL') and last_error(steps, 0) == ('VERIFY', '800b010f')
+            and address['address'].server_names[-1:] == ['localhost'],
+            out + '\nserver names: %s' % address['address'].server_names)
 
     # ebisu_schannel_socket_set_verify(): a chain without its name, a pin, or
     # no check.
