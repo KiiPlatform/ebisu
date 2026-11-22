@@ -1,5 +1,7 @@
 #include "catch.hpp"
 #include "ebisu_openssl.h"
+#include "ebisu_posix.h"
+#include "ebisu_server_clock.h"
 
 #include <openssl/err.h>
 #include <openssl/pem.h>
@@ -2139,6 +2141,118 @@ TEST_CASE( "The OpenSSL socket checks a host given as an address against the cer
         CHECK( connect_in_full(other, AF_INET, "localhost", &detail) == EBISU_SOCK_ERROR_VERIFY );
         CHECK( detail == X509_V_ERR_HOSTNAME_MISMATCH );
         CHECK( sni_seen == "localhost" );
+    }
+}
+
+namespace {
+
+const long DAY = 86400;
+
+// What connecting to localhost at a server of cert gives, checked at clock's
+// time as mode says, with ca for the CA certificate.
+ebisu_sock_error_t connect_at(ebisu_clock_t* clock, X509* cert, EVP_PKEY* key, X509* ca_cert,
+        ebisu_tls_verify_t mode, long* out_detail)
+{
+    *out_detail = 0;
+    LocalServer server;
+    REQUIRE( server.listening );
+    REQUIRE( SSL_CTX_use_certificate(server.ctx, cert) == 1 );
+    REQUIRE( SSL_CTX_use_PrivateKey(server.ctx, key) == 1 );
+    CaFile ca(ca_cert);
+    ebisu_openssl_tls_t tls;
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
+    REQUIRE( ebisu_openssl_tls_set_verify(&tls, mode, nullptr) );
+    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_init(&sock, 5, 5);
+    ebisu_openssl_socket_set_tls(&sock, &tls);
+    ebisu_openssl_socket_set_clock(&sock, clock);
+    ebisu_sock_error_t error = EBISU_SOCK_ERROR_NONE;
+    if (connect_to(&sock, server) != EBISU_SOCK_OK) {
+        error = last_error(&sock, out_detail);
+    }
+    CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+    ebisu_openssl_tls_free(&tls);
+    return error;
+}
+
+// A certificate that is its own CA's.
+ebisu_sock_error_t connect_at(ebisu_clock_t* clock, X509* cert, long* out_detail)
+{
+    return connect_at(clock, cert, server_key(), cert, EBISU_TLS_VERIFY_FULL, out_detail);
+}
+
+}
+
+TEST_CASE( "The OpenSSL socket checks the certificates' dates at the clock's time" ) {
+    const int64_t now = (int64_t)time(nullptr);
+    ebisu_server_clock_t clock;
+    REQUIRE( ebisu_server_clock_init(&clock, ebisu_posix_system()) );
+    static X509* expired = issue_certificate(server_key(), -60 * DAY, -30 * DAY);
+    static X509* not_yet = issue_certificate(server_key(), 30 * DAY, 60 * DAY);
+    long detail = 0;
+    int64_t time_now = 0;
+
+    SECTION("an expired one, at a time the clock has, is refused") {
+        REQUIRE( ebisu_server_clock_set_time(&clock, now) );
+        CHECK( connect_at(&clock.base, expired, &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( detail == X509_V_ERR_CERT_HAS_EXPIRED );
+        CHECK( ebisu_clock_get_time(&clock.base, &time_now) );
+    }
+    SECTION("an expired one, before the clock's floor, is refused") {
+        ebisu_server_clock_set_floor(&clock, now);
+        CHECK( connect_at(&clock.base, expired, &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( detail == X509_V_ERR_CERT_HAS_EXPIRED );
+    }
+    SECTION("one not valid yet, at a time the clock has, is refused, and the time forgotten") {
+        REQUIRE( ebisu_server_clock_set_time(&clock, now) );
+        CHECK( connect_at(&clock.base, not_yet, &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( detail == X509_V_ERR_CERT_NOT_YET_VALID );
+        CHECK_FALSE( ebisu_clock_get_time(&clock.base, &time_now) );
+        // At the lower bound that leaves, the next connection goes through.
+        CHECK( connect_at(&clock.base, not_yet, &detail) == EBISU_SOCK_ERROR_NONE );
+    }
+    SECTION("one not valid yet, with only the clock's floor, which it may have been issued since, is taken") {
+        ebisu_server_clock_set_floor(&clock, now);
+        CHECK( connect_at(&clock.base, not_yet, &detail) == EBISU_SOCK_ERROR_NONE );
+    }
+    SECTION("one not valid yet at the system's time, valid at the clock's, is taken") {
+        REQUIRE( ebisu_server_clock_set_time(&clock, now + 45 * DAY) );
+        CHECK( connect_at(&clock.base, not_yet, &detail) == EBISU_SOCK_ERROR_NONE );
+        CHECK( ebisu_clock_get_time(&clock.base, &time_now) );
+    }
+    SECTION("one not valid yet, at the system's clock's time, is refused, and the clock keeps it") {
+        ebisu_clock_t* system_clock = ebisu_system_clock(ebisu_posix_system());
+        CHECK( connect_at(system_clock, not_yet, &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( detail == X509_V_ERR_CERT_NOT_YET_VALID );
+        CHECK( ebisu_clock_get_time(system_clock, &time_now) );
+    }
+    // A certificate refused for more than its dates says nothing of the time:
+    // anyone can make one of any dates.
+    SECTION("one not valid yet that the CA doesn't lead to is refused, and the clock keeps its time") {
+        static EVP_PKEY* stranger = generate_key();
+        static X509* strange = issue_certificate(stranger, 30 * DAY, 60 * DAY);
+        REQUIRE( ebisu_server_clock_set_time(&clock, now) );
+        CHECK( connect_at(&clock.base, strange, stranger, server_certificate(),
+                    EBISU_TLS_VERIFY_FULL, &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( detail != X509_V_ERR_CERT_NOT_YET_VALID );
+        CHECK( ebisu_clock_get_time(&clock.base, &time_now) );
+    }
+    SECTION("one not valid yet for another host is refused, and the clock keeps its time") {
+        static X509* other = issue_certificate(server_key(), 30 * DAY, 60 * DAY, true,
+                "DNS:other.invalid");
+        REQUIRE( ebisu_server_clock_set_time(&clock, now) );
+        CHECK( connect_at(&clock.base, other, &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( detail == X509_V_ERR_HOSTNAME_MISMATCH );
+        CHECK( ebisu_clock_get_time(&clock.base, &time_now) );
+    }
+    SECTION("one not valid yet for another host, with the host not checked, is refused, and the time forgotten") {
+        static X509* other = issue_certificate(server_key(), 30 * DAY, 60 * DAY, true,
+                "DNS:other.invalid");
+        REQUIRE( ebisu_server_clock_set_time(&clock, now) );
+        CHECK( connect_at(&clock.base, other, server_key(), other, EBISU_TLS_VERIFY_CHAIN,
+                    &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( detail == X509_V_ERR_CERT_NOT_YET_VALID );
+        CHECK_FALSE( ebisu_clock_get_time(&clock.base, &time_now) );
     }
 }
 
