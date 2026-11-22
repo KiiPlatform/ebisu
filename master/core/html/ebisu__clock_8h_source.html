@@ -125,25 +125,25 @@ $(function() {
 <div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span></div>
 <div class="line"><a id="l00129" name="l00129"></a><span class="lineno"><a class="line" href="ebisu__clock_8h.html#a45709ee63c0559d9f29e5c199e1085bc">  129</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="ebisu__clock_8h.html#a45709ee63c0559d9f29e5c199e1085bc">ebisu_clock_get_time</a>(<a class="code hl_struct" href="structebisu__clock__t.html">ebisu_clock_t</a>* clock, int64_t* out_now);</div>
 <div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span></div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno"><a class="line" href="ebisu__clock_8h.html#aa00ab1f7611766edb574494ca947f07d">  148</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__clock_8h.html#aa00ab1f7611766edb574494ca947f07d">ebisu_clock_forget_time</a>(<a class="code hl_struct" href="structebisu__clock__t.html">ebisu_clock_t</a>* clock);</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span></div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno"><a class="line" href="ebisu__clock_8h.html#a5a05722564b0b889afc6c506ecc73435">  163</a></span><a class="code hl_enumeration" href="ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21f">ebisu_validity_t</a> <a class="code hl_function" href="ebisu__clock_8h.html#a5a05722564b0b889afc6c506ecc73435">ebisu_clock_check_validity</a>(</div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>        <a class="code hl_struct" href="structebisu__clock__t.html">ebisu_clock_t</a>* clock,</div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>        int64_t not_before,</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        int64_t not_after);</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span></div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno"><a class="line" href="ebisu__clock_8h.html#a7d254302e4d26bb3afd519d210bb23a7">  188</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="ebisu__clock_8h.html#a7d254302e4d26bb3afd519d210bb23a7">ebisu_clock_from_system_time</a>(int64_t seconds, int64_t* out_now);</div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span> </div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span><span class="preprocessor">#if defined(__GNUC__) || defined(__clang__)</span></div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span><span class="preprocessor">#pragma GCC visibility pop</span></div>
-<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno"><a class="line" href="ebisu__clock_8h.html#aa00ab1f7611766edb574494ca947f07d">  152</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__clock_8h.html#aa00ab1f7611766edb574494ca947f07d">ebisu_clock_forget_time</a>(<a class="code hl_struct" href="structebisu__clock__t.html">ebisu_clock_t</a>* clock);</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span></div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno"><a class="line" href="ebisu__clock_8h.html#a5a05722564b0b889afc6c506ecc73435">  167</a></span><a class="code hl_enumeration" href="ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21f">ebisu_validity_t</a> <a class="code hl_function" href="ebisu__clock_8h.html#a5a05722564b0b889afc6c506ecc73435">ebisu_clock_check_validity</a>(</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>        <a class="code hl_struct" href="structebisu__clock__t.html">ebisu_clock_t</a>* clock,</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>        int64_t not_before,</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>        int64_t not_after);</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span></div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno"><a class="line" href="ebisu__clock_8h.html#a7d254302e4d26bb3afd519d210bb23a7">  192</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="ebisu__clock_8h.html#a7d254302e4d26bb3afd519d210bb23a7">ebisu_clock_from_system_time</a>(int64_t seconds, int64_t* out_now);</div>
 <div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span> </div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>}</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span><span class="preprocessor">#if defined(__GNUC__) || defined(__clang__)</span></div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span><span class="preprocessor">#pragma GCC visibility pop</span></div>
 <div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span> </div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span><span class="preprocessor">#endif </span><span class="comment">/* EBISU_CLOCK_H */</span><span class="preprocessor"></span></div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span><span class="comment">/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */</span></div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>}</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span> </div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span><span class="preprocessor">#endif </span><span class="comment">/* EBISU_CLOCK_H */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span><span class="comment">/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */</span></div>
 <div class="ttc" id="aebisu__clock_8h_html_a45709ee63c0559d9f29e5c199e1085bc"><div class="ttname"><a href="ebisu__clock_8h.html#a45709ee63c0559d9f29e5c199e1085bc">ebisu_clock_get_time</a></div><div class="ttdeci">bool ebisu_clock_get_time(ebisu_clock_t *clock, int64_t *out_now)</div><div class="ttdoc">Get the time, with the clock&#39;s now.</div></div>
 <div class="ttc" id="aebisu__clock_8h_html_a47f1e6284ca7728f3288cd6e117ad21f"><div class="ttname"><a href="ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21f">ebisu_validity_t</a></div><div class="ttdeci">ebisu_validity_t</div><div class="ttdoc">Whether a validity period covers the time, as a clock knows it.</div><div class="ttdef"><b>Definition</b> ebisu_clock.h:108</div></div>
 <div class="ttc" id="aebisu__clock_8h_html_a47f1e6284ca7728f3288cd6e117ad21fa98ee80daf2d7954ad5c8fadb2f3076b3"><div class="ttname"><a href="ebisu__clock_8h.html#a47f1e6284ca7728f3288cd6e117ad21fa98ee80daf2d7954ad5c8fadb2f3076b3">EBISU_VALIDITY_OK</a></div><div class="ttdeci">@ EBISU_VALIDITY_OK</div><div class="ttdoc">Valid, as far as the time is known: within the period when the clock has the time,...</div><div class="ttdef"><b>Definition</b> ebisu_clock.h:112</div></div>

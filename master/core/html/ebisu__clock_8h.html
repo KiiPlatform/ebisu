@@ -230,6 +230,7 @@ Functions</h2></td></tr>
 
 <p>Forget the time the clock gave, with its doubt, if it has one. </p>
 <p>For the socket callbacks to call when their TLS stack refuses the server's certificate as not valid yet, at a time the clock gave as exact. On a device whose monotonic clock stops while it sleeps, <a class="el" href="structebisu__server__clock__t.html" title="The time servers state, for a device without a real-time clock.">ebisu_server_clock_t</a> falls behind, and a server that renewed its certificate meanwhile presents one that starts after it. Without a time of the server's, the clock could not catch up: the connection that would bring one is refused. Forgotten, the time becomes a lower bound, which <a class="el" href="#a5a05722564b0b889afc6c506ecc73435" title="Check a validity period, a certificate&#39;s for instance, against the time.">ebisu_clock_check_validity()</a> and the socket callbacks do not refuse a certificate for not having started by, so the next connection goes through, and its response gives the clock the time again.</p>
+<p>The sockets call it only when the dates are all the certificate is refused for. One that the CA certificates don't lead to, or for another host, says nothing of the time: anyone can make a certificate of any dates.</p>
 <p>A clock without doubt, the system's, is left as it is.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
