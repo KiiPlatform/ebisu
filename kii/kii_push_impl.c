@@ -17,7 +17,10 @@ kii_code_t _install_push(
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
+    // khc keeps a path shorter than the buffer may hold one.
+    if (khc_set_path(&kii->_khc, kii->_rw_buff) != KHC_ERR_OK) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
 
     // Request Headers
     kii_code_t res = _set_app_id_header(kii);
@@ -73,7 +76,10 @@ kii_code_t _get_mqtt_endpoint(
     if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
+    // khc keeps a path shorter than the buffer may hold one.
+    if (khc_set_path(&kii->_khc, kii->_rw_buff) != KHC_ERR_OK) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
 
     // Request Headers
     kii_code_t res = _set_app_id_header(kii);

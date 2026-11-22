@@ -1472,6 +1472,48 @@ struct Login {
 
 }
 
+// khc keeps a path of up to 255 bytes, and a host of its own length, and
+// refuses a longer one. Nine calls didn't look: with an application's and a
+// thing's IDs long enough, the request went out with the path of none, and a
+// state to a normalizer's host too long, to the host of none.
+TEST_CASE( "A path or a host khc has no room for fails the call, sending nothing" ) {
+    Client c;
+    const std::string app_id(KII_APP_ID_MAX_SIZE - 1, 'a');
+    kii_set_app_id(&c.kii, app_id.c_str());
+    c.kii._author = make_author(std::string(KII_AUTHOR_ID_MAX_SIZE - 1, 't').c_str(), "at1", "");
+    c.http.responses = { DONE };
+
+    SECTION("a thing's state") {
+        StateReader reader = { "{}", 0 };
+        CHECK( kii_ti_put_state(&c.kii, read_state, &reader, NULL, NULL, NULL) ==
+                KII_ERR_TOO_LARGE_DATA );
+    }
+    SECTION("its firmware version, stored") {
+        CHECK( kii_ti_put_firmware_version(&c.kii, "1.0") == KII_ERR_TOO_LARGE_DATA );
+    }
+    SECTION("its firmware version, read") {
+        kii_ti_firmware_version_t version;
+        CHECK( kii_ti_get_firmware_version(&c.kii, &version) == KII_ERR_TOO_LARGE_DATA );
+    }
+    SECTION("a normalizer's host") {
+        kii_set_app_id(&c.kii, "app");
+        c.kii._author = make_author("th.1", "at1", "");
+        const std::string host(KHC_HOST_MAX_SIZE, 'h');
+        StateReader reader = { "{}", 0 };
+        CHECK( kii_ti_put_state(&c.kii, read_state, &reader, NULL, NULL, host.c_str()) ==
+                KII_ERR_TOO_LARGE_DATA );
+        // One that fits is where the state goes.
+        CHECK( c.http.requests.empty() );
+        const std::string fits(KHC_HOST_MAX_SIZE - 1, 'h');
+        reader.pos = 0;
+        CHECK( kii_ti_put_state(&c.kii, read_state, &reader, NULL, NULL, fits.c_str()) == KII_ERR_OK );
+        REQUIRE( c.http.requests.size() == 1 );
+        CHECK( contains(c.http.requests[0], "HOST: " + fits + "\r\n") );
+        return;
+    }
+    CHECK( c.http.requests.empty() );
+}
+
 TEST_CASE( "Token lifetimes are read as 64-bit integers" ) {
     // A 32-bit long, as on Cortex-M, with -m32 and on 64-bit Windows, used to
     // turn the second into a negative lifetime, left unscheduled.
