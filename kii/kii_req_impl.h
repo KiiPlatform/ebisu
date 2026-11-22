@@ -52,6 +52,8 @@ kii_code_t _set_app_id_header(kii_t* kii);
 kii_code_t _set_app_key_header(kii_t* kii);
 
 kii_code_t _set_auth_header(kii_t* kii);
+/* The thing's ID for a path: the session's, if kii has one. */
+const char* _kii_thing_id(kii_t* kii);
 
 kii_code_t _set_auth_bearer_token(kii_t* kii, const char* token);
 

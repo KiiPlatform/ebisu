@@ -61,7 +61,7 @@ kii_code_t _set_bucket_subscription_path(kii_t* kii, const kii_bucket_t* bucket)
     switch (bucket->scope) {
         case KII_SCOPE_APP: {
             ebisu_strbuf_appendf(&path, "/api/apps/%s/buckets/%s/filters/all/push/subscriptions/things/%s",
-                kii->_app_id, bucket->bucket_name, kii->_author.author_id);
+                kii->_app_id, bucket->bucket_name, _kii_thing_id(kii));
             break;
         }
         case KII_SCOPE_USER:
@@ -69,7 +69,7 @@ kii_code_t _set_bucket_subscription_path(kii_t* kii, const kii_bucket_t* bucket)
         case KII_SCOPE_THING: {
             const char* scope = scope_strs[bucket->scope];
             ebisu_strbuf_appendf(&path, "/api/apps/%s/%s/%s/buckets/%s/filters/all/push/subscriptions/things/%s",
-                kii->_app_id, scope, bucket->scope_id, bucket->bucket_name, kii->_author.author_id);
+                kii->_app_id, scope, bucket->scope_id, bucket->bucket_name, _kii_thing_id(kii));
             break;
         }
         default:
@@ -125,7 +125,7 @@ kii_code_t _set_topic_subscription_path(kii_t* kii, const kii_topic_t* topic) {
     switch (topic->scope) {
         case KII_SCOPE_APP: {
             ebisu_strbuf_appendf(&path, "/api/apps/%s/topics/%s/push/subscriptions/things/%s",
-                kii->_app_id, topic->topic_name, kii->_author.author_id);
+                kii->_app_id, topic->topic_name, _kii_thing_id(kii));
             break;
         }
         case KII_SCOPE_USER:
@@ -133,7 +133,7 @@ kii_code_t _set_topic_subscription_path(kii_t* kii, const kii_topic_t* topic) {
         case KII_SCOPE_THING: {
             const char* scope = scope_strs[topic->scope];
             ebisu_strbuf_appendf(&path, "/api/apps/%s/%s/%s/topics/%s/push/subscriptions/things/%s",
-                kii->_app_id, scope, topic->scope_id, topic->topic_name, kii->_author.author_id);
+                kii->_app_id, scope, topic->scope_id, topic->topic_name, _kii_thing_id(kii));
             break;
         }
         default:
@@ -238,6 +238,17 @@ kii_code_t _set_auth_header(kii_t* kii)
         _kii_session_sync(kii);
     }
     return _set_auth_bearer_token(kii, kii->_author.access_token);
+}
+
+const char* _kii_thing_id(kii_t* kii)
+{
+    if (kii->_session != NULL) {
+        // Another kii_t sharing the session may have logged in, or onboarded,
+        // since this one last took the session's author: a path is made
+        // before the Authorization header, which takes it again.
+        _kii_session_sync(kii);
+    }
+    return kii->_author.author_id;
 }
 
 kii_code_t _set_auth_bearer_token(kii_t* kii, const char* token)
