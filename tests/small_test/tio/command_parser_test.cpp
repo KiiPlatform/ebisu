@@ -782,6 +782,75 @@ TEST_CASE( "_handle_command nothing to parse" ) {
     REQUIRE( handler._kii._req_headers == nullptr );
 }
 
+// A command's ID is a segment of the path its results are sent to, and went
+// into it as it came: one with a slash, a question mark or a line end sent
+// the results, with the thing's token, to another path than the command's.
+TEST_CASE( "_handle_command refuses a command ID that can't be a path segment" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    char kii_buff[2048];
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    std::string sent;
+    int connects = 0;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&connects](void*, const char*, unsigned int) {
+        ++connects;
+        return EBISU_SOCK_OK;
+    };
+    http_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    size_t resp_pos = 0;
+    const std::string resp = "HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n";
+    http_ctx.on_recv = [&resp_pos, &resp](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
+        resp_pos += *out_actual_length;
+        return EBISU_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
+    kii_set_http_socket(&handler._kii, http_ctx.socket());
+
+    auto handle = [&](const std::string& id, int* called) {
+        const std::string command =
+            "{\"commandID\":\"" + id + "\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+        return _handle_command(&handler, command.c_str(), command.length(), cb_action_ok, called);
+    };
+
+    SECTION("one that can't, with no action run and nothing sent") {
+        // As JSON has them: a slash may come escaped, and a line end has to.
+        for (const char* id : { "", ".", "..", "a/b", "a\\/b", "../../things/other", "a?b", "a#b",
+                "a%2Fb", "a b", "a\\r\\nX-Injected: 1", "a\\u0000b", "a\\\\b", "a\\u007fb" }) {
+            CAPTURE( std::string(id) );
+            int called = 0;
+            CHECK( handle(id, &called) == TIO_ERR_PARSE_JSON );
+            CHECK( called == 0 );
+        }
+        CHECK( connects == 0 );
+        CHECK( handler._kii._req_headers == nullptr );
+    }
+
+    SECTION("one that can, as the server gives them") {
+        int called = 0;
+        CHECK( handle("0af7a7e0-88d1-11e8-9a94-0af02ef8c0d5", &called) == TIO_ERR_OK );
+        CHECK( called == 1 );
+        CHECK( sent.find("PUT /thing-if/apps/appid/targets/thing:thingid/commands/"
+                    "0af7a7e0-88d1-11e8-9a94-0af02ef8c0d5/action-results HTTP/1.1") == 0 );
+    }
+
+    SECTION("one with what a segment may have") {
+        int called = 0;
+        CHECK( handle("a.b-c_d~e:f@g", &called) == TIO_ERR_OK );
+        CHECK( called == 1 );
+        CHECK( sent.find("/commands/a.b-c_d~e:f@g/action-results HTTP/1.1") != std::string::npos );
+    }
+}
+
 // A primitive action value such as abc or - is not JSON, which jsmn tokenized
 // all the same, and jkii cannot read a number out of range such as 1e999. The
 // action used to reach the callback with its value type and value never set.

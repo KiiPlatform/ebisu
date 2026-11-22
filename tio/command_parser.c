@@ -231,6 +231,25 @@ static tio_code_t _check_command(
     return _walk_command(handler, command, command_length, _ignore_action, NULL);
 }
 
+// Whether a command's ID can be a segment of the path its results go to, and
+// the path be the one meant: with nothing that ends a segment, a path or a
+// request line, or that a server may decode into one. The ID comes with the
+// command, from the network.
+static bool _is_path_segment(const char* id)
+{
+    if (id[0] == '\0' || strcmp(id, ".") == 0 || strcmp(id, "..") == 0) {
+        return false;
+    }
+    for (const char* p = id; *p != '\0'; ++p) {
+        const unsigned char c = (unsigned char)*p;
+        if (c <= 0x20 || c == 0x7f || c == '/' || c == '?' || c == '#' || c == '%' ||
+                c == '\\') {
+            return false;
+        }
+    }
+    return true;
+}
+
 static tio_code_t _start_result_request(
         tio_handler_t* handler,
         const char* command_id)
@@ -417,6 +436,12 @@ static tio_code_t _handle_command_locked(
 
     jkii_parse_err_t res = _parse_json(handler, command, command_length, fields);
     if (res != JKII_ERR_OK) {
+        return TIO_ERR_PARSE_JSON;
+    }
+    // Refused whole, before any of its actions runs, as a malformed command
+    // is: its results would have gone to another path than its own.
+    if (!_is_path_segment(command_id)) {
+        _log_step(handler, "_is_path_segment", 0);
         return TIO_ERR_PARSE_JSON;
     }
 
