@@ -214,6 +214,90 @@ static size_t refuse_body(char*, size_t, void* userdata) {
     return 0;
 }
 
+// The body is read by its length, and nothing says it is a string. But code
+// that reads it as one works for every body shorter than the buffer, which is
+// zeroed first, and read past the buffer for the one that filled it exactly.
+// And after a response with no body, it found the request's.
+TEST_CASE( "The byte after a response's body is a NUL, whatever fits" ) {
+    char memory[64 + 1];
+    char* kii_buff = memory;
+    const size_t buff_size = 64;
+    // What a string read past the buffer would run into.
+    memory[buff_size] = 'X';
+
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "a");
+    kii_set_buff(&kii, kii_buff, buff_size);
+
+    std::string resp;
+    size_t resp_pos = 0;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&resp_pos](void*, const char*, unsigned int) {
+        resp_pos = 0;
+        return EBISU_SOCK_OK;
+    };
+    http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    http_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
+        resp_pos += *out_actual_length;
+        return EBISU_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
+    kii_set_http_socket(&kii, http_ctx.socket());
+    auto respond = [&resp](const std::string& body) {
+        resp = "HTTP/1.1 200 OK\r\nContent-Length: " + std::to_string(body.size()) + "\r\n\r\n" + body;
+    };
+    auto get = [&kii]() {
+        kii_code_t res = kii_api_call_start(&kii, "GET", "/x", NULL, false);
+        return res == KII_ERR_OK ? kii_api_call_run(&kii) : res;
+    };
+
+    SECTION("one byte shorter than the buffer is the longest it takes") {
+        const std::string body(buff_size - 1, 'b');
+        respond(body);
+        REQUIRE( get() == KII_ERR_OK );
+        REQUIRE( kii_get_resp_body_length(&kii) == body.size() );
+        CHECK( std::string(kii_buff, body.size()) == body );
+        CHECK( kii_buff[body.size()] == '\0' );
+        CHECK( strlen(kii_buff) == body.size() );
+    }
+    SECTION("one that would fill it is too large") {
+        respond(std::string(buff_size, 'b'));
+        CHECK( get() == KII_ERR_TOO_LARGE_DATA );
+        CHECK( memory[buff_size] == 'X' );
+    }
+    SECTION("in pieces, as chunks come") {
+        resp = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n"
+            "20\r\n" + std::string(32, 'c') + "\r\n1f\r\n" + std::string(31, 'd') + "\r\n0\r\n\r\n";
+        REQUIRE( get() == KII_ERR_OK );
+        REQUIRE( kii_get_resp_body_length(&kii) == 63 );
+        CHECK( strlen(kii_buff) == 63 );
+        resp = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n"
+            "20\r\n" + std::string(32, 'c') + "\r\n20\r\n" + std::string(32, 'd') + "\r\n0\r\n\r\n";
+        CHECK( get() == KII_ERR_TOO_LARGE_DATA );
+    }
+    SECTION("with no body, after a request that had one") {
+        resp = "HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n";
+        REQUIRE( kii_api_call_start(&kii, "PUT", "/x", "application/json", false) == KII_ERR_OK );
+        REQUIRE( kii_api_call_append_body(&kii, "{\"sent\":1}", 10) == KII_ERR_OK );
+        REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
+        CHECK( kii_get_resp_body_length(&kii) == 0 );
+        CHECK( kii_buff[0] == '\0' );
+    }
+    SECTION("with a shorter body after a longer one") {
+        respond(std::string(40, 'l'));
+        REQUIRE( get() == KII_ERR_OK );
+        respond("short");
+        REQUIRE( get() == KII_ERR_OK );
+        CHECK( std::string(kii_buff) == "short" );
+    }
+}
+
 // The only reason kii's own write callback fails. An application's is another
 // matter, and keeps its code.
 TEST_CASE( "A response too large for the buffer is reported as such" ) {

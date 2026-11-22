@@ -231,6 +231,13 @@ kii_code_t _req_send(kii_t* kii)
     }
     khc_code_t code = _kii_perform(kii);
     _kii_clock_record(kii);
+    // A response without a body wrote nothing over the request's, which is
+    // done with. The same safety net as in _cb_write_buff(): whoever reads the
+    // buffer as a string finds an empty one, not the request.
+    if (kii->_khc._cb_write == _cb_write_buff && kii->_rw_buff_written == 0 &&
+            kii->_rw_buff != NULL && kii->_rw_buff_size > 0) {
+        kii->_rw_buff[0] = '\0';
+    }
     _req_headers_free_all(kii);
 
     // kii's own write callback fails only when the response doesn't fit in the

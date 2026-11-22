@@ -24,7 +24,11 @@ size_t _cb_write_buff(char *buffer, size_t size, void *userdata)
     }
     size_t remain = kii->_rw_buff_size - kii->_resp_offset - kii->_rw_buff_written;
     size_t req_size = size;
-    if (remain < req_size)
+    // One byte is kept for a NUL after the body, which the buffer, zeroed
+    // above, then has. A safety net, and no part of the API: the body is
+    // kii_get_resp_body_length() bytes, and nothing says it is a string. But
+    // whoever reads it as one all the same stops within the buffer.
+    if (remain <= req_size)
     {
         // Insufficient buffer size.
         return 0;

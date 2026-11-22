@@ -438,6 +438,10 @@ kii:
   `kii_execute_server_code()` and `kii_execute_server_code_version()` for an
   endpoint whose path, with the application's ID and the version, comes to 256
   bytes or more. 1.x sent the request all the same, to the wrong path.
+- A response's body can be at most one byte shorter than the buffer set by
+  `kii_set_buff()`. One that fills the buffer exactly, which 1.x took, is too
+  large. The body is still read by `kii_get_resp_body_length()`, not as a
+  string.
 - A response too large for the buffer set by `kii_set_buff()` is
   `KII_ERR_TOO_LARGE_DATA`, and `TIO_ERR_TOO_LARGE_DATA` in tio. In 1.x it was
   `KII_ERR_WRITE_CALLBACK` and `TIO_ERR_WRITE_CALLBACK`. `KII_ERR_WRITE_CALLBACK`
