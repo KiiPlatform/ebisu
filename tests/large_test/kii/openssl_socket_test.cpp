@@ -113,7 +113,7 @@ struct Connection {
         // callbacks: without them, the handshake below, on two threads at
         // once, races in OpenSSL's shared state.
         ebisu_openssl_tls_t tls;
-        REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr) );
+        REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr, nullptr) );
         ebisu_openssl_tls_free(&tls);
 
         EVP_PKEY* key = server_key();
@@ -687,7 +687,7 @@ TEST_CASE( "The OpenSSL socket trusts the CA certificates of its configuration" 
     SECTION("from a file") {
         CaFile ca;
         ebisu_openssl_tls_t tls;
-        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
         ebisu_openssl_socket_t sock;
         ebisu_openssl_socket_init(&sock, 5, 5);
         ebisu_openssl_socket_set_tls(&sock, &tls);
@@ -699,7 +699,7 @@ TEST_CASE( "The OpenSSL socket trusts the CA certificates of its configuration" 
     SECTION("from a directory") {
         CaPath ca;
         ebisu_openssl_tls_t tls;
-        REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, ca.dir) );
+        REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, ca.dir, nullptr) );
         ebisu_openssl_socket_t sock;
         ebisu_openssl_socket_init(&sock, 5, 5);
         ebisu_openssl_socket_set_tls(&sock, &tls);
@@ -735,7 +735,7 @@ TEST_CASE( "The OpenSSL socket asks for TLS 1.2 or later, with forward secrecy a
     REQUIRE( server.listening );
     CaFile ca;
     ebisu_openssl_tls_t tls;
-    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
     ebisu_openssl_socket_t sock;
     ebisu_openssl_socket_init(&sock, 5, 5);
     ebisu_openssl_socket_set_tls(&sock, &tls);
@@ -774,8 +774,30 @@ TEST_CASE( "The OpenSSL socket asks for TLS 1.2 or later, with forward secrecy a
 
 TEST_CASE( "A TLS configuration whose CA certificates can't be loaded fails" ) {
     ebisu_openssl_tls_t tls;
-    CHECK_FALSE( ebisu_openssl_tls_init(&tls, "/nonexistent/ca.pem", nullptr) );
+    CHECK_FALSE( ebisu_openssl_tls_init(&tls, "/nonexistent/ca.pem", nullptr, nullptr) );
     CHECK( tls.ssl_ctx == nullptr );
+
+    // And says why, to who asks: OpenSSL's first error of the call, whatever
+    // an earlier one left in the queue.
+#if (OPENSSL_VERSION_NUMBER >= 0x30000000L)
+    ERR_raise(ERR_LIB_USER, 1);
+#else
+    ERR_put_error(ERR_LIB_USER, 0, 1, __FILE__, __LINE__);
+#endif
+    unsigned long error = 0;
+    CHECK_FALSE( ebisu_openssl_tls_init(&tls, "/nonexistent/ca.pem", nullptr, &error) );
+    CHECK( error != 0 );
+    CHECK( ERR_GET_LIB(error) != ERR_LIB_USER );
+    // With the rest of it still in the queue.
+    CHECK( ERR_peek_error() == error );
+    ERR_clear_error();
+
+    // 0 when it doesn't fail.
+    CaFile ca;
+    error = 1;
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, &error) );
+    CHECK( error == 0 );
+    ebisu_openssl_tls_free(&tls);
 }
 
 // The CA certificates were parsed again for every connection, each with an
@@ -785,7 +807,7 @@ TEST_CASE( "The OpenSSL sockets of a configuration share its SSL_CTX" ) {
     REQUIRE( server.listening );
     CaFile ca;
     ebisu_openssl_tls_t tls;
-    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
 
     ebisu_openssl_socket_t first;
     ebisu_openssl_socket_init(&first, 5, 5);
@@ -828,7 +850,7 @@ TEST_CASE( "The OpenSSL socket resumes the session of the last connection to the
     REQUIRE( server.listening );
     CaFile ca;
     ebisu_openssl_tls_t tls;
-    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
     ebisu_openssl_socket_t sock;
     ebisu_openssl_socket_init(&sock, 5, 5);
     ebisu_openssl_socket_set_tls(&sock, &tls);
@@ -849,7 +871,7 @@ TEST_CASE( "The OpenSSL socket resumes the session of the last connection to the
 
     SECTION("a socket of another configuration doesn't") {
         ebisu_openssl_tls_t other_tls;
-        REQUIRE( ebisu_openssl_tls_init(&other_tls, ca.path, nullptr) );
+        REQUIRE( ebisu_openssl_tls_init(&other_tls, ca.path, nullptr, nullptr) );
         ebisu_openssl_socket_t other;
         ebisu_openssl_socket_init(&other, 5, 5);
         ebisu_openssl_socket_set_tls(&other, &other_tls);
@@ -922,7 +944,7 @@ TEST_CASE( "The OpenSSL socket tries each of the host's addresses" ) {
         }
         CaFile ca;
         ebisu_openssl_tls_t tls;
-        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
         for (unsigned int timeout : { 5u, 0u }) {
             INFO( "connect timeout " << timeout );
             ebisu_openssl_socket_t sock;
@@ -1034,7 +1056,7 @@ TEST_CASE( "The OpenSSL socket says why it failed" ) {
         REQUIRE( SSL_CTX_set_cipher_list(server.ctx, "AES128-SHA") == 1 );
         CaFile ca;
         ebisu_openssl_tls_t tls;
-        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
         ebisu_openssl_socket_set_tls(&sock, &tls);
         REQUIRE( connect_to(&sock, server) == EBISU_SOCK_FAIL );
         CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TLS_MISMATCH );
@@ -1172,7 +1194,7 @@ TEST_CASE( "The OpenSSL socket gives up a handshake at its connect timeout" ) {
         REQUIRE( server.listening );
         CaFile ca;
         ebisu_openssl_tls_t tls;
-        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
         ebisu_openssl_socket_init(&sock, 1, 5);
         ebisu_openssl_socket_set_connect_timeout(&sock, 5);
         ebisu_openssl_socket_set_tls(&sock, &tls);
@@ -1639,7 +1661,7 @@ TEST_CASE( "The OpenSSL socket checks the server's certificate as its configurat
 
     SECTION("in full, by default: its name too") {
         ebisu_openssl_tls_t tls;
-        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
         ebisu_openssl_socket_set_tls(&sock, &tls);
         CHECK( connect_by_address(&sock, server) == EBISU_SOCK_FAIL );
         CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_VERIFY );
@@ -1651,7 +1673,7 @@ TEST_CASE( "The OpenSSL socket checks the server's certificate as its configurat
 
     SECTION("its chain without its name") {
         ebisu_openssl_tls_t tls;
-        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
         REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
         ebisu_openssl_socket_set_tls(&sock, &tls);
         REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
@@ -1660,7 +1682,7 @@ TEST_CASE( "The OpenSSL socket checks the server's certificate as its configurat
         ebisu_openssl_tls_free(&tls);
 
         // Still to a CA certificate trusted.
-        REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr) );
+        REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr, nullptr) );
         REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
         CHECK( connect_by_address(&sock, server) == EBISU_SOCK_FAIL );
         CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_VERIFY );
@@ -1672,7 +1694,7 @@ TEST_CASE( "The OpenSSL socket checks the server's certificate as its configurat
         for (const std::vector<unsigned char>& pin :
                 { certificate_pin(server_certificate()), public_key_pin(server_certificate()) }) {
             ebisu_openssl_tls_t tls;
-            REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr) );
+            REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr, nullptr) );
             REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_PIN, pin.data()) );
             ebisu_openssl_socket_set_tls(&sock, &tls);
             REQUIRE( connect_by_address(&sock, server) == EBISU_SOCK_OK );
@@ -1685,7 +1707,7 @@ TEST_CASE( "The OpenSSL socket checks the server's certificate as its configurat
         std::vector<unsigned char> pin = certificate_pin(server_certificate());
         pin[0] ^= 1;
         ebisu_openssl_tls_t tls;
-        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
         REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_PIN, pin.data()) );
         ebisu_openssl_socket_set_tls(&sock, &tls);
         // At localhost, which its chain and its name would have passed.
@@ -1702,7 +1724,7 @@ TEST_CASE( "The OpenSSL socket checks the server's certificate as its configurat
         X509* expired = issue_certificate(server_key(), -7200, -3600);
         REQUIRE( SSL_CTX_use_certificate(server.ctx, expired) == 1 );
         ebisu_openssl_tls_t tls;
-        REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr) );
+        REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr, nullptr) );
         REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_PIN,
                     certificate_pin(expired).data()) );
         ebisu_openssl_socket_set_tls(&sock, &tls);
@@ -1714,7 +1736,7 @@ TEST_CASE( "The OpenSSL socket checks the server's certificate as its configurat
 
     SECTION("not at all, with a warning on each connection") {
         ebisu_openssl_tls_t tls;
-        REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr) );
+        REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr, nullptr) );
         REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_NONE, nullptr) );
         ebisu_openssl_socket_set_tls(&sock, &tls);
         for (int i = 0; i < 2; ++i) {
@@ -1746,7 +1768,7 @@ TEST_CASE( "The OpenSSL socket's close does nothing without a connection" ) {
     CaFile ca;
     LogCtx log;
     ebisu_openssl_tls_t tls;
-    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
     ebisu_openssl_socket_t sock;
     ebisu_openssl_socket_init(&sock, 5, 5);
     ebisu_openssl_socket_set_logger(&sock, log.get());
@@ -1814,7 +1836,7 @@ TEST_CASE( "The OpenSSL socket checks an idle connection, and sends at once, whe
     CaFile ca;
     LogCtx log;
     ebisu_openssl_tls_t tls;
-    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
     REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
     ebisu_openssl_socket_t sock;
     ebisu_openssl_socket_init(&sock, 5, 5);
@@ -1859,7 +1881,7 @@ TEST_CASE( "A TLS configuration checks in full again once set to, with no sessio
     LocalServer server(AF_INET, true);
     REQUIRE( server.listening );
     ebisu_openssl_tls_t tls;
-    REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr) );
+    REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr, nullptr) );
     REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_NONE, nullptr) );
     ebisu_openssl_socket_t sock;
     ebisu_openssl_socket_init(&sock, 5, 5);
@@ -1879,7 +1901,7 @@ TEST_CASE( "A TLS configuration refuses a mode it can't take, as it was" ) {
     REQUIRE( server.listening );
     CaFile ca;
     ebisu_openssl_tls_t tls;
-    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
     CHECK_FALSE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_PIN, nullptr) );
     CHECK_FALSE( ebisu_openssl_tls_set_verify(&tls, (ebisu_tls_verify_t)42, nullptr) );
     // Still in full: by name, at localhost.
@@ -1892,7 +1914,7 @@ TEST_CASE( "A TLS configuration refuses a mode it can't take, as it was" ) {
     ebisu_openssl_tls_free(&tls);
 
     ebisu_openssl_tls_t unset;
-    CHECK_FALSE( ebisu_openssl_tls_init(&unset, "/nonexistent/ca.pem", nullptr) );
+    CHECK_FALSE( ebisu_openssl_tls_init(&unset, "/nonexistent/ca.pem", nullptr, nullptr) );
     CHECK_FALSE( ebisu_openssl_tls_set_verify(&unset, EBISU_TLS_VERIFY_NONE, nullptr) );
 }
 
@@ -1920,7 +1942,7 @@ TEST_CASE( "The OpenSSL socket says when the server has no TLS version or suite 
         REQUIRE( server.listening );
         LogCtx log;
         ebisu_openssl_tls_t tls;
-        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
         REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
         ebisu_openssl_socket_t sock;
         ebisu_openssl_socket_init(&sock, 5, 5);
@@ -1945,7 +1967,7 @@ TEST_CASE( "The OpenSSL socket says when the server has no TLS version or suite 
 
     LogCtx log;
     ebisu_openssl_tls_t tls;
-    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
     REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
     ebisu_openssl_socket_t sock;
     ebisu_openssl_socket_init(&sock, 5, 5);
@@ -2006,7 +2028,7 @@ TEST_CASE( "The OpenSSL socket takes a host's commonName for its name only befor
     REQUIRE( SSL_CTX_use_certificate(server.ctx, cn_only) == 1 );
     CaFile ca(cn_only);
     ebisu_openssl_tls_t tls;
-    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
     ebisu_openssl_socket_t sock;
     ebisu_openssl_socket_init(&sock, 5, 5);
     ebisu_openssl_socket_set_tls(&sock, &tls);
@@ -2048,7 +2070,7 @@ ebisu_sock_error_t connect_in_full(X509* cert, int family, const char* host, lon
     REQUIRE( SSL_CTX_set_tlsext_servername_callback(server.ctx, note_sni) == 1 );
     CaFile ca(cert);
     ebisu_openssl_tls_t tls;
-    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
     ebisu_openssl_socket_t sock;
     ebisu_openssl_socket_init(&sock, 5, 5);
     ebisu_openssl_socket_set_tls(&sock, &tls);
@@ -2123,7 +2145,7 @@ TEST_CASE( "The OpenSSL socket checks a host given as an address against the cer
 TEST_CASE( "The OpenSSL socket gives the TLS version and cipher suite its connection negotiated" ) {
     CaFile ca;
     ebisu_openssl_tls_t tls;
-    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
     REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_CHAIN, nullptr) );
     ebisu_openssl_socket_t sock;
     ebisu_openssl_socket_init(&sock, 5, 5);

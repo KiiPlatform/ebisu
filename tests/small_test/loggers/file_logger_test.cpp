@@ -94,7 +94,9 @@ std::string numbered(int i) {
 TEST_CASE("The file logger writes a line for each message as important as its level") {
     Files files;
     ebisu_file_logger_t logger;
-    REQUIRE(ebisu_file_logger_init(&logger, PATH, 0, EBISU_LOG_WARNING, nullptr));
+    ebisu_logger_init_error_t error = EBISU_LOGGER_INIT_ERROR_OPEN;
+    REQUIRE(ebisu_file_logger_init(&logger, PATH, 0, EBISU_LOG_WARNING, nullptr, &error));
+    CHECK(error == EBISU_LOGGER_INIT_ERROR_NONE);
     ebisu_log(&logger.base, EBISU_LOG_ERROR, "failed to connect to %s.", "example.com");
     ebisu_log(&logger.base, EBISU_LOG_WARNING, "%d tries", 3);
     ebisu_log(&logger.base, EBISU_LOG_INFO, "dropped");
@@ -111,7 +113,7 @@ TEST_CASE("The file logger writes a line for each message as important as its le
 TEST_CASE("The file logger keeps its file under its size, and what came before in a backup") {
     Files files;
     ebisu_file_logger_t logger;
-    REQUIRE(ebisu_file_logger_init(&logger, PATH, 100, EBISU_LOG_DEBUG, nullptr));
+    REQUIRE(ebisu_file_logger_init(&logger, PATH, 100, EBISU_LOG_DEBUG, nullptr, nullptr));
     std::string expected[3];
     for (int i = 1; i <= 20; ++i) {
         ebisu_log(&logger.base, EBISU_LOG_INFO, "line %02d", i);
@@ -127,7 +129,7 @@ TEST_CASE("The file logger adds to a file there is, counting what it has") {
     const std::string before(90, 'x');
     write_file(PATH, before);
     ebisu_file_logger_t logger;
-    REQUIRE(ebisu_file_logger_init(&logger, PATH, 100, EBISU_LOG_DEBUG, nullptr));
+    REQUIRE(ebisu_file_logger_init(&logger, PATH, 100, EBISU_LOG_DEBUG, nullptr, nullptr));
     ebisu_log(&logger.base, EBISU_LOG_INFO, "line %02d", 1);
     ebisu_file_logger_close(&logger);
     CHECK(contents(BACKUP) == before);
@@ -135,7 +137,7 @@ TEST_CASE("The file logger adds to a file there is, counting what it has") {
 
     SECTION("and one that fits, to it") {
         write_file(PATH, std::string(10, 'y'));
-        REQUIRE(ebisu_file_logger_init(&logger, PATH, 100, EBISU_LOG_DEBUG, nullptr));
+        REQUIRE(ebisu_file_logger_init(&logger, PATH, 100, EBISU_LOG_DEBUG, nullptr, nullptr));
         ebisu_log(&logger.base, EBISU_LOG_INFO, "line %02d", 2);
         ebisu_file_logger_close(&logger);
         CHECK(contents(PATH) == std::string(10, 'y') + numbered(2));
@@ -146,7 +148,7 @@ TEST_CASE("The file logger adds to a file there is, counting what it has") {
 TEST_CASE("The file logger writes a line longer than its size in a file of its own") {
     Files files;
     ebisu_file_logger_t logger;
-    REQUIRE(ebisu_file_logger_init(&logger, PATH, 10, EBISU_LOG_DEBUG, nullptr));
+    REQUIRE(ebisu_file_logger_init(&logger, PATH, 10, EBISU_LOG_DEBUG, nullptr, nullptr));
     ebisu_log(&logger.base, EBISU_LOG_INFO, "line %02d", 1);
     CHECK(contents(PATH) == numbered(1));
     ebisu_log(&logger.base, EBISU_LOG_INFO, "line %02d", 2);
@@ -159,11 +161,21 @@ TEST_CASE("The file logger fails on a path too long, or a file it can't open") {
     Files files;
     ebisu_file_logger_t logger;
     const std::string too_long(EBISU_FILE_LOGGER_PATH_MAX - 2, 'a');
-    CHECK_FALSE(ebisu_file_logger_init(&logger, too_long.c_str(), 0, EBISU_LOG_DEBUG, nullptr));
+    // And says which.
+    ebisu_logger_init_error_t error = EBISU_LOGGER_INIT_ERROR_NONE;
+    CHECK_FALSE(ebisu_file_logger_init(&logger, too_long.c_str(), 0, EBISU_LOG_DEBUG, nullptr,
+            &error));
+    CHECK(error == EBISU_LOGGER_INIT_ERROR_ARGUMENT);
     ebisu_log(&logger.base, EBISU_LOG_ERROR, "dropped");
     ebisu_file_logger_close(&logger);
-    CHECK_FALSE(ebisu_file_logger_init(&logger, nullptr, 0, EBISU_LOG_DEBUG, nullptr));
-    CHECK_FALSE(ebisu_file_logger_init(&logger, "", 0, EBISU_LOG_DEBUG, nullptr));
+    error = EBISU_LOGGER_INIT_ERROR_NONE;
+    CHECK_FALSE(ebisu_file_logger_init(&logger, nullptr, 0, EBISU_LOG_DEBUG, nullptr, &error));
+    CHECK(error == EBISU_LOGGER_INIT_ERROR_ARGUMENT);
+    error = EBISU_LOGGER_INIT_ERROR_NONE;
+    CHECK_FALSE(ebisu_file_logger_init(&logger, "", 0, EBISU_LOG_DEBUG, nullptr, &error));
+    CHECK(error == EBISU_LOGGER_INIT_ERROR_ARGUMENT);
+    // To no one who doesn't ask.
+    CHECK_FALSE(ebisu_file_logger_init(&logger, "", 0, EBISU_LOG_DEBUG, nullptr, nullptr));
 
     SECTION("and tries the file again with each message") {
         const char* dir = "file_logger_test_dir";
@@ -175,7 +187,8 @@ TEST_CASE("The file logger fails on a path too long, or a file it can't open") {
         rmdir(dir);
 #endif
         REQUIRE_FALSE(ebisu_file_logger_init(&logger, path.c_str(), 0, EBISU_LOG_DEBUG,
-                nullptr));
+                nullptr, &error));
+        CHECK(error == EBISU_LOGGER_INIT_ERROR_OPEN);
         ebisu_log(&logger.base, EBISU_LOG_ERROR, "lost, with no directory");
 #ifdef _WIN32
         REQUIRE(_mkdir(dir) == 0);
@@ -200,7 +213,7 @@ TEST_CASE("The file logger's lines from several tasks at once stay whole, and no
     Files files;
     TestLock lock;
     ebisu_file_logger_t logger;
-    REQUIRE(ebisu_file_logger_init(&logger, PATH, 128 * 1024, EBISU_LOG_DEBUG, &lock.base));
+    REQUIRE(ebisu_file_logger_init(&logger, PATH, 128 * 1024, EBISU_LOG_DEBUG, &lock.base, nullptr));
     const int threads = 8;
     static const int each = 200;
     const std::string padding(100, '.');
@@ -299,7 +312,7 @@ long long now_ms() {
 TEST_CASE("The file logger starts each line with the time it is written, if asked") {
     Files files;
     ebisu_file_logger_t logger;
-    REQUIRE(ebisu_file_logger_init(&logger, PATH, 0, EBISU_LOG_DEBUG, nullptr));
+    REQUIRE(ebisu_file_logger_init(&logger, PATH, 0, EBISU_LOG_DEBUG, nullptr, nullptr));
     ebisu_file_logger_set_timestamps(&logger, true);
     const long long before = now_ms();
     ebisu_log(&logger.base, EBISU_LOG_ERROR, "failed to connect to %s.", "example.com");
@@ -320,7 +333,7 @@ TEST_CASE("The file logger starts each line with the time it is written, if aske
 
     SECTION("and not unless asked") {
         Files::clear();
-        REQUIRE(ebisu_file_logger_init(&logger, PATH, 0, EBISU_LOG_DEBUG, nullptr));
+        REQUIRE(ebisu_file_logger_init(&logger, PATH, 0, EBISU_LOG_DEBUG, nullptr, nullptr));
         ebisu_log(&logger.base, EBISU_LOG_ERROR, "plain");
         ebisu_file_logger_close(&logger);
         CHECK(contents(PATH) == "error: plain\n");
@@ -331,7 +344,7 @@ TEST_CASE("The file logger starts each line with the time it is written, if aske
 TEST_CASE("The file logger counts a line's timestamp in the file's size") {
     Files files;
     ebisu_file_logger_t logger;
-    REQUIRE(ebisu_file_logger_init(&logger, PATH, 100, EBISU_LOG_DEBUG, nullptr));
+    REQUIRE(ebisu_file_logger_init(&logger, PATH, 100, EBISU_LOG_DEBUG, nullptr, nullptr));
     ebisu_file_logger_set_timestamps(&logger, true);
     for (int i = 1; i <= 5; ++i) {
         ebisu_log(&logger.base, EBISU_LOG_INFO, "line %02d", i);
@@ -349,7 +362,7 @@ TEST_CASE("The file logger counts a line's timestamp in the file's size") {
 TEST_CASE("The file logger's line with its timestamp is at most the longest a logger writes") {
     Files files;
     ebisu_file_logger_t logger;
-    REQUIRE(ebisu_file_logger_init(&logger, PATH, 0, EBISU_LOG_DEBUG, nullptr));
+    REQUIRE(ebisu_file_logger_init(&logger, PATH, 0, EBISU_LOG_DEBUG, nullptr, nullptr));
     ebisu_file_logger_set_timestamps(&logger, true);
     const std::string message(2 * EBISU_LOGGER_LINE_MAX, 'x');
     ebisu_log(&logger.base, EBISU_LOG_ERROR, "%s", message.c_str());
@@ -367,7 +380,7 @@ TEST_CASE("The file logger's timestamps are in the order of its lines") {
     Files files;
     TestLock lock;
     ebisu_file_logger_t logger;
-    REQUIRE(ebisu_file_logger_init(&logger, PATH, 0, EBISU_LOG_DEBUG, &lock.base));
+    REQUIRE(ebisu_file_logger_init(&logger, PATH, 0, EBISU_LOG_DEBUG, &lock.base, nullptr));
     ebisu_file_logger_set_timestamps(&logger, true);
     std::vector<std::thread> running;
     for (int t = 0; t < 4; ++t) {

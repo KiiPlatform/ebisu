@@ -183,7 +183,7 @@ typedef ebisu_openssl_socket_t platform_socket_t;
 struct Tls {
     ebisu_openssl_tls_t tls;
     bool ok;
-    Tls() : ok(ebisu_openssl_tls_init(&tls, broker().ca.c_str(), nullptr)) {}
+    Tls() : ok(ebisu_openssl_tls_init(&tls, broker().ca.c_str(), nullptr, nullptr)) {}
     ~Tls() {
         if (ok) {
             ebisu_openssl_tls_free(&tls);

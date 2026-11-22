@@ -148,8 +148,10 @@ TEST_CASE("The UDP syslog logger sends each message as important as its level as
     Receiver server;
     REQUIRE(server.listening);
     ebisu_syslog_udp_logger_t logger;
+    ebisu_logger_init_error_t error = EBISU_LOGGER_INIT_ERROR_OPEN;
     REQUIRE(ebisu_syslog_udp_logger_init(&logger, "127.0.0.1", server.port, nullptr,
-            "ebisu-test", 1, EBISU_LOG_INFO));
+            "ebisu-test", 1, EBISU_LOG_INFO, &error));
+    CHECK(error == EBISU_LOGGER_INIT_ERROR_NONE);
 #ifndef _WIN32
     // Sending never waits, and a program the application executes doesn't
     // get the socket.
@@ -212,7 +214,7 @@ TEST_CASE("The UDP syslog logger takes any facility, and an application without 
     REQUIRE(server.listening);
     ebisu_syslog_udp_logger_t logger;
     REQUIRE(ebisu_syslog_udp_logger_init(&logger, "127.0.0.1", server.port, nullptr, nullptr,
-            23, EBISU_LOG_DEBUG));
+            23, EBISU_LOG_DEBUG, nullptr));
     ebisu_log(&logger.base, EBISU_LOG_DEBUG, "resumed");
     Message message = parse(server.next());
     // Local use 7, 23, and debug, 7: the largest priority there is.
@@ -224,7 +226,7 @@ TEST_CASE("The UDP syslog logger takes any facility, and an application without 
     SECTION("or the longest name") {
         const std::string name(EBISU_SYSLOG_APP_NAME_MAX, 'n');
         REQUIRE(ebisu_syslog_udp_logger_init(&logger, "127.0.0.1", server.port, nullptr,
-                name.c_str(), 0, EBISU_LOG_DEBUG));
+                name.c_str(), 0, EBISU_LOG_DEBUG, nullptr));
         ebisu_log(&logger.base, EBISU_LOG_ERROR, "kernel");
         message = parse(server.next());
         CHECK(message.priority == 3);
@@ -245,7 +247,7 @@ TEST_CASE("The UDP syslog logger sends the host name it is given, rather than th
         name = "!~";
     }
     REQUIRE(ebisu_syslog_udp_logger_init(&logger, "127.0.0.1", server.port, name.c_str(),
-            "ebisu-test", 1, EBISU_LOG_DEBUG));
+            "ebisu-test", 1, EBISU_LOG_DEBUG, nullptr));
     ebisu_log(&logger.base, EBISU_LOG_INFO, "started");
     Message message = parse(server.next());
     CHECK(message.hostname == name);
@@ -263,7 +265,7 @@ TEST_CASE("The UDP syslog logger sends to an IPv6 server") {
     }
     ebisu_syslog_udp_logger_t logger;
     REQUIRE(ebisu_syslog_udp_logger_init(&logger, "::1", server.port, nullptr, "ebisu-test", 1,
-            EBISU_LOG_DEBUG));
+            EBISU_LOG_DEBUG, nullptr));
     ebisu_log(&logger.base, EBISU_LOG_INFO, "over IPv6");
     CHECK(parse(server.next()).msg == "over IPv6");
     ebisu_syslog_udp_logger_close(&logger);
@@ -317,9 +319,36 @@ TEST_CASE("The UDP syslog logger refuses what RFC 5424 can't carry, and then dro
         hostname_field = hostname_too_long.c_str();
     }
 
+    ebisu_logger_init_error_t error = EBISU_LOGGER_INIT_ERROR_NONE;
     CHECK_FALSE(ebisu_syslog_udp_logger_init(&logger, host, server.port, hostname_field, app_name,
-            facility, EBISU_LOG_DEBUG));
+            facility, EBISU_LOG_DEBUG, &error));
+    CHECK(error == EBISU_LOGGER_INIT_ERROR_ARGUMENT);
     ebisu_log(&logger.base, EBISU_LOG_ERROR, "dropped");
     CHECK(server.next(300) == "");
+    ebisu_syslog_udp_logger_close(&logger);
+    // To no one who doesn't ask.
+    CHECK_FALSE(ebisu_syslog_udp_logger_init(&logger, host, server.port, hostname_field, app_name,
+            facility, EBISU_LOG_DEBUG, nullptr));
+    ebisu_syslog_udp_logger_close(&logger);
+}
+
+TEST_CASE("The UDP syslog logger says a server it can't look up from one it can't open a socket to") {
+    ebisu_syslog_udp_logger_t logger;
+    ebisu_logger_init_error_t error = EBISU_LOGGER_INIT_ERROR_NONE;
+    SECTION("a host that doesn't resolve") {
+        CHECK_FALSE(ebisu_syslog_udp_logger_init(&logger, "no-such-host.invalid", 514, nullptr,
+                nullptr, 1, EBISU_LOG_DEBUG, &error));
+        CHECK(error == EBISU_LOGGER_INIT_ERROR_LOOKUP);
+    }
+#ifdef __linux__
+    SECTION("an address the system connects no socket to") {
+        // The broadcast address, which Linux refuses a socket that hasn't
+        // asked for it.
+        CHECK_FALSE(ebisu_syslog_udp_logger_init(&logger, "255.255.255.255", 514, nullptr,
+                nullptr, 1, EBISU_LOG_DEBUG, &error));
+        CHECK(error == EBISU_LOGGER_INIT_ERROR_OPEN);
+    }
+#endif
+    ebisu_log(&logger.base, EBISU_LOG_ERROR, "dropped");
     ebisu_syslog_udp_logger_close(&logger);
 }
