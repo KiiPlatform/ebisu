@@ -528,8 +528,11 @@ jkii:
 
 - An integer's type follows its value: `int32_t`, then `int64_t`, then overflow
   or underflow, whatever its length. 1.x went by the number of characters, so
-  `2147483648` could be an overflow, and very long integers were doubles. A
-  double field given one now reports a type mismatch.
+  `2147483648` could be an overflow, and very long integers were doubles.
+- A field `jkii_parse()` is asked for as a double takes a number of any form:
+  a whole one without a fraction, as `25`, is read as 25.0, as
+  `jkii_member_double()` reads it. 1.x reported a type mismatch for an integer,
+  unless it was a very long one.
 - Integers with leading zeros are invalid, path indices such as `/[010]`
   included. 1.x read them as octal. `0` and `-0` are still numbers.
 - Numbers without digits, such as `-`, `1e` and `1e+`, are invalid.

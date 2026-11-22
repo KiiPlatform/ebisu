@@ -359,8 +359,8 @@ TEST_CASE("KiiJson, PrimitiveIntegerByRange") {
 // The same integers as fields. Asked for as any type, they come back as
 // primitives do, with one past the int64_t range a LONG that overflowed. Asked
 // for as an INTEGER, one past the int32_t range is out of range rather than a
-// type mismatch, as short ones already were; as a double, any integer is a
-// type mismatch, as all but very long ones already were.
+// type mismatch, as short ones already were; as a double, any integer is
+// read as one, to the nearest double.
 //
 // Where long was as wide as int, an int field is where the overflow was lost:
 // the long conversion gave LONG_MAX, which was INT_MAX, and the int conversion
@@ -422,10 +422,10 @@ TEST_CASE("KiiJson, GetObjectIntegerByRange") {
 
         res = parse_number_by_name(
                 c.text.c_str(), JKII_FIELD_TYPE_DOUBLE, &field);
-        CHECK(JKII_ERR_PARTIAL == res);
-        CHECK(JKII_FIELD_ERR_TYPE_MISMATCH == field.result);
-        CHECK((c.range == FITS_INT32 ? JKII_FIELD_TYPE_INTEGER
-                                     : JKII_FIELD_TYPE_LONG) == field.type);
+        CHECK(JKII_ERR_OK == res);
+        CHECK(JKII_FIELD_ERR_OK == field.result);
+        CHECK(JKII_FIELD_TYPE_DOUBLE == field.type);
+        CHECK(strtod(c.text.c_str(), nullptr) == field.field_copy.double_value);
     }
 }
 
@@ -457,6 +457,35 @@ TEST_CASE("KiiJson, GetObjectNumberWithoutDigitsByName") {
             }
         }
     }
+}
+
+// JSON has one kind of number. A value that happens to be whole comes without
+// a fraction, 25 for 25.0, and jkii_parse() refused it for a field expected as
+// a double: a type mismatch, for a temperature of 25 degrees.
+TEST_CASE("jkii_parse() reads a whole number for a field expected as a double") {
+    jkii_field_t field;
+    const struct { const char* text; double value; } cases[] = {
+        { "25", 25.0 }, { "-3", -3.0 }, { "0", 0.0 },
+        // Past an int32_t, and past an int64_t.
+        { "4294967296", 4294967296.0 }, { "18446744073709551616", 18446744073709551616.0 },
+        { "2.5", 2.5 }, { "1e3", 1000.0 },
+    };
+    for (const auto& c : cases) {
+        CAPTURE( std::string(c.text) );
+        REQUIRE( parse_number_by_name(c.text, JKII_FIELD_TYPE_DOUBLE, &field) == JKII_ERR_OK );
+        CHECK( field.result == JKII_FIELD_ERR_OK );
+        CHECK( field.field_copy.double_value == c.value );
+    }
+    // The other way stays a mismatch: a fraction is no integer.
+    CHECK( parse_number_by_name("2.5", JKII_FIELD_TYPE_INTEGER, &field) == JKII_ERR_PARTIAL );
+    CHECK( field.result == JKII_FIELD_ERR_TYPE_MISMATCH );
+    CHECK( parse_number_by_name("2.5", JKII_FIELD_TYPE_LONG, &field) == JKII_ERR_PARTIAL );
+    CHECK( field.result == JKII_FIELD_ERR_TYPE_MISMATCH );
+    // And what isn't a number is none.
+    CHECK( parse_number_by_name("\"25\"", JKII_FIELD_TYPE_DOUBLE, &field) == JKII_ERR_PARTIAL );
+    CHECK( field.result == JKII_FIELD_ERR_TYPE_MISMATCH );
+    CHECK( parse_number_by_name("true", JKII_FIELD_TYPE_DOUBLE, &field) == JKII_ERR_PARTIAL );
+    CHECK( field.result == JKII_FIELD_ERR_TYPE_MISMATCH );
 }
 
 // Their neighbours that do have digits still parse.

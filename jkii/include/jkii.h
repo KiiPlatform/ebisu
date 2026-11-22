@@ -115,7 +115,8 @@ typedef enum jkii_field_type_t {
      * INT64_MIN to INT64_MAX, whatever the width of long. */
     JKII_FIELD_TYPE_LONG,
 
-    /** This value denotes an double value. */
+    /** This value denotes an double value. Expected of a field, it takes a
+     * number of any form, a whole one without a fraction included, as 25. */
     JKII_FIELD_TYPE_DOUBLE,
 
     /** This value denotes a true or false value, as a bool. */
