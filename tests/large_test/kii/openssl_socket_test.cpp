@@ -48,8 +48,9 @@ EVP_PKEY* generate_key()
 // Valid from from seconds from now, until to seconds from now.
 // For localhost, in its subjectAltName as well as its commonName, unless
 // alt_name is false: OpenSSL 4.1 and later match a host against the first
-// alone.
-X509* issue_certificate(EVP_PKEY* key, long from = 0, long to = 3600, bool alt_name = true)
+// alone. With alt_names, for those in its subjectAltName instead.
+X509* issue_certificate(EVP_PKEY* key, long from = 0, long to = 3600, bool alt_name = true,
+        const char* alt_names = "DNS:localhost")
 {
     X509* cert = X509_new();
     REQUIRE( X509_set_version(cert, 2) == 1 );
@@ -70,7 +71,7 @@ X509* issue_certificate(EVP_PKEY* key, long from = 0, long to = 3600, bool alt_n
         X509V3_set_ctx_nodb(&ctx);
         X509V3_set_ctx(&ctx, cert, cert, nullptr, nullptr, 0);
         X509_EXTENSION* san = X509V3_EXT_conf_nid(nullptr, &ctx, NID_subject_alt_name,
-                const_cast<char*>("DNS:localhost"));
+                const_cast<char*>(alt_names));
         REQUIRE( san != nullptr );
         REQUIRE( X509_add_ext(cert, san, -1) == 1 );
         X509_EXTENSION_free(san);
@@ -1642,7 +1643,7 @@ TEST_CASE( "The OpenSSL socket checks the server's certificate as its configurat
         ebisu_openssl_socket_set_tls(&sock, &tls);
         CHECK( connect_by_address(&sock, server) == EBISU_SOCK_FAIL );
         CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_VERIFY );
-        CHECK( detail == X509_V_ERR_HOSTNAME_MISMATCH );
+        CHECK( detail == X509_V_ERR_IP_ADDRESS_MISMATCH );
         REQUIRE( ebisu_openssl_tls_set_verify(&tls, EBISU_TLS_VERIFY_FULL, nullptr) );
         CHECK( connect_by_address(&sock, server) == EBISU_SOCK_FAIL );
         ebisu_openssl_tls_free(&tls);
@@ -2020,6 +2021,103 @@ TEST_CASE( "The OpenSSL socket takes a host's commonName for its name only befor
 #endif
     CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
     ebisu_openssl_tls_free(&tls);
+}
+
+namespace {
+
+// The server name of the last ClientHello a server of this file took, or
+// "none" for a ClientHello without one.
+std::string sni_seen;
+
+int note_sni(SSL* ssl, int*, void*)
+{
+    const char* name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+    sni_seen = name != nullptr ? name : "none";
+    return SSL_TLSEXT_ERR_OK;
+}
+
+// What connecting to host at the server gives, in full verification, with
+// the server's certificate cert, which is its own CA.
+ebisu_sock_error_t connect_in_full(X509* cert, int family, const char* host, long* out_detail)
+{
+    *out_detail = 0;
+    sni_seen = "no handshake";
+    LocalServer server(family);
+    REQUIRE( server.listening );
+    REQUIRE( SSL_CTX_use_certificate(server.ctx, cert) == 1 );
+    REQUIRE( SSL_CTX_set_tlsext_servername_callback(server.ctx, note_sni) == 1 );
+    CaFile ca(cert);
+    ebisu_openssl_tls_t tls;
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_init(&sock, 5, 5);
+    ebisu_openssl_socket_set_tls(&sock, &tls);
+    ebisu_sock_error_t error = EBISU_SOCK_ERROR_NONE;
+    if (sock.base.ops->connect(&sock.base, host, server.port) != EBISU_SOCK_OK) {
+        error = last_error(&sock, out_detail);
+    }
+    CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+    ebisu_openssl_tls_free(&tls);
+    return error;
+}
+
+}
+
+// A certificate names the addresses it is issued for apart from the names:
+// in subjectAltNames of a kind of their own. And a ClientHello's server name
+// is a name, never an address (RFC 6066, section 3).
+TEST_CASE( "The OpenSSL socket checks a host given as an address against the certificate's addresses" ) {
+    long detail = 0;
+
+    SECTION("an IPv4 address the certificate is issued for") {
+        static X509* cert = issue_certificate(server_key(), 0, 3600, true, "IP:127.0.0.1");
+        CHECK( connect_in_full(cert, AF_INET, "127.0.0.1", &detail) == EBISU_SOCK_ERROR_NONE );
+        CHECK( sni_seen == "none" );
+        // In the other forms getaddrinfo() takes.
+        CHECK( connect_in_full(cert, AF_INET, "127.1", &detail) == EBISU_SOCK_ERROR_NONE );
+        CHECK( sni_seen == "none" );
+        CHECK( connect_in_full(cert, AF_INET, "0x7f000001", &detail) == EBISU_SOCK_ERROR_NONE );
+        CHECK( sni_seen == "none" );
+    }
+    SECTION("an IPv6 address the certificate is issued for, however it is written") {
+        static X509* cert = issue_certificate(server_key(), 0, 3600, true, "IP:::1");
+        LocalServer probe(AF_INET6);
+        if (!probe.listening) {
+            WARN( "no IPv6 loopback: skipped" );
+        } else {
+            CHECK( connect_in_full(cert, AF_INET6, "::1", &detail) == EBISU_SOCK_ERROR_NONE );
+            CHECK( sni_seen == "none" );
+            CHECK( connect_in_full(cert, AF_INET6, "0:0:0:0:0:0:0:1", &detail) == EBISU_SOCK_ERROR_NONE );
+            CHECK( sni_seen == "none" );
+            // With a scope, which a certificate has none of.
+            CHECK( connect_in_full(cert, AF_INET6, "::1%1", &detail) == EBISU_SOCK_ERROR_NONE );
+            CHECK( sni_seen == "none" );
+        }
+    }
+    SECTION("an address the certificate isn't issued for") {
+        static X509* cert = issue_certificate(server_key(), 0, 3600, true, "IP:127.0.0.2");
+        CHECK( connect_in_full(cert, AF_INET, "127.0.0.1", &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( detail == X509_V_ERR_IP_ADDRESS_MISMATCH );
+        CHECK( sni_seen == "none" );
+    }
+    SECTION("an address the certificate has as a name, which is no address") {
+        static X509* cert = issue_certificate(server_key(), 0, 3600, true, "DNS:127.0.0.1");
+        CHECK( connect_in_full(cert, AF_INET, "127.0.0.1", &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( detail == X509_V_ERR_IP_ADDRESS_MISMATCH );
+    }
+    SECTION("a name, as before: sent to the server, and checked against the names") {
+        static X509* cert = issue_certificate(server_key(), 0, 3600, true,
+                "DNS:localhost,IP:127.0.0.1");
+        CHECK( connect_in_full(cert, AF_INET, "localhost", &detail) == EBISU_SOCK_ERROR_NONE );
+        CHECK( sni_seen == "localhost" );
+        // With a name of another host, for no version of OpenSSL to take the
+        // commonName, which is localhost.
+        static X509* other = issue_certificate(server_key(), 0, 3600, true,
+                "DNS:other.invalid,IP:127.0.0.1");
+        CHECK( connect_in_full(other, AF_INET, "localhost", &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( detail == X509_V_ERR_HOSTNAME_MISMATCH );
+        CHECK( sni_seen == "localhost" );
+    }
 }
 
 TEST_CASE( "The OpenSSL socket gives the TLS version and cipher suite its connection negotiated" ) {

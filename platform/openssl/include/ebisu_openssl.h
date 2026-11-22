@@ -28,7 +28,10 @@ extern "C" {
  * certificates, and the host name, at the time of the clock set by
  * ebisu_openssl_socket_set_clock(), or the system's without one, against the
  * CA certificates of the configuration set by ebisu_openssl_socket_set_tls(),
- * or the system's without one. A receive that times out is EBISU_SOCK_FAIL,
+ * or the system's without one. A host given as an IPv4 or IPv6 address, in
+ * any form getaddrinfo() takes, is checked against the addresses the
+ * certificate is issued for, not its names, and the server is sent no server
+ * name. A receive that times out is EBISU_SOCK_FAIL,
  * which recv_timed_out tells from a lost connection. A send to a peer that
  * has gone fails, and never raises SIGPIPE. One serves one connection
  * at a time, and is used again for the next once closed. A connection offers
