@@ -767,16 +767,32 @@ static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
            clock having stopped while the device slept and the server having
            renewed its certificate meanwhile. Forgotten, the time becomes a
            lower bound, the next connection goes through, and its response
-           gives the clock the time again. */
+           gives the clock the time again.
+
+           Only if its dates are all it is refused for: one that no CA leads
+           to, or for another host, says nothing of the time, as anyone can
+           make a certificate of any dates. The policy gives one verdict, of
+           the dates before the name, so it is asked again with the dates
+           left alone. */
         if (ctx->clock != NULL && time_exact &&
                 policy_status.dwError == (DWORD)CERT_E_EXPIRED) {
+            bool not_yet = false;
             PCERT_SIMPLE_CHAIN simple = chain->rgpChain[0];
-            for (DWORD i = 0; i < simple->cElement; ++i) {
+            for (DWORD i = 0; i < simple->cElement && !not_yet; ++i) {
                 PCERT_INFO info = simple->rgpElement[i]->pCertContext->pCertInfo;
-                if (seconds_of(info->NotBefore) > now) {
-                    ebisu_clock_forget_time(ctx->clock);
-                    break;
-                }
+                not_yet = seconds_of(info->NotBefore) > now;
+            }
+            CERT_CHAIN_POLICY_STATUS undated;
+            memset(&undated, 0, sizeof(undated));
+            undated.cbSize = sizeof(undated);
+            policy_para.dwFlags = CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
+            if (not_yet &&
+                    CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_SSL, chain,
+                        &policy_para, &undated) &&
+                    undated.dwError == 0 &&
+                    (!is_address || ctx->verify == EBISU_TLS_VERIFY_CHAIN ||
+                        is_issued_for_address(cert, address, address_length))) {
+                ebisu_clock_forget_time(ctx->clock);
             }
         }
         goto done;

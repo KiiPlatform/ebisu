@@ -23,11 +23,18 @@
  *       to_send:<s>      init the socket again, with s for its send timeout
  *       to_connect:<s>   set the connect timeout
  *       pause:<ms>       sleep for ms milliseconds
+ *       clock:<kind>:<s> check certificates' dates at a clock's time: an
+ *                        ebisu_server_clock_t given the time s seconds from
+ *                        now (exact) or that for its floor (floor), or the
+ *                        system's clock (system)
+ *       clockstate       whether the clock has the time, or a lower bound
  *
  *       After a connect, send or recv that fails, last_error is printed too,
  *       as error=<name> detail=<hex>.
  */
 #include "ebisu_schannel.h"
+#include "ebisu_server_clock.h"
+#include "ebisu_win32.h"
 
 #include <ws2tcpip.h>
 #include <windows.h>
@@ -38,6 +45,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+/* The clock of the clock: steps. */
+static ebisu_server_clock_t server_clock;
+static ebisu_clock_t* clock_set = NULL;
 
 static const char* code_name(ebisu_sock_code_t code)
 {
@@ -332,6 +344,29 @@ static int run_step(ebisu_schannel_socket_t* ctx, const char** host, uint16_t po
                 option_of(ctx->socket, IPPROTO_TCP, TCP_KEEPINTVL),
                 option_of(ctx->socket, IPPROTO_TCP, TCP_KEEPCNT),
                 option_of(ctx->socket, IPPROTO_TCP, TCP_NODELAY));
+    } else if (strncmp(step, "clock:", 6) == 0) {
+        /* clock:exact:<seconds from now>, clock:floor:<seconds from now>, or
+           clock:system. */
+        bool ok = true;
+        if (strcmp(step + 6, "system") == 0) {
+            clock_set = ebisu_system_clock(ebisu_win32_system());
+        } else {
+            ok = ebisu_server_clock_init(&server_clock, ebisu_win32_system());
+            const char* at = strchr(step + 6, ':');
+            int64_t seconds = (int64_t)time(NULL) + (at != NULL ? atol(at + 1) : 0);
+            if (strncmp(step + 6, "exact:", 6) == 0) {
+                ok = ok && ebisu_server_clock_set_time(&server_clock, seconds);
+            } else {
+                ebisu_server_clock_set_floor(&server_clock, seconds);
+            }
+            clock_set = &server_clock.base;
+        }
+        ebisu_schannel_socket_set_clock(ctx, clock_set);
+        printf("STEP clock %s\n", ok ? "OK" : "FAIL");
+    } else if (strcmp(step, "clockstate") == 0) {
+        int64_t seconds = 0;
+        printf("STEP clockstate %s\n", clock_set == NULL ? "none" :
+                ebisu_clock_get_time(clock_set, &seconds) ? "exact" : "bound");
     } else if (strncmp(step, "pause:", 6) == 0) {
         Sleep((DWORD)strtoul(step + 6, NULL, 10));
         printf("STEP pause OK\n");
