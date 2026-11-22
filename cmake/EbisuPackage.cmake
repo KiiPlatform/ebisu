@@ -46,6 +46,11 @@ set(pc_dir ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 file(RELATIVE_PATH pc_prefix_from_dir /root/${pc_dir} /root)
 string(REGEX REPLACE "/$" "" pc_prefix_from_dir "${pc_prefix_from_dir}")
 
+# Where this file is, for the function below: inside a function,
+# CMAKE_CURRENT_LIST_DIR is its caller's, and CMAKE_CURRENT_FUNCTION_LIST_DIR
+# needs CMake 3.17, later than the 3.15 the project asks for.
+set(_ebisu_package_dir ${CMAKE_CURRENT_LIST_DIR})
+
 function(_ebisu_pkg_config name lib description)
     cmake_parse_arguments(PARSE_ARGV 3 arg "" "LIBS" "REQUIRES;REQUIRES_PRIVATE")
     set(pc_name ${name})
@@ -54,7 +59,7 @@ function(_ebisu_pkg_config name lib description)
     string(REPLACE ";" " " pc_requires "${arg_REQUIRES}")
     string(REPLACE ";" " " pc_requires_private "${arg_REQUIRES_PRIVATE}")
     set(pc_libs_extra "${arg_LIBS}")
-    configure_file(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ebisu.pc.in
+    configure_file(${_ebisu_package_dir}/ebisu.pc.in
         ${PROJECT_BINARY_DIR}/pkgconfig/ebisu-${name}.pc @ONLY)
     install(FILES ${PROJECT_BINARY_DIR}/pkgconfig/ebisu-${name}.pc DESTINATION ${pc_dir})
 endfunction()

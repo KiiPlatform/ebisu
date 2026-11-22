@@ -5,16 +5,26 @@
 # the OpenSSL port.
 #
 # Usage: package_consumer.sh
+# With EBISU_CMAKE, the CMake to do it with, as the oldest the project asks
+# for: cmake_minimum_required() only says so, and a command or a variable of a
+# later one configures all the same with a later one.
 set -euo pipefail
 root=$(cd "$(dirname "$0")/../.." && pwd)
+cmake=${EBISU_CMAKE:-cmake}
+"$cmake" --version | head -1
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
-cmake -S "$root" -B "$work/build" -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release > "$work/configure.log" \
+"$cmake" -S "$root" -B "$work/build" -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release > "$work/configure.log" \
     || { cat "$work/configure.log"; exit 1; }
-cmake --build "$work/build" -j"$(nproc)" > "$work/build.log" || { cat "$work/build.log"; exit 1; }
-cmake --install "$work/build" --prefix "$work/prefix" > /dev/null
+"$cmake" --build "$work/build" -j"$(nproc)" > "$work/build.log" || { cat "$work/build.log"; exit 1; }
+"$cmake" --install "$work/build" --prefix "$work/prefix" > /dev/null
 libdir=$(dirname "$(find "$work/prefix" -name 'ebisu-kii.pc')")/..
+
+# The licence and the notices go with the libraries.
+for f in LICENSE NOTICE; do
+    cmp "$root/$f" "$work/prefix/share/doc/ebisu/$f"
+done
 
 mkdir "$work/consumer"
 cat > "$work/consumer/main.c" <<'SOURCE'
@@ -48,9 +58,9 @@ add_executable(consumer main.c)
 target_link_libraries(consumer PRIVATE ebisu::dns_probe ebisu::openssl ebisu::posix ebisu::kii)
 SOURCE
 
-cmake -S "$work/consumer" -B "$work/consumer/build" -DCMAKE_PREFIX_PATH="$work/prefix" > "$work/consumer.log" \
+"$cmake" -S "$work/consumer" -B "$work/consumer/build" -DCMAKE_PREFIX_PATH="$work/prefix" > "$work/consumer.log" \
     || { cat "$work/consumer.log"; exit 1; }
-cmake --build "$work/consumer/build"
+"$cmake" --build "$work/consumer/build"
 echo "find_package:"
 LD_LIBRARY_PATH="$libdir" "$work/consumer/build/consumer"
 
