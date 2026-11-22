@@ -449,6 +449,12 @@ kii:
   ETag, and nothing for a header it skipped. An empty ETag passed to
   `kii_put_object()` or `kii_patch_object()` sends no `If-Match`, so the update
   wasn't conditional, as its caller meant it to be.
+- `kii_download_object_body()` gives its write callback the body of a 2xx
+  response alone. The body of any other response is read into the buffer set
+  by `kii_set_buff()`, as for the calls without a callback, cut short if it
+  doesn't fit, and the call returns `KII_ERR_RESP_STATUS` as before. 1.x gave
+  the callback every body, so an error's JSON was written where the object's
+  body was to go.
 
 khc, which kii and tio report in their own codes:
 

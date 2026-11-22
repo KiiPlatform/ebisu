@@ -207,6 +207,25 @@ exit:
     return ret;
 }
 
+// The write callback of a download. The body of a 2xx response is the
+// object's, and goes to the caller's callback. Any other is an error's: read
+// into kii's buffer as for any other call, where the session looks for a
+// refused token and the caller for what went wrong, and never written where
+// the object's body was to go. What of it the buffer has no room for is left
+// out, the status being what the call reports.
+static size_t _cb_write_download(char* buffer, size_t size, void* userdata)
+{
+    kii_t* kii = (kii_t*)userdata;
+    uint16_t status = khc_get_status_code(&kii->_khc);
+    if (200 <= status && status < 300) {
+        return kii->_download_cb(buffer, size, kii->_download_data);
+    }
+    if (!kii->_download_cut && _cb_write_buff(buffer, size, kii) != size) {
+        kii->_download_cut = true;
+    }
+    return size;
+}
+
 kii_code_t kii_download_object_body(
         kii_t* kii,
         const kii_bucket_t* bucket,
@@ -217,8 +236,13 @@ kii_code_t kii_download_object_body(
 {
     _reset_khc(kii);
     _reset_buff(kii);
-    khc_set_cb_write(&kii->_khc, write_cb, userdata);
-    kii->_req_streamed = true;
+    // The caller's callback gets the object's body alone, behind kii's own:
+    // see _cb_write_download(). The request has no body of the caller's, so
+    // it can be sent again.
+    kii->_download_cb = write_cb;
+    kii->_download_data = userdata;
+    kii->_download_cut = false;
+    khc_set_cb_write(&kii->_khc, _cb_write_download, kii);
 
     kii_code_t ret = _download_body(kii, bucket, object_id);
     if (ret != KII_ERR_OK) {
@@ -233,7 +257,8 @@ kii_code_t kii_download_object_body(
 
 exit:
     // Restore default callback.
-    kii->_req_streamed = false;
+    kii->_download_cb = NULL;
+    kii->_download_data = NULL;
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
     return ret;
 }
