@@ -693,7 +693,8 @@ static bool _publish_take(kii_t* kii)
     return taken;
 }
 
-// Whether the message sent at QoS 1 awaits a PUBACK, its caller there or not.
+// Whether a PUBACK may come: of the message sent at QoS 1, or of one before
+// it on this connection whose caller stopped waiting.
 static bool _publish_awaits_puback(kii_t* kii)
 {
     if (kii->_mqtt_lock == NULL) {
@@ -701,37 +702,55 @@ static bool _publish_awaits_puback(kii_t* kii)
     }
     _pub_lock(kii);
     const bool awaits = kii->_mqtt_pub_state == KII_MQTT_PUB_AWAITING_PUBACK ||
-        kii->_mqtt_pub_state == KII_MQTT_PUB_ABANDONED;
+        kii->_mqtt_pub_unacked_from != 0;
     _pub_unlock(kii);
     return awaits;
 }
 
+// Whether id is one of the packet identifiers given from first to last, which
+// go from 2 to 65535 and then from 2 again.
+static bool _is_id_given(uint16_t first, uint16_t last, uint16_t id)
+{
+    if (id < 2) {
+        return false;
+    }
+    return first <= last ? (first <= id && id <= last) : (id >= first || id <= last);
+}
+
 // Whether a PUBACK with packet identifier id acknowledges the message sent at
-// QoS 1, which is then done, or freed if its caller has gone.
+// QoS 1, which is then done, or one before it on this connection whose caller
+// stopped waiting: late, and no surprise.
 static bool _publish_acked(kii_t* kii, uint16_t id)
 {
     if (kii->_mqtt_lock == NULL) {
         return false;
     }
     _pub_lock(kii);
-    const uint8_t pub_state = kii->_mqtt_pub_state;
-    const bool acked = (pub_state == KII_MQTT_PUB_AWAITING_PUBACK ||
-            pub_state == KII_MQTT_PUB_ABANDONED) && kii->_mqtt_pub.packet_id == id;
-    if (acked && pub_state == KII_MQTT_PUB_AWAITING_PUBACK) {
+    bool acked = kii->_mqtt_pub_state == KII_MQTT_PUB_AWAITING_PUBACK &&
+        kii->_mqtt_pub.packet_id == id;
+    bool late = false;
+    if (acked) {
         kii->_mqtt_pub_result = KII_ERR_OK;
         kii->_mqtt_pub_state = KII_MQTT_PUB_DONE;
-    } else if (acked) {
-        kii->_mqtt_pub_state = KII_MQTT_PUB_FREE;
+    } else if (kii->_mqtt_pub_unacked_from != 0 &&
+            _is_id_given(kii->_mqtt_pub_unacked_from, kii->_mqtt_pub_last_id, id)) {
+        acked = true;
+        late = true;
     }
     _pub_unlock(kii);
+    if (late) {
+        _kii_log(kii, EBISU_LOG_INFO,
+                "MQTT task: the PUBACK of message %u came after kii_mqtt_publish() "
+                "had stopped waiting for it.", (unsigned)id);
+    }
     return acked;
 }
 
 // On a connection the broker accepted, a message at QoS 1 that the last one
 // left unacknowledged is sent again, with DUP and its packet identifier, as
 // MQTT has a client do on a session the broker kept: on a clean session too,
-// as its caller waits for it to be acknowledged. One whose caller has gone is
-// dropped.
+// as its caller waits for it to be acknowledged. One whose caller stopped
+// waiting isn't, and no PUBACK of it comes on this connection.
 static void _publish_reconnected(kii_t* kii)
 {
     if (kii->_mqtt_lock == NULL) {
@@ -741,9 +760,8 @@ static void _publish_reconnected(kii_t* kii)
     if (kii->_mqtt_pub_state == KII_MQTT_PUB_AWAITING_PUBACK) {
         kii->_mqtt_pub.dup = true;
         kii->_mqtt_pub_state = KII_MQTT_PUB_QUEUED;
-    } else if (kii->_mqtt_pub_state == KII_MQTT_PUB_ABANDONED) {
-        kii->_mqtt_pub_state = KII_MQTT_PUB_FREE;
     }
+    kii->_mqtt_pub_unacked_from = 0;
     _pub_unlock(kii);
 }
 
@@ -761,9 +779,8 @@ static void _publish_close(kii_t* kii)
     if (pub_state == KII_MQTT_PUB_QUEUED || pub_state == KII_MQTT_PUB_AWAITING_PUBACK) {
         kii->_mqtt_pub_result = KII_ERR_FAIL;
         kii->_mqtt_pub_state = KII_MQTT_PUB_DONE;
-    } else if (pub_state == KII_MQTT_PUB_ABANDONED) {
-        kii->_mqtt_pub_state = KII_MQTT_PUB_FREE;
     }
+    kii->_mqtt_pub_unacked_from = 0;
     _pub_unlock(kii);
 }
 
@@ -1774,11 +1791,21 @@ kii_code_t kii_mqtt_publish(
             return res;
         }
         if (timed_out && pub_state == KII_MQTT_PUB_AWAITING_PUBACK) {
-            // Its PUBACK may still come, which is then no surprise.
-            kii->_mqtt_pub_state = KII_MQTT_PUB_ABANDONED;
+            // Done with: the next message doesn't wait for a PUBACK that may
+            // never come. If it does come, on this connection, it is no
+            // surprise, nor that of a message given since.
+            const uint16_t id = kii->_mqtt_pub.packet_id;
+            if (kii->_mqtt_pub_unacked_from == 0) {
+                kii->_mqtt_pub_unacked_from = id;
+            }
+            kii->_mqtt_pub_state = KII_MQTT_PUB_FREE;
             kii->_mqtt_pub.topic = NULL;
             kii->_mqtt_pub.payload = NULL;
             _pub_unlock(kii);
+            _kii_log(kii, EBISU_LOG_WARNING,
+                    "no PUBACK of message %u within %lu ms: kii_mqtt_publish() stops "
+                    "waiting for it. The broker may have it.",
+                    (unsigned)id, (unsigned long)timeout_ms);
             return KII_ERR_TIMEOUT;
         }
         // Being sent, which reads topic and payload, or not yet timed out.

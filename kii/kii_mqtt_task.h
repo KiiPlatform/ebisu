@@ -111,10 +111,6 @@ enum {
     KII_MQTT_PUB_SENDING,
     /* Sent at QoS 1, and waiting for its PUBACK. */
     KII_MQTT_PUB_AWAITING_PUBACK,
-    /* As KII_MQTT_PUB_AWAITING_PUBACK, but its caller timed out and returned:
-     * only its packet identifier is left, for the PUBACK that may still come.
-     * The next message waits for that, or for the next connection. */
-    KII_MQTT_PUB_ABANDONED,
     /* Done, with kii_t::_mqtt_pub_result for its caller, which frees it. */
     KII_MQTT_PUB_DONE
 };
