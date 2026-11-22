@@ -87,6 +87,7 @@ cd /tmp/b
 gcc "${cflags[@]}" "${inc[@]}" -c /src/core/src/ebisu_clock.c -o clock.o
 gcc "${cflags[@]}" "${inc[@]}" -c /src/core/src/ebisu_dns.c -o dns.o
 gcc "${cflags[@]}" "${inc[@]}" -c /src/core/src/ebisu_log.c -o log.o
+gcc "${cflags[@]}" "${inc[@]}" -c /src/core/src/ebisu_server_clock.c -o server_clock.o
 gcc "${cflags[@]}" "${inc[@]}" -c /src/platform/openssl/src/ebisu_openssl.c -o openssl.o
 gcc "${cflags[@]}" "${inc[@]}" -c /src/platform/posix/src/ebisu_posix.c -o posix.o
 
@@ -94,7 +95,8 @@ printf '#define CATCH_CONFIG_MAIN\n#include "catch.hpp"\n' > main.cpp
 g++ -std=c++11 "${tinc[@]}" -c main.cpp -o main.o
 g++ -std=c++11 "${tinc[@]}" -c /src/tests/large_test/kii/openssl_socket_test.cpp -o openssl_test.o
 g++ -std=c++11 "${tinc[@]}" -c /src/tests/small_test/tio/posix_test.cpp -o posix_test.o
-g++ main.o openssl_test.o clock.o dns.o log.o openssl.o "${libs[@]}" -o openssl_test
+g++ main.o openssl_test.o clock.o dns.o log.o openssl.o posix.o server_clock.o "${libs[@]}" \
+    -o openssl_test
 g++ main.o posix_test.o posix.o clock.o -lpthread -o posix_test
 # And without logging, as -DEBISU_LOG=OFF builds it, whose test checks that
 # nothing is logged.
@@ -102,7 +104,8 @@ gcc "${cflags[@]}" -DEBISU_NO_LOG "${inc[@]}" -c /src/platform/openssl/src/ebisu
     -o openssl_no_log.o
 g++ -std=c++11 -DEBISU_NO_LOG "${tinc[@]}" -c /src/tests/large_test/kii/openssl_socket_test.cpp \
     -o openssl_no_log_test.o
-g++ main.o openssl_no_log_test.o clock.o dns.o openssl_no_log.o "${libs[@]}" -o openssl_no_log_test
+g++ main.o openssl_no_log_test.o clock.o dns.o openssl_no_log.o posix.o server_clock.o "${libs[@]}" \
+    -o openssl_no_log_test
 
 echo "OpenSSL port:"
 timeout 300 ./openssl_test
