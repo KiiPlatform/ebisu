@@ -1,5 +1,6 @@
 #include "ebisu_mbedtls.h"
 
+#include <ebisu_dns.h>
 #include <ebisu_object.h>
 #include <ebisu_time.h>
 
@@ -443,12 +444,78 @@ static bool public_key_hashes_to(const mbedtls_x509_crt* crt, const unsigned cha
 #endif
 }
 
+/* Whether the certificate is issued for the address, of length bytes: whether
+   its subjectAltName has it as an iPAddress. Only the later versions of
+   mbedTLS 3 keep those of a certificate, so this reads them from the
+   extensions as they came, which mbedTLS has parsed: a SEQUENCE of extensions, each a SEQUENCE of
+   an OID, a BOOLEAN that may be left out, and an OCTET STRING, which for a
+   subjectAltName holds a SEQUENCE of names. */
+static bool is_issued_for_address(const mbedtls_x509_crt* crt, const unsigned char* address,
+        size_t length)
+{
+    static const unsigned char SUBJECT_ALT_NAME[] = { 0x55, 0x1d, 0x11 };
+    const int sequence = MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE;
+    unsigned char* p = crt->v3_ext.p;
+    const unsigned char* end;
+    size_t len = 0;
+    if (p == NULL || crt->v3_ext.len == 0) {
+        return false;
+    }
+    end = p + crt->v3_ext.len;
+    if (mbedtls_asn1_get_tag(&p, end, &len, sequence) != 0) {
+        return false;
+    }
+    end = p + len;
+    while (p < end) {
+        const unsigned char* extension_end;
+        if (mbedtls_asn1_get_tag(&p, end, &len, sequence) != 0) {
+            return false;
+        }
+        extension_end = p + len;
+        if (mbedtls_asn1_get_tag(&p, extension_end, &len, MBEDTLS_ASN1_OID) != 0) {
+            return false;
+        }
+        if (len != sizeof(SUBJECT_ALT_NAME) || memcmp(p, SUBJECT_ALT_NAME, len) != 0) {
+            p = (unsigned char*)extension_end;
+            continue;
+        }
+        p += len;
+        if (p < extension_end && *p == MBEDTLS_ASN1_BOOLEAN) {
+            if (mbedtls_asn1_get_tag(&p, extension_end, &len, MBEDTLS_ASN1_BOOLEAN) != 0) {
+                return false;
+            }
+            p += len;
+        }
+        if (mbedtls_asn1_get_tag(&p, extension_end, &len, MBEDTLS_ASN1_OCTET_STRING) != 0 ||
+                mbedtls_asn1_get_tag(&p, p + len, &len, sequence) != 0) {
+            return false;
+        }
+        end = p + len;
+        while (p < end) {
+            /* [7], an iPAddress: its 4 or 16 bytes. */
+            const unsigned char tag = *p++;
+            if (mbedtls_asn1_get_len(&p, end, &len) != 0) {
+                return false;
+            }
+            if (tag == (MBEDTLS_ASN1_CONTEXT_SPECIFIC | 7) && len == length &&
+                    memcmp(p, address, length) == 0) {
+                return true;
+            }
+            p += len;
+        }
+        /* A certificate has one subjectAltName at the most. */
+        return false;
+    }
+    return false;
+}
+
 /* mbedTLS calls this for each certificate of the chain it built, from the CA's
    to the server's, with what it found wrong with it in flags.
    A pin is checked against the server's, depth 0's, the others taken; and no
    check takes them all. Without its name checked, the server's is taken for
-   another name. With a clock, the validity periods are the clock's to check,
-   in place of mbedTLS's check at the system's time, if it made one. */
+   another name. A host that is an address is checked here, mbedTLS having
+   been given no name. With a clock, the validity periods are the clock's to
+   check, in place of mbedTLS's check at the system's time, if it made one. */
 static int verify(void* arg, mbedtls_x509_crt* crt, int depth, uint32_t* flags)
 {
     ebisu_mbedtls_socket_t* sock = (ebisu_mbedtls_socket_t*)arg;
@@ -468,6 +535,10 @@ static int verify(void* arg, mbedtls_x509_crt* crt, int depth, uint32_t* flags)
             }
             break;
         default:
+            if (depth == 0 && sock->_address_length != 0 &&
+                    !is_issued_for_address(crt, sock->_address, sock->_address_length)) {
+                *flags |= MBEDTLS_X509_BADCERT_CN_MISMATCH;
+            }
             break;
     }
     if (sock->_clock == NULL) {
@@ -637,7 +708,27 @@ static ebisu_sock_code_t mbedtls_connect(ebisu_socket_t* self, const char* host,
     ret = mbedtls_ssl_setup(&sock->_ssl, &sock->_config);
 #endif
     if (ret == 0) {
-        ret = mbedtls_ssl_set_hostname(&sock->_ssl, host);
+        /* The name the server is to present a certificate for, and the one
+           mbedTLS checks the certificate for. An address is no name: the
+           server is told none, as RFC 6066 has it, and verify() checks the
+           certificate for the address, among its subjectAltNames of that
+           kind, which only the later versions of mbedTLS 3 read, and which
+           no name of the same text is. An address is what a socket takes for one, its scope
+           aside, which no certificate has. */
+        ebisu_dns_addr_t address;
+        sock->_address_length = 0;
+        if (ebisu_dns_parse_address(NULL, host, strlen(host), 0, true, &address)) {
+            sock->_address_length = address.family == EBISU_DNS_IPV4 ? 4 : 16;
+            memcpy(sock->_address, address.bytes, sock->_address_length);
+            /* No name, said: 3.6.3 and later fail a handshake that was told
+               nothing. Before 2.7, there is none to say, and no saying so. */
+            ret = mbedtls_ssl_set_hostname(&sock->_ssl, NULL);
+            if (ret == MBEDTLS_ERR_SSL_BAD_INPUT_DATA) {
+                ret = 0;
+            }
+        } else {
+            ret = mbedtls_ssl_set_hostname(&sock->_ssl, host);
+        }
     }
     if (ret != 0) {
         log_tls_error(sock->_logger, "failed to set up TLS for", host, &sock->_ssl, ret);

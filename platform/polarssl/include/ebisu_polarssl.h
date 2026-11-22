@@ -215,6 +215,11 @@ void ebisu_polarssl_tls_free(ebisu_polarssl_tls_t* tls);
  * system's time, with POLARSSL_HAVE_TIME; without that either, the socket
  * doesn't connect, rather than not check them.
  *
+ * A host given as an IPv4 or IPv6 address, in any form
+ * ebisu_dns_parse_address() takes, is checked against the addresses the
+ * certificate is issued for, by the socket itself, whatever the version of
+ * PolarSSL, and not against its names. The server is sent no server name then.
+ *
  * A close_notify of the server's, or the end of the stream under it, is the end
  * of the stream. recv_wait, when the socket under it has one, counts what
  * PolarSSL has received and not yet returned.
@@ -272,6 +277,10 @@ typedef struct ebisu_polarssl_socket_t {
     /** \private Whether it has said that a connection's cipher suite is
      * none of those the port would have. */
     bool _suite_warned;
+    /** \private The address the connection's host is, of 4 or 16 bytes, for
+     * the certificate to be checked for; 0 bytes for a name. */
+    unsigned char _address_length;
+    unsigned char _address[16]; /**< \private */
     /** \private Why the last operation that returned EBISU_SOCK_FAIL failed,
      * for last_error, and more of it. */
     ebisu_sock_error_t _error;

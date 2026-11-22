@@ -69,11 +69,15 @@ void add_extension(X509* cert, X509V3_CTX* ctx, int nid, const std::string& valu
     X509_EXTENSION_free(extension);
 }
 
+// For issue()'s alt_names: a subjectAltName with one name, a dNSName, of
+// the 4 bytes 127.0.0.1 is as an address.
+const char LOOPBACK_AS_NAME[] = "a dNSName of 127.0.0.1's bytes";
+
 // A certificate for name, valid from not_before to not_after, issued by the
 // issuer with its key, or self-signed without one: a CA's, or a server's.
 X509* issue(EVP_PKEY* key, const std::string& name, bool ca, time_t not_before,
         time_t not_after, X509* issuer = nullptr, EVP_PKEY* issuer_key = nullptr,
-        bool alt_name = true)
+        bool alt_name = true, const std::string& alt_names = "")
 {
     static long serial = 1;
     X509* cert = X509_new();
@@ -99,8 +103,21 @@ X509* issue(EVP_PKEY* key, const std::string& name, bool ca, time_t not_before,
         add_extension(cert, &ctx, NID_key_usage, "critical,keyCertSign,cRLSign");
     } else {
         add_extension(cert, &ctx, NID_basic_constraints, "CA:FALSE");
-        if (alt_name) {
-            add_extension(cert, &ctx, NID_subject_alt_name, "DNS:" + name);
+        if (alt_name && alt_names == LOOPBACK_AS_NAME) {
+            // What no configuration string says: a dNSName of an address's
+            // bytes.
+            static const unsigned char loopback[] = { 127, 0, 0, 1 };
+            GENERAL_NAMES* names = sk_GENERAL_NAME_new_null();
+            GENERAL_NAME* entry = GENERAL_NAME_new();
+            ASN1_IA5STRING* value = ASN1_IA5STRING_new();
+            REQUIRE( ASN1_STRING_set(value, loopback, sizeof(loopback)) == 1 );
+            GENERAL_NAME_set0_value(entry, GEN_DNS, value);
+            sk_GENERAL_NAME_push(names, entry);
+            REQUIRE( X509_add1_ext_i2d(cert, NID_subject_alt_name, names, 0, 0) == 1 );
+            sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
+        } else if (alt_name) {
+            add_extension(cert, &ctx, NID_subject_alt_name,
+                    alt_names.empty() ? "DNS:" + name : alt_names);
         }
         add_extension(cert, &ctx, NID_ext_key_usage, "serverAuth");
     }
@@ -1478,5 +1495,119 @@ TEST_CASE( "The PolarSSL socket gives up a handshake at the time set for it" ) {
         CHECK( client.tls._handshake_ms == 0 );
         ebisu_polarssl_socket_set_handshake_timeout(&client.tls, ebisu_posix_system(), 3);
         CHECK( client.tls._handshake_ms == 3000 );
+    }
+}
+
+namespace {
+
+// The server name of the last ClientHello a server of this file took, or
+// "none" for a ClientHello without one.
+std::string sni_seen;
+
+int note_sni(SSL* ssl, int*, void*)
+{
+    const char* name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+    sni_seen = name != nullptr ? name : "none";
+    return SSL_TLSEXT_ERR_OK;
+}
+
+// What connecting to host gives, at a server whose certificate has alt_names
+// for its subjectAltName, or none without any, and name for its commonName.
+ebisu_sock_error_t connect_to_host(const char* host, const std::string& alt_names,
+        ebisu_tls_verify_t verify = EBISU_TLS_VERIFY_FULL, const char* name = "other.invalid")
+{
+    Config config;
+    REQUIRE( ebisu_polarssl_tls_set_verify(&config.tls, verify, nullptr) );
+    ebisu_sock_error_t error = EBISU_SOCK_ERROR_NONE;
+    long detail = 0;
+    sni_seen = "no handshake";
+    {
+        TlsServer server(issue(pki().key, name, false, pki().now - DAY, pki().now + DAY,
+                    pki().ca, pki().ca_key, !alt_names.empty(), alt_names), nothing);
+        REQUIRE( SSL_CTX_set_tlsext_servername_callback(server.ctx, note_sni) == 1 );
+        Client client(&config.tls);
+        if (client.connect(server.port, host) != EBISU_SOCK_OK) {
+            error = client.error(&detail);
+        }
+    }
+    if (error == EBISU_SOCK_ERROR_VERIFY) {
+        // Its name, and nothing else of it.
+        CHECK( detail == BADCERT_CN_MISMATCH );
+    }
+    return error;
+}
+
+}
+
+// A certificate names the addresses it is issued for apart from the names:
+// in subjectAltNames of a kind of their own, which PolarSSL doesn't match a
+// host against. And a ClientHello's server name is a name, never an address
+// (RFC 6066, section 3).
+TEST_CASE( "The PolarSSL socket checks a host given as an address against the certificate's addresses" ) {
+    SECTION("an IPv4 address the certificate is issued for, in any form a socket takes") {
+        CHECK( connect_to_host("127.0.0.1", "IP:127.0.0.1") == EBISU_SOCK_ERROR_NONE );
+        CHECK( sni_seen == "none" );
+        CHECK( connect_to_host("127.1", "IP:127.0.0.1") == EBISU_SOCK_ERROR_NONE );
+        CHECK( sni_seen == "none" );
+        CHECK( connect_to_host("0x7f000001", "IP:127.0.0.1") == EBISU_SOCK_ERROR_NONE );
+        CHECK( sni_seen == "none" );
+    }
+    SECTION("an IPv6 address the certificate is issued for") {
+        // The server's, as IPv6 has an IPv4 address.
+        CHECK( connect_to_host("::ffff:127.0.0.1", "IP:::ffff:127.0.0.1") == EBISU_SOCK_ERROR_NONE );
+        CHECK( sni_seen == "none" );
+        CHECK( connect_to_host("0:0:0:0:0:ffff:7f00:1", "IP:::ffff:127.0.0.1") == EBISU_SOCK_ERROR_NONE );
+        CHECK( sni_seen == "none" );
+    }
+    SECTION("among other names and addresses, in a subjectAltName that is critical or not") {
+        CHECK( connect_to_host("127.0.0.1", "DNS:other.invalid,IP:10.0.0.1,IP:::1,IP:127.0.0.1") ==
+                EBISU_SOCK_ERROR_NONE );
+        CHECK( connect_to_host("127.0.0.1", "critical,IP:10.0.0.1,IP:127.0.0.1") ==
+                EBISU_SOCK_ERROR_NONE );
+    }
+    SECTION("an address the certificate isn't issued for") {
+        CHECK( connect_to_host("127.0.0.1", "IP:127.0.0.2") == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( sni_seen == "none" );
+        CHECK( connect_to_host("127.0.0.1", "IP:10.0.0.1,IP:127.0.0.2,DNS:localhost") ==
+                EBISU_SOCK_ERROR_VERIFY );
+        // IPv4's is none of IPv6's that has it, nor the other way round.
+        CHECK( connect_to_host("127.0.0.1", "IP:::ffff:127.0.0.1") == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( connect_to_host("::ffff:127.0.0.1", "IP:127.0.0.1") == EBISU_SOCK_ERROR_VERIFY );
+        // Nor of one that begins with its bytes.
+        CHECK( connect_to_host("127.0.0.1", "IP:7f00:1::") == EBISU_SOCK_ERROR_VERIFY );
+    }
+    SECTION("an address the certificate has as a name, which is no address") {
+        CHECK( connect_to_host("127.0.0.1", "DNS:127.0.0.1") == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( connect_to_host("127.0.0.1", "DNS:other.invalid", EBISU_TLS_VERIFY_FULL,
+                    "127.0.0.1") == EBISU_SOCK_ERROR_VERIFY );
+        // Nor is a name of the address's bytes.
+        CHECK( connect_to_host("127.0.0.1", LOOPBACK_AS_NAME) == EBISU_SOCK_ERROR_VERIFY );
+        // Without a subjectAltName at all.
+        CHECK( connect_to_host("127.0.0.1", "", EBISU_TLS_VERIFY_FULL, "127.0.0.1") ==
+                EBISU_SOCK_ERROR_VERIFY );
+    }
+    SECTION("no address, when the configuration checks the chain without the name") {
+        CHECK( connect_to_host("127.0.0.1", "IP:127.0.0.2", EBISU_TLS_VERIFY_CHAIN) ==
+                EBISU_SOCK_ERROR_NONE );
+        CHECK( sni_seen == "none" );
+    }
+    SECTION("a name, with a socket that connected to an address before") {
+        Config config;
+        Client client(&config.tls);
+        {
+            TlsServer server(issue(pki().key, "other.invalid", false, pki().now - DAY,
+                        pki().now + DAY, pki().ca, pki().ca_key, true, "IP:127.0.0.1"), nothing);
+            REQUIRE( client.connect(server.port, "127.0.0.1") == EBISU_SOCK_OK );
+            CHECK( client.sock->ops->close(client.sock) == EBISU_SOCK_OK );
+        }
+        TlsServer server(pki().server(), nothing);
+        CHECK( client.connect(server.port) == EBISU_SOCK_OK );
+    }
+    SECTION("a name, as before: sent to the server, and checked against the names") {
+        CHECK( connect_to_host("localhost", "DNS:localhost,IP:127.0.0.1") == EBISU_SOCK_ERROR_NONE );
+        CHECK( sni_seen == "localhost" );
+        CHECK( connect_to_host("localhost", "DNS:other.invalid,IP:127.0.0.1") ==
+                EBISU_SOCK_ERROR_VERIFY );
+        CHECK( sni_seen == "localhost" );
     }
 }

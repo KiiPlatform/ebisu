@@ -1,5 +1,6 @@
 #include "ebisu_polarssl.h"
 
+#include <ebisu_dns.h>
 #include <ebisu_object.h>
 #include <ebisu_time.h>
 
@@ -420,13 +421,79 @@ static bool public_key_hashes_to(const x509_crt* crt, const unsigned char* pin)
 #endif
 }
 
+/* Whether the certificate is issued for the address, of length bytes: whether
+   its subjectAltName has it as an iPAddress. PolarSSL keeps a certificate's
+   names only, so this reads them from the extensions as they came, which
+   PolarSSL has parsed: a SEQUENCE of extensions, each a SEQUENCE of an OID, a
+   BOOLEAN that may be left out, and an OCTET STRING, which for a
+   subjectAltName holds a SEQUENCE of names. */
+static bool is_issued_for_address(const x509_crt* crt, const unsigned char* address,
+        size_t length)
+{
+    static const unsigned char SUBJECT_ALT_NAME[] = { 0x55, 0x1d, 0x11 };
+    const int sequence = ASN1_CONSTRUCTED | ASN1_SEQUENCE;
+    unsigned char* p = crt->v3_ext.p;
+    const unsigned char* end;
+    size_t len = 0;
+    if (p == NULL || crt->v3_ext.len == 0) {
+        return false;
+    }
+    end = p + crt->v3_ext.len;
+    if (asn1_get_tag(&p, end, &len, sequence) != 0) {
+        return false;
+    }
+    end = p + len;
+    while (p < end) {
+        const unsigned char* extension_end;
+        if (asn1_get_tag(&p, end, &len, sequence) != 0) {
+            return false;
+        }
+        extension_end = p + len;
+        if (asn1_get_tag(&p, extension_end, &len, ASN1_OID) != 0) {
+            return false;
+        }
+        if (len != sizeof(SUBJECT_ALT_NAME) || memcmp(p, SUBJECT_ALT_NAME, len) != 0) {
+            p = (unsigned char*)extension_end;
+            continue;
+        }
+        p += len;
+        if (p < extension_end && *p == ASN1_BOOLEAN) {
+            if (asn1_get_tag(&p, extension_end, &len, ASN1_BOOLEAN) != 0) {
+                return false;
+            }
+            p += len;
+        }
+        if (asn1_get_tag(&p, extension_end, &len, ASN1_OCTET_STRING) != 0 ||
+                asn1_get_tag(&p, p + len, &len, sequence) != 0) {
+            return false;
+        }
+        end = p + len;
+        while (p < end) {
+            /* [7], an iPAddress: its 4 or 16 bytes. */
+            const unsigned char tag = *p++;
+            if (asn1_get_len(&p, end, &len) != 0) {
+                return false;
+            }
+            if (tag == (ASN1_CONTEXT_SPECIFIC | 7) && len == length &&
+                    memcmp(p, address, length) == 0) {
+                return true;
+            }
+            p += len;
+        }
+        /* A certificate has one subjectAltName at the most. */
+        return false;
+    }
+    return false;
+}
+
 /* PolarSSL calls this for each certificate of the chain it built, from the
    CA's to the server's, with what it found wrong with it in flags. A pin is
    checked against the server's, depth 0's, the others taken; and no check
    takes them all. The server's name is checked in full only, as PolarSSL is
-   given it only then. With a clock, the validity periods are the clock's to
-   check, in place of PolarSSL's check at the system's time, if it made
-   one. */
+   given it only then. A host that is an address is checked here, PolarSSL
+   having been given no name. With a clock, the validity periods are the
+   clock's to check, in place of PolarSSL's check at the system's time, if it
+   made one. */
 static int verify(void* arg, x509_crt* crt, int depth, int* flags)
 {
     ebisu_polarssl_socket_t* sock = (ebisu_polarssl_socket_t*)arg;
@@ -440,6 +507,12 @@ static int verify(void* arg, x509_crt* crt, int depth, int* flags)
             *flags = depth != 0 || hashes_to(crt->raw.p, crt->raw.len, tls->_pin) ||
                 public_key_hashes_to(crt, tls->_pin) ? 0 : BADCERT_OTHER;
             return 0;
+        case EBISU_TLS_VERIFY_FULL:
+            if (depth == 0 && sock->_address_length != 0 &&
+                    !is_issued_for_address(crt, sock->_address, sock->_address_length)) {
+                *flags |= BADCERT_CN_MISMATCH;
+            }
+            break;
         default:
             break;
     }
@@ -561,7 +634,20 @@ static int set_up(ebisu_polarssl_socket_t* sock, const char* host)
     if (tls->_suites[0] != 0) {
         ssl_set_ciphersuites(ssl, tls->_suites);
     }
-    /* The name to check the server's certificate for, in full only. */
+    /* The name to check the server's certificate for, in full only, and the
+       one the server is to present a certificate for. An address is no name:
+       the server is told none, as RFC 6066 has it, and verify() checks the
+       certificate for the address, among its subjectAltNames of that kind,
+       which PolarSSL doesn't read, and which no name of the same text is. An
+       address is what a socket takes for one, its scope aside, which no
+       certificate has. */
+    ebisu_dns_addr_t address;
+    sock->_address_length = 0;
+    if (ebisu_dns_parse_address(NULL, host, strlen(host), 0, true, &address)) {
+        sock->_address_length = address.family == EBISU_DNS_IPV4 ? 4 : 16;
+        memcpy(sock->_address, address.bytes, sock->_address_length);
+        host = NULL;
+    }
     ssl_set_ca_chain(ssl, &tls->_ca, NULL, tls->_verify == EBISU_TLS_VERIFY_FULL ? host : NULL);
     ssl_set_verify(ssl, verify, sock);
 #if EBISU_POLARSSL_SETS_RNG
@@ -569,9 +655,11 @@ static int set_up(ebisu_polarssl_socket_t* sock, const char* host)
 #endif
     ssl_set_bio(ssl, bio_recv, sock, bio_send, sock);
 #if defined(POLARSSL_SSL_SERVER_NAME_INDICATION)
-    ret = ssl_set_hostname(ssl, host);
-    if (ret != 0) {
-        return ret;
+    if (host != NULL) {
+        ret = ssl_set_hostname(ssl, host);
+        if (ret != 0) {
+            return ret;
+        }
     }
 #endif
     if (tls->_setup != NULL) {
