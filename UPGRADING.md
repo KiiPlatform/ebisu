@@ -282,6 +282,10 @@ With CMake:
 - There is one project, at the root of the repository. The `CMakeLists.txt` of
   `jkii`, `khc`, `kii` and `tio` no longer build on their own: configure from
   the root, or `add_subdirectory()` it.
+- Added with `add_subdirectory()`, ebisu builds what the project's
+  `BUILD_SHARED_LIBS` says, static libraries if it says nothing, as CMake does:
+  it declares that option, on by default, only when configured from its own
+  root, so that it no longer makes the project's own libraries shared.
 - The Makefiles at the root, in each component, in `tio/linux-sample` and in the
   tests are gone. See Building in the [README](./README.md#building). The cc3200
   and gt202 samples keep theirs, in `legacy/`, where the two have moved from
