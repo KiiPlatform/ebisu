@@ -303,7 +303,7 @@ int main(int argc, char** argv)
                     exit(1);
                 }
                 if (password == NULL) {
-                    printf("password is not specifeid.\n");
+                    printf("password is not specified.\n");
                     exit(1);
                 }
                 // Used to onboard again when the server refuses the token, or the broker
@@ -324,7 +324,9 @@ int main(int argc, char** argv)
                 printf("Onboarding succeeded!\n");
                 break;
             }
-            printf("option %s : %s\n", optName, optarg);
+            // Not the password, which a terminal's scrollback and a service's
+            // log keep.
+            printf("option %s : %s\n", optName, c == 1 ? "(given)" : optarg);
             switch(c) {
                 case 0:
                     vendorThingID = optarg;

@@ -266,7 +266,9 @@ int main(int argc, char** argv)
                 if (matched < 0) {
                     return 1;
                 }
-                printf("option password : %s\n", password);
+                // Not the password itself, which a terminal's scrollback
+                // and a service's log keep.
+                printf("option password : (given)\n");
             } else if (strcmp(argv[i], "--help") == 0) {
                 print_onboard_usage();
                 return 0;
