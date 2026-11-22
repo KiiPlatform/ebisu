@@ -144,62 +144,64 @@ $(function() {
 <div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span></div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#ab86dbd0f0ac75ceb587fd8b19128aaa0">  188</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__mbedtls_8h.html#ab86dbd0f0ac75ceb587fd8b19128aaa0">ebisu_mbedtls_tls_free</a>(<a class="code hl_struct" href="structebisu__mbedtls__tls__t.html">ebisu_mbedtls_tls_t</a>* tls);</div>
 <div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span></div>
-<div class="foldopen" id="foldopen00228" data-start="{" data-end="};">
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno"><a class="line" href="structebisu__mbedtls__socket__t.html">  228</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a> {</div>
-<div class="line"><a id="l00229" name="l00229"></a><span class="lineno"><a class="line" href="structebisu__mbedtls__socket__t.html#a6cbf4a51e723d4380e00db08a9572a14">  229</a></span>    <a class="code hl_structRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a> <a class="code hl_variable" href="structebisu__mbedtls__socket__t.html#a6cbf4a51e723d4380e00db08a9572a14">base</a>; </div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    <a class="code hl_structRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a>* _transport; </div>
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>    <a class="code hl_struct" href="structebisu__mbedtls__tls__t.html">ebisu_mbedtls_tls_t</a>* _tls; </div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>    <a class="code hl_structRef" href="../../core/html/structebisu__clock__t.html">ebisu_clock_t</a>* _clock; </div>
-<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    <a class="code hl_structRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a>* _logger; </div>
-<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>    mbedtls_ssl_context _ssl; </div>
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>    <span class="keywordtype">bool</span> _open;</div>
-<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>    <span class="keywordtype">bool</span> _failed;</div>
-<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>    <span class="keywordtype">bool</span> _time_exact;</div>
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>    <span class="keywordtype">bool</span> _timed_out;</div>
-<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>    <span class="keywordtype">bool</span> _again;</div>
-<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>    <span class="keywordtype">bool</span> _recv_timed_out;</div>
-<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>    <a class="code hl_enumerationRef" href="../../core/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a> _transport_error;</div>
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>    <span class="keywordtype">long</span> _transport_detail; </div>
-<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>    <a class="code hl_structRef" href="../../core/html/structebisu__system__t.html">ebisu_system_t</a>* _system;</div>
-<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>    uint32_t _handshake_ms; </div>
-<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>    uint64_t _handshake_start_ms;</div>
-<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>    <span class="keywordtype">bool</span> _handshaking; </div>
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>    <span class="keywordtype">bool</span> _handshake_ran_out; </div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>    <span class="keywordtype">bool</span> _suite_warned;</div>
-<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>    <a class="code hl_enumerationRef" href="../../core/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a> _error;</div>
-<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>    <span class="keywordtype">long</span> _error_detail; </div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span><span class="preprocessor">#if MBEDTLS_VERSION_NUMBER &lt; 0x02120000</span><span class="preprocessor"></span></div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>    mbedtls_ssl_config _config;</div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00277" name="l00277"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#ad23c56f0dfcb307ef1af753279523f9e">  277</a></span>} <a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a>;</div>
+<div class="foldopen" id="foldopen00233" data-start="{" data-end="};">
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno"><a class="line" href="structebisu__mbedtls__socket__t.html">  233</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a> {</div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno"><a class="line" href="structebisu__mbedtls__socket__t.html#a6cbf4a51e723d4380e00db08a9572a14">  234</a></span>    <a class="code hl_structRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a> <a class="code hl_variable" href="structebisu__mbedtls__socket__t.html#a6cbf4a51e723d4380e00db08a9572a14">base</a>; </div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>    <a class="code hl_structRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a>* _transport; </div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>    <a class="code hl_struct" href="structebisu__mbedtls__tls__t.html">ebisu_mbedtls_tls_t</a>* _tls; </div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>    <a class="code hl_structRef" href="../../core/html/structebisu__clock__t.html">ebisu_clock_t</a>* _clock; </div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>    <a class="code hl_structRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a>* _logger; </div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>    mbedtls_ssl_context _ssl; </div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>    <span class="keywordtype">bool</span> _open;</div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>    <span class="keywordtype">bool</span> _failed;</div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>    <span class="keywordtype">bool</span> _time_exact;</div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>    <span class="keywordtype">bool</span> _timed_out;</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>    <span class="keywordtype">bool</span> _again;</div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>    <span class="keywordtype">bool</span> _recv_timed_out;</div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>    <a class="code hl_enumerationRef" href="../../core/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a> _transport_error;</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>    <span class="keywordtype">long</span> _transport_detail; </div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>    <a class="code hl_structRef" href="../../core/html/structebisu__system__t.html">ebisu_system_t</a>* _system;</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>    uint32_t _handshake_ms; </div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>    uint64_t _handshake_start_ms;</div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>    <span class="keywordtype">bool</span> _handshaking; </div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>    <span class="keywordtype">bool</span> _handshake_ran_out; </div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>    <span class="keywordtype">bool</span> _suite_warned;</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> _address_length;</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> _address[16]; </div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>    <a class="code hl_enumerationRef" href="../../core/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a> _error;</div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>    <span class="keywordtype">long</span> _error_detail; </div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span><span class="preprocessor">#if MBEDTLS_VERSION_NUMBER &lt; 0x02120000</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>    mbedtls_ssl_config _config;</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#ad23c56f0dfcb307ef1af753279523f9e">  286</a></span>} <a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a>;</div>
 </div>
-<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span></div>
-<div class="line"><a id="l00289" name="l00289"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#a01d7f2e770693bad198923c60da99a51">  289</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__mbedtls_8h.html#a01d7f2e770693bad198923c60da99a51">ebisu_mbedtls_socket_init</a>(</div>
-<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>        <a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a>* sock,</div>
-<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>        <a class="code hl_structRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a>* transport,</div>
-<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>        <a class="code hl_struct" href="structebisu__mbedtls__tls__t.html">ebisu_mbedtls_tls_t</a>* tls);</div>
-<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span></div>
-<div class="line"><a id="l00319" name="l00319"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#a4c7400447203aad107f53996283486dd">  319</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__mbedtls_8h.html#a4c7400447203aad107f53996283486dd">ebisu_mbedtls_socket_set_handshake_timeout</a>(<a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a>* sock,</div>
-<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span>        <a class="code hl_structRef" href="../../core/html/structebisu__system__t.html">ebisu_system_t</a>* system, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> seconds);</div>
-<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span></div>
-<div class="line"><a id="l00337" name="l00337"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#a5a585d6e421c64c646b6ffb83fa5b2bc">  337</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__mbedtls_8h.html#a5a585d6e421c64c646b6ffb83fa5b2bc">ebisu_mbedtls_socket_set_clock</a>(<a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a>* sock, <a class="code hl_structRef" href="../../core/html/structebisu__clock__t.html">ebisu_clock_t</a>* clock);</div>
-<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span></div>
-<div class="line"><a id="l00353" name="l00353"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#a96077bf9eb7956f90a0a92643fe6c2c3">  353</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__mbedtls_8h.html#a96077bf9eb7956f90a0a92643fe6c2c3">ebisu_mbedtls_socket_set_logger</a>(<a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a>* sock, <a class="code hl_structRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a>* logger);</div>
-<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span></div>
-<div class="line"><a id="l00366" name="l00366"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#a7d856d4dbb0184cc58ad64b34d6d92cd">  366</a></span><span class="keyword">const</span> <span class="keywordtype">char</span>* <a class="code hl_function" href="ebisu__mbedtls_8h.html#a7d856d4dbb0184cc58ad64b34d6d92cd">ebisu_mbedtls_socket_get_protocol</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a>* sock);</div>
-<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span></div>
-<div class="line"><a id="l00379" name="l00379"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#a888a21004ed7d10309707f233a3acb17">  379</a></span><span class="keyword">const</span> <span class="keywordtype">char</span>* <a class="code hl_function" href="ebisu__mbedtls_8h.html#a888a21004ed7d10309707f233a3acb17">ebisu_mbedtls_socket_get_cipher</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a>* sock);</div>
-<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span> </div>
-<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span>}</div>
-<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span> </div>
-<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span><span class="preprocessor">#if defined(__GNUC__) || defined(__clang__)</span></div>
-<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span><span class="preprocessor">#pragma GCC visibility pop</span></div>
-<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span> </div>
-<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span><span class="preprocessor">#endif </span><span class="comment">/* EBISU_MBEDTLS_H */</span><span class="preprocessor"></span></div>
-<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span><span class="comment">/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */</span></div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span></div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#a01d7f2e770693bad198923c60da99a51">  298</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__mbedtls_8h.html#a01d7f2e770693bad198923c60da99a51">ebisu_mbedtls_socket_init</a>(</div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>        <a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a>* sock,</div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>        <a class="code hl_structRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a>* transport,</div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>        <a class="code hl_struct" href="structebisu__mbedtls__tls__t.html">ebisu_mbedtls_tls_t</a>* tls);</div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span></div>
+<div class="line"><a id="l00328" name="l00328"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#a4c7400447203aad107f53996283486dd">  328</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__mbedtls_8h.html#a4c7400447203aad107f53996283486dd">ebisu_mbedtls_socket_set_handshake_timeout</a>(<a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a>* sock,</div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>        <a class="code hl_structRef" href="../../core/html/structebisu__system__t.html">ebisu_system_t</a>* system, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> seconds);</div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span></div>
+<div class="line"><a id="l00346" name="l00346"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#a5a585d6e421c64c646b6ffb83fa5b2bc">  346</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__mbedtls_8h.html#a5a585d6e421c64c646b6ffb83fa5b2bc">ebisu_mbedtls_socket_set_clock</a>(<a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a>* sock, <a class="code hl_structRef" href="../../core/html/structebisu__clock__t.html">ebisu_clock_t</a>* clock);</div>
+<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span></div>
+<div class="line"><a id="l00362" name="l00362"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#a96077bf9eb7956f90a0a92643fe6c2c3">  362</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__mbedtls_8h.html#a96077bf9eb7956f90a0a92643fe6c2c3">ebisu_mbedtls_socket_set_logger</a>(<a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a>* sock, <a class="code hl_structRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a>* logger);</div>
+<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span></div>
+<div class="line"><a id="l00375" name="l00375"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#a7d856d4dbb0184cc58ad64b34d6d92cd">  375</a></span><span class="keyword">const</span> <span class="keywordtype">char</span>* <a class="code hl_function" href="ebisu__mbedtls_8h.html#a7d856d4dbb0184cc58ad64b34d6d92cd">ebisu_mbedtls_socket_get_protocol</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a>* sock);</div>
+<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span></div>
+<div class="line"><a id="l00388" name="l00388"></a><span class="lineno"><a class="line" href="ebisu__mbedtls_8h.html#a888a21004ed7d10309707f233a3acb17">  388</a></span><span class="keyword">const</span> <span class="keywordtype">char</span>* <a class="code hl_function" href="ebisu__mbedtls_8h.html#a888a21004ed7d10309707f233a3acb17">ebisu_mbedtls_socket_get_cipher</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a>* sock);</div>
+<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span> </div>
+<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>}</div>
+<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span> </div>
+<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span><span class="preprocessor">#if defined(__GNUC__) || defined(__clang__)</span></div>
+<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span><span class="preprocessor">#pragma GCC visibility pop</span></div>
+<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span> </div>
+<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span><span class="preprocessor">#endif </span><span class="comment">/* EBISU_MBEDTLS_H */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span><span class="comment">/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */</span></div>
 <div class="ttc" id="aebisu__clock_8h_html"><div class="ttname"><a href="../../core/html/ebisu__clock_8h.html">ebisu_clock.h</a></div></div>
 <div class="ttc" id="aebisu__log_8h_html"><div class="ttname"><a href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a></div></div>
 <div class="ttc" id="aebisu__mbedtls_8h_html_a01d7f2e770693bad198923c60da99a51"><div class="ttname"><a href="ebisu__mbedtls_8h.html#a01d7f2e770693bad198923c60da99a51">ebisu_mbedtls_socket_init</a></div><div class="ttdeci">void ebisu_mbedtls_socket_init(ebisu_mbedtls_socket_t *sock, ebisu_socket_t *transport, ebisu_mbedtls_tls_t *tls)</div><div class="ttdoc">Clears the socket, over the socket under it and with the configuration, and makes base a socket of it...</div></div>
@@ -220,8 +222,8 @@ $(function() {
 <div class="ttc" id="aebisu__system_8h_html"><div class="ttname"><a href="../../core/html/ebisu__system_8h.html">ebisu_system.h</a></div></div>
 <div class="ttc" id="astructebisu__clock__t_html"><div class="ttname"><a href="../../core/html/structebisu__clock__t.html">ebisu_clock_t</a></div></div>
 <div class="ttc" id="astructebisu__logger__t_html"><div class="ttname"><a href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a></div></div>
-<div class="ttc" id="astructebisu__mbedtls__socket__t_html"><div class="ttname"><a href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a></div><div class="ttdoc">A TLS connection with mbedTLS, over another socket of the system&#39;s.</div><div class="ttdef"><b>Definition</b> ebisu_mbedtls.h:228</div></div>
-<div class="ttc" id="astructebisu__mbedtls__socket__t_html_a6cbf4a51e723d4380e00db08a9572a14"><div class="ttname"><a href="structebisu__mbedtls__socket__t.html#a6cbf4a51e723d4380e00db08a9572a14">ebisu_mbedtls_socket_t::base</a></div><div class="ttdeci">ebisu_socket_t base</div><div class="ttdoc">What ebisu is given.</div><div class="ttdef"><b>Definition</b> ebisu_mbedtls.h:229</div></div>
+<div class="ttc" id="astructebisu__mbedtls__socket__t_html"><div class="ttname"><a href="structebisu__mbedtls__socket__t.html">ebisu_mbedtls_socket_t</a></div><div class="ttdoc">A TLS connection with mbedTLS, over another socket of the system&#39;s.</div><div class="ttdef"><b>Definition</b> ebisu_mbedtls.h:233</div></div>
+<div class="ttc" id="astructebisu__mbedtls__socket__t_html_a6cbf4a51e723d4380e00db08a9572a14"><div class="ttname"><a href="structebisu__mbedtls__socket__t.html#a6cbf4a51e723d4380e00db08a9572a14">ebisu_mbedtls_socket_t::base</a></div><div class="ttdeci">ebisu_socket_t base</div><div class="ttdoc">What ebisu is given.</div><div class="ttdef"><b>Definition</b> ebisu_mbedtls.h:234</div></div>
 <div class="ttc" id="astructebisu__mbedtls__tls__t_html"><div class="ttname"><a href="structebisu__mbedtls__tls__t.html">ebisu_mbedtls_tls_t</a></div><div class="ttdoc">The TLS configuration connections share.</div><div class="ttdef"><b>Definition</b> ebisu_mbedtls.h:98</div></div>
 <div class="ttc" id="astructebisu__socket__t_html"><div class="ttname"><a href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a></div></div>
 <div class="ttc" id="astructebisu__system__t_html"><div class="ttname"><a href="../../core/html/structebisu__system__t.html">ebisu_system_t</a></div></div>
