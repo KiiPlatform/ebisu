@@ -281,19 +281,32 @@ kii_code_t kii_get_mqtt_endpoint(
     fields[7].name = NULL;
 
     parse_result = jkii_parse(buff, buff_size, fields);
-    if (parse_result != JKII_ERR_OK) {
+    // The TTL is obsolete, and nothing uses it: an endpoint without one is
+    // an endpoint all the same, with a TTL of 0. All the rest has to be
+    // there, and a TTL that is has to be one.
+    bool ttl_absent = false;
+    if (parse_result == JKII_ERR_PARTIAL &&
+            fields[6].result == JKII_FIELD_ERR_NOT_FOUND) {
+        ttl_absent = true;
+        for (int i = 0; i < 6; ++i) {
+            if (fields[i].result != JKII_FIELD_ERR_OK) {
+                ttl_absent = false;
+            }
+        }
+    }
+    if (parse_result != JKII_ERR_OK && !ttl_absent) {
         res = KII_ERR_PARSE_JSON;
         goto exit;
     }
     if (_is_port(fields[4].field_copy.int_value) == 0 ||
             _is_port(fields[5].field_copy.int_value) == 0 ||
-            _fits_uint32(fields[6].field_copy.long_value) == 0) {
+            (!ttl_absent && _fits_uint32(fields[6].field_copy.long_value) == 0)) {
         res = KII_ERR_PARSE_JSON;
         goto exit;
     }
     endpoint->port_tcp = (uint16_t)fields[4].field_copy.int_value;
     endpoint->port_ssl = (uint16_t)fields[5].field_copy.int_value;
-    endpoint->ttl = (uint32_t)fields[6].field_copy.long_value;
+    endpoint->ttl = ttl_absent ? 0 : (uint32_t)fields[6].field_copy.long_value;
 
 exit:
     // The response carried the MQTT credentials.
