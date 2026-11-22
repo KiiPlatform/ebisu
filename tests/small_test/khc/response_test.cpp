@@ -896,6 +896,67 @@ TEST_CASE( "Headers that fit skip nothing" ) {
     CHECK( r.body == "body" );
 }
 
+// Skipping a header, khc keeps a CR that ended the last read, in case the next
+// starts with the LF. It looked for it in the byte before the buffer when
+// there was nothing left of the last read: when the socket had had nothing to
+// read yet, and the skip was called again. A CR there was taken for the
+// header's, and the rest of the value for a line starting with it.
+TEST_CASE( "A header being skipped when the socket has nothing to read yet" ) {
+    // The buffer after a CR, as whatever is before it in memory may be.
+    char memory[1 + 64];
+    memory[0] = '\r';
+    khc_t http;
+    khc_init(&http);
+    khc_set_host(&http, "api.kii.com");
+    khc_set_method(&http, "GET");
+    khc_set_path(&http, "/api/apps");
+    khc_set_req_headers(&http, NULL);
+    khc_set_resp_header_buff(&http, memory + 1, sizeof(memory) - 1);
+
+    const std::string resp =
+        "HTTP/1.1 200 OK\r\n"
+        "Set-Cookie: " + std::string(200, 'c') + "\r\n"
+        "Content-Length: 4\r\n"
+        "\r\n"
+        "body";
+    size_t resp_pos = 0;
+    int agains = 0;
+    khct::cb::SockCtx s_ctx;
+    s_ctx.on_connect = [](void*, const char*, uint16_t) { return EBISU_SOCK_OK; };
+    s_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    s_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        // Nothing yet, for every other read of the header being skipped.
+        if (http._state == KHC_STATE_RESP_HEADER_SKIP && ++agains % 2 == 1) {
+            *out_actual_length = 0;
+            return EBISU_SOCK_AGAIN;
+        }
+        *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
+        resp_pos += *out_actual_length;
+        return EBISU_SOCK_OK;
+    };
+    s_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
+    khc_set_socket(&http, s_ctx.socket());
+
+    std::string body;
+    khct::cb::IOCtx io_ctx;
+    io_ctx.on_header = [](char*, size_t size, void*) { return size; };
+    io_ctx.on_write = [&body](char* buffer, size_t size, void*) {
+        body.append(buffer, size);
+        return size;
+    };
+    khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
+    khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+    CHECK( khc_perform(&http) == KHC_ERR_OK );
+    CHECK( agains >= 2 );
+    CHECK( khc_get_resp_header_skipped(&http) );
+    CHECK( body == "body" );
+    CHECK( memory[0] == '\r' );
+}
+
 // No callback failed, so KHC_ERR_HEADER_CALLBACK sent the reader the wrong way.
 // The buffer is what to change.
 TEST_CASE( "A framing header too long for the buffer is too large" ) {
