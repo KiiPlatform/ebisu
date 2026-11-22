@@ -1895,7 +1895,10 @@ kii_code_t kii_api_call_run(kii_t* kii);
  * You don't have to take account the buffer size used by those response.
 
  * You can change the size of buffer depending on the request/ response size.
- * It must be enough large to store whole request/ response except for method listed above.
+ * It must be enough large to store whole request/ response except for method listed above:
+ * a response's body can be at most one byte shorter than the buffer, and a
+ * longer one fails the call as KII_ERR_TOO_LARGE_DATA. The body in it is
+ * kii_get_resp_body_length() bytes, and is not a string: read it by that length.
  * Typically, 4096 bytes is enough. However it varies depending on your data schema used to define
  * object or thing. If object becomes large, consider putting them in object body.
 
@@ -2317,6 +2320,8 @@ int64_t kii_get_resp_date(kii_t* kii);
 /**
  * \brief Get response body length.
  * If the response is chunked, decoded response body length is returned.
+ * It is how much of the buffer set by kii_set_buff() is the body, which is
+ * not a string.
  *
  * \param [in] kii kii_t instance.
  * \return Length of response body.
