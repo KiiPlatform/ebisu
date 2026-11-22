@@ -12,6 +12,7 @@
 
 #include "ebisu_schannel.h"
 
+#include <ebisu_dns.h>
 #include <ebisu_mem.h>
 
 #include <ws2tcpip.h>
@@ -436,6 +437,20 @@ static void keep_extra(ebisu_schannel_socket_t* ctx, const SecBuffer* buffers,
     ctx->recv_len = extra;
 }
 
+/* Whether the host is an IPv4 or IPv6 address, in any form a lookup takes for
+   one, with a scope or without, and no name: its bytes then, and how many. */
+static bool host_is_address(const ebisu_schannel_socket_t* ctx, unsigned char out[16],
+        DWORD* out_length)
+{
+    ebisu_dns_addr_t address;
+    if (!ebisu_dns_parse_address(NULL, ctx->host, strlen(ctx->host), 0, true, &address)) {
+        return false;
+    }
+    *out_length = address.family == EBISU_DNS_IPV4 ? 4 : 16;
+    memcpy(out, address.bytes, *out_length);
+    return true;
+}
+
 /* Runs the handshake. What the server sends is read into recv_buf, and
    whatever is left in it at the end is the start of the application data. */
 static int handshake(ebisu_schannel_socket_t* ctx)
@@ -452,13 +467,17 @@ static int handshake(ebisu_schannel_socket_t* ctx)
         set_buffer(&out[0], SECBUFFER_TOKEN, NULL, 0);
         set_buffer_desc(&out_desc, out, 1);
 
-        /* The target name is what Schannel sends as SNI. */
+        /* The target name is what Schannel sends as SNI: none for an address,
+           which is no name, as RFC 6066 has it. */
+        unsigned char address[16];
+        DWORD address_length = 0;
+        const bool is_address = host_is_address(ctx, address, &address_length);
         const int first = !ctx->has_ctxt;
         ULONG attrs = 0;
         SECURITY_STATUS status = InitializeSecurityContextA(
                 &ctx->cred,
                 first ? NULL : &ctx->ctxt,
-                (SEC_CHAR*)ctx->host,
+                is_address ? NULL : (SEC_CHAR*)ctx->host,
                 isc_flags,
                 0,
                 0,
@@ -601,6 +620,32 @@ static bool matches_pin(PCCERT_CONTEXT cert, const unsigned char* pin)
     return matches;
 }
 
+/* Whether the certificate is issued for the address, of length bytes: whether
+   its subjectAltName has it as an iPAddress. */
+static bool is_issued_for_address(PCCERT_CONTEXT cert, const unsigned char* address, DWORD length)
+{
+    PCERT_EXTENSION extension = CertFindExtension(szOID_SUBJECT_ALT_NAME2,
+            cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
+    if (extension == NULL) {
+        return false;
+    }
+    CERT_ALT_NAME_INFO* names = NULL;
+    DWORD names_size = 0;
+    if (!CryptDecodeObjectEx(X509_ASN_ENCODING, X509_ALTERNATE_NAME, extension->Value.pbData,
+                extension->Value.cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &names, &names_size)) {
+        return false;
+    }
+    bool found = false;
+    for (DWORD i = 0; i < names->cAltEntry && !found; ++i) {
+        const CERT_ALT_NAME_ENTRY* entry = &names->rgAltEntry[i];
+        found = entry->dwAltNameChoice == CERT_ALT_NAME_IP_ADDRESS &&
+            entry->IPAddress.cbData == length &&
+            memcmp(entry->IPAddress.pbData, address, length) == 0;
+    }
+    LocalFree(names);
+    return found;
+}
+
 static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
 {
     PCCERT_CONTEXT cert = NULL;
@@ -667,7 +712,14 @@ static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
     ssl_para.cbSize = sizeof(ssl_para);
     ssl_para.dwAuthType = AUTHTYPE_SERVER;
     ssl_para.pwszServerName = server_name;
-    if (ctx->verify == EBISU_TLS_VERIFY_CHAIN) {
+    /* An address is no name: the certificate has to be issued for it among
+       its subjectAltNames of that kind, which no name of the same text is,
+       and which is checked here, below, whatever the policy makes of an
+       address for a name. */
+    unsigned char address[16];
+    DWORD address_length = 0;
+    const bool is_address = host_is_address(ctx, address, &address_length);
+    if (ctx->verify == EBISU_TLS_VERIFY_CHAIN || is_address) {
         ssl_para.fdwChecks = SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
     }
 
@@ -727,6 +779,13 @@ static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
                 }
             }
         }
+        goto done;
+    }
+    if (is_address && ctx->verify != EBISU_TLS_VERIFY_CHAIN &&
+            !is_issued_for_address(cert, address, address_length)) {
+        log_code(ctx, (unsigned long)CERT_E_CN_NO_MATCH, "server certificate for %s rejected",
+                ctx->host);
+        set_error(ctx, EBISU_SOCK_ERROR_VERIFY, (long)CERT_E_CN_NO_MATCH);
         goto done;
     }
     result = 0;
