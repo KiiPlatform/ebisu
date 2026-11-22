@@ -1,4 +1,5 @@
 #include "ebisu_openssl.h"
+#include <ebisu_dns.h>
 
 #include <sys/socket.h>
 #include <fcntl.h>
@@ -894,12 +895,23 @@ static ebisu_sock_code_t
 
     /* The name the server is to present a certificate for, and the one the
        certificate has to be issued for, unless the configuration checks
-       less. */
+       less. An address is no name: the server is told none, as RFC 6066 has
+       it, and the certificate has to be issued for the address, among its
+       subjectAltNames of that kind, which no name of the same text is. An
+       address is what getaddrinfo() takes for one, its scope aside, which
+       no certificate has. */
     const ebisu_tls_verify_t verify = verify_of(ssl_ctx, NULL);
-    SSL_set_tlsext_host_name(ssl, host);
+    ebisu_dns_addr_t address;
+    const bool is_address = ebisu_dns_parse_address(NULL, host, strlen(host), 0, true, &address);
+    if (!is_address) {
+        SSL_set_tlsext_host_name(ssl, host);
+    }
     X509_VERIFY_PARAM* param = SSL_get0_param(ssl);
     X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
-    if (verify == EBISU_TLS_VERIFY_FULL && X509_VERIFY_PARAM_set1_host(param, host, 0) != 1) {
+    if (verify == EBISU_TLS_VERIFY_FULL &&
+            (is_address ? X509_VERIFY_PARAM_set1_ip(param, address.bytes,
+                    address.family == EBISU_DNS_IPV4 ? 4 : 16) :
+                X509_VERIFY_PARAM_set1_host(param, host, 0)) != 1) {
         log_to(ctx->logger, EBISU_LOG_ERROR, "failed to set the host name to verify.");
         error = EBISU_SOCK_ERROR_OTHER;
         goto fail;
