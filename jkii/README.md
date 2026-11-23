@@ -287,7 +287,9 @@ fixed number of decimals, with `.` whatever the locale. They are read with
 for numbers of up to 15 digits with a power of ten within 10^22 and a few units
 in the last place off beyond: see `jkii_parse_primitive()`. Objects and arrays nest
 up to `JKII_WRITER_MAX_DEPTH`, 16 unless defined otherwise for jkii and for
-everything using it.
+everything using it. With CMake, set it as a CMake variable,
+`-DJKII_WRITER_MAX_DEPTH=32`, and jkii's target and pkg-config file define it
+for what is built against jkii, installed or not.
 
 ## Reading JSON Lines
 

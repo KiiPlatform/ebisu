@@ -52,13 +52,17 @@ string(REGEX REPLACE "/$" "" pc_prefix_from_dir "${pc_prefix_from_dir}")
 set(_ebisu_package_dir ${CMAKE_CURRENT_LIST_DIR})
 
 function(_ebisu_pkg_config name lib description)
-    cmake_parse_arguments(PARSE_ARGV 3 arg "" "LIBS" "REQUIRES;REQUIRES_PRIVATE")
+    cmake_parse_arguments(PARSE_ARGV 3 arg "" "LIBS" "REQUIRES;REQUIRES_PRIVATE;DEFINITIONS")
     set(pc_name ${name})
     set(pc_lib ${lib})
     set(pc_description ${description})
     string(REPLACE ";" " " pc_requires "${arg_REQUIRES}")
     string(REPLACE ";" " " pc_requires_private "${arg_REQUIRES_PRIVATE}")
     set(pc_libs_extra "${arg_LIBS}")
+    set(pc_cflags_extra "")
+    foreach(definition IN LISTS arg_DEFINITIONS)
+        string(APPEND pc_cflags_extra " -D${definition}")
+    endforeach()
     configure_file(${_ebisu_package_dir}/ebisu.pc.in
         ${PROJECT_BINARY_DIR}/pkgconfig/ebisu-${name}.pc @ONLY)
     install(FILES ${PROJECT_BINARY_DIR}/pkgconfig/ebisu-${name}.pc DESTINATION ${pc_dir})
@@ -69,9 +73,13 @@ endfunction()
 _ebisu_pkg_config(core ebisu_core
     "Core of ebisu: the abstractions it is written against, and its utilities")
 _ebisu_pkg_config(khc ebisu_khc "HTTP client of ebisu" REQUIRES ebisu-core)
-_ebisu_pkg_config(jkii ebisu_jkii "JSON parser of ebisu" REQUIRES_PRIVATE ebisu-core)
+# The sizes the libraries were built with go with them, as the targets' do:
+# see the root CMakeLists.txt. ebisu-tio has kii's through ebisu-kii.
+_ebisu_pkg_config(jkii ebisu_jkii "JSON parser of ebisu" REQUIRES_PRIVATE ebisu-core
+    DEFINITIONS ${EBISU_JKII_SIZE_DEFINITIONS})
 _ebisu_pkg_config(kii ebisu_kii "Kii Cloud client of ebisu"
-    REQUIRES ebisu-khc ebisu-jkii ebisu-core)
+    REQUIRES ebisu-khc ebisu-jkii ebisu-core
+    DEFINITIONS ${EBISU_KII_SIZE_DEFINITIONS})
 _ebisu_pkg_config(tio ebisu_tio "Thing-IF client of ebisu" REQUIRES ebisu-kii ebisu-jkii)
 if(TARGET ebisu_posix)
     _ebisu_pkg_config(posix ebisu_posix

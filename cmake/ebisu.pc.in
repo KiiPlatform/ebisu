@@ -7,5 +7,5 @@ Description: @pc_description@
 Version: @version@
 Requires: @pc_requires@
 Requires.private: @pc_requires_private@
-Cflags: -I${includedir}
+Cflags: -I${includedir}@pc_cflags_extra@
 Libs: -L${libdir} -l@pc_lib@ @pc_libs_extra@

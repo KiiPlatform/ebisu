@@ -53,7 +53,9 @@ extern "C" {
  * \brief How deep objects and arrays may nest.
  *
  * Another depth changes the size of jkii_writer_t: define it alike for jkii
- * and for everything using it.
+ * and for everything using it. With CMake, it is set as a CMake variable of
+ * the same name, which jkii's target and pkg-config file then define for what
+ * is built against jkii, installed or not.
  */
 #ifndef JKII_WRITER_MAX_DEPTH
 #define JKII_WRITER_MAX_DEPTH 16
