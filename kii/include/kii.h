@@ -920,7 +920,8 @@ void kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
 
  * \param [out] kii kii_t instance.
  * \param [in] buff Pointer to the buffer.
- * \param [in] buff_size Size of the buffer.
+ * \param [in] buff_size Size of the buffer, at least 1 for a buffer that isn't
+ * NULL: each request fails for 0.
  */
 void kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
 
@@ -942,7 +943,8 @@ void kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
 
  * \param [out] kii kii_t instance.
  * \param [in] buff Pointer to the buffer.
- * \param [in] buff_size Size of the buffer.
+ * \param [in] buff_size Size of the buffer, at least 1 for a buffer that isn't
+ * NULL: each request fails for 0.
  */
 void kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size);
 

@@ -378,11 +378,20 @@ void khc_reset_except_cb(khc* khc);
  * khc_set_cb_write(khc*, KHC_CB_WRITE, void*) and
  * khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
  * called.
+ *
+ * Each call starts from the request alone: what the last one's response left
+ * behind is reset first, as by khc_reset_except_cb(khc*), which also clears
+ * the request itself. A body is read through the read callback each time,
+ * which must start it over.
+ *
  * This method blocks until the HTTP session ends.
  * \param [in, out] khc instance.
  * \returns KHC_ERR_OK if the response was read whole. KHC_ERR_FAIL, without
  * connecting, if a socket callback, the write callback or the header callback
  * is not set. The read callback may be left out for a request with no body.
+ * KHC_ERR_FAIL too, without connecting, for a buffer set with a size of 0 by
+ * khc_set_resp_header_buff(khc*, char*, size_t) or
+ * khc_set_stream_buff(khc*, char*, size_t).
  */
 khc_code khc_perform(khc* khc);
 
@@ -439,7 +448,8 @@ khc_code khc_set_req_headers(khc* khc, khc_slist* headers);
 
  * \param [out] khc instance.
  * \param [in] buffer pointer to the buffer.
- * \param [in] buff_size size of the buffer.
+ * \param [in] buff_size size of the buffer, at least 1 for a buffer that isn't
+ * NULL: khc_perform(khc*) returns KHC_ERR_FAIL for 0.
  */
 void khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size);
 
@@ -461,7 +471,8 @@ void khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size);
  *
  * \param [out] khc instance.
  * \param [in] buffer pointer to the buffer.
- * \param [in] buff_size size of the buffer.
+ * \param [in] buff_size size of the buffer, at least 1 for a buffer that isn't
+ * NULL: khc_perform(khc*) returns KHC_ERR_FAIL for 0.
  */
 void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size);
 

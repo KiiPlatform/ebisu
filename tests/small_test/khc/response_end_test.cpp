@@ -15,6 +15,9 @@ struct Peer {
     bool closes = false;
     std::string method = "GET";
     size_t stream_buff_size = 1024;
+    // The write callback's call, from 0, that says it wrote 100 bytes more
+    // than it was given, or -1 for none.
+    int overstated_write = -1;
 };
 
 struct Result {
@@ -81,9 +84,10 @@ Result perform(const Peer& peer) {
     io_ctx.on_header = [](char*, size_t size, void*) {
         return size;
     };
-    io_ctx.on_write = [&result](char* buffer, size_t size, void*) {
+    int writes = 0;
+    io_ctx.on_write = [&result, &peer, &writes](char* buffer, size_t size, void*) {
         result.body.append(buffer, size);
-        return size;
+        return writes++ == peer.overstated_write ? size + 100 : size;
     };
 
     result.res = khc_perform(&http);
@@ -394,3 +398,30 @@ TEST_CASE( "An interim response's Transfer-Encoding doesn't frame the final body
         }
     }
 }
+
+// A write callback that said it wrote more than it was given was taken where
+// the body is read through the stream buffer, and the more counted as
+// received: a Content-Length body ended before it had arrived whole, with
+// KHC_ERR_OK. Any count but the one given fails the request, as KHC_CB_WRITE
+// says, with the body's first part, read with the headers, or a later one.
+TEST_CASE( "A write callback that says it wrote more than it was given fails the request" ) {
+    const std::string body(40, 'x');
+    const bool chunked = GENERATE(false, true);
+    const int overstated = GENERATE(0, 1);
+    CAPTURE( chunked, overstated );
+    Peer peer = chunked ?
+        peer_with({ CHUNKED + "28\r\n" + body.substr(0, 10), body.substr(10, 15),
+                body.substr(25) + "\r\n0\r\n\r\n" }) :
+        peer_with({ STATUS + "Content-Length: 40\r\n\r\n" + body.substr(0, 10),
+                body.substr(10, 15), body.substr(25) });
+    peer.overstated_write = overstated;
+
+    Result r = perform(peer);
+    CHECK( r.res == KHC_ERR_WRITE_CALLBACK );
+    CHECK( r.on_close_called == 1 );
+
+    // Told the truth, the same reads give the body whole.
+    peer.overstated_write = -1;
+    check_ends_without_waiting(perform(peer), body);
+}
+
