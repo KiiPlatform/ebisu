@@ -626,7 +626,7 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true if the close callback returned EBISU_SOCK_FAIL in the last <a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a>, or EBISU_SOCK_AGAIN once the request had timed out or been cancelled, when it isn't called again; false if it hasn't since <a class="el" href="#ad413a75131c9b3c9206949044dd1e7a9" title="Set initial value to members of khc.">khc_init(khc_t*)</a>, <a class="el" href="#ace4678e5617fad499c0f401bb9829ea0" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc_t*)</a> or <a class="el" href="#ad48d9501d10ae35d377c9e29eb30cb8c" title="Prepare to perform the same request again.">khc_reset_except_request(khc_t*)</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the close callback returned EBISU_SOCK_FAIL in the last <a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a>, or EBISU_SOCK_AGAIN once the request had timed out or been cancelled, when it isn't called again; false if it didn't, or none has been performed since <a class="el" href="#ad413a75131c9b3c9206949044dd1e7a9" title="Set initial value to members of khc.">khc_init(khc_t*)</a>, <a class="el" href="#ace4678e5617fad499c0f401bb9829ea0" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc_t*)</a> or <a class="el" href="#ad48d9501d10ae35d377c9e29eb30cb8c" title="Prepare to perform the same request again.">khc_reset_except_request(khc_t*)</a>. </dd></dl>
 
 </div>
 </div>
@@ -682,7 +682,7 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true if the last <a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a> skipped a header, false if it hasn't since <a class="el" href="#ad413a75131c9b3c9206949044dd1e7a9" title="Set initial value to members of khc.">khc_init(khc_t*)</a>, <a class="el" href="#ace4678e5617fad499c0f401bb9829ea0" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc_t*)</a> or <a class="el" href="#ad48d9501d10ae35d377c9e29eb30cb8c" title="Prepare to perform the same request again.">khc_reset_except_request(khc_t*)</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the last <a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a> skipped a header, false if it didn't, or none has been performed since <a class="el" href="#ad413a75131c9b3c9206949044dd1e7a9" title="Set initial value to members of khc.">khc_init(khc_t*)</a>, <a class="el" href="#ace4678e5617fad499c0f401bb9829ea0" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc_t*)</a> or <a class="el" href="#ad48d9501d10ae35d377c9e29eb30cb8c" title="Prepare to perform the same request again.">khc_reset_except_request(khc_t*)</a>. </dd></dl>
 
 </div>
 </div>
@@ -740,7 +740,7 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the three-digit HTTP status code of the response, or 0 if none has been parsed since <a class="el" href="#ad413a75131c9b3c9206949044dd1e7a9" title="Set initial value to members of khc.">khc_init(khc_t*)</a>, <a class="el" href="#ace4678e5617fad499c0f401bb9829ea0" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc_t*)</a> or <a class="el" href="#ad48d9501d10ae35d377c9e29eb30cb8c" title="Prepare to perform the same request again.">khc_reset_except_request(khc_t*)</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the three-digit HTTP status code of the last <a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a>'s response, or 0 if it parsed none, or none has been performed since <a class="el" href="#ad413a75131c9b3c9206949044dd1e7a9" title="Set initial value to members of khc.">khc_init(khc_t*)</a>, <a class="el" href="#ace4678e5617fad499c0f401bb9829ea0" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc_t*)</a> or <a class="el" href="#ad48d9501d10ae35d377c9e29eb30cb8c" title="Prepare to perform the same request again.">khc_reset_except_request(khc_t*)</a>. </dd></dl>
 
 </div>
 </div>
@@ -812,7 +812,9 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
 </div><div class="memdoc">
 
 <p>Perform the HTTP session. </p>
-<p>During the session, the socket set by <a class="el" href="#aae1eb51fb3d9df3f416955b0bbd3a73f" title="Set the socket requests are sent on.">khc_set_socket(khc_t*, ebisu_socket_t*)</a>, and callback functions set by <a class="el" href="#ab3092de311938f34922143408e4a36d3" title="Set read callback.">khc_set_cb_read(khc_t*, KHC_CB_READ, void*)</a>, <a class="el" href="#ae49341971ce08a8226df6d003e11a3ca" title="Set write callback.">khc_set_cb_write(khc_t*, KHC_CB_WRITE, void*)</a> and <a class="el" href="#a1ce534b8e234038975581e93d75204d8" title="Set header callback.">khc_set_cb_header(khc_t*, KHC_CB_HEADER, void*)</a> called. This method blocks until the HTTP session ends. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>During the session, the socket set by <a class="el" href="#aae1eb51fb3d9df3f416955b0bbd3a73f" title="Set the socket requests are sent on.">khc_set_socket(khc_t*, ebisu_socket_t*)</a>, and callback functions set by <a class="el" href="#ab3092de311938f34922143408e4a36d3" title="Set read callback.">khc_set_cb_read(khc_t*, KHC_CB_READ, void*)</a>, <a class="el" href="#ae49341971ce08a8226df6d003e11a3ca" title="Set write callback.">khc_set_cb_write(khc_t*, KHC_CB_WRITE, void*)</a> and <a class="el" href="#a1ce534b8e234038975581e93d75204d8" title="Set header callback.">khc_set_cb_header(khc_t*, KHC_CB_HEADER, void*)</a> called.</p>
+<p>Each call starts from the request alone: what the last one's response left behind is reset first, as by <a class="el" href="#ad48d9501d10ae35d377c9e29eb30cb8c" title="Prepare to perform the same request again.">khc_reset_except_request(khc_t*)</a>. A body is read through the read callback each time, which must start it over.</p>
+<p>This method blocks until the HTTP session ends. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">khc</td><td>instance. </td></tr>
   </table>
@@ -866,7 +868,8 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
 
 <p>Prepare to perform the same request again. </p>
 <p>Resets what sending the last request and reading its response left behind, so that the next <a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a> sends the request again. The request itself &ndash; host, path, method, headers and the body length set by <a class="el" href="#a736428a1e77b3369fe0e7e7b0a549710" title="Set the length of the request body.">khc_set_req_body_length(khc_t*, size_t)</a> &ndash; remains, as do callbacks/ userdata, the settings of <a class="el" href="#a52e531a218a49a7532af53e5087445de" title="Enable insecure connection.">khc_enable_insecure(khc_t*, bool)</a> and <a class="el" href="#ae52a7f9a211e4496cc49bf482fb19f82" title="Send the whole URL in the request line.">khc_enable_absolute_target(khc_t*, bool)</a>, and the buffers set by <a class="el" href="#acd65a7b58f771603a15f972315e78614" title="Set stream buffer.">khc_set_stream_buff(khc_t*, char*, size_t)</a> and <a class="el" href="#a5461bcbb5b7da247bed5c0a3ee1fd47d" title="Set response header buffer.">khc_set_resp_header_buff(khc_t*, char*, size_t)</a>.</p>
-<p>The body is read again through the read callback, which must start it over. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>The body is read again through the read callback, which must start it over.</p>
+<p><a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a> does the same when it starts, so the same request can be performed again without this. What this adds is clearing the last response's results, such as <a class="el" href="#a2a0636e5c349015914cf18a1e2226541" title="Get HTTP status code.">khc_get_status_code(khc_t*)</a>, before then. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">khc</td><td>instance. </td></tr>
   </table>
