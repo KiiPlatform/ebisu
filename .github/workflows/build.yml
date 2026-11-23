@@ -105,3 +105,30 @@ jobs:
         # The preset compiles with -fno-sanitize-recover=all, so a UBSan finding
         # aborts instead of printing a "runtime error" line and passing.
         run: ctest --preset asan-small
+
+  # Every release of the branch's major.minor keeps its ABI: a program built
+  # against 2.0.x runs with a later 2.0's libraries. tests/compat_check.sh
+  # builds the tree and each of those releases, and abidiff compares their
+  # libraries over the public headers. Additions pass; anything else fails.
+  abi:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Fetch tags
+        # The releases to compare with, and the version git describes, which
+        # says which releases those are.
+        run: git fetch --unshallow --tags --force
+      - name: Setup build env
+        # Each try is bounded, so that a mirror that stalls fails the step
+        # rather than hang the job until its timeout.
+        run: |
+          for try in 1 2 3; do
+            sudo timeout 300 apt-get -yq update &&
+              sudo timeout 300 apt-get -yq install cmake ninja-build libssl-dev abigail-tools patchelf &&
+              break
+            [ $try -lt 3 ] || exit 1
+          done
+      - name: ABI against the releases
+        run: tests/compat_check.sh
