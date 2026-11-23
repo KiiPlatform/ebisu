@@ -3,7 +3,19 @@
 #include <jkii.h>
 #include <jkii_utils.h>
 #include <math.h>
-#include <limits.h>
+#include <stdint.h>
+#include <string>
+#include <type_traits>
+#include <vector>
+
+// master's jkii_parse() needs no tokens; 2.x's takes them. For the tests
+// backported from master.
+static jkii_parse_err_t jkii_parse3(const char* json, size_t json_len, jkii_field_t* fields)
+{
+    static jkii_token_t tokens[256];
+    jkii_resource_t resource = { tokens, 256 };
+    return jkii_parse(json, json_len, fields, &resource);
+}
 
 static jkii_resource_t* cb_alloc(size_t required_size)
 {
@@ -56,6 +68,52 @@ TEST_CASE("KiiJson, GetObjectStringByName") {
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
+}
+
+// Only an object has names: the elements of an array were taken for pairs of a
+// name and a value.
+TEST_CASE("KiiJson, ByNameInArrayRoot") {
+    const std::string jsons[] = {
+        "[\"key1\",\"value1\"]",
+        "[\"key1\",\"value1\",\"key2\",\"value2\"]",
+        "[\"key2\",\"value2\",\"key1\",\"value1\"]",
+    };
+    for (const auto& json : jsons) {
+        INFO(json);
+        jkii_token_t tokens[32];
+        jkii_resource_t resource = { tokens, 32 };
+        char buf[16];
+        jkii_field_t fields[2];
+        memset(fields, 0, sizeof(fields));
+        memset(buf, 0, sizeof(buf));
+        fields[0].name = "key1";
+        fields[0].type = JKII_FIELD_TYPE_STRING;
+        fields[0].field_copy.string = buf;
+        fields[0].field_copy_buff_size = sizeof(buf);
+        fields[1].name = NULL;
+
+        CHECK( jkii_parse(json.c_str(), json.size(), fields, &resource) == JKII_ERR_PARTIAL );
+        CHECK( fields[0].result == JKII_FIELD_ERR_NOT_FOUND );
+        CHECK( std::string(buf) == "" );
+    }
+}
+
+TEST_CASE("KiiJson, ByPathInArrayRoot") {
+    const std::string json = "[\"key1\",\"value1\"]";
+    jkii_token_t tokens[32];
+    jkii_resource_t resource = { tokens, 32 };
+    char buf[16];
+    jkii_field_t fields[2];
+    memset(fields, 0, sizeof(fields));
+    fields[0].path = "/[1]";
+    fields[0].type = JKII_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = buf;
+    fields[0].field_copy_buff_size = sizeof(buf);
+    fields[1].name = NULL;
+    fields[1].path = NULL;
+
+    CHECK( jkii_parse(json.c_str(), json.size(), fields, &resource) == JKII_ERR_OK );
+    CHECK( std::string(buf) == "value1" );
 }
 
 TEST_CASE("KiiJson, GetObjectPositiveIntByName") {
@@ -241,6 +299,357 @@ TEST_CASE("KiiJson, GetObjectNegativeEDoubleByName") {
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
+}
+
+// Parses {"key1" : value}, asking for key1 as the given type.
+static jkii_parse_err_t parse_number_by_name(
+        const char* value,
+        jkii_field_type_t type,
+        jkii_field_t* out_field)
+{
+    char json_string[64];
+    snprintf(json_string, sizeof(json_string), "{\"key1\" : %s}", value);
+
+    jkii_token_t tokens[8];
+    jkii_resource_t resource = { tokens, 8 };
+
+    jkii_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
+
+    fields[0].name = "key1";
+    fields[0].type = type;
+    fields[1].name = NULL;
+
+    jkii_parse_err_t res = jkii_parse(
+            json_string,
+            strlen(json_string),
+            fields,
+            &resource);
+    *out_field = fields[0];
+    return res;
+}
+
+// 2.x keeps int_value and long_value an int and a long, for its ABI: an
+// integer's type follows its value within those. The range cases below take
+// long to be 64 bits, as it is on the hosts these tests run on.
+static_assert(std::is_same<
+        decltype(((jkii_field_t*)0)->field_copy.int_value), int>::value,
+        "int_value is an int");
+static_assert(std::is_same<
+        decltype(((jkii_field_t*)0)->field_copy.long_value), long>::value,
+        "long_value is a long");
+static_assert(std::is_same<
+        decltype(((jkii_primitive_t*)0)->value.int_value), int>::value,
+        "int_value is an int");
+static_assert(std::is_same<
+        decltype(((jkii_primitive_t*)0)->value.long_value), long>::value,
+        "long_value is a long");
+
+// The narrower of int32_t and int64_t that an integer fits in, if either.
+enum IntegerRange {
+    FITS_INT32,
+    FITS_INT64_ONLY,
+    FITS_NEITHER
+};
+
+struct IntegerCase {
+    std::string text;
+    IntegerRange range;
+    int64_t value; // unless FITS_NEITHER
+};
+
+static IntegerCase integer_case(int64_t value)
+{
+    char text[32];
+    snprintf(text, sizeof(text), "%lld", (long long)value);
+    IntegerRange range = FITS_INT64_ONLY;
+    if (INT32_MIN <= value && value <= INT32_MAX) {
+        range = FITS_INT32;
+    }
+    return IntegerCase{ text, range, value };
+}
+
+// Integers at the edges of the int32_t and int64_t ranges, and on either side
+// of the lengths jkii used to go by.
+//
+// jkii chose the type by length, from how the libc spells INT_MAX and
+// LONG_MAX. With glibc on 64-bit Linux, integers of up to 12 characters were
+// ints whatever their value, up to 21 were longs, and longer ones doubles.
+// The ranges were those of int and long, so where long is 32 bits, as on the
+// ARM targets, nothing past the int range could be read at all.
+static std::vector<IntegerCase> integer_range_cases()
+{
+    return {
+        integer_case(INT32_MAX),
+        integer_case((int64_t)INT32_MAX + 1),
+        integer_case(INT32_MIN),
+        integer_case((int64_t)INT32_MIN - 1),
+        integer_case(INT64_MAX),
+        integer_case(INT64_MIN),
+        integer_case(INT64_C(4294967296)),
+        integer_case(INT64_C(999999999999)),
+        integer_case(INT64_C(-99999999999)),
+        integer_case(INT64_C(9999999999999)),
+        IntegerCase{ "9223372036854775808", FITS_NEITHER, 0 },
+        IntegerCase{ "-9223372036854775809", FITS_NEITHER, 0 },
+        IntegerCase{ "10000000000000000000000", FITS_NEITHER, 0 },
+        IntegerCase{ "-10000000000000000000000", FITS_NEITHER, 0 },
+    };
+}
+
+// An integer is an INTEGER if it fits in an int32_t, a LONG if it fits only in
+// an int64_t, and out of range otherwise, whatever its length. Short integers
+// past the int range came back as int overflow instead of as longs, and very
+// long ones as doubles instead of as out of range.
+TEST_CASE("KiiJson, PrimitiveIntegerByRange") {
+    for (const IntegerCase& c : integer_range_cases()) {
+        INFO("value " << c.text);
+        const bool negative = c.text[0] == '-';
+        jkii_primitive_t res;
+        memset(&res, 0x00, sizeof(res));
+
+        jkii_primitive_err_t err =
+            jkii_parse_primitive(c.text.c_str(), c.text.size(), &res);
+        switch (c.range) {
+            case FITS_INT32:
+                CHECK(JKII_PRIMITIVE_ERR_OK == err);
+                CHECK(JKII_FIELD_TYPE_INTEGER == res.type);
+                CHECK(c.value == res.value.int_value);
+                break;
+            case FITS_INT64_ONLY:
+                CHECK(JKII_PRIMITIVE_ERR_OK == err);
+                CHECK(JKII_FIELD_TYPE_LONG == res.type);
+                CHECK(c.value == res.value.long_value);
+                break;
+            case FITS_NEITHER:
+                CHECK((negative ? JKII_PRIMITIVE_ERR_UNDERFLOW
+                                : JKII_PRIMITIVE_ERR_OVERFLOW) == err);
+                break;
+        }
+    }
+}
+
+// The same integers as fields. Asked for as any type, they come back as
+// primitives do, with one past the int64_t range a LONG that overflowed. Asked
+// for as an INTEGER, one past the int32_t range is out of range rather than a
+// type mismatch, as short ones already were; as a double, any integer is
+// read as one, to the nearest double.
+//
+// Where long was as wide as int, an int field is where the overflow was lost:
+// the long conversion gave LONG_MAX, which was INT_MAX, and the int conversion
+// took that for a value that fits.
+TEST_CASE("KiiJson, GetObjectIntegerByRange") {
+    for (const IntegerCase& c : integer_range_cases()) {
+        INFO("value " << c.text);
+        const bool negative = c.text[0] == '-';
+        const jkii_field_err_t out_of_range = negative ?
+            JKII_FIELD_ERR_NUM_UNDERFLOW : JKII_FIELD_ERR_NUM_OVERFLOW;
+        jkii_field_t field;
+        jkii_parse_err_t res;
+
+        res = parse_number_by_name(c.text.c_str(), JKII_FIELD_TYPE_ANY, &field);
+        switch (c.range) {
+            case FITS_INT32:
+                CHECK(JKII_ERR_OK == res);
+                CHECK(JKII_FIELD_TYPE_INTEGER == field.type);
+                CHECK(c.value == field.field_copy.int_value);
+                break;
+            case FITS_INT64_ONLY:
+                CHECK(JKII_ERR_OK == res);
+                CHECK(JKII_FIELD_TYPE_LONG == field.type);
+                CHECK(c.value == field.field_copy.long_value);
+                break;
+            case FITS_NEITHER:
+                CHECK(JKII_ERR_PARTIAL == res);
+                CHECK(out_of_range == field.result);
+                CHECK(JKII_FIELD_TYPE_LONG == field.type);
+                CHECK((negative ? INT64_MIN : INT64_MAX) ==
+                        field.field_copy.long_value);
+                break;
+        }
+
+        res = parse_number_by_name(
+                c.text.c_str(), JKII_FIELD_TYPE_INTEGER, &field);
+        CHECK(JKII_FIELD_TYPE_INTEGER == field.type);
+        if (c.range == FITS_INT32) {
+            CHECK(JKII_ERR_OK == res);
+            CHECK(c.value == field.field_copy.int_value);
+        } else {
+            CHECK(JKII_ERR_PARTIAL == res);
+            CHECK(out_of_range == field.result);
+            CHECK((negative ? INT32_MIN : INT32_MAX) ==
+                    field.field_copy.int_value);
+        }
+
+        res = parse_number_by_name(c.text.c_str(), JKII_FIELD_TYPE_LONG, &field);
+        CHECK(JKII_FIELD_TYPE_LONG == field.type);
+        if (c.range != FITS_NEITHER) {
+            CHECK(JKII_ERR_OK == res);
+            CHECK(c.value == field.field_copy.long_value);
+        } else {
+            CHECK(JKII_ERR_PARTIAL == res);
+            CHECK(out_of_range == field.result);
+            CHECK((negative ? INT64_MIN : INT64_MAX) ==
+                    field.field_copy.long_value);
+        }
+
+        res = parse_number_by_name(
+                c.text.c_str(), JKII_FIELD_TYPE_DOUBLE, &field);
+        CHECK(JKII_ERR_OK == res);
+        CHECK(JKII_FIELD_ERR_OK == field.result);
+        CHECK(JKII_FIELD_TYPE_DOUBLE == field.type);
+        CHECK(strtod(c.text.c_str(), nullptr) == field.field_copy.double_value);
+    }
+}
+
+// A sign, a point or an exponent marker without the digits that go with it is
+// not a number, but jsmn passes any primitive through, so one can arrive in a
+// command or a response. "-" passes jkii's type check as an integer and "1e"
+// as a double, so they reach strtol and strtod, which convert nothing of "-"
+// and only the "1" of "1e". Whether strtol reports that in errno is left to
+// the libc: glibc does not, BSD and macOS set EINVAL, which jkii asserted
+// against. "1e" was read as 1 and reported as parsed, on every libc.
+TEST_CASE("KiiJson, GetObjectNumberWithoutDigitsByName") {
+    const char* const values[] = { "-", "+", ".", "-.", "1e", "1e+", "-1E-" };
+    const jkii_field_type_t types[] = {
+        JKII_FIELD_TYPE_INTEGER,
+        JKII_FIELD_TYPE_LONG,
+        JKII_FIELD_TYPE_DOUBLE
+    };
+
+    for (const char* value : values) {
+        for (jkii_field_type_t type : types) {
+            INFO("value " << value << ", type " << type);
+            jkii_field_t field;
+            jkii_parse_err_t res = parse_number_by_name(value, type, &field);
+            // Either the input is refused, or this field is reported failed.
+            if (res != JKII_ERR_INVALID_INPUT) {
+                CHECK(JKII_ERR_PARTIAL == res);
+                CHECK(JKII_FIELD_ERR_OK != field.result);
+            }
+        }
+    }
+}
+
+// JSON has one kind of number. A value that happens to be whole comes without
+// a fraction, 25 for 25.0, and jkii_parse() refused it for a field expected as
+// a double: a type mismatch, for a temperature of 25 degrees.
+TEST_CASE("jkii_parse() reads a whole number for a field expected as a double") {
+    jkii_field_t field;
+    const struct { const char* text; double value; } cases[] = {
+        { "25", 25.0 }, { "-3", -3.0 }, { "0", 0.0 },
+        // Past an int32_t, and past an int64_t.
+        { "4294967296", 4294967296.0 }, { "18446744073709551616", 18446744073709551616.0 },
+        { "2.5", 2.5 }, { "1e3", 1000.0 },
+    };
+    for (const auto& c : cases) {
+        CAPTURE( std::string(c.text) );
+        REQUIRE( parse_number_by_name(c.text, JKII_FIELD_TYPE_DOUBLE, &field) == JKII_ERR_OK );
+        CHECK( field.result == JKII_FIELD_ERR_OK );
+        CHECK( field.field_copy.double_value == c.value );
+    }
+    // The other way stays a mismatch: a fraction is no integer.
+    CHECK( parse_number_by_name("2.5", JKII_FIELD_TYPE_INTEGER, &field) == JKII_ERR_PARTIAL );
+    CHECK( field.result == JKII_FIELD_ERR_TYPE_MISMATCH );
+    CHECK( parse_number_by_name("2.5", JKII_FIELD_TYPE_LONG, &field) == JKII_ERR_PARTIAL );
+    CHECK( field.result == JKII_FIELD_ERR_TYPE_MISMATCH );
+    // And what isn't a number is none.
+    CHECK( parse_number_by_name("\"25\"", JKII_FIELD_TYPE_DOUBLE, &field) == JKII_ERR_PARTIAL );
+    CHECK( field.result == JKII_FIELD_ERR_TYPE_MISMATCH );
+    CHECK( parse_number_by_name("true", JKII_FIELD_TYPE_DOUBLE, &field) == JKII_ERR_PARTIAL );
+    CHECK( field.result == JKII_FIELD_ERR_TYPE_MISMATCH );
+}
+
+// Their neighbours that do have digits still parse.
+TEST_CASE("KiiJson, GetObjectNumberWithDigitsByName") {
+    jkii_field_t field;
+
+    REQUIRE(JKII_ERR_OK ==
+            parse_number_by_name("-1", JKII_FIELD_TYPE_INTEGER, &field));
+    REQUIRE(-1 == field.field_copy.int_value);
+
+    REQUIRE(JKII_ERR_OK ==
+            parse_number_by_name("-0", JKII_FIELD_TYPE_LONG, &field));
+    REQUIRE(0 == field.field_copy.long_value);
+
+    REQUIRE(JKII_ERR_OK ==
+            parse_number_by_name("1e1", JKII_FIELD_TYPE_DOUBLE, &field));
+    REQUIRE(10.0 == field.field_copy.double_value);
+
+    REQUIRE(JKII_ERR_OK ==
+            parse_number_by_name("1e+1", JKII_FIELD_TYPE_DOUBLE, &field));
+    REQUIRE(10.0 == field.field_copy.double_value);
+
+    REQUIRE(JKII_ERR_OK ==
+            parse_number_by_name("-1E-1", JKII_FIELD_TYPE_DOUBLE, &field));
+    REQUIRE(0.0001 >= fabs(field.field_copy.double_value + 0.1));
+
+    REQUIRE(JKII_ERR_OK ==
+            parse_number_by_name("-0.5", JKII_FIELD_TYPE_DOUBLE, &field));
+    REQUIRE(-0.5 == field.field_copy.double_value);
+}
+
+// A JSON number has no leading zeros. jkii's integer check lets them through,
+// and strtol was called with base 0, which reads a leading 0 as octal: 010
+// came back as 8, and 08, not being octal, made the whole input invalid.
+TEST_CASE("KiiJson, GetObjectIntegerWithLeadingZeroByName") {
+    const char* const zeros[] = { "0", "-0" };
+    const char* const values[] = {
+        "00", "007", "08", "-08", "09", "010", "-010"
+    };
+    const jkii_field_type_t types[] = {
+        JKII_FIELD_TYPE_INTEGER,
+        JKII_FIELD_TYPE_LONG
+    };
+
+    for (const char* value : zeros) {
+        INFO("value " << value);
+        jkii_field_t field;
+
+        CHECK(JKII_ERR_OK ==
+                parse_number_by_name(value, JKII_FIELD_TYPE_INTEGER, &field));
+        CHECK(0 == field.field_copy.int_value);
+
+        CHECK(JKII_ERR_OK ==
+                parse_number_by_name(value, JKII_FIELD_TYPE_LONG, &field));
+        CHECK(0 == field.field_copy.long_value);
+    }
+
+    for (const char* value : values) {
+        for (jkii_field_type_t type : types) {
+            INFO("value " << value << ", type " << type);
+            jkii_field_t field;
+            jkii_parse_err_t res = parse_number_by_name(value, type, &field);
+            // Either the input is refused, or this field is reported failed.
+            if (res != JKII_ERR_INVALID_INPUT) {
+                CHECK(JKII_ERR_PARTIAL == res);
+                CHECK(JKII_FIELD_ERR_OK != field.result);
+            }
+        }
+    }
+}
+
+// Nor hexadecimal. These never reached strtol, whose base 0 would have read
+// them, because the type check refuses the x; now strtol would not either.
+TEST_CASE("KiiJson, GetObjectHexadecimalByName") {
+    const char* const values[] = { "0x10", "-0x10", "0X10" };
+    const jkii_field_type_t types[] = {
+        JKII_FIELD_TYPE_INTEGER,
+        JKII_FIELD_TYPE_LONG
+    };
+
+    for (const char* value : values) {
+        for (jkii_field_type_t type : types) {
+            INFO("value " << value << ", type " << type);
+            jkii_field_t field;
+            jkii_parse_err_t res = parse_number_by_name(value, type, &field);
+            // Either the input is refused, or this field is reported failed.
+            if (res != JKII_ERR_INVALID_INPUT) {
+                CHECK(JKII_ERR_PARTIAL == res);
+                CHECK(JKII_FIELD_ERR_OK != field.result);
+            }
+        }
+    }
 }
 
 TEST_CASE("KiiJson, GetObjectTrueByName") {
@@ -1188,6 +1597,113 @@ TEST_CASE("KiiJson, GetArrayFalse") {
     REQUIRE(JKII_FALSE == fields[0].field_copy.boolean_value);
 }
 
+// An index in a path goes through strtol as well. Without digits it converts
+// nothing, which asserted on BSD and macOS. Elsewhere "/[]", which hands
+// strtol an empty string and so leaves nothing over, found element 0.
+TEST_CASE("KiiJson, GetArrayIndexWithoutDigits") {
+    const char json_string[] = "[10]";
+    const char* const paths[] = { "/[]", "/[-]" };
+
+    for (const char* path : paths) {
+        INFO("path " << path);
+
+        jkii_token_t tokens[8];
+        jkii_resource_t resource = { tokens, 8 };
+
+        jkii_field_t fields[2];
+        memset(fields, 0x00, sizeof(fields));
+
+        fields[0].path = path;
+        fields[0].type = JKII_FIELD_TYPE_INTEGER;
+        fields[1].name = NULL;
+
+        jkii_parse_err_t res = jkii_parse(
+                json_string,
+                strlen(json_string),
+                fields,
+                &resource);
+        CHECK(JKII_ERR_PARTIAL == res);
+        CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
+    }
+}
+
+// An index in a path follows the same rule, as the path grammar in jkii.h has
+// it: /[010] found element 8, and now finds nothing, as /[08] did.
+TEST_CASE("KiiJson, GetArrayIndexWithLeadingZero") {
+    // Each element is its own index.
+    const char json_string[] = "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]";
+    const struct {
+        const char* path;
+        int index; // -1: not found
+    } cases[] = {
+        { "/[0]", 0 }, { "/[8]", 8 }, { "/[10]", 10 }, { "/[11]", 11 },
+        { "/[00]", -1 }, { "/[08]", -1 }, { "/[09]", -1 },
+        { "/[010]", -1 }, { "/[011]", -1 }, { "/[0x1]", -1 }
+    };
+
+    for (const auto& c : cases) {
+        INFO("path " << c.path);
+
+        jkii_token_t tokens[16];
+        jkii_resource_t resource = { tokens, 16 };
+
+        jkii_field_t fields[2];
+        memset(fields, 0x00, sizeof(fields));
+
+        fields[0].path = c.path;
+        fields[0].type = JKII_FIELD_TYPE_INTEGER;
+        fields[1].name = NULL;
+
+        jkii_parse_err_t res = jkii_parse(
+                json_string,
+                strlen(json_string),
+                fields,
+                &resource);
+        if (c.index < 0) {
+            CHECK(JKII_ERR_PARTIAL == res);
+            CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
+        } else {
+            CHECK(JKII_ERR_OK == res);
+            CHECK(JKII_FIELD_ERR_OK == fields[0].result);
+            CHECK(c.index == fields[0].field_copy.int_value);
+        }
+    }
+}
+
+// An index in a path is read as an int64_t as well, and has to be one that a
+// size_t holds. Where size_t is 32 bits, a cast alone would take 4294967296
+// for 0 and 4294967297 for 1. A negative index is no index either.
+TEST_CASE("KiiJson, GetArrayIndexOutOfRange") {
+    const char json_string[] = "[0, 1, 2]";
+    const char* const paths[] = {
+        "/[3]", "/[-1]", "/[-2147483649]", "/[2147483648]",
+        "/[4294967296]", "/[4294967297]", "/[9223372036854775807]",
+        "/[9223372036854775808]", "/[18446744073709551617]"
+    };
+
+    for (const char* path : paths) {
+        INFO("path " << path);
+
+        jkii_token_t tokens[8];
+        jkii_resource_t resource = { tokens, 8 };
+
+        jkii_field_t fields[2];
+        memset(fields, 0x00, sizeof(fields));
+
+        fields[0].path = path;
+        fields[0].type = JKII_FIELD_TYPE_INTEGER;
+        fields[1].name = NULL;
+
+        jkii_parse_err_t res = jkii_parse(
+                json_string,
+                strlen(json_string),
+                fields,
+                &resource);
+        CHECK(JKII_ERR_PARTIAL == res);
+        CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
+    }
+}
+
 TEST_CASE("KiiJson, GetComplexObject") {
     const char json_string[] =
         "{"
@@ -1298,6 +1814,98 @@ TEST_CASE("KiiJson, GetComplexObject") {
     REQUIRE(JKII_TRUE == fields[12].field_copy.boolean_value);
     // fields[12] does not have value. it is null.
     REQUIRE(0 == strcmp("value", fields[13].field_copy.string));
+}
+
+// A path segment that is neither a field nor an index, by the grammar in
+// jkii.h, finds nothing. It used to be read the same as the end of the path
+// with an empty field, so on an object with a "" key it found that key's
+// value; an unterminated index was read without its last digit.
+TEST_CASE("KiiJson, GetByInvalidPath") {
+    const char json_string[] =
+        "{\"\" : 1, \"a\" : [10, 20], \"b\" : {\"\" : 2, \"c\" : 3}}";
+    const char* const paths[] = {
+        // Not a number.
+        "/[abc]", "/[]", "/[-]", "/[+1]", "/[ 1]", "/[1 ]",
+        "/b/[abc]", "/b/[]", "/[abc]/c", "/b/[]/c",
+        // Negative, with a leading zero, too large, or into an object.
+        "/[-1]", "/b/[-1]", "/a/[-1]", "/[0]", "/[08]", "/b/[08]",
+        "/[9223372036854775808]", "/b/[9223372036854775808]",
+        "/[99999999999999999999]", "/[99999999999999999999999999]",
+        // No ']' to end it, or more after it.
+        "/[", "/[0", "/[1", "/b/[0", "/a/[1x", "/a/[10", "/[0]x", "/[0]]",
+        "/a/[1]x",
+        // Empty fields.
+        "/", "//", "//c", "/b/", "/b//c", "/a/[1]/",
+        // No leading '/'.
+        "b", "b/c", "[0]"
+    };
+
+    for (const char* path : paths) {
+        INFO("path " << path);
+
+        jkii_token_t tokens[16];
+        jkii_resource_t resource = { tokens, 16 };
+
+        jkii_field_t fields[2];
+        memset(fields, 0x00, sizeof(fields));
+
+        fields[0].path = path;
+        fields[0].type = JKII_FIELD_TYPE_INTEGER;
+        fields[1].name = NULL;
+
+        jkii_parse_err_t res = jkii_parse(
+                json_string,
+                strlen(json_string),
+                fields,
+                &resource);
+        CHECK(JKII_ERR_PARTIAL == res);
+        CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
+    }
+}
+
+// Valid paths into the same document, beside invalid ones, are still found.
+TEST_CASE("KiiJson, GetByValidPathBesideInvalid") {
+    const char json_string[] =
+        "{\"\" : 1, \"a\" : [10, 20], \"b\" : {\"\" : 2, \"c\" : 3},"
+        " \"[0]\" : 4}";
+
+    jkii_token_t tokens[16];
+    jkii_resource_t resource = { tokens, 16 };
+
+    jkii_field_t fields[7];
+    memset(fields, 0x00, sizeof(fields));
+
+    fields[0].path = "/a/[0]";
+    fields[0].type = JKII_FIELD_TYPE_INTEGER;
+    fields[1].path = "/[]";
+    fields[1].type = JKII_FIELD_TYPE_INTEGER;
+    fields[2].path = "/a/[1]";
+    fields[2].type = JKII_FIELD_TYPE_INTEGER;
+    fields[3].path = "/b/";
+    fields[3].type = JKII_FIELD_TYPE_INTEGER;
+    fields[4].path = "/b/c";
+    fields[4].type = JKII_FIELD_TYPE_INTEGER;
+    // An escaped '[' is part of a field, not the start of an index.
+    fields[5].path = "/\\[0\\]";
+    fields[5].type = JKII_FIELD_TYPE_INTEGER;
+    fields[6].path = NULL;
+
+    jkii_parse_err_t res = jkii_parse(
+            json_string,
+            strlen(json_string),
+            fields,
+            &resource);
+    CHECK(JKII_ERR_PARTIAL == res);
+    CHECK(JKII_FIELD_ERR_OK == fields[0].result);
+    CHECK(10 == fields[0].field_copy.int_value);
+    CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[1].result);
+    CHECK(JKII_FIELD_ERR_OK == fields[2].result);
+    CHECK(20 == fields[2].field_copy.int_value);
+    CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[3].result);
+    CHECK(JKII_FIELD_ERR_OK == fields[4].result);
+    CHECK(3 == fields[4].field_copy.int_value);
+    CHECK(JKII_FIELD_ERR_OK == fields[5].result);
+    CHECK(4 == fields[5].field_copy.int_value);
 }
 
 TEST_CASE("KiiJson, PushRetrieveEndpoint") {
@@ -1413,6 +2021,73 @@ TEST_CASE("KiiJson, CommandParseTest") {
     REQUIRE(JKII_FIELD_ERR_OK == fields[1].result);
     REQUIRE(JKII_FIELD_ERR_OK == fields[2].result);
     REQUIRE(JKII_FIELD_ERR_OK == fields[3].result);
+}
+
+// jsmn is built strict, so an unquoted key is not JSON, wherever it is and
+// whatever is looked up. Built lenient, it parsed as a primitive, which no
+// lookup found.
+TEST_CASE("KiiJson, UnquotedKeyByPath") {
+    const char json_string[] = "{x:1}";
+
+    jkii_token_t tokens[256];
+    jkii_resource_t resource = { tokens, 256 };
+
+    jkii_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
+
+    fields[0].path = "/x";
+    fields[0].type = JKII_FIELD_TYPE_INTEGER;
+    fields[1].path = NULL;
+
+    jkii_parse_err_t res = jkii_parse(
+            json_string,
+            strlen(json_string),
+            fields,
+            &resource);
+    REQUIRE(JKII_ERR_INVALID_INPUT == res);
+}
+
+TEST_CASE("KiiJson, UnquotedKeySecondLayerByPath") {
+    const char json_string[] = "{\"key1\" : {key2 : 100}}";
+
+    jkii_token_t tokens[256];
+    jkii_resource_t resource = { tokens, 256 };
+
+    jkii_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
+
+    fields[0].path = "/key1/key2";
+    fields[0].type = JKII_FIELD_TYPE_INTEGER;
+    fields[1].path = NULL;
+
+    jkii_parse_err_t res = jkii_parse(
+            json_string,
+            strlen(json_string),
+            fields,
+            &resource);
+    REQUIRE(JKII_ERR_INVALID_INPUT == res);
+}
+
+// What jsmn's strict grammar refuses, and its lenient one took. Taken, a
+// missing colon also made a key the parent of what followed it.
+TEST_CASE("KiiJson, StrictGrammar") {
+    const char* const inputs[] = {
+        "{x:1}", "{1:2}", "{\"a\":{b:1}}", "{\"a\"{\"b\":1}}", "{\"a\" 1}",
+        "{\"a\":{\"a\"{\"a\":1}}}"
+    };
+    for (const char* json_string : inputs) {
+        INFO("input " << json_string);
+        jkii_token_t tokens[64];
+        jkii_resource_t resource = { tokens, 64 };
+        jkii_field_t fields[2];
+        memset(fields, 0x00, sizeof(fields));
+        fields[0].name = "a";
+        fields[0].type = JKII_FIELD_TYPE_ANY;
+        CHECK(JKII_ERR_INVALID_INPUT ==
+                jkii_parse(json_string, strlen(json_string), fields, &resource));
+        CHECK(JKII_ERR_INVALID_INPUT ==
+                jkii_validate_root_object(json_string, strlen(json_string), &resource));
+    }
 }
 
 TEST_CASE("KiiJson, NoTokensTest")
@@ -1541,4 +2216,342 @@ TEST_CASE("KiiJson, FailedAllocationTest")
             cb_free);
 
     REQUIRE(JKII_ERR_ALLOCATION == res);
+}
+
+// A string with no JSON token in it is invalid input, not a programming error:
+// it can come from the network, e.g. a command whose alias maps to "" rather
+// than to an array of actions. The entry points asserted a non-zero length,
+// aborting any build with assertions enabled, and without them went on to read
+// the token array as the previous parse had left it. Whitespace alone was
+// never asserted against and took that second path in every build.
+TEST_CASE("KiiJson, NoTokenInputTest")
+{
+    const char previous[] = "{\"key1\" : \"value1\"}";
+    const char empty[] = "";
+    const char whitespace[] = " \t\r\n";
+    char buf[256];
+
+    jkii_token_t tokens[8];
+    jkii_resource_t resource = { tokens, 8 };
+
+    jkii_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
+
+    fields[0].name = "key1";
+    fields[0].type = JKII_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = buf;
+    fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
+    fields[1].name = NULL;
+
+    // Leave the tokens of a valid object behind, as kii and tio do by reusing
+    // one resource for every parse.
+    REQUIRE(JKII_ERR_OK ==
+            jkii_parse(previous, strlen(previous), fields, &resource));
+
+    SECTION("jkii_parse") {
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_parse(empty, 0, fields, &resource));
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_parse(whitespace, strlen(whitespace), fields, &resource));
+    }
+
+    SECTION("jkii_parse_with_allocator") {
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_parse_with_allocator(empty, 0, fields, cb_alloc, cb_free));
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_parse_with_allocator(whitespace, strlen(whitespace),
+                    fields, cb_alloc, cb_free));
+    }
+
+    SECTION("jkii_validate_root_object") {
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_validate_root_object(empty, 0, &resource));
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_validate_root_object(whitespace, strlen(whitespace),
+                    &resource));
+    }
+
+    SECTION("jkii_validate_root_object_with_allocator") {
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_validate_root_object_with_allocator(empty, 0,
+                    cb_alloc, cb_free));
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_validate_root_object_with_allocator(whitespace,
+                    strlen(whitespace), cb_alloc, cb_free));
+    }
+}
+
+// Even strict, jsmn takes a key with no value for valid:
+// {"a"} is an object holding one string, with no token after it for the
+// value. Each document below ends in such a key, and the token after the
+// last one parsed must not be taken for its value.
+//
+// parse_after() parses into a resource that a previous message was parsed
+// into, as kii and tio reuse theirs, and into the same buffer, left
+// uncleared. That message had a value where this one stops, so the token
+// after the last one parsed is still that value, its offsets still
+// pointing at its text.
+static jkii_parse_err_t parse_after(
+        const char* previous,
+        const char* json_string,
+        jkii_field_t* fields)
+{
+    char buf[256];
+    jkii_token_t tokens[256];
+    jkii_resource_t resource = { tokens, 256 };
+    jkii_field_t no_fields[1];
+    memset(no_fields, 0x00, sizeof(no_fields));
+
+    memcpy(buf, previous, strlen(previous));
+    REQUIRE(JKII_ERR_OK ==
+            jkii_parse(buf, strlen(previous), no_fields, &resource));
+    // No terminator: the rest of the previous message stays after this one.
+    memcpy(buf, json_string, strlen(json_string));
+    return jkii_parse(buf, strlen(json_string), fields, &resource);
+}
+
+// The allocator variant sizes the token array to the parse, so there is no
+// token after the last one.
+static jkii_parse_err_t parse_allocated(
+        const char* json_string,
+        jkii_field_t* fields)
+{
+    return jkii_parse_with_allocator(json_string, strlen(json_string),
+            fields, cb_alloc, cb_free);
+}
+
+TEST_CASE("KiiJson, OnlyKeyHasNoValue")
+{
+    const char json_string[] = "{\"a\"}";
+    char by_name[64];
+    char by_path[64];
+    jkii_parse_err_t res = JKII_ERR_OK;
+
+    jkii_field_t fields[3];
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].name = "a";
+    fields[0].type = JKII_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = by_name;
+    fields[0].field_copy_buff_size = sizeof(by_name) / sizeof(by_name[0]);
+    fields[1].path = "/a";
+    fields[1].type = JKII_FIELD_TYPE_STRING;
+    fields[1].field_copy.string = by_path;
+    fields[1].field_copy_buff_size = sizeof(by_path) / sizeof(by_path[0]);
+    fields[2].name = NULL;
+
+    SECTION("reused resource") {
+        res = parse_after("{\"a\":\"stale\"}", json_string, fields);
+    }
+    SECTION("allocator") {
+        res = parse_allocated(json_string, fields);
+    }
+    REQUIRE(JKII_ERR_PARTIAL == res);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[1].result);
+}
+
+TEST_CASE("KiiJson, LastKeyHasNoValue")
+{
+    const char json_string[] = "{\"a\":1,\"b\"}";
+    jkii_parse_err_t res = JKII_ERR_OK;
+
+    jkii_field_t fields[6];
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].name = "a";
+    fields[0].type = JKII_FIELD_TYPE_INTEGER;
+    fields[1].name = "b";
+    fields[1].type = JKII_FIELD_TYPE_ANY;
+    fields[2].path = "/b";
+    fields[2].type = JKII_FIELD_TYPE_ANY;
+    // Not there at all, but looking for it walks past b.
+    fields[3].name = "c";
+    fields[3].type = JKII_FIELD_TYPE_ANY;
+    fields[4].path = "/c";
+    fields[4].type = JKII_FIELD_TYPE_ANY;
+    fields[5].name = NULL;
+
+    SECTION("reused resource") {
+        res = parse_after("{\"a\":1,\"b\":\"stale\"}", json_string, fields);
+    }
+    SECTION("allocator") {
+        res = parse_allocated(json_string, fields);
+    }
+    REQUIRE(JKII_ERR_PARTIAL == res);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
+    REQUIRE(1 == fields[0].field_copy.int_value);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[1].result);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[2].result);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[3].result);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[4].result);
+}
+
+TEST_CASE("KiiJson, NestedKeyHasNoValue")
+{
+    const char json_string[] = "{\"a\":{\"b\"}}";
+    jkii_parse_err_t res = JKII_ERR_OK;
+
+    jkii_field_t fields[4];
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].path = "/a";
+    fields[0].type = JKII_FIELD_TYPE_OBJECT;
+    fields[1].path = "/a/b";
+    fields[1].type = JKII_FIELD_TYPE_ANY;
+    fields[2].path = "/a/c";
+    fields[2].type = JKII_FIELD_TYPE_ANY;
+    fields[3].path = NULL;
+
+    SECTION("reused resource") {
+        res = parse_after("{\"a\":{\"b\":\"stale\"}}", json_string, fields);
+    }
+    SECTION("allocator") {
+        res = parse_allocated(json_string, fields);
+    }
+    REQUIRE(JKII_ERR_PARTIAL == res);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[1].result);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[2].result);
+}
+
+// A string nothing can be looked up in leaves no field reading as found from
+// what its result was before: zeroed, it would be JKII_FIELD_ERR_OK.
+// jsmn, which 2.x parses with, takes a trailing comma even in its strict mode,
+// so {"a":1,} isn't among them as it is on master.
+TEST_CASE("KiiJson, NoFieldFoundInInvalidInput") {
+    for (const char* json : { "", "{", "{x:1}", "42", "\"a\"", "null" }) {
+        for (int allocated = 0; allocated < 2; ++allocated) {
+            INFO("\"" << json << "\"" << (allocated ? ", with the allocator" : ""));
+            jkii_field_t fields[3];
+            memset(fields, 0x00, sizeof(fields));
+            fields[0].name = "a";
+            fields[0].type = JKII_FIELD_TYPE_ANY;
+            fields[1].path = "/a";
+            fields[1].type = JKII_FIELD_TYPE_INTEGER;
+            jkii_parse_err_t res;
+            if (allocated) {
+                res = jkii_parse_with_allocator(json, strlen(json), fields, cb_alloc, cb_free);
+            } else {
+                jkii_token_t tokens[16];
+                jkii_resource_t resource = { tokens, 16 };
+                res = jkii_parse(json, strlen(json), fields, &resource);
+            }
+            CHECK(res != JKII_ERR_OK);
+            CHECK(fields[0].result == JKII_FIELD_ERR_NOT_FOUND);
+            CHECK(fields[1].result == JKII_FIELD_ERR_NOT_FOUND);
+            // The end of the array, untouched.
+            CHECK(fields[2].result == JKII_FIELD_ERR_OK);
+        }
+    }
+}
+
+// A number with a fraction or an exponent is read as a double up to 310
+// characters, DBL_MAX_10_EXP + 2. A longer one is JSON, but not one jkii reads:
+// jkii_parse() refuses the string, as it refuses one that isn't JSON, leaving
+// no field reading as found.
+TEST_CASE("KiiJson, NumberLongerThanJkiiReads") {
+    for (size_t length : { (size_t)310, (size_t)311, (size_t)312, (size_t)400 }) {
+        INFO("a number of " << length << " characters");
+        const std::string number = "1." + std::string(length - 2, '0');
+        const std::string json = "{\"a\":1,\"d\":" + number + ",\"b\":2}";
+        const bool read = length <= 310;
+        jkii_field_t fields[4];
+        memset(fields, 0x00, sizeof(fields));
+        fields[0].name = "a";
+        fields[0].type = JKII_FIELD_TYPE_INTEGER;
+        fields[1].name = "d";
+        fields[1].type = JKII_FIELD_TYPE_DOUBLE;
+        fields[2].name = "b";
+        fields[2].type = JKII_FIELD_TYPE_ANY;
+
+        jkii_token_t tokens[16];
+        jkii_resource_t resource = { tokens, 16 };
+        jkii_parse_err_t res = jkii_parse(json.data(), json.size(), fields, &resource);
+        if (read) {
+            CHECK(res == JKII_ERR_OK);
+            CHECK(fields[1].result == JKII_FIELD_ERR_OK);
+            CHECK(fields[1].field_copy.double_value == 1.0);
+        } else {
+            CHECK(res == JKII_ERR_INVALID_INPUT);
+            for (int i = 0; i < 3; ++i) {
+                CHECK(fields[i].result == JKII_FIELD_ERR_NOT_FOUND);
+            }
+        }
+
+        jkii_primitive_t p;
+        CHECK(jkii_parse_primitive(number.data(), number.size(), &p) ==
+                (read ? JKII_PRIMITIVE_ERR_OK : JKII_PRIMITIVE_ERR_INVALID));
+    }
+}
+
+// A document's number must not become the address the next document's string
+// is copied to.
+TEST_CASE( "jkii_parse() never writes a number or a boolean over a field's buffer address" ) {
+    char buf[16] = "untouched";
+    jkii_field_t fields[2];
+    memset(fields, 0, sizeof(fields));
+    fields[0].path = "/a";
+    fields[0].field_copy.string = buf;
+    fields[0].field_copy_buff_size = sizeof(buf);
+    fields[1].path = NULL;
+
+    SECTION("a field of any type, used for one document after another") {
+        fields[0].type = JKII_FIELD_TYPE_ANY;
+        // 0x4141414141414141, as an address.
+        const char number[] = "{\"a\":4702111234474983745}";
+        CHECK( jkii_parse3(number, strlen(number), fields) == JKII_ERR_OK );
+        CHECK( fields[0].result == JKII_FIELD_ERR_OK );
+        CHECK( fields[0].type == JKII_FIELD_TYPE_LONG );
+        CHECK( std::string(number + fields[0].start, fields[0].end - fields[0].start) ==
+                "4702111234474983745" );
+        CHECK( (const void*)fields[0].field_copy.string == (const void*)buf );
+        CHECK( std::string(buf) == "untouched" );
+
+        // Now expected as a number, with the buffer still.
+        CHECK( jkii_parse3(number, strlen(number), fields) == JKII_ERR_PARTIAL );
+        CHECK( fields[0].result == JKII_FIELD_ERR_COPY );
+        CHECK( (const void*)fields[0].field_copy.string == (const void*)buf );
+
+        const char text[] = "{\"a\":\"x\"}";
+        CHECK( jkii_parse3(text, strlen(text), fields) == JKII_ERR_PARTIAL );
+        CHECK( fields[0].result == JKII_FIELD_ERR_TYPE_MISMATCH );
+        CHECK( fields[0].type == JKII_FIELD_TYPE_STRING );
+        CHECK( (const void*)fields[0].field_copy.string == (const void*)buf );
+
+        const char more[] = "{\"a\":\"copied\"}";
+        CHECK( jkii_parse3(more, strlen(more), fields) == JKII_ERR_OK );
+        CHECK( (const void*)fields[0].field_copy.string == (const void*)buf );
+        CHECK( std::string(buf) == "copied" );
+    }
+
+    SECTION("each number and boolean, expected as any type or as itself") {
+        const struct { const char* json; jkii_field_type_t type; } cases[] = {
+            { "{\"a\":7}", JKII_FIELD_TYPE_INTEGER },
+            { "{\"a\":4702111234474983745}", JKII_FIELD_TYPE_LONG },
+            { "{\"a\":1.5}", JKII_FIELD_TYPE_DOUBLE },
+            { "{\"a\":true}", JKII_FIELD_TYPE_BOOLEAN },
+        };
+        for (const auto& c : cases) {
+            INFO( c.json );
+            fields[0].type = JKII_FIELD_TYPE_ANY;
+            CHECK( jkii_parse3(c.json, strlen(c.json), fields) == JKII_ERR_OK );
+            CHECK( fields[0].result == JKII_FIELD_ERR_OK );
+            CHECK( fields[0].type == c.type );
+            CHECK( (const void*)fields[0].field_copy.string == (const void*)buf );
+
+            fields[0].type = c.type;
+            CHECK( jkii_parse3(c.json, strlen(c.json), fields) == JKII_ERR_PARTIAL );
+            CHECK( fields[0].result == JKII_FIELD_ERR_COPY );
+            CHECK( (const void*)fields[0].field_copy.string == (const void*)buf );
+        }
+        CHECK( std::string(buf) == "untouched" );
+    }
+
+    SECTION("without a buffer, a field of any type has the number, as before") {
+        fields[0].field_copy.string = NULL;
+        fields[0].field_copy_buff_size = 0;
+        fields[0].type = JKII_FIELD_TYPE_ANY;
+        const char number[] = "{\"a\":4702111234474983745}";
+        CHECK( jkii_parse3(number, strlen(number), fields) == JKII_ERR_OK );
+        CHECK( fields[0].type == JKII_FIELD_TYPE_LONG );
+        CHECK( fields[0].field_copy.long_value == INT64_C(4702111234474983745) );
+    }
 }

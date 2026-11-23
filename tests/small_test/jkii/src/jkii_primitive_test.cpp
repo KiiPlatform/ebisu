@@ -2,9 +2,12 @@
 #include <jkii.h>
 #include <jkii_utils.h>
 #include <math.h>
-#include <limits.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <float.h>
+#include <locale.h>
+#include <string>
 
 TEST_CASE("KiiJson, PrimitiveInt")
 {
@@ -16,48 +19,51 @@ TEST_CASE("KiiJson, PrimitiveInt")
     REQUIRE(1 == res.value.int_value);
 }
 
+// The ranges are those of int32_t and int64_t, whatever the widths of int and
+// long. These went by INT_MAX and LONG_MAX, so where long is 32 bits LONG_MAX
+// was an int and the long tests failed.
 TEST_CASE("KiiJson, PrimitiveIntMax")
 {
-    char str_buff[64];
-    snprintf(str_buff, 64, "%d", INT_MAX);
+    const char str[] = "2147483647";
     jkii_primitive_t res;
-    jkii_parse_primitive(str_buff, strlen(str_buff), &res);
+    REQUIRE(JKII_PRIMITIVE_ERR_OK ==
+            jkii_parse_primitive(str, strlen(str), &res));
 
     REQUIRE(JKII_FIELD_TYPE_INTEGER == res.type);
-    REQUIRE(INT_MAX == res.value.int_value);
+    REQUIRE(INT32_MAX == res.value.int_value);
 }
 
 TEST_CASE("KiiJson, PrimitiveIntMin")
 {
-    char str_buff[64];
-    snprintf(str_buff, 64, "%d", INT_MIN);
+    const char str[] = "-2147483648";
     jkii_primitive_t res;
-    jkii_parse_primitive(str_buff, strlen(str_buff), &res);
+    REQUIRE(JKII_PRIMITIVE_ERR_OK ==
+            jkii_parse_primitive(str, strlen(str), &res));
 
     REQUIRE(JKII_FIELD_TYPE_INTEGER == res.type);
-    REQUIRE(INT_MIN == res.value.int_value);
+    REQUIRE(INT32_MIN == res.value.int_value);
 }
 
 TEST_CASE("KiiJson, PrimitiveLongMin")
 {
-    char str_buff[64];
-    snprintf(str_buff, 64, "%ld", LONG_MIN);
+    const char str[] = "-9223372036854775808";
     jkii_primitive_t res;
-    jkii_parse_primitive(str_buff, strlen(str_buff), &res);
+    REQUIRE(JKII_PRIMITIVE_ERR_OK ==
+            jkii_parse_primitive(str, strlen(str), &res));
 
     REQUIRE(JKII_FIELD_TYPE_LONG == res.type);
-    REQUIRE(LONG_MIN == res.value.long_value);
+    REQUIRE(INT64_MIN == res.value.long_value);
 }
 
 TEST_CASE("KiiJson, PrimitiveLongMax")
 {
-    char str_buff[64];
-    snprintf(str_buff, 64, "%ld", LONG_MAX);
+    const char str[] = "9223372036854775807";
     jkii_primitive_t res;
-    jkii_parse_primitive(str_buff, strlen(str_buff), &res);
+    REQUIRE(JKII_PRIMITIVE_ERR_OK ==
+            jkii_parse_primitive(str, strlen(str), &res));
 
     REQUIRE(JKII_FIELD_TYPE_LONG == res.type);
-    REQUIRE(LONG_MAX == res.value.long_value);
+    REQUIRE(INT64_MAX == res.value.long_value);
 }
 
 TEST_CASE("KiiJson, PrimitiveDouble")
@@ -208,4 +214,193 @@ TEST_CASE("KiiJson, PrimitiveLongerThanLiteralDoesNotOverread")
     const char truthy[] = "truelike";
     REQUIRE(JKII_PRIMITIVE_ERR_INVALID ==
             jkii_parse_primitive(truthy, strlen(truthy), &res));
+}
+
+// tio parses the values of command actions with this. A number needs digits.
+// "-" and "" asserted on BSD and macOS, where strtol sets EINVAL when it
+// converts nothing, and elsewhere "" came back as the integer 0. "1e" came
+// back as the double 1 everywhere.
+TEST_CASE("KiiJson, PrimitiveNumberWithoutDigitsIsInvalid")
+{
+    const char* const values[] = { "", "-", "+", ".", "-.", "1e", "1e+", "-1E-" };
+
+    for (const char* value : values) {
+        INFO("value \"" << value << "\"");
+        jkii_primitive_t res;
+        CHECK(JKII_PRIMITIVE_ERR_INVALID ==
+                jkii_parse_primitive(value, strlen(value), &res));
+    }
+}
+
+// A JSON number has no leading zeros. jkii's integer check lets them through,
+// and strtol was called with base 0, which reads a leading 0 as octal: 010
+// came back as 8 and 08 was invalid.
+TEST_CASE("KiiJson, PrimitiveIntegerWithLeadingZeroIsInvalid")
+{
+    const char* const zeros[] = { "0", "-0" };
+    for (const char* value : zeros) {
+        INFO("value " << value);
+        jkii_primitive_t res;
+        jkii_primitive_err_t err =
+            jkii_parse_primitive(value, strlen(value), &res);
+        CHECK(JKII_PRIMITIVE_ERR_OK == err);
+        if (err == JKII_PRIMITIVE_ERR_OK) {
+            CHECK(JKII_FIELD_TYPE_INTEGER == res.type);
+            CHECK(0 == res.value.int_value);
+        }
+    }
+
+    // The last is too long for an int64_t: invalid all the same, not an
+    // overflow.
+    const char* const values[] = {
+        "00", "007", "08", "-08", "09", "010", "-010",
+        "00000000000000000000000000000005"
+    };
+    for (const char* value : values) {
+        INFO("value " << value);
+        jkii_primitive_t res;
+        CHECK(JKII_PRIMITIVE_ERR_INVALID ==
+                jkii_parse_primitive(value, strlen(value), &res));
+    }
+}
+
+// A byte above 0x7f is not a digit, wherever it is in a number. Where char
+// is signed it is negative, which isdigit is not given.
+TEST_CASE("KiiJson, PrimitiveNumberWithNonAsciiByteIsInvalid")
+{
+    const char* const values[] = {
+        "\xb9", "1\xb9", "-\xb9", "1.\xb9", "1.5\xb9", "1e\xb9", "1e5\xb9",
+        "\xff", "1\xff", "1.\xff", "1e\xff"
+    };
+    for (const char* value : values) {
+        INFO("value " << value);
+        jkii_primitive_t res;
+        CHECK(JKII_PRIMITIVE_ERR_INVALID ==
+                jkii_parse_primitive(value, strlen(value), &res));
+    }
+}
+
+// Nor hexadecimal. These never reached strtol, whose base 0 would have read
+// them, because the type check refuses the x; now strtol would not either.
+TEST_CASE("KiiJson, PrimitiveHexadecimalIsInvalid")
+{
+    const char* const values[] = { "0x10", "-0x10", "0X10" };
+
+    for (const char* value : values) {
+        INFO("value " << value);
+        jkii_primitive_t res;
+        CHECK(JKII_PRIMITIVE_ERR_INVALID ==
+                jkii_parse_primitive(value, strlen(value), &res));
+    }
+}
+
+// strtod() reads the decimal point the locale sets, while JSON's is always
+// '.'. So in a program that set a locale whose decimal point is a comma, no
+// number with a fraction was read: strtod() stopped at the '.', and what was
+// left of it made the number invalid.
+TEST_CASE("KiiJson, PrimitiveDoubleWhateverTheLocale")
+{
+    // Names of such locales on Linux, then on Windows.
+    const char* const names[] = {
+        "de_DE.UTF-8", "de_DE.utf8", "de_DE", "fr_FR.UTF-8", "es_ES.UTF-8",
+        "German_Germany.1252", "German", "de-DE"
+    };
+    // Put back whatever happens, as the other tests expect the C locale.
+    struct Restore {
+        std::string saved;
+        ~Restore() { setlocale(LC_NUMERIC, saved.c_str()); }
+    } restore = { setlocale(LC_NUMERIC, NULL) };
+    const char* set = NULL;
+    for (const char* name : names) {
+        if (setlocale(LC_NUMERIC, name) != NULL &&
+                strcmp(localeconv()->decimal_point, ",") == 0) {
+            set = name;
+            break;
+        }
+    }
+    if (set == NULL) {
+        WARN("no locale with a decimal comma here, so this isn't tested");
+        return;
+    }
+    INFO("locale " << set);
+
+    const struct {
+        const char* str;
+        double value;
+    } cases[] = {
+        { "25.5", 25.5 }, { "-0.1", -0.1 }, { "1.5e3", 1500.0 },
+        { "2.25E-1", 0.225 }, { "1e2", 100.0 }
+    };
+    for (const auto& c : cases) {
+        INFO("value " << c.str);
+        jkii_primitive_t res;
+        REQUIRE(JKII_PRIMITIVE_ERR_OK ==
+                jkii_parse_primitive(c.str, strlen(c.str), &res));
+        CHECK(JKII_FIELD_TYPE_DOUBLE == res.type);
+        CHECK(c.value == res.value.double_value);
+    }
+
+    // And in a field of an object, as tio's commands and kii's responses are.
+    const char json[] = "{\"key1\" : 25.5}";
+    jkii_token_t tokens[16];
+    jkii_resource_t resource = { tokens, 16 };
+    jkii_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].name = "key1";
+    fields[0].type = JKII_FIELD_TYPE_DOUBLE;
+    CHECK(JKII_ERR_OK == jkii_parse(json, strlen(json), fields, &resource));
+    CHECK(JKII_FIELD_ERR_OK == fields[0].result);
+    CHECK(25.5 == fields[0].field_copy.double_value);
+}
+
+// A number below the smallest normal double, but not small enough to be 0, is
+// a double, a subnormal one. glibc's strtod() sets ERANGE for it all the same,
+// which jkii took for an overflow.
+TEST_CASE("KiiJson, PrimitiveDoubleBelowNormal")
+{
+    for (const char* s : { "2.225073858507201e-308", "1e-310", "-1e-310", "1.5e-323",
+            "4.9406564584124654e-324", "5e-324", "-5e-324" }) {
+        INFO(s);
+        jkii_primitive_t res;
+        CHECK(jkii_parse_primitive(s, strlen(s), &res) == JKII_PRIMITIVE_ERR_OK);
+        CHECK(res.type == JKII_FIELD_TYPE_DOUBLE);
+        CHECK(res.value.double_value == strtod(s, NULL));
+        CHECK(res.value.double_value != 0);
+        CHECK(fabs(res.value.double_value) < DBL_MIN);
+    }
+    jkii_primitive_t res;
+    CHECK(jkii_parse_primitive("2e-324", 6, &res) == JKII_PRIMITIVE_ERR_UNDERFLOW);
+}
+
+// Out of a double's range, told from what strtod() gives, not from errno: where
+// errno.h isn't the C library's own, 1e999 was read as an infinity and 1e-400
+// as 0, both as found. small_test_jkii_strtod_without_errno runs this against
+// jkii built with a strtod() that sets no errno.
+TEST_CASE("KiiJson, PrimitiveDoubleOutOfRange")
+{
+    const struct {
+        const char* str;
+        jkii_primitive_err_t res;
+    } cases[] = {
+        { "1e999", JKII_PRIMITIVE_ERR_OVERFLOW },
+        { "-1e999", JKII_PRIMITIVE_ERR_OVERFLOW },
+        { "1.5e400", JKII_PRIMITIVE_ERR_OVERFLOW },
+        { "1e-400", JKII_PRIMITIVE_ERR_UNDERFLOW },
+        { "-1e-400", JKII_PRIMITIVE_ERR_UNDERFLOW },
+        { "0.000001e-400", JKII_PRIMITIVE_ERR_UNDERFLOW },
+        // 0 written as 0 is 0, however small its exponent.
+        { "0.0", JKII_PRIMITIVE_ERR_OK },
+        { "0e-400", JKII_PRIMITIVE_ERR_OK },
+        { "-0.000e999", JKII_PRIMITIVE_ERR_OK },
+        { "1.7976931348623157e308", JKII_PRIMITIVE_ERR_OK },
+    };
+    for (const auto& c : cases) {
+        INFO(c.str);
+        jkii_primitive_t res;
+        CHECK(jkii_parse_primitive(c.str, strlen(c.str), &res) == c.res);
+        if (c.res == JKII_PRIMITIVE_ERR_OK) {
+            CHECK(res.type == JKII_FIELD_TYPE_DOUBLE);
+            CHECK(res.value.double_value == strtod(c.str, NULL));
+        }
+    }
 }
