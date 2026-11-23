@@ -2,10 +2,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <limits.h>
 #include "khc.h"
 #include "khc_impl.h"
 #include "khc_state_impl.h"
 
+#ifdef KHC_TRACE
 static void _trace_dump(char prefix, char* buf, size_t len) {
     for(int i=0;i<len;i++) {
         if (buf[i] == '\r') {
@@ -23,6 +25,7 @@ static void _trace_dump(char prefix, char* buf, size_t len) {
 static void _trace_op(char* op, int res) {
     printf("* %s = %d\n", op, res);
 }
+#endif
 
 khc_code khc_set_cb_sock_connect(
         khc* khc,
@@ -94,11 +97,28 @@ khc_code khc_set_cb_header(
     return KHC_ERR_OK;
 }
 
+// Whether text can stand in the request line, or be the Host header's value,
+// and leave the request as it was meant: with no space, which ends a part of
+// the request line, no CR or LF, which end the line, and no other control
+// character.
+static int _is_request_text(const char* text, size_t len) {
+    for (size_t i = 0; i < len; ++i) {
+        const unsigned char c = (unsigned char)text[i];
+        if (c <= 0x20 || c == 0x7f) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 khc_code khc_set_host(khc* khc, const char* host) {
     size_t len = strlen(host);
     size_t buff_len = sizeof(khc->_host);
     if (buff_len < len + 1) {
         return KHC_ERR_TOO_LARGE_DATA;
+    }
+    if (!_is_request_text(host, len)) {
+        return KHC_ERR_FAIL;
     }
     memcpy(khc->_host, host, len + 1);
     return KHC_ERR_OK;
@@ -110,6 +130,9 @@ khc_code khc_set_path(khc* khc, const char* path) {
     if (buff_len < len + 1) {
         return KHC_ERR_TOO_LARGE_DATA;
     }
+    if (!_is_request_text(path, len)) {
+        return KHC_ERR_FAIL;
+    }
     memcpy(khc->_path, path, len + 1);
     return KHC_ERR_OK;
 }
@@ -119,6 +142,9 @@ khc_code khc_set_method(khc* khc, const char* method) {
     size_t buff_len = sizeof(khc->_method);
     if (buff_len < len + 1) {
         return KHC_ERR_TOO_LARGE_DATA;
+    }
+    if (!_is_request_text(method, len)) {
+        return KHC_ERR_FAIL;
     }
     memcpy(khc->_method, method, len + 1);
     return KHC_ERR_OK;
@@ -399,7 +425,10 @@ void khc_state_req_header_end(khc* khc) {
         } else {
             khc->_sent_length = 0;
         }
-        if (khc->_cb_read != NULL) {
+        // A method without a body ends the request here: its headers say
+        // nothing of one, so a body, or even the chunk ending an empty one,
+        // would be taken for the start of another request.
+        if (khc_method_can_have_body(khc) && khc->_cb_read != NULL) {
             khc->_state = KHC_STATE_REQ_BODY_READ;
         } else {
             khc->_resp_header_read_size = 0;
@@ -432,14 +461,31 @@ void khc_state_req_body_read(khc* khc) {
     return;
 }
 
-void khc_state_req_body_send_size(khc* khc) {
-    char size_buff[16];
-    int size_len = snprintf(size_buff, 15, "%lx\r\n", khc->_read_size);
-    if (size_len > 15) {
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_TOO_LARGE_DATA;
-        return;
+// Written by hand rather than with snprintf: no printf length modifier matches
+// size_t on every target and libc, and the buffer fits any size_t, so the line
+// is never cut short.
+size_t _khc_chunk_size_line(size_t size, char out[KHC_CHUNK_SIZE_LINE_SIZE]) {
+    static const char hex_digits[] = "0123456789abcdef";
+    char digits[sizeof(size_t) * 2];
+    size_t digits_len = 0;
+    do {
+        digits[digits_len++] = hex_digits[size & 0xf];
+        size >>= 4;
+    } while (size != 0);
+
+    size_t len = 0;
+    while (digits_len > 0) {
+        out[len++] = digits[--digits_len];
     }
+    out[len++] = '\r';
+    out[len++] = '\n';
+    out[len] = '\0';
+    return len;
+}
+
+void khc_state_req_body_send_size(khc* khc) {
+    char size_buff[KHC_CHUNK_SIZE_LINE_SIZE];
+    _khc_chunk_size_line(khc->_read_size, size_buff);
     char* send_pos = &size_buff[khc->_sent_length];
     size_t send_len = strlen(send_pos);
     size_t sent_len = 0;
@@ -551,6 +597,17 @@ void khc_state_req_body_send_crlf(khc* khc) {
     }
 }
 
+// The first CRLF within the first len bytes of buff, or NULL. By length,
+// not with strstr(): a NUL among what was read would hide the rest of it.
+static const char* _find_crlf(const char* buff, size_t len) {
+    for (size_t i = 0; i + 1 < len; ++i) {
+        if (buff[i] == '\r' && buff[i + 1] == '\n') {
+            return &buff[i];
+        }
+    }
+    return NULL;
+}
+
 void khc_state_resp_status_read(khc* khc) {
     size_t read_size = 0;
     size_t read_req_size = khc->_resp_header_buff_size - khc->_resp_header_read_size - 1;
@@ -565,13 +622,19 @@ void khc_state_resp_status_read(khc* khc) {
         if (read_size == 0) {
             khc->_read_end = 1;
         }
-        // check CRLF. no exist -> ERROR.
-        if (strstr(khc->_resp_header_buff, "\r\n") == NULL) {
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_TOO_LARGE_DATA;
+        if (_find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size) != NULL) {
+            khc->_state = KHC_STATE_RESP_STATUS_PARSE;
             return;
         }
-        khc->_state = KHC_STATE_RESP_STATUS_PARSE;
+        if (khc->_resp_header_read_size + 1 == khc->_resp_header_buff_size) {
+            khc->_state = KHC_STATE_CLOSE;
+            khc->_result = KHC_ERR_TOO_LARGE_DATA;
+        } else if (read_size == 0) {
+            // Closed before the status line ended.
+            khc->_state = KHC_STATE_CLOSE;
+            khc->_result = KHC_ERR_SOCK_RECV;
+        }
+        // Otherwise a read can end anywhere: read the rest of the line.
         return;
     }
     #ifdef KHC_TRACE
@@ -590,29 +653,40 @@ void khc_state_resp_status_read(khc* khc) {
 }
 
 void khc_state_resp_status_parse(khc* khc) {
-    const char http_version[] = "HTTP/d.d ";
-    char* ptr = khc->_resp_header_buff + strlen(http_version);
-
-    int status_code = 0;
-    for (int i = 0; i < 3; ++i) {
-        char d = ptr[i];
-        if (isdigit((int)d) == 0){
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_FAIL;
-            return;
-        }
-        status_code = status_code * 10 + (d - '0');
+    const char* line_end = _find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size);
+    // Check the line itself: past it, the buffer may hold what an earlier
+    // response left there.
+    if (line_end == NULL ||
+            !_is_status_line(khc->_resp_header_buff, (size_t)(line_end - khc->_resp_header_buff))) {
+        khc->_state = KHC_STATE_CLOSE;
+        khc->_result = KHC_ERR_INVALID_RESPONSE;
+        return;
     }
-    khc->_status_code = status_code;
+    // The three digits after "HTTP/1.1 ", so at most 999.
+    const char* digits = khc->_resp_header_buff + 9;
+    khc->_status_code = (digits[0] - '0') * 100 + (digits[1] - '0') * 10 + (digits[2] - '0');
+    khc->_resp_status_line_given = 0;
+    khc->_resp_version_1_0 = khc->_resp_header_buff[7] == '0' ? 1 : 0;
+    // A response of its own, an interim 1xx one included: what framed the
+    // one before doesn't frame this one.
+    khc->_resp_content_length = 0;
+    khc->_resp_has_content_length = 0;
+    khc->_chunked_resp = 0;
     khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
     return;
 }
 
 void khc_state_resp_header_callback(khc* khc) {
-    char* header_boundary = strstr(khc->_resp_header_buff, "\r\n");
+    const char* header_boundary = _find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size);
     if (header_boundary == NULL) {
         if (khc->_resp_header_buff_size == khc->_resp_header_read_size + 1) {
-            // no space in _resp_header_buff.
+            // no space in _resp_header_buff. What there is of the header is
+            // checked now, as what comes after it is while it is skipped.
+            if (!_is_header_start(khc->_resp_header_buff, khc->_resp_header_read_size)) {
+                khc->_state = KHC_STATE_CLOSE;
+                khc->_result = KHC_ERR_INVALID_RESPONSE;
+                return;
+            }
             khc->_state = KHC_STATE_RESP_HEADER_SKIP;
             return;
         }
@@ -620,6 +694,15 @@ void khc_state_resp_header_callback(khc* khc) {
         return;
     }
     size_t header_size = header_boundary - khc->_resp_header_buff;
+    // The status line, checked already, comes first, and the headers after
+    // it. A line that starts with a space or a tab, which continues the one
+    // before in the obsolete line folding, isn't one.
+    if (header_size > 0 && khc->_resp_status_line_given &&
+            !_is_header_line(khc->_resp_header_buff, header_size)) {
+        khc->_state = KHC_STATE_CLOSE;
+        khc->_result = KHC_ERR_INVALID_RESPONSE;
+        return;
+    }
     if (header_size > 0) {
         size_t content_length = 0;
         size_t header_written = khc->_cb_header(khc->_resp_header_buff,
@@ -629,11 +712,31 @@ void khc_state_resp_header_callback(khc* khc) {
             khc->_result = KHC_ERR_HEADER_CALLBACK;
             return;
         }
+        khc->_resp_status_line_given = 1;
 
-        if (_is_chunked_encoding(khc->_resp_header_buff, header_size) == 1) {
+        int chunked = _is_chunked_encoding(khc->_resp_header_buff, header_size);
+        if (chunked == 1) {
             khc->_chunked_resp = 1;
-        } else if (_extract_content_length(khc->_resp_header_buff, header_size, &content_length) == 1) {
-            khc->_resp_content_length = content_length;
+        } else if (chunked == -1) { // Transfer coding khc cannot remove.
+            khc->_state = KHC_STATE_CLOSE;
+            khc->_result = KHC_ERR_INVALID_RESPONSE;
+            return;
+        } else {
+            int extracted = _extract_content_length(khc->_resp_header_buff, header_size, &content_length);
+            if (extracted == 1 && khc->_resp_has_content_length &&
+                    content_length != khc->_resp_content_length) {
+                // Lengths that disagree: body length unknown.
+                khc->_state = KHC_STATE_CLOSE;
+                khc->_result = KHC_ERR_INVALID_RESPONSE;
+                return;
+            } else if (extracted == 1) {
+                khc->_resp_content_length = content_length;
+                khc->_resp_has_content_length = 1;
+            } else if (extracted == -1) { // Invalid Content-Length: body length unknown.
+                khc->_state = KHC_STATE_CLOSE;
+                khc->_result = KHC_ERR_INVALID_RESPONSE;
+                return;
+            }
         }
     }
 
@@ -643,9 +746,26 @@ void khc_state_resp_header_callback(khc* khc) {
 
     if (header_size == 0) {
         if (100 <= khc->_status_code && khc->_status_code < 200) {
-            khc->_state = KHC_STATE_RESP_STATUS_READ;
+            // The final response may have come with this one, its status
+            // line whole: then there is nothing to wait for.
+            if (_find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size) != NULL) {
+                khc->_state = KHC_STATE_RESP_STATUS_PARSE;
+            } else {
+                khc->_state = KHC_STATE_RESP_STATUS_READ;
+            }
         } else {
-            if (khc->_chunked_resp) {
+            if (strcmp(khc->_method, "HEAD") == 0 ||
+                    khc->_status_code == 204 || khc->_status_code == 304) {
+                // These have no body, whatever length they give.
+                khc->_state = KHC_STATE_CLOSE;
+            } else if (khc->_chunked_resp &&
+                    (khc->_resp_has_content_length || khc->_resp_version_1_0)) {
+                // Chunks with a Content-Length too, or in an HTTP/1.0 response,
+                // which has none: framing that something else on the way may
+                // have read another way (RFC 9112, sections 6.1 and 6.3).
+                khc->_state = KHC_STATE_CLOSE;
+                khc->_result = KHC_ERR_INVALID_RESPONSE;
+            } else if (khc->_chunked_resp) {
                 khc->_body_read_size = 0;
                 khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
             } else {
@@ -668,7 +788,10 @@ void khc_state_resp_header_read(khc* khc) {
         khc->_resp_header_read_size += read_size;
         khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
         if (read_size == 0) {
-            khc->_read_end = 1;
+            // Closed before the headers ended: nothing more will come.
+            khc->_state = KHC_STATE_CLOSE;
+            khc->_result = KHC_ERR_SOCK_RECV;
+            return;
         }
         khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
         return;
@@ -693,12 +816,14 @@ void khc_state_resp_header_skip(khc* khc) {
     if (_is_header_present("Content-Length", khc->_resp_header_buff, khc->_resp_header_read_size) == 1 ||
             _is_header_present("Transfer-Encoding", khc->_resp_header_buff, khc->_resp_header_read_size) == 1) {
         khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_HEADER_CALLBACK;
+        khc->_result = KHC_ERR_TOO_LARGE_DATA;
         return;
     }
 
-    // check and leave CR at last.
-    if (khc->_resp_header_buff[khc->_resp_header_read_size - 1] == '\r') {
+    // check and leave CR at last. There may be nothing left of the last
+    // read: this is called again when the socket had nothing to read yet.
+    if (khc->_resp_header_read_size > 0 &&
+            khc->_resp_header_buff[khc->_resp_header_read_size - 1] == '\r') {
         khc->_resp_header_buff[0] = '\r';
         khc->_resp_header_read_size = 1;
     } else {
@@ -719,10 +844,25 @@ void khc_state_resp_header_skip(khc* khc) {
         khc->_resp_header_read_size += read_size;
         khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
         if (read_size == 0) {
-            khc->_read_end = 1;
+            // Closed before the headers ended: nothing more will come.
+            khc->_state = KHC_STATE_CLOSE;
+            khc->_result = KHC_ERR_SOCK_RECV;
+            return;
         }
         // check header boundary.
-        char* header_boundary = strstr(khc->_resp_header_buff, "\r\n");
+        const char* header_boundary = _find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size);
+        // The rest of the value, up to its CRLF, or a CR that may start it.
+        size_t value_size = header_boundary != NULL ?
+            (size_t)(header_boundary - khc->_resp_header_buff) :
+            khc->_resp_header_read_size;
+        if (header_boundary == NULL && khc->_resp_header_buff[value_size - 1] == '\r') {
+            --value_size;
+        }
+        if (!_is_field_text(khc->_resp_header_buff, value_size)) {
+            khc->_state = KHC_STATE_CLOSE;
+            khc->_result = KHC_ERR_INVALID_RESPONSE;
+            return;
+        }
         if (header_boundary == NULL) {
             // re-skip.
             return;
@@ -751,19 +891,48 @@ void khc_state_resp_header_skip(khc* khc) {
     }
 }
 
+/* A body that isn't chunked ends at the response's Content-Length, or without
+ * one when the connection closes. If it closes short of that length, the body
+ * ended early. */
+static void _end_resp_body(khc* khc) {
+    khc->_state = KHC_STATE_CLOSE;
+    if (khc->_resp_body_received < khc->_resp_content_length) {
+        khc->_result = KHC_ERR_SOCK_RECV;
+    }
+}
+
+static int _resp_body_complete(const khc* khc) {
+    return khc->_resp_has_content_length &&
+        khc->_resp_body_received >= khc->_resp_content_length;
+}
+
+/* How much of size bytes just read is body: what comes after Content-Length
+ * isn't. */
+static size_t _resp_body_part(const khc* khc, size_t size) {
+    if (!khc->_resp_has_content_length) {
+        return size;
+    }
+    if (_resp_body_complete(khc)) {
+        return 0;
+    }
+    size_t remain = khc->_resp_content_length - khc->_resp_body_received;
+    return size < remain ? size : remain;
+}
+
 void khc_state_resp_body_fragment(khc* khc) {
-    if (khc->_resp_header_read_size > 0) {
-        size_t written =
-            khc->_cb_write(khc->_resp_header_buff, khc->_resp_header_read_size, khc->_write_data);
-        if (written != khc->_resp_header_read_size) { // Error in write callback.
+    size_t size = _resp_body_part(khc, khc->_resp_header_read_size);
+    if (size > 0) {
+        size_t written = khc->_cb_write(khc->_resp_header_buff, size, khc->_write_data);
+        if (written != size) { // Error in write callback.
             khc->_state = KHC_STATE_CLOSE;
             khc->_result = KHC_ERR_WRITE_CALLBACK;
             return;
         }
+        khc->_resp_body_received += written;
     }
 
-    if (khc->_read_end == 1) {
-        khc->_state = KHC_STATE_CLOSE;
+    if (khc->_read_end || _resp_body_complete(khc)) {
+        _end_resp_body(khc);
         return;
     } else {
         khc->_state = KHC_STATE_RESP_BODY_READ;
@@ -819,7 +988,7 @@ void khc_state_resp_body_read(khc* khc) {
         khc->_body_read_size = read_size;
         if (read_size == 0) {
             khc->_read_end = 1;
-            khc->_state = KHC_STATE_CLOSE;
+            _end_resp_body(khc);
             return;
         }
         khc->_state = KHC_STATE_RESP_BODY_CALLBACK;
@@ -841,14 +1010,16 @@ void khc_state_resp_body_read(khc* khc) {
 }
 
 void khc_state_resp_body_callback(khc* khc) {
-    size_t written = khc->_cb_write(khc->_stream_buff, khc->_body_read_size, khc->_write_data);
-    if (written < khc->_body_read_size) { // Error in write callback.
+    size_t size = _resp_body_part(khc, khc->_body_read_size);
+    size_t written = khc->_cb_write(khc->_stream_buff, size, khc->_write_data);
+    if (written < size) { // Error in write callback.
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_WRITE_CALLBACK;
         return;
     }
-    if (khc->_read_end == 1) {
-        khc->_state = KHC_STATE_CLOSE;
+    khc->_resp_body_received += written;
+    if (khc->_read_end || _resp_body_complete(khc)) {
+        _end_resp_body(khc);
     } else {
         khc->_state = KHC_STATE_RESP_BODY_READ;
     }
@@ -858,18 +1029,31 @@ void khc_state_resp_body_callback(khc* khc) {
 void khc_state_resp_body_parse_chunk_size(khc* khc) {
     size_t chunk_size = 0;
     int has_chunk_size = _read_chunk_size(khc->_stream_buff, khc->_body_read_size, &chunk_size);
+    if (has_chunk_size == 1 && chunk_size > LONG_MAX) {
+        // khc keeps the size in a long, as 2.x's ABI has it.
+        has_chunk_size = -1;
+    }
     if (has_chunk_size == 1) {
         khc->_chunk_size = chunk_size;
         khc->_chunk_size_written = 0;
-        const char* chunk_end = strstr(khc->_stream_buff, "\r\n");
+        // The CRLF _read_chunk_size() found, which ends the size line. Not
+        // with strstr(): the stream buffer holds what has been read, with no
+        // terminator after it, so it would read on past the end.
+        const char* chunk_end = _find_crlf(khc->_stream_buff, khc->_body_read_size);
         size_t remain = khc->_body_read_size - (chunk_end + 2 - khc->_stream_buff);
         memmove(khc->_stream_buff, chunk_end + 2, remain);
         khc->_body_read_size = remain;
         if (chunk_size > 0) {
             khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
         } else {
+            // The CRLF of this last chunk's line starts what ends the body.
+            khc->_trailer_end_matched = 2;
             khc->_state = KHC_STATE_RESP_BODY_SKIP_TRAILERS;
         }
+    } else if (has_chunk_size < 0) {
+        // Without a valid size the rest of the body can't be framed.
+        khc->_state = KHC_STATE_CLOSE;
+        khc->_result = KHC_ERR_INVALID_RESPONSE;
     } else {
         if (khc->_resp_header_read_size > 0) {
             khc->_state = KHC_STATE_READ_CHUNK_SIZE_FROM_HEADER_BUFF;
@@ -899,7 +1083,7 @@ void khc_state_resp_body_read_chunk_size(khc* khc) {
         khc->_body_read_size += read_size;
         if (read_size == 0) {
             khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_FAIL;
+            khc->_result = KHC_ERR_SOCK_RECV;
             return;
         }
         khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
@@ -921,10 +1105,11 @@ void khc_state_resp_body_read_chunk_size(khc* khc) {
 }
 
 void khc_state_resp_body_parse_chunk_body(khc* khc) {
+    size_t chunk_remain = khc->_chunk_size - khc->_chunk_size_written;
     size_t target_size =
-        khc->_chunk_size > khc->_body_read_size + khc->_chunk_size_written ?
+        chunk_remain > khc->_body_read_size ?
         khc->_body_read_size :
-        khc->_chunk_size - khc->_chunk_size_written;
+        chunk_remain;
     size_t written = khc->_cb_write(khc->_stream_buff, target_size, khc->_write_data);
     if (written < target_size) { // Error in write callback.
         khc->_state = KHC_STATE_CLOSE;
@@ -962,7 +1147,7 @@ void khc_state_resp_body_read_chunk_body(khc* khc) {
         #endif
         if (read_size == 0) {
             khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_FAIL;
+            khc->_result = KHC_ERR_SOCK_RECV;
             return;
         }
         khc->_body_read_size = read_size;
@@ -984,8 +1169,26 @@ void khc_state_resp_body_read_chunk_body(khc* khc) {
     }
 }
 
+// The CRLF that ends a chunk's data, of which the first size bytes of data
+// have come.
+static int _is_chunk_data_end(const char* data, size_t size) {
+    return memcmp(data, "\r\n", size) == 0;
+}
+
 void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
+    if (!_is_chunk_data_end(khc->_stream_buff, khc->_body_read_size < 2 ? khc->_body_read_size : 2)) {
+        // Something else after the data: the chunk's size didn't say where
+        // it ended.
+        khc->_state = KHC_STATE_CLOSE;
+        khc->_result = KHC_ERR_INVALID_RESPONSE;
+        return;
+    }
     if (khc->_body_read_size < 2) {
+        if (khc->_resp_header_read_size > 0) {
+            // What was read along with the headers comes first.
+            _move_resp_header_to_stream(khc);
+            return;
+        }
         size_t tmp_size = 2 - khc->_body_read_size;
         char tmp[tmp_size];
         size_t read_size = 0;
@@ -1000,7 +1203,20 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
             #endif
             if (read_size == 0) {
                 khc->_state = KHC_STATE_CLOSE;
-                khc->_result = KHC_ERR_FAIL;
+                khc->_result = KHC_ERR_SOCK_RECV;
+                return;
+            }
+            // What came has to be what was left of the CRLF.
+            if (memcmp(tmp, &"\r\n"[khc->_body_read_size], read_size) != 0) {
+                khc->_state = KHC_STATE_CLOSE;
+                khc->_result = KHC_ERR_INVALID_RESPONSE;
+                return;
+            }
+            khc->_body_read_size += read_size;
+            if (khc->_body_read_size < 2) {
+                // Only the CR has come: it is kept, for the check above, and
+                // the LF read next.
+                khc->_stream_buff[0] = '\r';
                 return;
             }
             khc->_body_read_size = 0;
@@ -1028,7 +1244,32 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
     }
 }
 
+/* Whether data has the empty line that ends the trailers. */
+static int _find_trailer_end(khc* khc, const char* data, size_t size) {
+    const char trailer_end[] = "\r\n\r\n";
+    for (size_t i = 0; i < size; ++i) {
+        if (data[i] == trailer_end[khc->_trailer_end_matched]) {
+            ++khc->_trailer_end_matched;
+            if (khc->_trailer_end_matched == sizeof(trailer_end) - 1) {
+                return 1;
+            }
+        } else {
+            khc->_trailer_end_matched = data[i] == '\r' ? 1 : 0;
+        }
+    }
+    return 0;
+}
+
 void khc_state_resp_body_skip_trailers(khc* khc) {
+    // What was read along with the last chunk comes first.
+    if (_find_trailer_end(khc, khc->_stream_buff, khc->_body_read_size) ||
+            _find_trailer_end(khc, khc->_resp_header_buff, khc->_resp_header_read_size)) {
+        khc->_state = KHC_STATE_CLOSE;
+        return;
+    }
+    khc->_body_read_size = 0;
+    khc->_resp_header_read_size = 0;
+
     size_t read_size = 0;
     khc_sock_code_t read_res = khc->_cb_sock_recv(
             khc->_sock_ctx_recv,
@@ -1043,6 +1284,7 @@ void khc_state_resp_body_skip_trailers(khc* khc) {
             khc->_state = KHC_STATE_CLOSE;
             return;
         }
+        khc->_body_read_size = read_size;
         return;
     }
     #ifdef KHC_TRACE
@@ -1073,8 +1315,11 @@ void khc_state_close(khc* khc) {
         return;
     }
     if (close_res == KHC_SOCK_FAIL) {
+        // The request has its result by now, and this must not change it. After
+        // a whole response, a failure would make a POST the server has acted on
+        // look as if it had not been; after a failure, it would hide what went
+        // wrong.
         khc->_state = KHC_STATE_FINISHED;
-        khc->_result = KHC_ERR_SOCK_CLOSE;
         return;
     }
 }

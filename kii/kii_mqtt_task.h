@@ -30,6 +30,12 @@ typedef struct {
      * PINGRESP detects it within one keep-alive interval instead.
      */
     kii_bool_t pingresp_received;
+    /** \private
+     * Whether the MQTT socket is connected: from a successful connect until
+     * the close callback is called, so that the task closes it on its way
+     * out, and only then.
+     */
+    kii_bool_t sock_connected;
 } mqtt_state_t;
 
 void _init_mqtt_state(kii_t* kii, mqtt_state_t* state);

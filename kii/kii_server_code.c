@@ -19,10 +19,16 @@ static kii_code_t _execute_server_code(
             "/api/apps/%s/server-code/versions/%s/%s",
             kii->_app_id, version, endpoint_name);
 
+    // The version and the endpoint's name come from the application. Too long
+    // for khc, or with what would break the request line, the request would
+    // go without its path.
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
+    khc_code path_res = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (path_res != KHC_ERR_OK) {
+        return _convert_code(path_res);
+    }
 
     // Request headers
     kii_code_t res = _set_app_id_header(kii);
@@ -60,7 +66,7 @@ static kii_code_t _execute_server_code(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);

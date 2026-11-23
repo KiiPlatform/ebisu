@@ -17,6 +17,19 @@ void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
 }
 
 khc_code khc_perform(khc* khc) {
+    // Called without checking from here on. The read callback is left out of
+    // this: a request need not have a body.
+    if (khc->_cb_sock_connect == NULL || khc->_cb_sock_send == NULL ||
+            khc->_cb_sock_recv == NULL || khc->_cb_sock_close == NULL ||
+            khc->_cb_header == NULL || khc->_cb_write == NULL) {
+        return KHC_ERR_FAIL;
+    }
+    // A header with a line end in it would be two, or the end of the headers.
+    for (const khc_slist* header = khc->_req_headers; header != NULL; header = header->next) {
+        if (header->data != NULL && strpbrk(header->data, "\r\n") != NULL) {
+            return KHC_ERR_FAIL;
+        }
+    }
     khc->_state = KHC_STATE_IDLE;
     khc->_result = KHC_ERR_OK;
 
@@ -113,11 +126,11 @@ void khc_reset_except_cb(khc* khc) {
     khc->_read_req_end = 0;
     khc->_resp_header_read_size = 0;
     khc->_status_code =0;
-    khc->_body_boundary = NULL;
-    khc->_cb_header_pos = NULL;
-    khc->_cb_header_remaining_size = 0;
-    khc->_body_fragment = NULL;
-    khc->_body_fragment_size = 0;
+    khc->_resp_has_content_length = 0;
+    khc->_resp_status_line_given = 0;
+    khc->_trailer_end_matched = 0;
+    khc->_resp_version_1_0 = 0;
+    khc->_resp_body_received = 0;
     khc->_chunked_resp = 0;
     khc->_chunk_size = 0;
     khc->_chunk_size_written = 0;

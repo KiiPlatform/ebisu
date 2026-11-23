@@ -225,11 +225,12 @@ typedef enum khc_code {
     KHC_ERR_OK,
     /**< \brief Failure in connecting to server. */
     KHC_ERR_SOCK_CONNECT,
-    /**< \brief Failure in closing connection. */
+    /**< \brief No longer returned: closing doesn't change a request's result. */
     KHC_ERR_SOCK_CLOSE,
     /**< \brief Failure in sending data. */
     KHC_ERR_SOCK_SEND,
-    /**< \brief Failure in receiving data. */
+    /**< \brief Failure in receiving data, or the connection closed before
+     * the response ended. */
     KHC_ERR_SOCK_RECV,
     /**< \brief Failure in handling response headers. */
     KHC_ERR_HEADER_CALLBACK,
@@ -237,10 +238,17 @@ typedef enum khc_code {
     KHC_ERR_WRITE_CALLBACK,
     /**< \brief Memory allocation error. */
     KHC_ERR_ALLOCATION,
-    /**< \brief Data is too large and doesn't fit to buffers statically allocated. */
+    /**< \brief Data is too large and doesn't fit to buffers statically
+     * allocated, as a Content-Length or Transfer-Encoding header too long for
+     * the buffer set by khc_set_resp_header_buff(khc*, char*, size_t) is. */
     KHC_ERR_TOO_LARGE_DATA,
     /**< \brief Other errors. */
     KHC_ERR_FAIL,
+    /* Added after KHC_ERR_FAIL so that the codes above keep their values. */
+    /**< \brief The response isn't one khc can read: its status line isn't
+     * one, or its Content-Length, Transfer-Encoding or chunks don't say where
+     * its body ends. */
+    KHC_ERR_INVALID_RESPONSE,
 } khc_code;
 
 /**
@@ -296,16 +304,26 @@ typedef struct khc {
     size_t _resp_header_read_size; /**< \private **/
 
     int _status_code; /**< \private **/
-    /* Pointer to the double CRLF boundary in the resp_header_buffer */
-    char* _body_boundary; /**< \private **/
+    /* Whether the response has a Content-Length, 1 or 0. A size_t in the
+     * place of _body_boundary, a pointer that nothing read, so that the
+     * layout stays 2.0's. */
+    size_t _resp_has_content_length; /**< \private **/
 
-    /* Header callback */
-    char* _cb_header_pos; /**< \private **/
-    /* Used to seek for CRFL effectively. */
-    size_t _cb_header_remaining_size; /**< \private **/
+    /* Whether the response's status line has reached the header callback:
+     * the lines after it are headers. 1 or 0, a size_t in the place of
+     * _cb_header_pos, a pointer that nothing read. */
+    size_t _resp_status_line_given; /**< \private **/
+    /* How much of the CRLF CRLF that ends a chunked body has come. In the
+     * place of _cb_header_remaining_size, which nothing read. */
+    size_t _trailer_end_matched; /**< \private **/
 
-    char* _body_fragment; /**< \private **/
-    size_t _body_fragment_size; /**< \private **/
+    /* Whether the status line said HTTP/1.0, which has no chunks. 1 or 0, a
+     * size_t in the place of _body_fragment, a pointer that nothing read. */
+    size_t _resp_version_1_0; /**< \private **/
+    /* How much of the body has come, outside a chunked one. In the place of
+     * _body_fragment_size, which nothing read, so that the layout stays
+     * 2.0's. */
+    size_t _resp_body_received; /**< \private **/
     int _chunked_resp; /**< \private **/
     long _chunk_size; /**< \private **/
     long _chunk_size_written; /**< \private **/
@@ -362,6 +380,9 @@ void khc_reset_except_cb(khc* khc);
  * called.
  * This method blocks until the HTTP session ends.
  * \param [in, out] khc instance.
+ * \returns KHC_ERR_OK if the response was read whole. KHC_ERR_FAIL, without
+ * connecting, if a socket callback, the write callback or the header callback
+ * is not set. The read callback may be left out for a request with no body.
  */
 khc_code khc_perform(khc* khc);
 
@@ -411,7 +432,8 @@ khc_code khc_set_req_headers(khc* khc, khc_slist* headers);
  * The buffer is used to store single HTTP response header.
  * If header is larger than the buffer, the header is skipped and KHC_CB_HEADER is not called.
  * khc needs to parse Status Line, Content-Length, Transfer-Encoding header to process HTTP message.
- * The buffer must have enough size to store those headers. 256 bytes would be enough.
+ * The buffer must have enough size to store those headers: khc_perform(khc*) returns
+ * KHC_ERR_TOO_LARGE_DATA if it doesn't. 256 bytes would be enough.
  * If you set the buffer by the method, the method must be called befor khc_perform(khc*)
  * and memory used by the buffer can be safely freed after khc_perform(khc*) returned.
 

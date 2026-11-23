@@ -99,9 +99,11 @@ TEST_CASE( "HTTP chunked response test" ) {
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
-    REQUIRE( on_send_called == 5 );
-    REQUIRE( on_read_called == 1 );
-    REQUIRE( on_recv_called == 4 );
+    // A GET sends no body: the request line, the host header and the end of
+    // the headers, without calling the read callback.
+    REQUIRE( on_send_called == 3 );
+    REQUIRE( on_read_called == 0 );
+    REQUIRE( on_recv_called == 3 );
     REQUIRE( on_header_called == 12 );
     REQUIRE( on_write_called >= 6 );
     REQUIRE( on_close_called == 1 );
@@ -205,8 +207,10 @@ TEST_CASE( "small buffer size test" ) {
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
-    REQUIRE( on_send_called == 5 );
-    REQUIRE( on_read_called == 1 );
+    // A GET sends no body: the request line, the host header and the end of
+    // the headers, without calling the read callback.
+    REQUIRE( on_send_called == 3 );
+    REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called > 0 );
     REQUIRE( on_header_called == 12 );
     REQUIRE( on_write_called > 0 );
@@ -315,8 +319,10 @@ TEST_CASE( "random buffer size test" ) {
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
-    REQUIRE( on_send_called == 5 );
-    REQUIRE( on_read_called == 1 );
+    // A GET sends no body: the request line, the host header and the end of
+    // the headers, without calling the read callback.
+    REQUIRE( on_send_called == 3 );
+    REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called > 0 );
     REQUIRE( on_header_called == 12 );
     REQUIRE( on_write_called > 0 );
@@ -428,7 +434,8 @@ TEST_CASE( "random chunk body test" ) {
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
     REQUIRE( on_send_called > 0 );
-    REQUIRE( on_read_called > 0 );
+    // A GET sends no body, so the read callback is not called.
+    REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called > 0 );
     REQUIRE( on_header_called == 12 );
     REQUIRE( on_write_called > 0 );
@@ -492,13 +499,7 @@ TEST_CASE( "HTTP response 400 test(chunked)" ) {
     auto is = resp.to_istringstream();
     s_ctx.on_recv = [=, &on_recv_called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++on_recv_called;
-        if (on_recv_called == 1) {
-            // recv header.
-            REQUIRE( length_to_read == 255 );
-        } else {
-            // recv body(= 0).
-            REQUIRE( length_to_read == 1024 );
-        }
+        REQUIRE( length_to_read == 255 );
         *out_actual_length = is.read(buffer, length_to_read).gcount();
         return KHC_SOCK_OK;
     };
@@ -533,10 +534,165 @@ TEST_CASE( "HTTP response 400 test(chunked)" ) {
     REQUIRE( on_connect_called == 1 );
     REQUIRE( on_send_called == 3 );
     REQUIRE( on_read_called == 0 );
-    REQUIRE( on_recv_called == 2 );
+    REQUIRE( on_recv_called == 1 );
     REQUIRE( on_header_called == 2 );
     REQUIRE( on_write_called == 1 );
     REQUIRE( on_close_called == 1 );
 
     REQUIRE( expectBody == oss.str() );
+}
+
+namespace {
+
+struct ChunkedResult {
+    khc_code res;
+    string body;
+    int on_close_called;
+};
+
+// Performs a GET answered with the given chunked body. The socket hands over
+// the headers in one read, and the body at most max_recv bytes at a time, or
+// as much as is asked for if 0.
+ChunkedResult perform_chunked(
+        const string& chunked_body,
+        size_t max_recv,
+        size_t stream_buff_size = DEFAULT_STREAM_BUFF_SIZE) {
+    khc http;
+    khc_init(&http);
+
+    // Stale bytes in the stream buffer are hex digits, so that a size read
+    // past what was received shows.
+    vector<char> stream_buff(stream_buff_size, 'f');
+    khc_set_stream_buff(&http, stream_buff.data(), stream_buff.size());
+
+    khc_set_host(&http, "api.kii.com");
+    khc_set_method(&http, "GET");
+    khc_set_path(&http, "/api/apps");
+    khc_set_req_headers(&http, NULL);
+
+    khct::cb::SockCtx s_ctx;
+    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
+    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
+    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+
+    khct::cb::IOCtx io_ctx;
+    khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
+    khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+    s_ctx.on_connect = [](void* socket_context, const char* host, unsigned int port) {
+        return KHC_SOCK_OK;
+    };
+    s_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+
+    const string headers = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n";
+    istringstream is(headers + chunked_body);
+    int on_recv_called = 0;
+    s_ctx.on_recv = [&is, &on_recv_called, &headers, max_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        // Far more reads than these responses need: khc is not making progress.
+        if (++on_recv_called > 1000) {
+            return KHC_SOCK_FAIL;
+        }
+        if (max_recv > 0) {
+            size_t limit = on_recv_called == 1 ? headers.size() : max_recv;
+            if (length_to_read > limit) {
+                length_to_read = limit;
+            }
+        }
+        *out_actual_length = is.read(buffer, length_to_read).gcount();
+        return KHC_SOCK_OK;
+    };
+    io_ctx.on_header = [](char *buffer, size_t size, void *userdata) {
+        return size;
+    };
+
+    ChunkedResult result = { KHC_ERR_OK, "", 0 };
+    io_ctx.on_write = [&result](char *buffer, size_t size, void *userdata) {
+        result.body.append(buffer, size);
+        return size;
+    };
+    s_ctx.on_close = [&result](void* socket_ctx) {
+        ++result.on_close_called;
+        return KHC_SOCK_OK;
+    };
+
+    result.res = khc_perform(&http);
+    return result;
+}
+
+}
+
+TEST_CASE( "chunk size lines in uppercase or with extensions" ) {
+    // A byte at a time also splits the CRLF after each chunk's data.
+    for (size_t max_recv : { 0, 1 }) {
+        INFO("max_recv " << max_recv);
+        ChunkedResult r = perform_chunked(
+                "A;name=value\r\n0123456789\r\n"
+                "0003 ;name=\"quoted value\"\r\nabc\r\n"
+                "0;last\r\n\r\n",
+                max_recv);
+        REQUIRE( r.res == KHC_ERR_OK );
+        REQUIRE( r.body == "0123456789abc" );
+        REQUIRE( r.on_close_called == 1 );
+    }
+}
+
+TEST_CASE( "an invalid chunk size line fails the response" ) {
+    const string lines[] = {
+        "-1",
+        "+a",
+        "xyz",
+        "",
+        "0x5",
+        // One past SIZE_MAX, and 20 hex digits, too many for 64 bits.
+        "1" + string(sizeof(size_t) * 2, '0'),
+        "123456789abcdef01234",
+        string("5\0", 2),
+        string("5;\0", 3),
+    };
+    // The invalid size first, and after a chunk that is passed on.
+    const struct {
+        string chunks;
+        string body;
+    } befores[] = {
+        { "", "" },
+        { "3\r\nabc\r\n", "abc" },
+    };
+    for (const auto& line : lines) {
+        for (const auto& before : befores) {
+            for (size_t max_recv : { 0, 1 }) {
+                INFO("line \"" << line << "\" after \"" << before.chunks << "\", max_recv " << max_recv);
+                ChunkedResult r = perform_chunked(
+                        before.chunks + line + "\r\nhello\r\n0\r\n\r\n",
+                        max_recv);
+                REQUIRE( r.res == KHC_ERR_INVALID_RESPONSE );
+                REQUIRE( r.body == before.body );
+                REQUIRE( r.on_close_called == 1 );
+            }
+        }
+    }
+}
+
+// A read can bring more of the body than the stream buffer holds, along with
+// the headers, into a response header buffer that is larger. The CRLF after a
+// chunk's data was then looked for on the socket, ahead of what was waiting
+// there.
+TEST_CASE( "chunks read along with the headers, into a larger header buffer" ) {
+    const string body = "abcdefghij";
+    string chunks;
+    for (char c : body) {
+        chunks += "1\r\n" + string(1, c) + "\r\n";
+    }
+    chunks += "0\r\n\r\n";
+
+    for (size_t stream_buff_size = 8; stream_buff_size < 32; ++stream_buff_size) {
+        INFO("stream buffer of " << stream_buff_size);
+        ChunkedResult r = perform_chunked(chunks, 0, stream_buff_size);
+        REQUIRE( r.res == KHC_ERR_OK );
+        REQUIRE( r.body == body );
+        REQUIRE( r.on_close_called == 1 );
+    }
 }

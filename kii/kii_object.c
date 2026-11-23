@@ -204,6 +204,34 @@ exit:
     return ret;
 }
 
+/* What a download's write callback goes by. On the stack of
+ * kii_download_object_body(), whose request it is for, so that kii_t keeps its
+ * layout. */
+typedef struct _download_ctx_t {
+    kii_t* kii;
+    KII_CB_WRITE write_cb;
+    void* userdata;
+    int cut;
+} _download_ctx_t;
+
+// The write callback of a download. The body of a 2xx response is the
+// object's, and goes to the caller's callback. Any other is an error's: read
+// into kii's buffer as for any other call, where the caller can see what went
+// wrong, and never written where the object's body was to go. What of it the
+// buffer has no room for is left out, the status being what the call reports.
+static size_t _cb_write_download(char* buffer, size_t size, void* userdata)
+{
+    _download_ctx_t* ctx = (_download_ctx_t*)userdata;
+    int status = khc_get_status_code(&ctx->kii->_khc);
+    if (200 <= status && status < 300) {
+        return ctx->write_cb(buffer, size, ctx->userdata);
+    }
+    if (ctx->cut == 0 && _cb_write_buff(buffer, size, ctx->kii) != size) {
+        ctx->cut = 1;
+    }
+    return size;
+}
+
 kii_code_t kii_download_object_body(
         kii_t* kii,
         const kii_bucket_t* bucket,
@@ -214,7 +242,14 @@ kii_code_t kii_download_object_body(
 {
     khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
-    khc_set_cb_write(&kii->_khc, write_cb, userdata);
+    // The caller's callback gets the object's body alone, behind kii's own:
+    // see _cb_write_download().
+    _download_ctx_t ctx;
+    ctx.kii = kii;
+    ctx.write_cb = write_cb;
+    ctx.userdata = userdata;
+    ctx.cut = 0;
+    khc_set_cb_write(&kii->_khc, _cb_write_download, &ctx);
 
     kii_code_t ret = _download_body(kii, bucket, object_id);
     if (ret != KII_ERR_OK) {

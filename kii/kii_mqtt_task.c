@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
+#include <limits.h>
 
 #include "kii_mqtt_task.h"
 #include "kii.h"
@@ -66,7 +67,7 @@ khc_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) {
     *        User Name Flag     Password Flag    Will Retain        Will QoS     Will Flag   Clean Session   Reserved
     */
     kii->_mqtt_buffer[i++] = (char)0xc2;
-    /* Variable header:Keep Alive */
+    /* Variable header:Keep Alive, which kii_start_push_task() keeps to 16 bits */
     kii->_mqtt_buffer[i++] = (keep_alive_interval & 0xff00) >> 8;
     kii->_mqtt_buffer[i++] = keep_alive_interval & 0x00ff;
     /* Payload:Client Identifier */
@@ -175,21 +176,24 @@ khc_sock_code_t _mqtt_send_pingreq(kii_t* kii)
     return sock_err;
 }
 
-khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed_header)
+// Reads the first byte of a fixed header, which holds the packet type, and
+// returns what the recv callback returned, KHC_SOCK_AGAIN included: RECV_READY
+// handles a failure here, before any of a packet has been read, differently.
+// KHC_SOCK_OK with *out_received 0 is the end of the stream: the broker closed
+// the connection.
+static khc_sock_code_t _mqtt_recv_fixed_header_byte1(kii_t* kii, kii_mqtt_fixed_header* fixed_header, size_t* out_received)
 {
     char c = '\0';
-    size_t received = 0;
-    // Read First byte.
-    khc_sock_code_t res = kii->_cb_mqtt_sock_recv(kii->_mqtt_sock_recv_ctx, &c, 1, &received);
-    if (res == KHC_SOCK_FAIL) {
-        return KHC_SOCK_FAIL;
-    }
-    else if (res == KHC_SOCK_AGAIN) {
-        // Don't accept non-blocking mode.
-        return KHC_SOCK_FAIL;
-    }
+    *out_received = 0;
+    khc_sock_code_t res = kii->_cb_mqtt_sock_recv(kii->_mqtt_sock_recv_ctx, &c, 1, out_received);
     fixed_header->byte1 = c;
-    
+    return res;
+}
+
+// Reads the rest of a fixed header, the remaining length.
+static khc_sock_code_t _mqtt_recv_fixed_header_rest(kii_t* kii, kii_mqtt_fixed_header* fixed_header)
+{
+    size_t received = 0;
     char buff[4];
     for (int i = 0; i < 4; ++i) {
         char c2 = '\0';
@@ -201,6 +205,10 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
             // Don't accept non-blocking mode.
             return KHC_SOCK_FAIL;
         }
+        if (received == 0) {
+            // End of stream: the broker closed the connection.
+            return KHC_SOCK_FAIL;
+        }
         buff[i] = c2;
         if ((c2 & 128) == 0) { // Check continue bit.
             break;
@@ -208,10 +216,26 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
     }
 
     unsigned long remaining_length = 0;
-    _mqtt_decode(buff, &remaining_length);
+    // MQTT allows four bytes. A fourth that says more follow leaves the stream
+    // at a byte that is no packet's start.
+    if (_mqtt_decode(buff, &remaining_length) < 0) {
+        return KHC_SOCK_FAIL;
+    }
 
     fixed_header->remaining_length = remaining_length;
     return KHC_SOCK_OK;
+}
+
+khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed_header)
+{
+    size_t received = 0;
+    khc_sock_code_t res = _mqtt_recv_fixed_header_byte1(kii, fixed_header, &received);
+    if (res != KHC_SOCK_OK || received == 0) {
+        // KHC_SOCK_FAIL, KHC_SOCK_AGAIN (don't accept non-blocking mode), or
+        // the end of the stream.
+        return KHC_SOCK_FAIL;
+    }
+    return _mqtt_recv_fixed_header_rest(kii, fixed_header);
 }
 
 // If the MQTT buffer size is insufficient,
@@ -221,12 +245,20 @@ khc_sock_code_t _mqtt_recv_remaining_trash(kii_t* kii, unsigned long remaining_l
     char buff[buff_size];
     size_t received = 0;
     size_t total_received = 0;
-    khc_sock_code_t res = KHC_SOCK_FAIL;
+    // A packet with nothing after its fixed header leaves nothing to discard.
+    khc_sock_code_t res = KHC_SOCK_OK;
     while (total_received < remaining_length) {
+        // Ask for no more than is left of this packet. recv on a stream
+        // socket returns whatever is there up to the size asked for, so asking
+        // for more takes the start of the next packet too when it has arrived.
+        size_t length_to_read = remaining_length - total_received;
+        if (length_to_read > buff_size) {
+            length_to_read = buff_size;
+        }
         res = kii->_cb_mqtt_sock_recv(
                 kii->_mqtt_sock_recv_ctx,
                 buff,
-                buff_size,
+                length_to_read,
                 &received);
         if (res == KHC_SOCK_FAIL) {
             return KHC_SOCK_FAIL;
@@ -236,6 +268,10 @@ khc_sock_code_t _mqtt_recv_remaining_trash(kii_t* kii, unsigned long remaining_l
             return KHC_SOCK_FAIL;
         }
         else if (res == KHC_SOCK_OK) {
+            if (received == 0) {
+                // End of stream: the peer closed the connection.
+                return KHC_SOCK_FAIL;
+            }
             total_received += received;
         }
     }
@@ -261,6 +297,10 @@ khc_sock_code_t _mqtt_recv_remaining(kii_t* kii, unsigned long remaining_length,
             return KHC_SOCK_FAIL;
         }
         else if (res == KHC_SOCK_OK) {
+            if (received == 0) {
+                // End of stream: the peer closed the connection.
+                return KHC_SOCK_FAIL;
+            }
             total_received += received;
         }
     }
@@ -276,6 +316,26 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
     state->elapsed_time_ms = 0;
     state->remaining_message_size = 0;
     state->pingresp_received = KII_TRUE;
+    state->sock_connected = KII_FALSE;
+}
+
+/* Whether a request that failed may succeed if tried again: the server said so,
+ * or it never answered, which is no reason to stop on a device that can lose
+ * its network at any time. */
+static kii_bool_t _is_temporary_error(kii_t* kii, kii_code_t res)
+{
+    switch (res) {
+        case KII_ERR_SOCK_CONNECT:
+        case KII_ERR_SOCK_CLOSE:
+        case KII_ERR_SOCK_SEND:
+        case KII_ERR_SOCK_RECV:
+            return KII_TRUE;
+        default:
+            break;
+    }
+    int status_code = khc_get_status_code(&kii->_khc);
+    return ((500 <= status_code && status_code < 600) || status_code == 429) ?
+        KII_TRUE : KII_FALSE;
 }
 
 void _mqtt_state_install_push(mqtt_state_t* state)
@@ -284,8 +344,7 @@ void _mqtt_state_install_push(mqtt_state_t* state)
     kii_mqtt_task_info* task_info = &state->info;
     kii_code_t res = kii_install_push(kii, KII_FALSE, &state->ins_id);
     if (res != KII_ERR_OK) {
-        int status_code = khc_get_status_code(&kii->_khc);
-        if ((500 <= status_code && status_code < 600) || status_code == 429) {
+        if (_is_temporary_error(kii, res) == KII_TRUE) {
             // Temporal error. Try again.
             kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
         } else {
@@ -305,8 +364,7 @@ void _mqtt_state_get_endpoint(mqtt_state_t* state)
     kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
     kii_code_t  res = kii_get_mqtt_endpoint(kii, state->ins_id.id, &state->endpoint);
     if (res != KII_ERR_OK) {
-        int status_code = khc_get_status_code(&kii->_khc);
-        if ((500 <= status_code && status_code < 600) || status_code == 429) {
+        if (_is_temporary_error(kii, res) == KII_TRUE) {
             // Temporal error. Try again.
         } else {
             task_info->error = KII_MQTT_ERR_GET_ENDPOINT;
@@ -336,6 +394,7 @@ void _mqtt_state_sock_connect(mqtt_state_t* state)
         // Transit to KII_MQTT_ST_GET_ENDPOINT if retroy count > max retry count
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
     } else {
+        state->sock_connected = KII_TRUE;
         task_info->task_state = KII_MQTT_ST_SEND_CONNECT;
     }
 }
@@ -377,14 +436,15 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
         return;
     }
     char ptype = fixed_header.byte1 & 0xf0;
-    if (ptype != 0x20) {
-        // Must not happens. CONNACK must be the first response.
+    // CONNACK has to be the first packet, and its variable header is always
+    // 2 bytes: after one that says otherwise, what is read next wouldn't be
+    // where the next packet starts.
+    enum { length = 2 };
+    if (ptype != 0x20 || fixed_header.remaining_length != length) {
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
-    // CONNACK variable header LENGTH is always 2.
-    enum { length = 2 };
     char buff[length];
     memset(buff, '\0', length);
     khc_sock_code_t res2 = _mqtt_recv_remaining(kii, length, buff);
@@ -394,7 +454,18 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
         return;
     }
     char return_code = buff[1];
-    if (return_code != 0) {
+    if (return_code == 4 || return_code == 5) {
+        // Bad user name or password, or not authorized: the broker refused the
+        // credentials GET_ENDPOINT fetched, e.g. because they expired or were
+        // revoked. RECONNECT would present the same ones again and be refused
+        // forever, so close the socket as RECONNECT does and fetch new ones.
+        // The installation ID is kept; if it is no longer valid either,
+        // GET_ENDPOINT fails permanently and exits.
+        kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
+        state->sock_connected = KII_FALSE;
+        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        task_info->task_state = KII_MQTT_ST_GET_ENDPOINT;
+    } else if (return_code != 0) {
         // CONNACK indicates failure.
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
@@ -435,12 +506,13 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
         return;
     }
     unsigned char ptype = fixed_header.byte1 & 0xf0;
-    if (ptype != 0x90) {
+    // The packet identifier, and a return code for the one topic subscribed.
+    enum { len = 3 };
+    if (ptype != 0x90 || fixed_header.remaining_length != len) {
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
-    enum { len = 3 };
     char buff[len];
     memset(buff, '\0', len);
     khc_sock_code_t res2 = _mqtt_recv_remaining(kii, len, buff);
@@ -460,27 +532,81 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
     }
 }
 
+// Adds to the time elapsed since the last PINGREQ, stopping at UINT_MAX
+// rather than wrapping round to a time at which no PINGREQ is due.
+static void _add_elapsed_ms(mqtt_state_t* state, unsigned int ms)
+{
+    if (ms > UINT_MAX - state->elapsed_time_ms) {
+        state->elapsed_time_ms = UINT_MAX;
+    } else {
+        state->elapsed_time_ms += ms;
+    }
+}
+
+// The receive timeout in milliseconds, or UINT_MAX if it is longer than that.
+static unsigned int _to_recv_ms(const kii_t* kii)
+{
+    if (kii->_mqtt_to_recv_sec > UINT_MAX / 1000) {
+        return UINT_MAX;
+    }
+    return kii->_mqtt_to_recv_sec * 1000;
+}
+
 void _mqtt_state_recv_ready(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
-    const int thresh_ms = (kii->_keep_alive_interval - kii->_mqtt_to_recv_sec) * 1000;
-    if (state->elapsed_time_ms > thresh_ms) {
+    // A keep-alive of 0 disables PINGREQ. Otherwise send one early enough that
+    // a receive running into its timeout still ends within the keep-alive.
+    // A timeout as long as the keep-alive leaves no such margin. Then send one
+    // once the keep-alive is over, which is after any receive that times out,
+    // rather than at once: that would come back here straight after sending
+    // it, before its PINGRESP could be read, and reconnect for want of it.
+    const unsigned int keep_alive = kii->_keep_alive_interval;
+    const unsigned int to_recv = kii->_mqtt_to_recv_sec;
+    // kii_start_push_task() keeps the keep-alive to 65535, so this fits.
+    const unsigned int thresh_ms =
+        (to_recv < keep_alive ? keep_alive - to_recv : keep_alive) * 1000;
+    if (keep_alive > 0 && state->elapsed_time_ms > thresh_ms) {
         task_info->task_state = KII_MQTT_ST_SEND_PINGREQ;
         return;
     }
     kii_mqtt_fixed_header fh;
-    khc_sock_code_t res = _mqtt_recv_fixed_header(kii, &fh);
+    size_t received = 0;
+    khc_sock_code_t res = _mqtt_recv_fixed_header_byte1(kii, &fh, &received);
+    if (res == KHC_SOCK_OK && received == 0) {
+        // End of stream: the broker closed the connection.
+        state->elapsed_time_ms = 0;
+        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        task_info->task_state = KII_MQTT_ST_RECONNECT;
+        return;
+    }
     if (res == KHC_SOCK_OK) {
+        res = _mqtt_recv_fixed_header_rest(kii, &fh);
+        if (res != KHC_SOCK_OK) {
+            // A packet has started to arrive, so the next read would begin
+            // inside it and take its bytes for a fixed header. Reconnect,
+            // whether the receive timed out or failed, as RECV_MSG does.
+            state->elapsed_time_ms = 0;
+            kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+            task_info->task_state = KII_MQTT_ST_RECONNECT;
+            return;
+        }
         unsigned char mtype = fh.byte1 & 0xf0;
         if (mtype == 0x30) { // PUBLISH
             state->remaining_message_size = fh.remaining_length;
             task_info->task_state = KII_MQTT_ST_RECV_MSG;
             // Estimate worst case.
-            state->elapsed_time_ms += kii->_mqtt_to_recv_sec * 1000;
+            _add_elapsed_ms(state, _to_recv_ms(kii));
+        } else if (mtype == 0xD0 && fh.remaining_length != 0) {
+            // A PINGRESP is its fixed header alone. What one says follows it
+            // would otherwise be read as the next packet.
+            state->elapsed_time_ms = 0;
+            kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+            task_info->task_state = KII_MQTT_ST_RECONNECT;
         } else if (mtype == 0xD0) { // PINGRESP
             state->pingresp_received = KII_TRUE;
-            state->elapsed_time_ms += ARRIVED_MSG_READ_TIME;
+            _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME);
         } else { // Ignore other messages.
             unsigned long size = fh.remaining_length;
             // Read and ignore.
@@ -492,8 +618,11 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
             }
         }
     } else {
+        // No packet has started to arrive: the receive timed out, or returned
+        // KHC_SOCK_AGAIN, as it would in non-blocking mode.
         // Just repeat same state after the wait.
-        state->elapsed_time_ms += kii->_mqtt_to_recv_sec * 1000 + WAIT_MS;
+        _add_elapsed_ms(state, _to_recv_ms(kii));
+        _add_elapsed_ms(state, WAIT_MS);
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
     }
 }
@@ -511,7 +640,7 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
             kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
         } else {
-            state->elapsed_time_ms += ARRIVED_MSG_READ_TIME + WAIT_MS;
+            _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME + WAIT_MS);
             kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
             task_info->task_state = KII_MQTT_ST_RECV_READY;
         }
@@ -523,12 +652,20 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
             kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
         } else {
-            state->elapsed_time_ms += ARRIVED_MSG_READ_TIME;
-            unsigned int topic_size = (unsigned int)kii->_mqtt_buffer[0] * 256 + (unsigned int)kii->_mqtt_buffer[1];
+            _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME);
             // 2 bytes: topic size. packet identifier is not present since QoS0
-            char* body_ptr = kii->_mqtt_buffer + topic_size + 2;
-            size_t body_length = remaining_message_size - topic_size - 2;
-            kii->_cb_push_received(body_ptr, body_length, kii->_push_data);
+            // The topic size comes from the message: read its bytes unsigned,
+            // as char may be signed, and check the topic fits before taking the
+            // rest as the body. A message where it does not has been read whole
+            // all the same, so drop it, as one larger than the buffer is.
+            if (remaining_message_size >= 2) {
+                unsigned int topic_size = (unsigned char)kii->_mqtt_buffer[0] * 256 + (unsigned char)kii->_mqtt_buffer[1];
+                if (topic_size <= remaining_message_size - 2) {
+                    char* body_ptr = kii->_mqtt_buffer + topic_size + 2;
+                    size_t body_length = remaining_message_size - topic_size - 2;
+                    kii->_cb_push_received(body_ptr, body_length, kii->_push_data);
+                }
+            }
             task_info->task_state = KII_MQTT_ST_RECV_READY;
         }
     }
@@ -565,6 +702,7 @@ void _mqtt_state_reconnect(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
+    state->sock_connected = KII_FALSE;
     state->info.task_state = KII_MQTT_ST_SOCK_CONNECT;
 }
 
@@ -598,6 +736,14 @@ void* mqtt_start_task(void* sdata)
         }
         mqtt_state_handlers[state.info.task_state](&state);
     }
+    // Discontinued, or exiting on an error, with a connection open: close it,
+    // as nothing else will. The application cannot tell whether one is open.
+    if (state.sock_connected == KII_TRUE) {
+        kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
+        state.sock_connected = KII_FALSE;
+    }
+    // Before the callback, which may start the task again.
+    kii->_task_running = KII_FALSE;
     if (kii->_cb_task_exit != NULL) {
         kii->_cb_task_exit(&state.info, kii->_task_exit_data);
     }
