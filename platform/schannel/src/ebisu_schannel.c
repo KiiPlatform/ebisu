@@ -276,10 +276,8 @@ static void teardown(ebisu_schannel_socket_t* ctx)
         DeleteSecurityContext(&ctx->ctxt);
         ctx->has_ctxt = 0;
     }
-    if (ctx->has_cred) {
-        FreeCredentialsHandle(&ctx->cred);
-        ctx->has_cred = 0;
-    }
+    /* The credentials are every socket's, and stay. */
+    ctx->has_cred = 0;
     /* What was decrypted in place, and what was about to be encrypted, are
        requests and responses, with their tokens and passwords. */
     if (ctx->recv_buf != NULL) {
@@ -814,32 +812,72 @@ done:
     return result;
 }
 
+/* One credentials handle for every socket's connections, acquired by the
+   first to connect and kept for as long as the process runs. Schannel
+   resumes a TLS session only on a connection made with the credentials of
+   the one that made the session, so with a handle of its own, as each
+   connection had, none resumed. Every connection's credentials are the same,
+   and verify_server_certificate() checks the server's certificate on every
+   connection, resumed or not. Schannel bounds how long it keeps a session
+   itself. */
+static INIT_ONCE shared_cred_once = INIT_ONCE_STATIC_INIT;
+static CRITICAL_SECTION shared_cred_lock;
+static CredHandle shared_cred;
+static int has_shared_cred = 0;
+
+static BOOL CALLBACK init_shared_cred_lock(PINIT_ONCE once, PVOID param, PVOID* context)
+{
+    (void)once;
+    (void)param;
+    (void)context;
+    InitializeCriticalSection(&shared_cred_lock);
+    return TRUE;
+}
+
+/* The shared credentials in out_cred, acquired unless they have been, or why
+   they couldn't be. A failure is tried again on the next connect. */
+static SECURITY_STATUS get_shared_cred(CredHandle* out_cred)
+{
+    InitOnceExecuteOnce(&shared_cred_once, init_shared_cred_lock, NULL, NULL);
+    EnterCriticalSection(&shared_cred_lock);
+    SECURITY_STATUS status = SEC_E_OK;
+    if (!has_shared_cred) {
+        /* SCHANNEL_CRED, with which Schannel negotiates TLS 1.2 at most: TLS
+           1.3 needs SCH_CREDENTIALS, which older versions of Windows do not
+           have. And TLS 1.2 at the least, as the other ports have it,
+           whatever older versions the system enables for clients: named, it
+           is the only one offered. Manual validation, since
+           verify_server_certificate() does it. */
+        SCHANNEL_CRED cred_data;
+        memset(&cred_data, 0, sizeof(cred_data));
+        cred_data.dwVersion = SCHANNEL_CRED_VERSION;
+        cred_data.dwFlags =
+            SCH_CRED_MANUAL_CRED_VALIDATION |
+            SCH_CRED_NO_DEFAULT_CREDS |
+            SCH_USE_STRONG_CRYPTO;
+        cred_data.grbitEnabledProtocols = SP_PROT_TLS1_2_CLIENT;
+        status = AcquireCredentialsHandleA(
+                NULL,
+                (SEC_CHAR*)UNISP_NAME_A,
+                SECPKG_CRED_OUTBOUND,
+                NULL,
+                &cred_data,
+                NULL,
+                NULL,
+                &shared_cred,
+                NULL);
+        has_shared_cred = status == SEC_E_OK;
+    }
+    if (has_shared_cred) {
+        *out_cred = shared_cred;
+    }
+    LeaveCriticalSection(&shared_cred_lock);
+    return status;
+}
+
 static int tls_connect(ebisu_schannel_socket_t* ctx)
 {
-    /* SCHANNEL_CRED, with which Schannel negotiates TLS 1.2 at most: TLS 1.3
-       needs SCH_CREDENTIALS, which older versions of Windows do not have. And
-       TLS 1.2 at the least, as the other ports have it, whatever older
-       versions the system enables for clients: named, it is the only one
-       offered. Manual validation, since verify_server_certificate() does
-       it. */
-    SCHANNEL_CRED cred_data;
-    memset(&cred_data, 0, sizeof(cred_data));
-    cred_data.dwVersion = SCHANNEL_CRED_VERSION;
-    cred_data.dwFlags =
-        SCH_CRED_MANUAL_CRED_VALIDATION |
-        SCH_CRED_NO_DEFAULT_CREDS |
-        SCH_USE_STRONG_CRYPTO;
-    cred_data.grbitEnabledProtocols = SP_PROT_TLS1_2_CLIENT;
-    SECURITY_STATUS status = AcquireCredentialsHandleA(
-            NULL,
-            (SEC_CHAR*)UNISP_NAME_A,
-            SECPKG_CRED_OUTBOUND,
-            NULL,
-            &cred_data,
-            NULL,
-            NULL,
-            &ctx->cred,
-            NULL);
+    SECURITY_STATUS status = get_shared_cred(&ctx->cred);
     if (status != SEC_E_OK) {
         log_code(ctx, (unsigned long)status, "AcquireCredentialsHandle");
         set_error(ctx, EBISU_SOCK_ERROR_TLS, (long)status);
@@ -865,6 +903,14 @@ static int tls_connect(ebisu_schannel_socket_t* ctx)
     if (ctx->verify != EBISU_TLS_VERIFY_NONE && verify_server_certificate(ctx) != 0) {
         return -1;
     }
+#ifdef SSL_SESSION_RECONNECT
+    SecPkgContext_SessionInfo session;
+    memset(&session, 0, sizeof(session));
+    if (QueryContextAttributesA(&ctx->ctxt, SECPKG_ATTR_SESSION_INFO, &session) == SEC_E_OK &&
+            (session.dwFlags & SSL_SESSION_RECONNECT) != 0) {
+        log_to(ctx->logger, EBISU_LOG_DEBUG, "resumed the TLS session with %s.", ctx->host);
+    }
+#endif
 
     status = QueryContextAttributesA(
             &ctx->ctxt, SECPKG_ATTR_STREAM_SIZES, &ctx->sizes);

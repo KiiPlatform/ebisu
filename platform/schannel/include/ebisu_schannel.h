@@ -74,6 +74,7 @@ typedef struct ebisu_schannel_socket_t {
     /* The server's name, which its certificate must be issued for. */
     char host[256]; /**< \private */
     SOCKET socket; /**< \private */
+    /* A copy of the credentials every socket shares, while connected. */
     CredHandle cred; /**< \private */
     int has_cred; /**< \private */
     CtxtHandle ctxt; /**< \private */
