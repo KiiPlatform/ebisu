@@ -59,7 +59,9 @@ of the application's own, as the
   without the system's. The `SSL_CTX` keeps the TLS sessions of the last
   connections to a few hosts, and a connection offers the server the one for its
   host and port to resume, which saves most of the handshake when the server
-  takes it. A send to a peer that has gone fails rather than raise `SIGPIPE`,
+  takes it. A resumed connection checks no certificate, so a session is offered
+  for an hour after the full handshake that checked the server's, or for as
+  long as `ebisu_openssl_tls_set_session_lifetime()` sets. A send to a peer that has gone fails rather than raise `SIGPIPE`,
   as the POSIX TCP socket's does: OpenSSL writes with `write()`, so the socket
   sets `SO_NOSIGPIPE` where there is one, and elsewhere blocks the signal on
   the calling thread for the length of each call and takes off the one the

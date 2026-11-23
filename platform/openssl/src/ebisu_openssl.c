@@ -101,14 +101,22 @@ static void log_ssl_error(ebisu_logger_t* logger, const char* what)
    next connection to the same host and port to resume: the server may take it
    and skip most of the handshake, which on a slow link costs more than many a
    request. One per SSL_CTX, kept in its ex_data, so that the sockets sharing a
-   configuration share them, and SSL_CTX_free() frees them. */
+   configuration share them, and SSL_CTX_free() frees them.
+
+   A connection that resumes checks no certificate. So a session is offered
+   only for lifetime_s after the full handshake that checked the server's,
+   however often it is resumed, and the server's new tickets with it, in the
+   meantime. */
 #define SESSION_CACHE_SIZE 4
 #define SESSION_HOST_SIZE 256
+#define SESSION_LIFETIME_S 3600
 
 typedef struct {
     char host[SESSION_HOST_SIZE];
     uint16_t port;
     SSL_SESSION* session; /* NULL for an entry not in use. */
+    /* When the server's certificate was checked, by monotonic_ms(). */
+    int64_t checked_ms;
 } cached_session_t;
 
 typedef struct {
@@ -116,6 +124,8 @@ typedef struct {
     cached_session_t entries[SESSION_CACHE_SIZE];
     /* The entry the next host replaces when none is free. */
     unsigned int next;
+    /* How long a session is offered, in seconds; 0 for none. */
+    unsigned int lifetime_s;
 } session_cache_t;
 
 static int session_cache_index = -1;
@@ -177,6 +187,14 @@ static void offer_session(SSL* ssl, const char* host, uint16_t port)
     }
     pthread_mutex_lock(&cache->lock);
     cached_session_t* entry = find_session(cache, host, port);
+    if (entry != NULL &&
+            monotonic_ms() - entry->checked_ms >= (int64_t)cache->lifetime_s * 1000) {
+        /* Its certificate was checked too long ago, or with a lifetime of 0
+           at all: this connection checks it again. */
+        SSL_SESSION_free(entry->session);
+        entry->session = NULL;
+        entry = NULL;
+    }
 #if (OPENSSL_VERSION_NUMBER >= 0x10101000L)
     if (entry != NULL && !SSL_SESSION_is_resumable(entry->session)) {
         entry = NULL;
@@ -223,6 +241,17 @@ static int on_new_session(SSL* ssl, SSL_SESSION* session)
     }
     pthread_mutex_lock(&cache->lock);
     cached_session_t* entry = find_session(cache, host, ctx->port);
+    int64_t checked_ms = monotonic_ms();
+    if (SSL_session_reused(ssl)) {
+        /* A ticket given on a connection that resumed: the certificate was
+           checked when the session it resumed was made, unless that has gone
+           from the cache since, and then when is unknown. */
+        if (entry == NULL) {
+            pthread_mutex_unlock(&cache->lock);
+            return 0;
+        }
+        checked_ms = entry->checked_ms;
+    }
     if (entry == NULL) {
         for (int i = 0; i < SESSION_CACHE_SIZE && entry == NULL; ++i) {
             if (cache->entries[i].session == NULL) {
@@ -240,6 +269,7 @@ static int on_new_session(SSL* ssl, SSL_SESSION* session)
     strcpy(entry->host, host);
     entry->port = ctx->port;
     entry->session = session;
+    entry->checked_ms = checked_ms;
     pthread_mutex_unlock(&cache->lock);
     return 1;
 }
@@ -261,6 +291,7 @@ static void add_session_cache(SSL_CTX* ssl_ctx)
         free(cache);
         return;
     }
+    cache->lifetime_s = SESSION_LIFETIME_S;
     if (SSL_CTX_set_ex_data(ssl_ctx, session_cache_index, cache) != 1) {
         pthread_mutex_destroy(&cache->lock);
         free(cache);
@@ -523,6 +554,21 @@ bool ebisu_openssl_tls_set_verify(ebisu_openssl_tls_t* tls, ebisu_tls_verify_t v
             verify == EBISU_TLS_VERIFY_PIN || verify == EBISU_TLS_VERIFY_NONE ?
                 check_without_chain : NULL, NULL);
     forget_sessions(tls->ssl_ctx);
+    return true;
+}
+
+bool ebisu_openssl_tls_set_session_lifetime(ebisu_openssl_tls_t* tls, unsigned int seconds)
+{
+    if (tls->ssl_ctx == NULL) {
+        return false;
+    }
+    session_cache_t* cache = session_cache_of(tls->ssl_ctx);
+    if (cache == NULL) {
+        return false;
+    }
+    pthread_mutex_lock(&cache->lock);
+    cache->lifetime_s = seconds;
+    pthread_mutex_unlock(&cache->lock);
     return true;
 }
 

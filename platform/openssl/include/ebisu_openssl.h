@@ -177,6 +177,24 @@ bool ebisu_openssl_tls_set_verify(ebisu_openssl_tls_t* tls, ebisu_tls_verify_t v
         const unsigned char* pin);
 
 /**
+ * \brief Sets for how long the configuration's connections resume a session.
+ *
+ * A connection offers the server the session of the last one to the same host
+ * and port, which the server may resume, sending neither its certificate nor
+ * a key exchange. Then no certificate is checked: the server's was checked
+ * when the session was made. A session is offered for this long after that,
+ * however often it is resumed meanwhile, and the next connection makes a full
+ * handshake, which checks the certificate again. An hour unless set, as for
+ * the configuration sockets without one share; 0 resumes none.
+ * \param [in,out] tls The configuration.
+ * \param [in] seconds How long a session is offered after its certificate was
+ * checked.
+ * \return true, or false, changing nothing, for a configuration that wasn't
+ * set up, or that has no room for sessions, as when memory ran out.
+ */
+bool ebisu_openssl_tls_set_session_lifetime(ebisu_openssl_tls_t* tls, unsigned int seconds);
+
+/**
  * \brief Clears the socket, with its timeouts, and makes base a socket of it.
  *
  * \param [out] sock The socket.
