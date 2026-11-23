@@ -308,7 +308,7 @@ static SOCKET tcp_connect(ebisu_schannel_socket_t* ctx, uint16_t port)
     ebisu_sock_error_t error = EBISU_SOCK_ERROR_OTHER;
     long detail = 0;
     SOCKET sock = connect_to_host(ctx->host, port, ctx->to_connect, ctx->logger, &error,
-            &detail);
+            &detail, ctx->last_address, &ctx->last_address_size);
     if (sock == INVALID_SOCKET) {
         set_error(ctx, error, detail);
         return INVALID_SOCKET;

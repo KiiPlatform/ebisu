@@ -859,7 +859,8 @@ static ebisu_sock_code_t
 
     ebisu_sock_error_t error = EBISU_SOCK_ERROR_OTHER;
     long detail = 0;
-    sock = connect_to_host(host, port, ctx->to_connect, ctx->logger, &error, &detail);
+    sock = connect_to_host(host, port, ctx->to_connect, ctx->logger, &error, &detail,
+            ctx->last_address, &ctx->last_address_size);
     if (sock < 0) {
         return fail_with(ctx, error, detail);
     }

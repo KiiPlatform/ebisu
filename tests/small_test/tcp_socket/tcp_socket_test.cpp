@@ -19,6 +19,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/select.h>
@@ -28,6 +29,7 @@
 #endif
 
 #include <chrono>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -610,3 +612,159 @@ TEST_CASE( "The plain TCP socket checks an idle connection, and sends at once, w
     }
 #endif
 }
+
+namespace {
+
+// The families "localhost" is looked up as, in the order the sockets' lookup
+// gives them, with the same hints.
+std::vector<int> localhost_families()
+{
+    start_network();
+    addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    addrinfo* result = nullptr;
+    std::vector<int> families;
+    if (getaddrinfo("localhost", "80", &hints, &result) != 0) {
+        return families;
+    }
+    for (addrinfo* ai = result; ai != nullptr; ai = ai->ai_next) {
+        families.push_back(ai->ai_family);
+    }
+    freeaddrinfo(result);
+    return families;
+}
+
+// A server on the loopback address of a family, 127.0.0.1 or ::1, at a port,
+// or at one of its own with port 0, which may be taken already.
+struct FamilyServer {
+    fd_t listener;
+    uint16_t port;
+
+    FamilyServer(int family, uint16_t at) : listener(NO_FD), port(0) {
+        listener = socket(family, SOCK_STREAM, 0);
+        if (listener == NO_FD) {
+            return;
+        }
+        int on = 1;
+        setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, sizeof(on));
+        sockaddr_storage addr;
+        memset(&addr, 0, sizeof(addr));
+        socklen_t len;
+        if (family == AF_INET6) {
+            // Only ::1, and not 127.0.0.1 as well, as a mapped address.
+            setsockopt(listener, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&on, sizeof(on));
+            sockaddr_in6* in6 = (sockaddr_in6*)&addr;
+            in6->sin6_family = AF_INET6;
+            in6->sin6_addr = in6addr_loopback;
+            in6->sin6_port = htons(at);
+            len = sizeof(*in6);
+        } else {
+            sockaddr_in in4 = loopback(at);
+            memcpy(&addr, &in4, sizeof(in4));
+            len = sizeof(in4);
+        }
+        if (bind(listener, (sockaddr*)&addr, len) != 0 || listen(listener, 4) != 0 ||
+                getsockname(listener, (sockaddr*)&addr, &len) != 0) {
+            close_fd(listener);
+            listener = NO_FD;
+            return;
+        }
+        port = ntohs(family == AF_INET6 ?
+                ((sockaddr_in6*)&addr)->sin6_port : ((sockaddr_in*)&addr)->sin_port);
+    }
+
+    ~FamilyServer() {
+        if (listener != NO_FD) {
+            close_fd(listener);
+        }
+    }
+
+    // Whether a connection is waiting, which it takes and closes.
+    bool took_one() {
+        fd_set readable;
+        FD_ZERO(&readable);
+        FD_SET(listener, &readable);
+        timeval timeout = { 1, 0 };
+        if (select((int)listener + 1, &readable, nullptr, nullptr, &timeout) != 1) {
+            return false;
+        }
+        fd_t peer = accept(listener, nullptr, nullptr);
+        if (peer == NO_FD) {
+            return false;
+        }
+        close_fd(peer);
+        return true;
+    }
+};
+
+}
+
+// A server whose addresses don't share their TLS sessions resumes one only on
+// the address that made it, and a lookup can give the addresses in another
+// order each time, so that the next connection went where no session could be
+// resumed. The socket now tries the address it last connected to first, while
+// the host still has it.
+TEST_CASE( "The plain TCP socket connects again to the address it last connected to" ) {
+    std::vector<int> families = localhost_families();
+    if (families.size() != 2 || families[0] == families[1]) {
+        WARN( "localhost isn't 127.0.0.1 and ::1 here, which this needs" );
+        return;
+    }
+    // The second address, the only one listening at first, so that the first
+    // connection goes there once the first address refuses.
+    std::unique_ptr<FamilyServer> second(new FamilyServer(families[1], 0));
+    if (second->listener == NO_FD) {
+        WARN( "no server could listen on localhost's second address here" );
+        return;
+    }
+    const uint16_t port = second->port;
+    tcp_socket_t sock;
+    tcp_socket_init(&sock, 1, 5);
+    const ebisu_socket_ops_t* ops = sock.base.ops;
+
+    REQUIRE( ops->connect(&sock.base, "localhost", port) == EBISU_SOCK_OK );
+    CHECK( second->took_one() );
+    ops->close(&sock.base);
+
+    std::unique_ptr<FamilyServer> first(new FamilyServer(families[0], port));
+    if (first->listener == NO_FD) {
+        WARN( "no server could listen on localhost's first address at the same port" );
+        return;
+    }
+
+    SECTION("the same address, though the lookup gives another first") {
+        for (int i = 0; i < 3; ++i) {
+            INFO( "connection " << i );
+            REQUIRE( ops->connect(&sock.base, "localhost", port) == EBISU_SOCK_OK );
+            CHECK( second->took_one() );
+            CHECK_FALSE( first->took_one() );
+            ops->close(&sock.base);
+        }
+    }
+
+    SECTION("another address once that one refuses, and then that one") {
+        second.reset();
+        REQUIRE( ops->connect(&sock.base, "localhost", port) == EBISU_SOCK_OK );
+        CHECK( first->took_one() );
+        ops->close(&sock.base);
+
+        second.reset(new FamilyServer(families[1], port));
+        REQUIRE( second->listener != NO_FD );
+        REQUIRE( ops->connect(&sock.base, "localhost", port) == EBISU_SOCK_OK );
+        CHECK( first->took_one() );
+        CHECK_FALSE( second->took_one() );
+        ops->close(&sock.base);
+    }
+
+    SECTION("the lookup's first, for a host without that address") {
+        REQUIRE( ops->connect(&sock.base, families[0] == AF_INET6 ? "::1" : "127.0.0.1",
+                    port) == EBISU_SOCK_OK );
+        CHECK( first->took_one() );
+        CHECK_FALSE( second->took_one() );
+        ops->close(&sock.base);
+    }
+}
+

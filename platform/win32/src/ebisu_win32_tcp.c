@@ -121,7 +121,8 @@ static ebisu_sock_code_t tcp_connect(ebisu_socket_t* self, const char* host, uin
     ctx->recv_timed_out = false;
     ebisu_sock_error_t error = EBISU_SOCK_ERROR_OTHER;
     long detail = 0;
-    SOCKET sock = connect_to_host(host, port, ctx->to_connect, ctx->logger, &error, &detail);
+    SOCKET sock = connect_to_host(host, port, ctx->to_connect, ctx->logger, &error, &detail,
+            ctx->last_address, &ctx->last_address_size);
     if (sock == INVALID_SOCKET) {
         return fail_with(ctx, error, detail);
     }

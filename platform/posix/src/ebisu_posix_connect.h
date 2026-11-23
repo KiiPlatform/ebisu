@@ -325,10 +325,42 @@ static int connect_by(int sock, const struct sockaddr* addr, socklen_t addr_len,
     return ret;
 }
 
-/* A socket connected to one of host's addresses, tried in the order the
-   resolver gives them, or -1. */
+/* What a socket keeps of the address it last connected to, in
+   last_address[28]: a struct sockaddr_in6 at most. */
+#define LAST_ADDRESS_MAX 28
+typedef char last_address_fits[sizeof(struct sockaddr_in6) <= LAST_ADDRESS_MAX ? 1 : -1];
+
+/* A socket connected to ai, the attempt bounded by timeout_ms, 0 for none, or
+   -1, with why in out_error and out_detail. */
+static int connect_to_address(const struct addrinfo* ai, int64_t timeout_ms,
+        ebisu_sock_error_t* out_error, long* out_detail)
+{
+    int sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+    if (sock < 0) {
+        *out_error = EBISU_SOCK_ERROR_OTHER;
+        *out_detail = errno;
+        return -1;
+    }
+    int64_t deadline_ms = timeout_ms > 0 ? monotonic_ms() + timeout_ms : 0;
+    int attempt_errno = 0;
+    if (connect_by(sock, ai->ai_addr, ai->ai_addrlen, deadline_ms, out_error,
+                &attempt_errno) == 0) {
+        return sock;
+    }
+    *out_detail = attempt_errno;
+    close(sock);
+    return -1;
+}
+
+/* A socket connected to one of host's addresses, or -1. They are tried in the
+   order the resolver gives them, but for the one the last connection was made
+   to, last_address of last_address_size bytes, which goes first if the host
+   still has it, and becomes the one connected to. A server whose addresses
+   don't share their TLS sessions resumes one only on the address that made
+   it, and the resolver's order can change from one lookup to the next. */
 static int connect_to_host(const char* host, uint16_t port, unsigned int timeout_s,
-        ebisu_logger_t* logger, ebisu_sock_error_t* out_error, long* out_detail)
+        ebisu_logger_t* logger, ebisu_sock_error_t* out_error, long* out_detail,
+        unsigned char* last_address, unsigned char* last_address_size)
 {
     int64_t timeout_ms = (int64_t)timeout_s * 1000;
     int64_t deadline_ms = timeout_ms > 0 ? monotonic_ms() + timeout_ms : 0;
@@ -341,25 +373,32 @@ static int connect_to_host(const char* host, uint16_t port, unsigned int timeout
     /* Why the last address failed, which is what is said. */
     *out_error = EBISU_SOCK_ERROR_CONNECT;
     *out_detail = 0;
-    int sock = -1;
-    for (struct addrinfo* ai = addrs; ai != NULL; ai = ai->ai_next) {
-        sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-        if (sock < 0) {
-            *out_error = EBISU_SOCK_ERROR_OTHER;
-            *out_detail = errno;
-            continue;
-        }
-        /* Each address gets the whole timeout: one that doesn't answer leaves
-           the rest as much time as the first had. */
-        int64_t attempt_deadline_ms = timeout_ms > 0 ? monotonic_ms() + timeout_ms : 0;
-        int attempt_errno = 0;
-        if (connect_by(sock, ai->ai_addr, ai->ai_addrlen, attempt_deadline_ms,
-                    out_error, &attempt_errno) == 0) {
+    const struct addrinfo* first = NULL;
+    for (const struct addrinfo* ai = addrs; ai != NULL && *last_address_size > 0;
+            ai = ai->ai_next) {
+        if (ai->ai_addrlen == *last_address_size &&
+                memcmp(ai->ai_addr, last_address, *last_address_size) == 0) {
+            first = ai;
             break;
         }
-        *out_detail = attempt_errno;
-        close(sock);
-        sock = -1;
+    }
+    /* Each address gets the whole timeout: one that doesn't answer leaves the
+       rest as much time as the first had. */
+    const struct addrinfo* connected = NULL;
+    int sock = -1;
+    if (first != NULL) {
+        sock = connect_to_address(first, timeout_ms, out_error, out_detail);
+        connected = first;
+    }
+    for (const struct addrinfo* ai = addrs; sock < 0 && ai != NULL; ai = ai->ai_next) {
+        if (ai != first) {
+            sock = connect_to_address(ai, timeout_ms, out_error, out_detail);
+            connected = ai;
+        }
+    }
+    if (sock >= 0 && connected->ai_addrlen <= LAST_ADDRESS_MAX) {
+        memcpy(last_address, connected->ai_addr, connected->ai_addrlen);
+        *last_address_size = (unsigned char)connected->ai_addrlen;
     }
     free_addresses(addrs, lookup);
     if (sock < 0) {
