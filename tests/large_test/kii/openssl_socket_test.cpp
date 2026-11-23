@@ -107,7 +107,9 @@ struct Connection {
     int server_fd;
     bool client_closed;
 
-    Connection() : client_closed(false) {
+    // Over TCP on the loopback rather than a socketpair, for a transport that
+    // can be reset.
+    explicit Connection(bool tcp = false) : client_closed(false) {
         // As the sample does: writes go to a peer that has gone.
         signal(SIGPIPE, SIG_IGN);
         // As the socket's connect does, which these tests don't go through.
@@ -122,7 +124,11 @@ struct Connection {
         X509* cert = server_certificate();
 
         int fds[2];
-        REQUIRE( socketpair(AF_UNIX, SOCK_STREAM, 0, fds) == 0 );
+        if (tcp) {
+            tcp_pair(fds);
+        } else {
+            REQUIRE( socketpair(AF_UNIX, SOCK_STREAM, 0, fds) == 0 );
+        }
         server_fd = fds[0];
 
         server_ctx = SSL_CTX_new(SSLv23_server_method());
@@ -167,6 +173,47 @@ struct Connection {
     void close_server_socket() {
         close(server_fd);
         server_fd = -1;
+    }
+
+    // The transport is reset, as by a server that closes with what the
+    // client sent unread: a TCP connection only. False where SO_LINGER can't
+    // be set, as under qemu-arm's emulation of Linux, which doesn't have it.
+    bool reset_server_socket() {
+        struct linger l = { 1, 0 };
+        if (setsockopt(server_fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l)) != 0) {
+            return false;
+        }
+        close_server_socket();
+        return true;
+    }
+
+    // Bytes on the transport that aren't the server's TLS: a record of
+    // application data that doesn't decrypt.
+    void send_garbage() {
+        const unsigned char record[] = { 0x17, 0x03, 0x03, 0x00, 0x20,
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+            17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 };
+        REQUIRE( write(server_fd, record, sizeof(record)) == (ssize_t)sizeof(record) );
+    }
+
+    // A connected pair of TCP sockets on the loopback: the server's first.
+    static void tcp_pair(int fds[2]) {
+        int listening = socket(AF_INET, SOCK_STREAM, 0);
+        REQUIRE( listening >= 0 );
+        struct sockaddr_in addr;
+        memset(&addr, 0, sizeof(addr));
+        addr.sin_family = AF_INET;
+        addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        REQUIRE( bind(listening, (struct sockaddr*)&addr, sizeof(addr)) == 0 );
+        REQUIRE( listen(listening, 1) == 0 );
+        socklen_t size = sizeof(addr);
+        REQUIRE( getsockname(listening, (struct sockaddr*)&addr, &size) == 0 );
+        fds[1] = socket(AF_INET, SOCK_STREAM, 0);
+        REQUIRE( fds[1] >= 0 );
+        REQUIRE( connect(fds[1], (struct sockaddr*)&addr, sizeof(addr)) == 0 );
+        fds[0] = accept(listening, nullptr, nullptr);
+        REQUIRE( fds[0] >= 0 );
+        close(listening);
     }
 
     ebisu_sock_code_t close_client() {
@@ -293,6 +340,83 @@ TEST_CASE( "The OpenSSL socket's recv_wait waits for something for recv to retur
         received = 1;
         CHECK( sock->ops->recv(sock, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
         CHECK( received == 0 );
+    }
+}
+
+// A TLS 1.3 server sends its session tickets after the handshake: records
+// that carry nothing for recv to return. recv_wait polled the socket alone, so
+// it took them for something to return, and recv then waited for its whole
+// timeout. While a request's body is being sent, khc asks it whether the
+// server has answered early.
+TEST_CASE( "The OpenSSL socket's recv_wait doesn't take a TLS 1.3 server's tickets for data" ) {
+    Connection c;
+#ifdef TLS1_3_VERSION
+    if (SSL_version(c.client.ssl) != TLS1_3_VERSION) {
+        WARN( "TLS 1.3 wasn't negotiated: nothing to check" );
+        return;
+    }
+#else
+    WARN( "no TLS 1.3 in this OpenSSL: nothing to check" );
+    return;
+#endif
+    ebisu_socket_t* sock = &c.client.base;
+
+    const auto start = std::chrono::steady_clock::now();
+    CHECK( sock->ops->recv_wait(sock, 300) == false );
+    const auto waited = std::chrono::steady_clock::now() - start;
+    CHECK( waited >= std::chrono::milliseconds(290) );
+    CHECK( waited < std::chrono::milliseconds(2000) );
+    CHECK( sock->ops->recv_wait(sock, 0) == false );
+
+    // What comes after them is.
+    char buffer[16];
+    size_t received = 0;
+    REQUIRE( SSL_write(c.server, "hello", 5) == 5 );
+    CHECK( sock->ops->recv_wait(sock, 10000) == true );
+    CHECK( sock->ops->recv(sock, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
+    CHECK( std::string(buffer, received) == "hello" );
+}
+
+// recv_wait reads ahead of recv, so it comes to the end of the stream or a
+// failure first. recv returns what reading it would have: a second read after
+// a reset reads the end of the stream, which a body that ends with the
+// connection takes for its end.
+TEST_CASE( "The OpenSSL socket's recv returns what its recv_wait came to first" ) {
+    char buffer[16];
+    size_t received = 1;
+
+    SECTION("a record that doesn't decrypt") {
+        Connection c;
+        ebisu_socket_t* sock = &c.client.base;
+        c.send_garbage();
+        CHECK( sock->ops->recv_wait(sock, 10000) == true );
+        CHECK( sock->ops->recv(sock, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
+        CHECK( received == 0 );
+        long detail = 0;
+        CHECK( sock->ops->last_error(sock, &detail) == EBISU_SOCK_ERROR_TLS );
+        CHECK( sock->ops->recv_timed_out(sock) == false );
+    }
+
+    SECTION("a reset") {
+        Connection c(true);
+        ebisu_socket_t* sock = &c.client.base;
+        // Something of the client's for the server not to read: a reset
+        // rather than a close.
+        REQUIRE( sock->ops->send != nullptr );
+        size_t sent = 0;
+        REQUIRE( sock->ops->send(sock, "x", 1, &sent) == EBISU_SOCK_OK );
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        if (!c.reset_server_socket()) {
+            WARN( "SO_LINGER can't be set here: no reset to check" );
+            return;
+        }
+        CHECK( sock->ops->recv_wait(sock, 10000) == true );
+        CHECK( sock->ops->recv(sock, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
+        CHECK( received == 0 );
+        long detail = 0;
+        CHECK( sock->ops->last_error(sock, &detail) == EBISU_SOCK_ERROR_CLOSED );
+        CHECK( detail == ECONNRESET );
+        CHECK( sock->ops->recv_timed_out(sock) == false );
     }
 }
 
