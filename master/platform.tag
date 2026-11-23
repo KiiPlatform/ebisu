@@ -567,6 +567,13 @@
       <arglist>(ebisu_openssl_tls_t *tls, ebisu_tls_verify_t verify, const unsigned char *pin)</arglist>
     </member>
     <member kind="function">
+      <type>bool</type>
+      <name>ebisu_openssl_tls_set_session_lifetime</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>a1fec6feb9e3a3009306db7aecd02c53b</anchor>
+      <arglist>(ebisu_openssl_tls_t *tls, unsigned int seconds)</arglist>
+    </member>
+    <member kind="function">
       <type>void</type>
       <name>ebisu_openssl_socket_init</name>
       <anchorfile>ebisu__openssl_8h.html</anchorfile>
