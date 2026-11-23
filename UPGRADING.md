@@ -553,6 +553,11 @@ khc, which kii and tio report in their own codes:
   early, returning `KHC_ERR_OK`. A status code and the other results of the
   last request are now cleared when the next `khc_perform()` starts, even when
   it fails before reaching the server.
+- A write callback that returns more than it was given fails the request with
+  `KHC_ERR_WRITE_CALLBACK`, as `KHC_CB_WRITE` says, wherever it is called. 1.x
+  failed it only for a body's first part, read with the headers, and took it
+  for the rest, counting the more as received: a `Content-Length` body could
+  end early with `KHC_ERR_OK`.
 - GET, HEAD and DELETE send no body, and don't call the read callback.
 - Each chunk of a request body is sent in one send, with its size line and CRLF,
   from the stream buffer. 1.x sent the three separately. The read callback is
