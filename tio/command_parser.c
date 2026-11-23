@@ -21,6 +21,11 @@ _cmd_parser_code_t _get_object_in_array(
         char** out_object,
         size_t* out_object_length)
 {
+    // What isn't an array is malformed: looked up by index, it read as an
+    // empty one, and the command was taken as good.
+    if (json_array_length == 0 || json_array[0] != '[') {
+        return _CMD_PARSE_FAIL;
+    }
     char idx_str[32];
     int len = snprintf(idx_str, 32, "/[%lu]", (unsigned long)index);
     if (len >= 32) {
@@ -45,9 +50,13 @@ _cmd_parser_code_t _get_object_in_array(
         *out_object = (char*)(json_array + field[0].start);
         *out_object_length = field[0].end - field[0].start;
         return _CMD_PARSE_OK;
-    } else if (res == JKII_ERR_PARTIAL) {
+    } else if (res == JKII_ERR_PARTIAL &&
+            field[0].result == JKII_FIELD_ERR_NOT_FOUND) {
         return _CMD_PARSE_ARRAY_OUT_OF_INDEX;
     } else {
+        // An element that isn't an object is malformed. Taken for the end of
+        // the array, it dropped what came after it, and the command was taken
+        // as good.
         return _CMD_PARSE_FAIL;
     }
 }
@@ -68,6 +77,11 @@ _cmd_parser_code_t _parse_first_kv(
 
     p_err = jsmn_parse(&parser, object, object_length, tokens, 64);
     if (p_err >= 0) {
+        // jsmn writes only the tokens it parsed: an object without both a key
+        // and a value, such as {}, leaves tokens[1] and tokens[2] unset.
+        if (p_err < 3) {
+            return _CMD_PARSE_FAIL;
+        }
         if (tokens[0].type != JSMN_OBJECT) {
             return _CMD_PARSE_FAIL;
         }
@@ -120,6 +134,10 @@ _cmd_parser_code_t _parse_alias(
             out_actions_array_in_alias,
             out_actions_array_in_alias_length,
             &alias_type);
+    if (res == _CMD_PARSE_OK && alias_type != JSMN_ARRAY) {
+        // An alias's actions are an array.
+        return _CMD_PARSE_FAIL;
+    }
     return res;
 }
 
@@ -133,13 +151,18 @@ int _check_double(const char* str, size_t len)
     return -1;
 }
 
-void _parse_primitive(
+_cmd_parser_code_t _parse_primitive(
         const char* action_value,
         size_t action_value_length,
         tio_action_t* out_action)
 {
     jkii_primitive_t jprim;
-    jkii_parse_primitive(action_value, action_value_length, &jprim);
+    // jsmn, even strict, passes primitives that are not JSON, such as - or 1e.
+    // jkii does not set jprim for those, nor for numbers out of range.
+    jkii_primitive_err_t p_res = jkii_parse_primitive(action_value, action_value_length, &jprim);
+    if (p_res != JKII_PRIMITIVE_ERR_OK) {
+        return _CMD_PARSE_FAIL;
+    }
     switch (jprim.type) {
         case JKII_FIELD_TYPE_NULL:
             out_action->action_value.type = TIO_TYPE_NULL;
@@ -166,6 +189,7 @@ void _parse_primitive(
             // Programing error.
             break;
     }
+    return _CMD_PARSE_OK;
 }
 
 _cmd_parser_code_t _parse_action(
@@ -228,12 +252,55 @@ _cmd_parser_code_t _parse_action(
             out_action->action_value.param.opaque_value = action_value;
             break;
         case JSMN_PRIMITIVE:
-            _parse_primitive(action_value, action_value_length, out_action);
-            break;
+            return _parse_primitive(action_value, action_value_length, out_action);
         default:
             break;
     }
     return _CMD_PARSE_OK;
+}
+
+static tio_code_t _walk_command(
+        tio_handler_t* handler,
+        const char* command,
+        size_t command_length,
+        const TIO_CB_PARSED_ACTION cb_parsed_action,
+        void* userdata);
+
+static void _ignore_action(char* command_id, tio_action_t* action, void* userdata)
+{
+    (void)command_id;
+    (void)action;
+    (void)userdata;
+}
+
+// A malformed command is refused whole, before any of its actions runs:
+// refused when the walk reached its malformed part, it had run the actions
+// before it, whose results were never sent.
+static tio_code_t _check_command(
+        tio_handler_t* handler,
+        const char* command,
+        size_t command_length)
+{
+    return _walk_command(handler, command, command_length, _ignore_action, NULL);
+}
+
+// Whether a command's ID can be a segment of the path its results go to, and
+// the path be the one meant: with nothing that ends a segment, a path or a
+// request line, or that a server may decode into one. The ID comes with the
+// command, from the network.
+static int _is_path_segment(const char* id)
+{
+    if (id[0] == '\0' || strcmp(id, ".") == 0 || strcmp(id, "..") == 0) {
+        return 0;
+    }
+    for (const char* p = id; *p != '\0'; ++p) {
+        const unsigned char c = (unsigned char)*p;
+        if (c <= 0x20 || c == 0x7f || c == '/' || c == '?' || c == '#' || c == '%' ||
+                c == '\\') {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 static tio_code_t _start_result_request(
@@ -267,7 +334,7 @@ static tio_code_t _start_result_request(
             strlen(result_start));
     if (a_res != KII_ERR_OK) {
         _trace_op("kii_api_call_append_body", a_res);
-        return _tio_convert_code(s_res);
+        return _tio_convert_code(a_res);
     }
     return TIO_ERR_OK;
 }
@@ -289,17 +356,30 @@ jkii_parse_err_t _validate_json(
     return res;
 }
 
+// Appends text to the body of the result request being prepared, unless an
+// append before it failed.
+static void _append_to_result(tio_handler_t* handler, kii_code_t* res, const char* text,
+        size_t length)
+{
+    if (*res == KII_ERR_OK) {
+        *res = kii_api_call_append_body(&handler->_kii, text, length);
+    }
+}
+
+// An action's result is written piece by piece to the request's body, in the
+// buffer the application gave kii. It was put together first in a buffer of
+// 256 bytes on the stack, the failure's message in one of 128 inside it: a
+// name, a message and data of lengths the callback's own types allow didn't
+// fit in them, and the command's results were given up, its actions done.
 static tio_code_t _append_action_result(
         tio_handler_t* handler,
         size_t index,
         tio_bool_t succeeded,
         tio_action_t* action,
         const char* err_message,
-        const char* json_data,
-        char* work_buff,
-        size_t work_buff_size)
+        const char* json_data)
 {
-    int json_data_len = strlen(json_data);
+    size_t json_data_len = strlen(json_data);
     if (json_data_len > 0) {
         // Validate json_data.
         jkii_parse_err_t json_res = _validate_json(handler, json_data, json_data_len);
@@ -309,93 +389,51 @@ static tio_code_t _append_action_result(
             return TIO_ERR_PARSE_JSON;
         }
     }
-    char *comma = ",";
-    if (index == 0)
-    {
-        comma = "";
+    // Escaping can double the message, so this holds the longest
+    // tio_action_err_t::err_message can be.
+    char esc_msg[TIO_ACTION_ERR_MESSAGE_MAX_SIZE * 2 - 1];
+    int esc_len = 0;
+    size_t msg_len = succeeded == KII_TRUE ? 0 : strlen(err_message);
+    if (msg_len > 0) {
+        if (msg_len * 2 + 1 > sizeof(esc_msg)) {
+            return TIO_ERR_TOO_LARGE_DATA;
+        }
+        esc_len = jkii_escape_str(err_message, esc_msg, sizeof(esc_msg)/sizeof(esc_msg[0]));
+        if (esc_len < 0) {
+            return TIO_ERR_TOO_LARGE_DATA;
+        }
     }
+
     // The action name is a slice of the parsed command, so its length comes
-    // from the network. Copying it to the stack first sized the array by that
-    // length, letting whoever publishes a command choose how much stack to
-    // consume -- bounded only by the buffer passed to kii_set_mqtt_buff(), on
-    // targets whose whole stack may be smaller than that. It is printed with a
-    // precision instead, which needs no copy and no allocation.
-    if (action->action_name_length >= work_buff_size) {
-        return TIO_ERR_TOO_LARGE_DATA;
+    // from the network: it is appended as it is there, with no copy of it.
+    kii_code_t res = KII_ERR_OK;
+    const char open[] = ",{\"";
+    const char succeeded_true[] = "\":{\"succeeded\":true";
+    const char succeeded_false[] = "\":{\"succeeded\":false";
+    const char message_open[] = ",\"errorMessage\":\"";
+    const char data_open[] = ",\"data\":";
+    if (index == 0) {
+        _append_to_result(handler, &res, open + 1, sizeof(open) - 2);
+    } else {
+        _append_to_result(handler, &res, open, sizeof(open) - 1);
     }
-    const int action_name_length = (int)action->action_name_length;
-    if (succeeded == KII_TRUE)
-    {
-        int len = snprintf(
-                work_buff, work_buff_size,
-                "%s{\"%.*s\":{\"succeeded\":true",
-                comma, action_name_length, action->action_name);
-        len += 2; // length of "}}".
-        if (len >= work_buff_size)
-        {
-            return TIO_ERR_TOO_LARGE_DATA;
+    _append_to_result(handler, &res, action->action_name, action->action_name_length);
+    if (succeeded == KII_TRUE) {
+        _append_to_result(handler, &res, succeeded_true, sizeof(succeeded_true) - 1);
+    } else {
+        _append_to_result(handler, &res, succeeded_false, sizeof(succeeded_false) - 1);
+        if (msg_len > 0) {
+            _append_to_result(handler, &res, message_open, sizeof(message_open) - 1);
+            _append_to_result(handler, &res, esc_msg, (size_t)esc_len);
+            _append_to_result(handler, &res, "\"", 1);
         }
-        if (json_data_len > 0) {
-            len += json_data_len + 8;
-            if (len >= work_buff_size)
-            {
-                return TIO_ERR_TOO_LARGE_DATA;
-            }
-            strcat(work_buff, ",\"data\":");
-            strcat(work_buff, json_data);
-        }
-        strcat(work_buff, "}}");
-        kii_code_t res =  kii_api_call_append_body(&handler->_kii, work_buff, len);
-        return _tio_convert_code(res);
     }
-    else
-    {
-        char *err_part = "";
-        char temp_err[128];
-        size_t msg_len = strlen(err_message);
-        if (msg_len > 0)
-        {
-            // Escaping can double the message, so this holds the longest
-            // tio_action_err_t::err_message can be. Sizing it from msg_len made
-            // it a variable length array whose bound depended on a caller the
-            // parameter type does not constrain.
-            char esc_msg[TIO_ACTION_ERR_MESSAGE_MAX_SIZE * 2 - 1];
-            if (msg_len * 2 + 1 > sizeof(esc_msg)) {
-                return TIO_ERR_TOO_LARGE_DATA;
-            }
-            int esc_len = jkii_escape_str(err_message, esc_msg, sizeof(esc_msg)/sizeof(esc_msg[0]));
-            if (esc_len < 0) {
-                return TIO_ERR_TOO_LARGE_DATA;
-            }
-            int len = snprintf(temp_err, 128, ",\"errorMessage\":\"%s\"", esc_msg);
-            if (len >= 128)
-            {
-                return TIO_ERR_TOO_LARGE_DATA;
-            }
-            err_part = temp_err;
-        }
-        int len = snprintf(
-                work_buff, work_buff_size,
-                "%s{\"%.*s\":{\"succeeded\":false%s",
-                comma, action_name_length, action->action_name, err_part);
-        len += 2; // length of "}}".
-        if (len >= work_buff_size)
-        {
-            return TIO_ERR_TOO_LARGE_DATA;
-        }
-        if (json_data_len > 0) {
-            len += json_data_len + 8;
-            if (len >= work_buff_size)
-            {
-                return TIO_ERR_TOO_LARGE_DATA;
-            }
-            strcat(work_buff, ",\"data\":");
-            strcat(work_buff, json_data);
-        }
-        strcat(work_buff, "}}");
-        kii_code_t res = kii_api_call_append_body(&handler->_kii, work_buff, len);
-        return _tio_convert_code(res);
+    if (json_data_len > 0) {
+        _append_to_result(handler, &res, data_open, sizeof(data_open) - 1);
+        _append_to_result(handler, &res, json_data, json_data_len);
     }
+    _append_to_result(handler, &res, "}}", 2);
+    return _tio_convert_code(res);
 }
 
 //
@@ -415,6 +453,11 @@ tio_code_t _handle_command(
         TIO_CB_ACTION cb_action,
         void* cb_action_data)
 {
+    tio_code_t c_res = _check_command(handler, command, command_length);
+    if (c_res != TIO_ERR_OK) {
+        return c_res;
+    }
+
     jkii_field_t fields[3];
     char command_id[64];
     memset(fields, 0x00, sizeof(fields));
@@ -432,6 +475,12 @@ tio_code_t _handle_command(
     if (res != JKII_ERR_OK) {
         return TIO_ERR_PARSE_JSON;
     }
+    // Refused whole, before any of its actions runs, as a malformed command
+    // is: its results would have gone to another path than its own.
+    if (!_is_path_segment(command_id)) {
+        _trace_op("_is_path_segment", 0);
+        return TIO_ERR_PARSE_JSON;
+    }
 
     tio_code_t s_res = _start_result_request(handler, command_id);
     if (s_res != TIO_ERR_OK) {
@@ -441,7 +490,6 @@ tio_code_t _handle_command(
     const char* actions_array = command + fields[1].start;
     size_t actions_array_length = fields[1].end - fields[1].start;
     tio_action_t action;
-    size_t result_counts = 0;
     for (size_t alias_idx = 0; ; ++alias_idx) {
         char* actions_array_in_alias = NULL;
         size_t actions_array_in_alias_length = 0;
@@ -493,22 +541,22 @@ tio_code_t _handle_command(
                     tio_action_result_data_t action_result_data;
                     action_result_data.json[0] = '\0';
                     tio_bool_t succeeded = cb_action(&action, &action_err, &action_result_data, cb_action_data);
-                    char work_buff[256];
+                    // The index within the alias, whose results are an array
+                    // of their own: counted across the command, the first
+                    // result of every alias after the first was written with
+                    // a leading comma, and the server refused the body.
                     tio_code_t app_res = _append_action_result(
                             handler,
-                            result_counts,
+                            action_idx,
                             succeeded,
                             &action,
                             action_err.err_message,
-                            action_result_data.json,
-                            work_buff,
-                            sizeof(work_buff)/sizeof(work_buff[0]));
+                            action_result_data.json);
                     if (app_res != TIO_ERR_OK) {
                         _trace_op("_append_action_result", app_res);
                         kii_cancel_request_being_prepared(&handler->_kii);
                         return app_res;
                     }
-                    ++result_counts;
                 } else if (pa_res == _CMD_PARSE_ARRAY_OUT_OF_INDEX) {
                     // Handled all actions in alias.
                     break;
@@ -542,6 +590,12 @@ tio_code_t _handle_command(
         _trace_op("kii_api_call_run", run_res);
         return _tio_convert_code(run_res);
     }
+    // kii_api_call_run only reports transport errors.
+    int resp_code = kii_get_resp_status(&handler->_kii);
+    if (resp_code < 200 || 300 <= resp_code) {
+        _trace_op("kii_get_resp_status", resp_code);
+        return TIO_ERR_RESP_STATUS;
+    }
     return TIO_ERR_OK;
 }
 
@@ -565,6 +619,21 @@ jkii_parse_err_t _parse_json(
 
 
 tio_code_t _parse_command(
+        tio_handler_t* handler,
+        const char* command,
+        size_t command_length,
+        const TIO_CB_PARSED_ACTION cb_parsed_action,
+        void* userdata)
+{
+    tio_code_t c_res = _check_command(handler, command, command_length);
+    if (c_res != TIO_ERR_OK) {
+        return c_res;
+    }
+    return _walk_command(handler, command, command_length, cb_parsed_action,
+            userdata);
+}
+
+static tio_code_t _walk_command(
         tio_handler_t* handler,
         const char* command,
         size_t command_length,

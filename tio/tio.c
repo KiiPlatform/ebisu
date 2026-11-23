@@ -298,6 +298,17 @@ tio_code_t tio_handler_start(
         TIO_CB_ACTION cb_action,
         void* userdata)
 {
+    // kii_start_push_task() turns these away too, but takes the keep-alive as
+    // an unsigned int, to which a larger size_t would be cut down first.
+    // Checking first leaves the handler as it was when it does: a running task
+    // reads what is set below.
+    if (handler->_kii._task_running == KII_TRUE ||
+            handler->_keep_alive_interval > 65535) {
+        return TIO_ERR_FAIL;
+    }
+    if (author == NULL || cb_action == NULL) {
+        return TIO_ERR_FAIL;
+    }
     handler->_kii._author = *author;
 
     handler->_cb_action = cb_action;
@@ -333,6 +344,7 @@ void tio_updater_init(tio_updater_t* updater)
     updater->_task_continue_data = NULL;
     updater->_cb_task_exit = NULL;
     updater->_task_exit_data = NULL;
+    updater->_kii._task_running = KII_FALSE;
 }
 
 void tio_updater_set_cb_sock_connect(
@@ -449,17 +461,16 @@ static void* _update_state(void* data) {
     while(1) {
         // Ask to continue every 1 second.
         const size_t interval_chk_cnt_sec = 1;
-        if (interval_remain_sec > interval_chk_cnt_sec) {
-            if (updater->_cb_task_continue != NULL) {
-                tio_bool_t cont = updater->_cb_task_continue(NULL, updater->_task_continue_data);
-                if (cont != KII_TRUE) {
-                    break;
-                }
+        if (updater->_cb_task_continue != NULL) {
+            tio_bool_t cont = updater->_cb_task_continue(NULL, updater->_task_continue_data);
+            if (cont != KII_TRUE) {
+                break;
             }
-            updater->_kii._cb_delay_ms(interval_chk_cnt_sec * 1000, updater->_kii._delay_ms_data);
+        }
+        updater->_kii._cb_delay_ms(interval_chk_cnt_sec * 1000, updater->_kii._delay_ms_data);
+        if (interval_remain_sec > interval_chk_cnt_sec) {
             interval_remain_sec -= interval_chk_cnt_sec;
         } else {
-            updater->_kii._cb_delay_ms(interval_remain_sec * 1000, updater->_kii._delay_ms_data);
             interval_remain_sec = updater->_update_interval;
             size_t state_size = updater->_cb_state_size(updater->_cb_state_size_data);
             if (state_size > 0) {
@@ -478,9 +489,9 @@ static void* _update_state(void* data) {
                 }
             }
         }
-
-
     }
+    // Before the callback, which may start the task again.
+    updater->_kii._task_running = KII_FALSE;
     if (updater->_cb_task_exit != NULL) {
         updater->_cb_task_exit(NULL, updater->_task_exit_data);
     }
@@ -539,6 +550,20 @@ const tio_author_t* tio_updater_get_author(
     return &updater->_kii._author;
 }
 
+/* What the task uses without checking, so that one left out is found when
+ * starting it, rather than as a crash in the task. */
+static tio_bool_t _updater_task_can_run(const tio_updater_t* updater)
+{
+    const kii_t* kii = &updater->_kii;
+    const khc* http = &kii->_khc;
+    return (kii->_cb_delay_ms != NULL &&
+            http->_cb_sock_connect != NULL &&
+            http->_cb_sock_send != NULL &&
+            http->_cb_sock_recv != NULL &&
+            http->_cb_sock_close != NULL &&
+            kii->_rw_buff != NULL) ? KII_TRUE : KII_FALSE;
+}
+
 tio_code_t tio_updater_start(
         tio_updater_t* updater,
         const tio_author_t* author,
@@ -547,6 +572,23 @@ tio_code_t tio_updater_start(
         TIO_CB_READ state_reader,
         void* state_reader_data)
 {
+    // A second task would share the first's socket and buffer, and a running
+    // task reads what is set below.
+    if (updater->_kii._task_running == KII_TRUE) {
+        return TIO_ERR_FAIL;
+    }
+    // Unset, as there is no interval to default to.
+    if (updater->_update_interval == 0) {
+        return TIO_ERR_FAIL;
+    }
+    // No callback to create the task with is a task that cannot be created.
+    if (updater->_kii._cb_task_create == NULL) {
+        return TIO_ERR_CREATE_TASK;
+    }
+    if (author == NULL || cb_state_size == NULL || state_reader == NULL ||
+            _updater_task_can_run(updater) != KII_TRUE) {
+        return TIO_ERR_FAIL;
+    }
     updater->_kii._author = *author;
 
     updater->_cb_state_size = cb_state_size;
@@ -555,6 +597,8 @@ tio_code_t tio_updater_start(
     updater->_state_reader = state_reader;
     updater->_state_reader_data = state_reader_data;
 
+    // Before creating it, as it may have finished by the time that returns.
+    updater->_kii._task_running = KII_TRUE;
     kii_task_code_t res = updater->_kii._cb_task_create(
             TIO_TASK_NAME_UPDATE_STATE,
             _update_state,
@@ -562,6 +606,7 @@ tio_code_t tio_updater_start(
             updater->_kii._task_create_data);
 
     if (res != KII_TASKC_OK) {
+        updater->_kii._task_running = KII_FALSE;
         return TIO_ERR_CREATE_TASK;
     }
     return TIO_ERR_OK;

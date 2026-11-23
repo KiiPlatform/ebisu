@@ -41,15 +41,19 @@ typedef enum tio_code_t {
     TIO_ERR_SOCK_CONNECT, /**< \brief Socket error in connection. */
     TIO_ERR_SOCK_SEND, /**< \brief Socket error in sending data. */
     TIO_ERR_SOCK_RECV, /**< \brief Socket error in receiving data. */
-    TIO_ERR_SOCK_CLOSE, /**< \brief Socket error in closing. */
-    TIO_ERR_WRITE_CALLBACK, /**< \brief Error in write callback. */
+    TIO_ERR_SOCK_CLOSE, /**< \brief No longer returned: closing doesn't change a request's result. */
+    TIO_ERR_WRITE_CALLBACK, /**< \brief No longer returned: a response too large for the buffer is TIO_ERR_TOO_LARGE_DATA. */
     TIO_ERR_HEADER_CALLBACK, /**< \brief Error in header callback. */
     TIO_ERR_ALLOCATION, /**< \brief Error in memory allocation. */
     TIO_ERR_TOO_LARGE_DATA, /**< \brief Data is larger than expected. */
     TIO_ERR_RESP_STATUS, /**< \brief REST API returns error status code. */
     TIO_ERR_PARSE_JSON, /**< \brief Error in parsing JSON. */
     TIO_ERR_CREATE_TASK, /**< \brief Error in creating task. */
-    TIO_ERR_FAIL /**< \brief Other errors. */
+    TIO_ERR_FAIL, /**< \brief Other errors. */
+    /* Added after TIO_ERR_FAIL so that the codes above keep their values. */
+    /** \brief A response isn't HTTP tio can read: its status line isn't one,
+     * or its framing doesn't say where its body ends. */
+    TIO_ERR_INVALID_RESPONSE
 } tio_code_t;
 
 /**
@@ -60,7 +64,7 @@ typedef enum tio_code_t {
 typedef enum tio_data_type_t {
     TIO_TYPE_NULL, /**< \brief NULL type. */
     TIO_TYPE_BOOLEAN, /**< \brief Boolean type. */
-    TIO_TYPE_INTEGER, /**< \brief Integer type. */
+    TIO_TYPE_INTEGER, /**< \brief Integer type, held as a long. */
     TIO_TYPE_DOUBLE, /**< \brief Double type. */
     TIO_TYPE_STRING, /**< \brief String type. */
     TIO_TYPE_OBJECT, /**< \brief Object type. */
@@ -73,7 +77,8 @@ typedef enum tio_data_type_t {
 typedef struct tio_action_value_t {
     tio_data_type_t type; /**< \brief Data type of the value. */
     union {
-        long long_value; /**< Value stored when type is TIO_TYPE_INTEGER */
+        long long_value; /**< Value stored when type is TIO_TYPE_INTEGER:
+                           * any JSON integer from LONG_MIN to LONG_MAX. */
         double double_value; /**< Value stored when type is TIO_TYPE_DOUBLE */
         tio_bool_t bool_value; /**< Value stored when type is TIO_TYPE_BOOLEAN */
         const char *opaque_value; /**< Value stored when type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY */
@@ -458,6 +463,9 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTIN
 
  * Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback or
  * un-recoverble error occurs.
+ * If it has a connection to the MQTT broker open, it closes it first with the
+ * callback set by tio_handler_set_cb_sock_close_mqtt(), so exit_cb is called
+ * with no MQTT connection open.
  * In exit_cb, you'll need to free memory used for buffers set by following APIs
  * - tio_handler_set_http_buff(),
  * - tio_handler_set_stream_buff(),
@@ -545,6 +553,8 @@ void tio_handler_set_mqtt_buff(tio_handler_t* handler, char* buff, size_t buff_s
  * Limitation: keep_alive_interval must be larger than socket recv/ send timeout set by
  * tio_handler_set_mqtt_to_sock_recv() / tio_handler_set_mqtt_to_sock_send().
  * Twice as large as recv/ send timeout works fine but recommend few minutes to avoid congestion.
+ * If 0, Keep-Alive is disabled. At most 65535, the largest MQTT can carry:
+ * tio_handler_start() fails with TIO_ERR_FAIL for a larger value.
  *
  * \param [out] handler tio_handler_t instance.
  * \param [in] keep_alive_interval_sec Keep-Alive interval in seconds.
@@ -682,11 +692,15 @@ const tio_author_t* tio_handler_get_author(
  * You can start tio_handler task by this method.
  * If the API returns TIO_ERR_OK, asynchronous task is started successfully and
  * callbacks set by tio_handler setter methods and this method is called when corresponding event occurs.
+ * If the callback set by tio_handler_set_cb_task_create() is not set, or fails
+ * to create the task, no task is started and the API returns TIO_ERR_CREATE_TASK.
  *
  * \param [in] handler tio_handler_t instance.
  * \param [in] author API author.
  * \param [in] cb_action Action callback called when received remote controll command.
  * \param [in] userdata Context object pointer passed to cb_action.
+ * \return tio_code_t. TIO_ERR_FAIL if the Keep-Alive interval set by
+ * tio_handler_set_keep_alive_interval() is larger than 65535.
  */
 tio_code_t tio_handler_start(
         tio_handler_t* handler,
@@ -710,6 +724,9 @@ tio_code_t tio_handler_start(
  * When app invokes the method, TIO_CB_ACTION callback is invoked.
  * Command may includes multiple actions. The callback TIO_CB_ACTION is invoked
  * per action.
+ *
+ * A malformed command is refused whole: it returns TIO_ERR_PARSE_JSON before
+ * the callback is invoked for any action, and sends nothing.
  *
  * \param [in] handler tio_handler_t instance.
  * \param [in] command received command.
@@ -750,7 +767,8 @@ typedef void (*TIO_CB_PARSED_ACTION)(char* command_id, tio_action_t* action, voi
  * \param [in] command_length Length of received command.
  * \param [in] cb_parsed_action TIO_CB_PARSED_ACTION callback called when parsed a action.
  * \param [in] userdata Context object pointer passed to cb_parsed_action.
- * \return TIO_ERR_OK when succeeded to parse the command.
+ * \return TIO_ERR_OK when succeeded to parse the command. TIO_ERR_PARSE_JSON
+ * for a malformed command, before cb_parsed_action is called for any action.
  */
 tio_code_t tio_handler_parse_command(
         tio_handler_t* handler,
@@ -953,6 +971,9 @@ void tio_updater_set_app(tio_updater_t* updater, const char* app_id, const char*
 /**
  * \brief Set interval of updating state.
  *
+ * Required: tio_updater_start() fails with TIO_ERR_FAIL if it is 0, the value
+ * tio_updater_init() sets.
+ *
  * \param [out] updater tio_updater_t instance.
  * \param [in] update_interval_sec Interval in seconds.
  */
@@ -1054,7 +1075,8 @@ const tio_author_t* tio_updater_get_author(
  * \param [in] state_size_data Context object pointer passed to cb_state_size.
  * \param [in] cb_read_state Callback read state of the device.
  * \param [in] read_state_data Context object pointer passed to cb_read_state.
- * \return TIO_ERR_OK when succeeded to start task.
+ * \return TIO_ERR_OK when succeeded to start task. TIO_ERR_FAIL if no
+ * interval is set by tio_updater_set_interval().
  */
 tio_code_t tio_updater_start(
         tio_updater_t* updater,
