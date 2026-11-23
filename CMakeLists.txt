@@ -44,6 +44,14 @@ endif()
 # refuses fails the request, as it does without one. Nothing else changes, the
 # layout of kii_t and kii_session_t included.
 option(EBISU_SESSION "Compile in sessions, which renew a thing's tokens" ON)
+# TLS session resumption in the ports for devices, the mbedTLS port's: a
+# socket keeps the session of its last connection, for the next to the same
+# host to resume, once ebisu_mbedtls_socket_set_session_resume() asks it to.
+# OFF leaves out the code and the memory it takes, as not defining
+# EBISU_TLS_RESUME does in a build without CMake, which defines it, when it
+# does, for the port and for everything using it. The OpenSSL and Schannel
+# ports resume sessions whatever this says.
+option(EBISU_TLS_RESUME "Let the mbedTLS port resume TLS sessions" OFF)
 if(NOT EBISU_SESSION)
     add_compile_definitions(EBISU_NO_SESSION)
 endif()
