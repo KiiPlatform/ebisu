@@ -61,6 +61,40 @@ if(NOT EBISU_DATE_CEILING_YEARS MATCHES "^[0-9]+$")
 endif()
 add_compile_definitions(EBISU_DATE_CEILING_YEARS=${EBISU_DATE_CEILING_YEARS})
 
+# The sizes of the fixed buffers in kii's types, and how deep jkii's writer
+# nests, for a build that needs them otherwise than kii.h and jkii_writer.h
+# define them: see kii/README.md and jkii/README.md. They change the layout of
+# kii_author_t, kii_mqtt_endpoint_t and kii_t, which tio's handlers hold, and
+# of jkii_writer_t, so what is built against the libraries has to define them
+# alike. Set here, each is defined for its library and for everything built
+# against it: by the library's target, in this build or installed, and by its
+# pkg-config file. Empty, as by default, leaves the header's.
+set(EBISU_KII_SIZES KII_TOKEN_MAX_SIZE KII_REFRESH_TOKEN_MAX_SIZE
+    KII_USERNAME_MAX_SIZE KII_PASSWORD_MAX_SIZE KII_TOPIC_MAX_SIZE
+    KII_HOST_MAX_SIZE)
+set(EBISU_KII_SIZE_DEFINITIONS "")
+set(EBISU_JKII_SIZE_DEFINITIONS "")
+foreach(size IN LISTS EBISU_KII_SIZES ITEMS JKII_WRITER_MAX_DEPTH)
+    set(${size} "" CACHE STRING "${size}, or empty for the header's")
+    # Defined among the compiler's flags instead, it would reach the libraries
+    # but not what is built against an installed copy.
+    if("${CMAKE_C_FLAGS} ${CMAKE_CXX_FLAGS}" MATCHES "-D *${size}([= ]|$)")
+        message(FATAL_ERROR "Set ${size} as a CMake variable, -D${size}=<size>, "
+            "rather than among the compiler's flags, so that what is built "
+            "against ebisu, installed or not, defines it alike.")
+    endif()
+    if(NOT "${${size}}" STREQUAL "")
+        if(NOT "${${size}}" MATCHES "^[1-9][0-9]*$")
+            message(FATAL_ERROR "${size} must be 1 or more: ${${size}}")
+        endif()
+        if(size STREQUAL "JKII_WRITER_MAX_DEPTH")
+            list(APPEND EBISU_JKII_SIZE_DEFINITIONS "${size}=${${size}}")
+        else()
+            list(APPEND EBISU_KII_SIZE_DEFINITIONS "${size}=${${size}}")
+        endif()
+    endif()
+endforeach()
+
 # On by default so a warning cannot quietly return: the four fixed in #192 sat
 # unnoticed for years because the build target only ran doxygen and compiled
 # nothing.

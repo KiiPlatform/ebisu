@@ -1,7 +1,8 @@
 #!/bin/bash
 # Installs ebisu into a prefix of its own, then builds a program against the
 # installed copy twice, through its CMake package and through pkg-config, and
-# runs both. Needs CMake, a C compiler, pkg-config and OpenSSL's headers, for
+# runs both. The libraries are built with sizes other than the headers', which
+# both ways have to define for the program as well. Needs CMake, a C compiler, pkg-config and OpenSSL's headers, for
 # the OpenSSL port.
 #
 # Usage: package_consumer.sh
@@ -15,7 +16,8 @@ cmake=${EBISU_CMAKE:-cmake}
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
-"$cmake" -S "$root" -B "$work/build" -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release > "$work/configure.log" \
+"$cmake" -S "$root" -B "$work/build" -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release \
+    -DKII_TOKEN_MAX_SIZE=256 -DKII_HOST_MAX_SIZE=96 -DJKII_WRITER_MAX_DEPTH=20 > "$work/configure.log" \
     || { cat "$work/configure.log"; exit 1; }
 "$cmake" --build "$work/build" -j"$(nproc)" > "$work/build.log" || { cat "$work/build.log"; exit 1; }
 "$cmake" --install "$work/build" --prefix "$work/prefix" > /dev/null
@@ -32,8 +34,18 @@ cat > "$work/consumer/main.c" <<'SOURCE'
 #include <ebisu_openssl.h>
 #include <ebisu_posix.h>
 #include <ebisu_version.h>
+#include <jkii_writer.h>
 #include <kii.h>
 #include <stdio.h>
+
+/* What the libraries were built with: otherwise this would lay kii_t and
+ * jkii_writer_t out otherwise than they do. */
+#if KII_TOKEN_MAX_SIZE != 256 || KII_HOST_MAX_SIZE != 96 || JKII_WRITER_MAX_DEPTH != 20
+#error "the sizes the libraries were built with are not defined here"
+#endif
+#if KII_REFRESH_TOKEN_MAX_SIZE != 128
+#error "a size the libraries were built with as kii.h has it is defined otherwise"
+#endif
 
 int main(void)
 {

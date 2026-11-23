@@ -6,6 +6,11 @@ target_include_directories(ebisu_kii_objs
     PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 target_link_libraries(ebisu_kii_objs
     PRIVATE ebisu_khc_objs ebisu_core_objs ebisu_jkii_objs)
+# The sizes the root CMakeLists.txt was given, for kii and for everything built
+# against it, as they change the layout of its types.
+if(EBISU_KII_SIZE_DEFINITIONS)
+    target_compile_definitions(ebisu_kii_objs PUBLIC ${EBISU_KII_SIZE_DEFINITIONS})
+endif()
 ebisu_configure_target(ebisu_kii_objs)
 
 # kii alone: khc, jkii and ebisu_core are libraries of their own, which it
@@ -15,6 +20,9 @@ target_include_directories(kii
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 # kii.h includes khc.h, jkii.h and ebisu_core's headers.
 target_link_libraries(kii PUBLIC khc jkii ebisu_core)
+if(EBISU_KII_SIZE_DEFINITIONS)
+    target_compile_definitions(kii PUBLIC ${EBISU_KII_SIZE_DEFINITIONS})
+endif()
 set_target_properties(kii PROPERTIES
     OUTPUT_NAME ebisu_kii VERSION ${version} SOVERSION ${soversion})
 ebisu_configure_target(kii)

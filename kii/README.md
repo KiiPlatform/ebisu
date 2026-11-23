@@ -115,7 +115,11 @@ An access token or a refresh token can be 127 bytes long, far more than Kii
 Cloud's are. A server that issues longer ones needs kii, and everything using
 it, built with `KII_TOKEN_MAX_SIZE` and `KII_REFRESH_TOKEN_MAX_SIZE` defined
 as their length and one more, which makes `kii_author_t`, and what holds one,
-as much larger. A token longer than its size fails the login, onboarding or
+as much larger. With CMake, set them as CMake variables,
+`-DKII_TOKEN_MAX_SIZE=256`: kii's target and pkg-config file then define them
+for what is built against kii, installed or not. Defined among the compiler's
+flags instead, they fail the configure, as an installed copy wouldn't pass them
+on. A token longer than its size fails the login, onboarding or
 renewal that got it with `KII_ERR_TOO_LARGE_DATA`, and the log says which.
 
 The server refuses a token with `403` and the errorCode `WRONG_TOKEN`. The
@@ -328,7 +332,8 @@ the topic, and when the broker refuses the credentials, the callback set by
 `KII_MQTT_ERR_CREDENTIALS`. Brokers that hand out longer fields than
 `kii_mqtt_endpoint_t` holds can be given room by defining `KII_USERNAME_MAX_SIZE`,
 `KII_PASSWORD_MAX_SIZE`, `KII_TOPIC_MAX_SIZE` and `KII_HOST_MAX_SIZE`, alike
-for kii and everything using it. A session that renews by onboarding again
+for kii and everything using it, with CMake as CMake variables, as for the
+tokens above. A session that renews by onboarding again
 then needs as much more room in the buffer, as onboarding's response carries
 the endpoint.
 

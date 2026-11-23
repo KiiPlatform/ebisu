@@ -53,7 +53,9 @@ extern "C" {
  * renewal needs as much more room in the buffer set by kii_set_buff(), as its
  * response carries the tokens, and, by onboarding again, the endpoint. A token
  * longer than its size fails the login, onboarding or renewal that got it
- * with KII_ERR_TOO_LARGE_DATA. */
+ * with KII_ERR_TOO_LARGE_DATA. With CMake, each is set as a CMake variable of
+ * the same name, which kii's target and pkg-config file then define for what
+ * is built against kii, installed or not. */
 /** \brief Size of kii_author_t::access_token. */
 #ifndef KII_TOKEN_MAX_SIZE
 #define KII_TOKEN_MAX_SIZE 128
