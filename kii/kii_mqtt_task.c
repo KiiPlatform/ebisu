@@ -1268,10 +1268,11 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
     kii_mqtt_task_info_t* task_info = &state->info;
     // A keep-alive of 0 disables PINGREQ. Otherwise send one early enough that
     // a receive running into its timeout still ends within the keep-alive.
-    // A timeout as long as the keep-alive leaves no such margin. Then send one
-    // once the keep-alive is over, which is after any receive that times out,
-    // rather than at once: that would come back here straight after sending
-    // it, before its PINGRESP could be read, and reconnect for want of it.
+    // Starting the task refuses a timeout that leaves no such margin, but one
+    // set while the task runs may. Then send PINGREQ once the keep-alive is
+    // over, which is after any receive that times out, rather than at once:
+    // that would come back here straight after sending it, before its
+    // PINGRESP could be read, and reconnect for want of it.
     const uint32_t keep_alive = kii->_keep_alive_interval;
     const uint32_t to_recv = kii->_mqtt_to_recv_sec;
     // The keep-alive is a uint16_t, so this is at most 65535000 and fits.

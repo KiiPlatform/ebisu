@@ -349,6 +349,17 @@ static kii_code_t _start_task(kii_t* kii, uint32_t keep_alive_interval,
     if (keep_alive_interval > 65535) {
         return KII_ERR_FAIL;
     }
+    // The task sends PINGREQ between receives, and on an idle connection a
+    // receive lasts its timeout. Without one, it lasts until the broker,
+    // having heard nothing for one and a half keep-alives, closes the
+    // connection; with one as long as the keep-alive or longer, PINGREQ comes
+    // after the keep-alive, and from one and a half keep-alives on, after the
+    // broker has closed it. A timeout above 0 and below the keep-alive lets
+    // the task send PINGREQ within it.
+    if (keep_alive_interval > 0 && (kii->_mqtt_to_recv_sec == 0 ||
+                kii->_mqtt_to_recv_sec >= keep_alive_interval)) {
+        return KII_ERR_FAIL;
+    }
     if (kii->_system == NULL || kii->_system->ops->task_create == NULL) {
         return KII_ERR_CREATE_TASK;
     }

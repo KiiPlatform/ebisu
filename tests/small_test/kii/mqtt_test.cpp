@@ -3495,6 +3495,75 @@ TEST_CASE( "MQTT keep-alive interval range" ) {
     }
 }
 
+// The task sends PINGREQ between receives. Without a receive timeout, a
+// receive on an idle connection lasted until the broker, having heard nothing
+// for one and a half keep-alives, closed the connection, and the task
+// connected again. With one not below the keep-alive, PINGREQ came late, and
+// from one and a half keep-alives on, after the broker had closed it.
+TEST_CASE( "The push task needs a receive timeout below its keep-alive" ) {
+    char buff[1024];
+    kii_t kii;
+    kii_init(&kii);
+    khct::set_push_needs(&kii, buff, sizeof(buff));
+    int call_task_create = 0;
+    khct::cb::SystemCtx sys;
+    sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return count_task_create(name, entry, entry_param, &call_task_create);
+    };
+    kii_set_system(&kii, sys.system());
+    kii_mqtt_endpoint_t endpoint;
+    memset(&endpoint, 0, sizeof(endpoint));
+    strcpy(endpoint.host, "broker.example.com");
+    strcpy(endpoint.topic, "devices/1");
+
+    const struct {
+        uint32_t keep_alive;
+        uint32_t to_recv;
+        bool starts;
+    } cases[] = {
+        { 300, 1, true },
+        { 300, 299, true },
+        { 2, 1, true },
+        { 65535, 65534, true },
+        // No keep-alive, no PINGREQ, whatever the timeout.
+        { 0, 0, true },
+        { 0, 300, true },
+        { 300, 0, false },
+        { 300, 300, false },
+        { 300, 450, false },
+        { 300, UINT32_MAX, false },
+        { 65535, 65535, false },
+        // Nothing in whole seconds is above 0 and below 1.
+        { 1, 0, false },
+        { 1, 1, false },
+    };
+    for (const auto& c : cases) {
+        INFO("keep-alive " << c.keep_alive << ", receive timeout " << c.to_recv);
+        kii_set_mqtt_to_sock_recv(&kii, c.to_recv);
+        for (bool with_endpoint : { false, true }) {
+            INFO((with_endpoint ? "with an endpoint" : "push's own"));
+            kii._keep_alive_interval = 7;
+            call_task_create = 0;
+            kii_code_t res = with_endpoint ?
+                kii_start_mqtt_task_with_endpoint(&kii, &endpoint, c.keep_alive) :
+                kii_start_push_task(&kii, c.keep_alive);
+            if (c.starts) {
+                CHECK( res == KII_ERR_OK );
+                CHECK( call_task_create == 1 );
+                CHECK( kii._keep_alive_interval == c.keep_alive );
+                // The callback runs no task, which would have said so when it
+                // ended.
+                kii._push_task_running = false;
+            } else {
+                CHECK( res == KII_ERR_FAIL );
+                CHECK( call_task_create == 0 );
+                CHECK( kii._keep_alive_interval == 7 );
+                CHECK_FALSE( kii._push_task_running );
+            }
+        }
+    }
+}
+
 // PINGREQ is sent once the keep-alive less the receive timeout has elapsed.
 // That was worked out in unsigned int and kept in an int, so a receive timeout
 // longer than the keep-alive wrapped round to a time never reached, and no
@@ -3538,7 +3607,8 @@ TEST_CASE( "MQTT PINGREQ timing" ) {
             { 65535, 5, 65530000, false },
             { 65535, 5, 65530001, true },
             // A timeout as long as the keep-alive or longer leaves no time for
-            // that, so once the keep-alive is over. Sending PINGREQ and reading
+            // that, so once the keep-alive is over. Starting the task refuses
+            // one, so only one set while the task runs gets here. Sending PINGREQ and reading
             // PINGRESP count as a second, and a keep-alive is at least that, so
             // the PINGRESP is read before PINGREQ is due again.
             { 30, 30, 30000, false },
@@ -3630,7 +3700,8 @@ TEST_CASE( "MQTT PINGREQ timing" ) {
     }
 
     // One PINGREQ after each receive that times out, which is as often as
-    // the receive timeout allows, and no reconnecting.
+    // the receive timeout allows, and no reconnecting, for a timeout set
+    // while the task runs: starting it refuses one.
     SECTION("with a receive timeout longer than the keep-alive") {
         size_t served = 0;
         kii._keep_alive_interval = 10;
@@ -4448,6 +4519,7 @@ TEST_CASE( "The MQTT task with an endpoint of the application's" ) {
     kii_init(&kii);
     kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
     kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, NULL);
+    kii_set_mqtt_to_sock_recv(&kii, 15);
     strcpy(kii._author.author_id, "th.1");
     int tasks = 0;
     khct::cb::SystemCtx sys;

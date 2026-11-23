@@ -253,8 +253,10 @@ void message_cb(const kii_mqtt_message_t* message, void* userdata)
   socket's optional `recv_timed_out` tells such a timeout from a lost
   connection, after which the task connects again.
 - **Keep-alive**: the second argument of `kii_start_push_task()`, in seconds.
-  It must be longer than the socket timeouts; a few minutes is recommended. 0
-  turns it off, and a lost connection may then go unnoticed.
+  Unless 0, it has to be longer than the receive timeout, which then has to be
+  above 0, or the task doesn't start. It should be longer than the send
+  timeout too; a few minutes is recommended. 0 turns it off, and a lost
+  connection may then go unnoticed.
 - **System**: an `ebisu_system_t`, whose `task_create` creates the task and
   whose `delay_ms` it waits with. Both are required.
   `kii_set_cb_task_continue()` lets the application stop the task, and

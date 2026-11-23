@@ -377,11 +377,13 @@ void tio_handler_set_mqtt_socket(tio_handler_t* handler, ebisu_socket_t* socket)
 /**
  * \brief Set timeout of receiving data from socket user for MQTT(S)
  *
- * This setting is mandatory to achieve MQTT keep-alive mechanism.
- * PINGREQ is sent early enough that a receive running into this timeout still
- * ends within the keep-alive. Without a monotonic_ms in the system set by
- * tio_handler_set_system(), the time since the last packet is also estimated
- * from it.
+ * tio_handler sends PINGREQ between receives, early enough that a receive
+ * running into this timeout still ends within the keep-alive. So with a
+ * keep-alive, the timeout has to be above 0 and below it: tio_handler_start()
+ * fails with TIO_ERR_FAIL otherwise. 0, the default, would have a receive on
+ * an idle connection wait until the broker closed it. Without a monotonic_ms
+ * in the system set by tio_handler_set_system(), the time since the last
+ * packet is also estimated from it. Set it before starting the task.
  * The recv of the socket set by tio_handler_set_mqtt_socket()
  * must have same timeout specified by to_sock_recv_sec.
  *
@@ -592,12 +594,13 @@ void tio_handler_set_mqtt_clean_session(tio_handler_t* handler, bool clean_sessi
 /**
  * \brief Set MQTT Keep-Alive interval.
  *
- * Limitation: keep_alive_interval must be larger than the socket's recv and send timeouts.
- * Twice as large as recv/ send timeout works fine but recommend few minutes to avoid congestion.
- * If 0, Keep-Alive is disabled. At most 65535, the largest MQTT can carry:
- * tio_handler_start() fails with TIO_ERR_FAIL for a larger value. It is taken
- * as a uint32_t rather than a uint16_t so that a larger value is turned away
- * there rather than cut down to its low 16 bits where this is called.
+ * 300 unless set. If 0, Keep-Alive is disabled. Otherwise it has to be longer
+ * than the receive timeout set by tio_handler_set_mqtt_to_sock_recv(), which
+ * then has to be above 0, so at least 2. A few minutes avoids congestion. At
+ * most 65535, the largest MQTT can carry. tio_handler_start() fails with
+ * TIO_ERR_FAIL for any other value. It is taken as a uint32_t rather than a
+ * uint16_t so that a larger value is turned away there rather than cut down to
+ * its low 16 bits where this is called.
  *
  * \param [out] handler tio_handler_t instance.
  * \param [in] keep_alive_interval_sec Keep-Alive interval in seconds.
@@ -814,7 +817,8 @@ ebisu_sock_error_t tio_handler_get_sock_error(tio_handler_t* handler, long* out_
  * \param [in] userdata Context object pointer passed to cb_action.
  * \return tio_code_t. TIO_ERR_FAIL, with no task started, if the Keep-Alive
  * interval set by tio_handler_set_keep_alive_interval() is larger than 65535,
- * if author is NULL and no session is set, if cb_action, the system's delay_ms,
+ * or above 0 with the receive timeout set by
+ * tio_handler_set_mqtt_to_sock_recv() 0 or not below it, if author is NULL and no session is set, if cb_action, the system's delay_ms,
  * a socket or an operation of one, or a buffer it needs is not set, or if the task of an earlier start is still running. That task runs
  * until the callback set by tio_handler_set_cb_task_continue() ends it, or an
  * error does, and has finished by the time the callback set by

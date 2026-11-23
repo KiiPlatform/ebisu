@@ -302,6 +302,11 @@ tio_code_t tio_handler_start(
             handler->_keep_alive_interval > 65535) {
         return TIO_ERR_FAIL;
     }
+    if (handler->_keep_alive_interval > 0 &&
+            (handler->_kii._mqtt_to_recv_sec == 0 ||
+             handler->_kii._mqtt_to_recv_sec >= handler->_keep_alive_interval)) {
+        return TIO_ERR_FAIL;
+    }
     if (cb_action == NULL) {
         return TIO_ERR_FAIL;
     }

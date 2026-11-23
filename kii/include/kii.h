@@ -1299,8 +1299,11 @@ void kii_set_cb_mqtt_message(kii_t* kii, KII_CB_MQTT_MESSAGE cb, void* userdata)
  * At most 65535, the largest MQTT can carry. It is taken as a uint32_t
  * rather than a uint16_t so that a larger value is turned away here rather
  * than cut down to its low 16 bits where the function is called.
+ * Unless 0, it has to be longer than the receive timeout set by
+ * kii_set_mqtt_to_sock_recv(), which then has to be above 0, so at least 2.
  * \return kii_code_t. KII_ERR_FAIL, with no task started, if
- * keep_alive_interval_sec is larger than 65535, if the message callback, the
+ * keep_alive_interval_sec is larger than 65535, or above 0 with a receive
+ * timeout of 0 or not below it, if the message callback, the
  * system's delay_ms, a socket or an operation of one, or a buffer it needs is
  * not set, or if the task of an earlier start is still running. That task runs
  * until the callback set by kii_set_cb_task_continue() ends it, or an error
@@ -2082,11 +2085,14 @@ void kii_set_mqtt_socket(kii_t* kii, ebisu_socket_t* socket);
 /**
  * \brief Set timeout of receiving data from socket user for MQTT(S)
  *
- * This setting is mandatory to achieve MQTT keep-alive mechanism.
- * PINGREQ is sent early enough that a receive running into this timeout still
- * ends within the keep-alive. Without a monotonic_ms in the system set by
- * kii_set_system(), the time since the last packet is also estimated
- * from it.
+ * The MQTT task sends PINGREQ between receives, early enough that a receive
+ * running into this timeout still ends within the keep-alive. So with a
+ * keep-alive, the timeout has to be above 0 and below it:
+ * kii_start_push_task() and kii_start_mqtt_task_with_endpoint() fail with
+ * KII_ERR_FAIL otherwise. 0, the default, would have a receive on an idle
+ * connection wait until the broker closed it. Without a monotonic_ms in the
+ * system set by kii_set_system(), the time since the last packet is also
+ * estimated from it. Set it before starting the task.
  * The recv of the socket set by kii_set_mqtt_socket()
  * must have same timeout specified by to_sock_recv_sec.
  *
