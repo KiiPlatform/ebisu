@@ -423,6 +423,10 @@ struct Client {
 
     ~Client() {
         sock->ops->close(sock);
+#if defined(EBISU_TLS_RESUME)
+        // What it kept, which closing keeps for the next connection.
+        ebisu_polarssl_socket_set_session_resume(&tls, nullptr);
+#endif
     }
 
     ebisu_sock_code_t connect(uint16_t port, const char* host = "localhost") {
@@ -1649,3 +1653,154 @@ TEST_CASE( "The PolarSSL socket checks a host given as an address against the ce
         CHECK( sni_seen == "localhost" );
     }
 }
+
+#if defined(EBISU_TLS_RESUME)
+namespace {
+
+// A system whose monotonic_ms is the test's to move on.
+struct Clocked {
+    ebisu_system_t system;
+    ebisu_system_ops_t ops;
+    uint64_t now_ms;
+
+    static uint64_t monotonic(ebisu_system_t* self) {
+        return ((Clocked*)self)->now_ms;
+    }
+
+    Clocked() : now_ms(1000) {
+        memset(&ops, 0, sizeof(ops));
+        ops.monotonic_ms = monotonic;
+        system.ops = &ops;
+    }
+};
+
+// Whether each connection's handshake resumed a session, as the server saw
+// it, for servers that echo once.
+struct Resumptions {
+    std::mutex lock;
+    std::vector<bool> reused;
+
+    TlsServer::serve_t serve() {
+        return [this](SSL* ssl, int fd) {
+            {
+                std::lock_guard<std::mutex> guard(lock);
+                reused.push_back(SSL_session_reused(ssl) == 1);
+            }
+            echo(ssl, fd);
+        };
+    }
+
+    std::vector<bool> seen() {
+        std::lock_guard<std::mutex> guard(lock);
+        return reused;
+    }
+};
+
+// A connection, a round trip on it, and its close.
+void round_trip(Client& client, uint16_t port)
+{
+    REQUIRE( client.connect(port) == EBISU_SOCK_OK );
+    client.send("again");
+    CHECK( client.recv(64) == "again" );
+    CHECK( client.sock->ops->close(client.sock) == EBISU_SOCK_OK );
+}
+
+const int64_t MINUTE_MS = 60 * 1000;
+
+}
+
+// Every connection made a full handshake: the server's certificate chain and
+// a key exchange, though khc makes a connection for each request. Built with
+// EBISU_TLS_RESUME, a socket asked to keeps its last connection's session,
+// for the next to the same host and port to resume.
+TEST_CASE( "The PolarSSL socket resumes the session of its last connection, when asked to" ) {
+    Config config;
+    Resumptions seen;
+    Clocked clock;
+    typedef std::vector<bool> resumed;
+
+    SECTION("not unless asked") {
+        TlsServer server(pki().server(), seen.serve(), 2, TLS1_2_VERSION);
+        Client client(&config.tls);
+        round_trip(client, server.port);
+        round_trip(client, server.port);
+        CHECK( seen.seen() == resumed({ false, false }) );
+    }
+
+    SECTION("the next connections, once asked") {
+        TlsServer server(pki().server(), seen.serve(), 3, TLS1_2_VERSION);
+        Client client(&config.tls);
+        ebisu_polarssl_socket_set_session_resume(&client.tls, &clock.system);
+        round_trip(client, server.port);
+        round_trip(client, server.port);
+        round_trip(client, server.port);
+        CHECK( seen.seen() == resumed({ false, true, true }) );
+        CHECK( client.logger.quiet() );
+    }
+
+    SECTION("for an hour after the full handshake, however often resumed meanwhile") {
+        TlsServer server(pki().server(), seen.serve(), 4, TLS1_2_VERSION);
+        Client client(&config.tls);
+        ebisu_polarssl_socket_set_session_resume(&client.tls, &clock.system);
+        round_trip(client, server.port);
+        clock.now_ms += 59 * MINUTE_MS;
+        round_trip(client, server.port);
+        clock.now_ms += 2 * MINUTE_MS;
+        round_trip(client, server.port);
+        // The session of that full handshake.
+        round_trip(client, server.port);
+        CHECK( seen.seen() == resumed({ false, true, false, true }) );
+    }
+
+    SECTION("only to the same host and port") {
+        Resumptions other_seen;
+        TlsServer server(pki().server(), seen.serve(), 2, TLS1_2_VERSION);
+        TlsServer other(pki().server(), other_seen.serve(), 1, TLS1_2_VERSION);
+        // The same ticket keys, so that the other would resume a session of
+        // the first's if it were offered one.
+        unsigned char keys[80];
+        REQUIRE( SSL_CTX_get_tlsext_ticket_keys(server.ctx, keys, sizeof(keys)) == 1 );
+        REQUIRE( SSL_CTX_set_tlsext_ticket_keys(other.ctx, keys, sizeof(keys)) == 1 );
+        Client client(&config.tls);
+        ebisu_polarssl_socket_set_session_resume(&client.tls, &clock.system);
+        round_trip(client, server.port);
+        round_trip(client, other.port);
+        round_trip(client, server.port);
+        CHECK( seen.seen() == resumed({ false, false }) );
+        CHECK( other_seen.seen() == resumed({ false }) );
+    }
+
+    SECTION("only while the configuration checks certificates as it did") {
+        TlsServer server(pki().server(), seen.serve(), 3, TLS1_2_VERSION);
+        Client client(&config.tls);
+        ebisu_polarssl_socket_set_session_resume(&client.tls, &clock.system);
+        REQUIRE( ebisu_polarssl_tls_set_verify(&config.tls, EBISU_TLS_VERIFY_NONE, nullptr) );
+        round_trip(client, server.port);
+        // A session of a connection that checked nothing, resumed, would
+        // check nothing either.
+        REQUIRE( ebisu_polarssl_tls_set_verify(&config.tls, EBISU_TLS_VERIFY_FULL, nullptr) );
+        round_trip(client, server.port);
+        round_trip(client, server.port);
+        CHECK( seen.seen() == resumed({ false, false, true }) );
+    }
+
+    SECTION("none once told so, freeing the one kept") {
+        TlsServer server(pki().server(), seen.serve(), 2, TLS1_2_VERSION);
+        Client client(&config.tls);
+        ebisu_polarssl_socket_set_session_resume(&client.tls, &clock.system);
+        round_trip(client, server.port);
+        ebisu_polarssl_socket_set_session_resume(&client.tls, nullptr);
+        round_trip(client, server.port);
+        CHECK( seen.seen() == resumed({ false, false }) );
+    }
+
+    SECTION("with a server whose highest is TLS 1.3, over TLS 1.2, PolarSSL's highest") {
+        TlsServer server(pki().server(), seen.serve(), 2);
+        Client client(&config.tls);
+        ebisu_polarssl_socket_set_session_resume(&client.tls, &clock.system);
+        round_trip(client, server.port);
+        round_trip(client, server.port);
+        CHECK( seen.seen() == resumed({ false, true }) );
+    }
+}
+#endif

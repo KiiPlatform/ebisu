@@ -498,6 +498,11 @@ static int verify(void* arg, x509_crt* crt, int depth, int* flags)
 {
     ebisu_polarssl_socket_t* sock = (ebisu_polarssl_socket_t*)arg;
     const ebisu_polarssl_tls_t* tls = sock->_tls;
+#if defined(EBISU_TLS_RESUME)
+    if (depth == 0) {
+        sock->_cert_checked = true;
+    }
+#endif
     switch (tls->_verify) {
         case EBISU_TLS_VERIFY_NONE:
             *flags = 0;
@@ -699,6 +704,96 @@ static void warn_of_suite(ebisu_polarssl_socket_t* sock, const char* host)
 #define warn_of_suite(sock, host) ((void)0)
 #endif
 
+#if defined(EBISU_TLS_RESUME)
+/* How long a session is offered after the full handshake that checked the
+   server's certificate. */
+#define SESSION_LIFETIME_MS ((uint64_t)3600 * 1000)
+
+/* FNV-1a, of 32 bits, of a host's name or a pin: a session is kept for the
+   host, and the way its certificate was checked, without either. */
+static uint32_t fnv1a(const unsigned char* p, size_t length)
+{
+    uint32_t hash = 2166136261u;
+    for (size_t i = 0; i < length; ++i) {
+        hash ^= p[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static uint32_t host_hash(const char* host)
+{
+    return fnv1a((const unsigned char*)host, strlen(host));
+}
+
+/* The configuration's pin, if it checks one, by its hash, or 0. */
+static uint32_t pin_hash(const ebisu_polarssl_tls_t* tls)
+{
+    return tls->_verify == EBISU_TLS_VERIFY_PIN ? fnv1a(tls->_pin, EBISU_TLS_PIN_SIZE) : 0;
+}
+
+static void forget_session(ebisu_polarssl_socket_t* sock)
+{
+    if (sock->_has_session) {
+        ssl_session_free(&sock->_session);
+        ssl_session_init(&sock->_session);
+        sock->_has_session = false;
+    }
+}
+
+/* Offers the connection about to shake hands the session kept, if it is of
+   the same host and port, and its certificate was checked less than
+   SESSION_LIFETIME_MS ago, as the configuration checks them now: a session
+   of a connection that checked none, resumed, would check none either. */
+static void offer_session(ebisu_polarssl_socket_t* sock)
+{
+    sock->_cert_checked = false;
+    if (!sock->_has_session) {
+        return;
+    }
+    if (sock->_resume_system == NULL || sock->_session_host != sock->_host_hash ||
+            sock->_session_port != sock->_port ||
+            sock->_session_verify != sock->_tls->_verify ||
+            sock->_session_pin != pin_hash(sock->_tls) ||
+            ebisu_system_monotonic_ms(sock->_resume_system) - sock->_session_checked_ms >=
+                SESSION_LIFETIME_MS) {
+        forget_session(sock);
+        return;
+    }
+    if (ssl_set_session(&sock->_ssl, &sock->_session) != 0) {
+        forget_session(sock);
+    }
+}
+
+/* Keeps the session of a connection whose handshake is done. */
+static void keep_session(ebisu_polarssl_socket_t* sock)
+{
+    if (sock->_resume_system == NULL) {
+        return;
+    }
+    /* A handshake that resumed a session checked no certificate: the one
+       that made the session did, at the time kept with it. */
+    bool full = sock->_cert_checked || sock->_tls->_verify == EBISU_TLS_VERIFY_NONE;
+    if (!full && !sock->_has_session) {
+        return;
+    }
+    uint64_t checked_ms = full ?
+        ebisu_system_monotonic_ms(sock->_resume_system) : sock->_session_checked_ms;
+    forget_session(sock);
+    if (ssl_get_session(&sock->_ssl, &sock->_session) != 0) {
+        ssl_session_free(&sock->_session);
+        ssl_session_init(&sock->_session);
+        return;
+    }
+    sock->_has_session = true;
+    sock->_session_host = sock->_host_hash;
+    sock->_session_port = sock->_port;
+    sock->_session_checked_ms = checked_ms;
+    sock->_session_verify = sock->_tls->_verify;
+    sock->_session_pin = pin_hash(sock->_tls);
+}
+#endif
+
 static ebisu_sock_code_t polarssl_connect(ebisu_socket_t* self, const char* host, uint16_t port)
 {
     ebisu_polarssl_socket_t* sock = EBISU_CONTAINER_OF(self, ebisu_polarssl_socket_t, base);
@@ -749,6 +844,11 @@ static ebisu_sock_code_t polarssl_connect(ebisu_socket_t* self, const char* host
         int64_t now = 0;
         sock->_time_exact = ebisu_clock_get_time(sock->_clock, &now);
     }
+#if defined(EBISU_TLS_RESUME)
+    sock->_host_hash = host_hash(host);
+    sock->_port = port;
+    offer_session(sock);
+#endif
 
     sock->_handshake_ran_out = false;
     if (sock->_handshake_ms != 0) {
@@ -810,9 +910,16 @@ static ebisu_sock_code_t polarssl_connect(ebisu_socket_t* self, const char* host
                 "connected to %s without verifying its certificate.", host);
     }
     warn_of_suite(sock, host);
+#if defined(EBISU_TLS_RESUME)
+    keep_session(sock);
+#endif
     return EBISU_SOCK_OK;
 
 fail:
+#if defined(EBISU_TLS_RESUME)
+    /* The session offered may be why it failed. */
+    forget_session(sock);
+#endif
     /* No close_notify for a handshake that didn't end. */
     end(sock, false);
     (void)transport->ops->close(transport);
@@ -960,6 +1067,9 @@ void ebisu_polarssl_socket_init(
     sock->base.ops = transport->ops->recv_wait != NULL ? &ops_waiting : &ops;
     sock->_transport = transport;
     sock->_tls = tls;
+#if defined(EBISU_TLS_RESUME)
+    ssl_session_init(&sock->_session);
+#endif
 }
 
 void ebisu_polarssl_socket_set_handshake_timeout(ebisu_polarssl_socket_t* sock,
@@ -981,6 +1091,17 @@ void ebisu_polarssl_socket_set_logger(ebisu_polarssl_socket_t* sock, ebisu_logge
 {
     sock->_logger = logger;
 }
+
+#if defined(EBISU_TLS_RESUME)
+void ebisu_polarssl_socket_set_session_resume(ebisu_polarssl_socket_t* sock,
+        ebisu_system_t* system)
+{
+    sock->_resume_system = system;
+    if (system == NULL) {
+        forget_session(sock);
+    }
+}
+#endif
 
 const char* ebisu_polarssl_socket_get_protocol(const ebisu_polarssl_socket_t* sock)
 {

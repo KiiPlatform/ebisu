@@ -182,6 +182,10 @@ if(NOT TARGET PolarSSL::polarssl)
 endif()
 if(TARGET PolarSSL::polarssl)
     add_library(ebisu_polarssl STATIC polarssl/src/ebisu_polarssl.c)
+    # As for the mbedTLS port: it changes the socket's layout.
+    if(EBISU_TLS_RESUME)
+        target_compile_definitions(ebisu_polarssl PUBLIC EBISU_TLS_RESUME)
+    endif()
     target_include_directories(ebisu_polarssl
         PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/polarssl/include>)

@@ -325,14 +325,16 @@ one: some 3 KB of the Cortex-M3 thing below. Built so, `kii_set_session()`,
 but `NULL`, and a token the server refuses fails the request, as it does without
 a session. A build without CMake defines `EBISU_NO_SESSION` for the same.
 
-`-DEBISU_TLS_RESUME=ON`, off by default, lets platform's mbedTLS port resume TLS
-sessions: a socket that `ebisu_mbedtls_socket_set_session_resume()` asks to
-keeps the session of its last TLS 1.2 connection, for the next to the same host
-and port, which then skips the server's certificate and the key exchange. Off,
-none of its code is built and the socket is the size it was: for a Cortex-M4,
-on, the port is some 420 bytes larger and the socket 176, and each socket asked
-to keeps its session in memory mbedTLS allocates, about 2 KB with mbedTLS 2.4,
-which keeps a copy of the server's certificate in it. A build without CMake
+`-DEBISU_TLS_RESUME=ON`, off by default, lets platform's mbedTLS and PolarSSL
+ports resume TLS sessions: a socket that
+`ebisu_mbedtls_socket_set_session_resume()` or
+`ebisu_polarssl_socket_set_session_resume()` asks to keeps the session of its
+last TLS 1.2 connection, for the next to the same host and port, which then
+skips the server's certificate and the key exchange. Off, none of its code is
+built and the socket is the size it was: for a Cortex-M4, on, each port is some
+400 bytes larger and its socket some 170, and each socket asked to keeps its
+session in memory the library allocates, about 2 KB with mbedTLS 2.4 or
+PolarSSL, which keep a copy of the server's certificate in it. A build without CMake
 defines `EBISU_TLS_RESUME` for the port and everything using it, as it changes
 the socket's layout. The OpenSSL and Schannel ports resume sessions whatever it
 says.

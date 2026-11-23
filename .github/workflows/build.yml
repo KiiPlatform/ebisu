@@ -426,7 +426,9 @@ jobs:
 
   # The PolarSSL port's tests, experimental: the mbedTLS port's, against
   # PolarSSL 1.3.8, as vendors' SDKs ship it, mbedTLS 1.3.22, the last of its
-  # API, and 1.3.8 without CTR_DRBG and entropy, under valgrind.
+  # API, and 1.3.8 without CTR_DRBG and entropy, under valgrind. Built with
+  # -DEBISU_TLS_RESUME=ON, as the mbedTLS port's are, so that they test
+  # session resumption too.
   polarssl-port:
     name: polarssl port (${{ matrix.polarssl }}${{ matrix.variant && format(', {0}', matrix.variant) || '' }}, valgrind)
     runs-on: ubuntu-latest
@@ -462,7 +464,7 @@ jobs:
       - name: PolarSSL ${{ matrix.polarssl }} ${{ matrix.variant }}
         run: EBISU_DOWNLOADS="$HOME/ebisu-downloads" tests/polarssl/install_polarssl.sh ${{ matrix.polarssl }} "$RUNNER_TEMP/polarssl" ${{ matrix.variant }}
       - name: configure
-        run: cmake --preset debug -DEBISU_TEST_JUNIT=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/polarssl"
+        run: cmake --preset debug -DEBISU_TEST_JUNIT=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/polarssl" -DEBISU_TLS_RESUME=ON
       - name: build
         run: cmake --build --preset debug --target small_test_polarssl
       # As the build job's small tests: see there for --test-dir.
