@@ -1,5 +1,0 @@
-small_test_khc 1 0.552721
-small_test_kii 1 0.481675
-small_test_jkii 1 0.353511
-small_test_tio 1 0.407864
----
