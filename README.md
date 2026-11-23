@@ -255,7 +255,13 @@ application allocates `khc`, `kii_t`, `tio_handler_t`, the sockets and the
 like itself, at the size its headers gave them, and a minor release may add to
 them, so build the application again for each minor release. The shared
 libraries' soname has the major and the minor, `libebisu_kii.so.3.0`, so that
-an application built against 3.0 doesn't load 3.1's.
+an application built against 3.0 doesn't load 3.1's. Patch releases are made
+from a `release/X.Y` branch. `tests/samples/compat_check.sh` checks both, as
+CI does. It compares the shared libraries with those of each earlier release
+of the same X.Y, by abidiff, allowing functions, and enumerators at the end of
+an enum, to be added and nothing else.
+It also builds the Linux sample of the newest earlier minor release against
+them.
 
 **Version.** The version, which names the shared libraries and the package and
 goes with each request in the `X-Kii-SDK` header, is what `git describe --tags`

@@ -642,6 +642,28 @@ jobs:
           "$RUNNER_TEMP/cmake315/bin/pip" install --quiet cmake==3.15.3
           EBISU_CMAKE="$RUNNER_TEMP/cmake315/bin/cmake" tests/samples/package_consumer.sh
 
+  # The versioning policy README.md's Packaging section states: the libraries
+  # keep the ABI of each release of their X.Y, by abidiff, and the Linux sample
+  # of the newest release of an earlier minor version of their major builds
+  # against them. Before there is such a release, as while master is becoming
+  # 3.0, it checks only that it would notice. See tests/samples/compat_check.sh.
+  compat:
+    name: versioning policy (abidiff with X.Y's releases, X's API)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Fetch tags
+        run: git fetch --unshallow --tags --force
+      - name: Setup build env
+        uses: ./.github/actions/apt-install
+        with:
+          packages: abigail-tools
+          options: --no-install-recommends
+      - name: compare with the releases
+        run: tests/samples/compat_check.sh
+
   # The large tests, against the live Kii application the secrets name, on
   # 64-bit Linux under valgrind. The msvc job runs them on Windows itself, over
   # the Schannel port, so its TLS runs against the live server too.
