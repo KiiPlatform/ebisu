@@ -189,6 +189,69 @@ TEST_CASE( "tio_handler_start keep-alive range" ) {
     }
 }
 
+// As kii_start_push_task() does, and turned away before anything of the
+// handler is changed. The keep-alive is 300 unless set, and the receive timeout
+// 0, so a handler that never had the timeout set doesn't start.
+TEST_CASE( "tio_handler_start needs a receive timeout below the keep-alive" ) {
+    char buff[64];
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    khct::set_push_needs(&handler._kii, buff, sizeof(buff));
+    tio_handler_set_mqtt_to_sock_recv(&handler, 0);
+    int call_task_create = 0;
+    khct::cb::SystemCtx handler_sys;
+    handler_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return count_task_create(name, entry, entry_param, &call_task_create);
+    };
+    tio_handler_set_system(&handler, handler_sys.system());
+    tio_author_t author = {};
+    strcpy(author.author_id, "th.1");
+
+    SECTION("unless set, it is 0") {
+        REQUIRE( handler._keep_alive_interval == 300 );
+        CHECK( tio_handler_start(&handler, &author, no_action, NULL) == TIO_ERR_FAIL );
+        CHECK( call_task_create == 0 );
+        CHECK( handler._cb_action == nullptr );
+        CHECK( handler._kii._author.author_id[0] == '\0' );
+    }
+
+    SECTION("set") {
+        const struct {
+            uint32_t keep_alive;
+            uint32_t to_recv;
+            bool starts;
+        } cases[] = {
+            { 300, 15, true },
+            { 2, 1, true },
+            { 0, 0, true },
+            { 300, 300, false },
+            { 300, 301, false },
+            { 1, 1, false },
+        };
+        for (const auto& c : cases) {
+            INFO("keep-alive " << c.keep_alive << ", receive timeout " << c.to_recv);
+            tio_handler_set_keep_alive_interval(&handler, c.keep_alive);
+            tio_handler_set_mqtt_to_sock_recv(&handler, c.to_recv);
+            handler._cb_action = NULL;
+            handler._kii._author.author_id[0] = '\0';
+            call_task_create = 0;
+            if (c.starts) {
+                CHECK( tio_handler_start(&handler, &author, no_action, NULL) == TIO_ERR_OK );
+                CHECK( call_task_create == 1 );
+                CHECK( std::string(handler._kii._author.author_id) == "th.1" );
+                // The callback runs no task, which would have said so when it
+                // ended.
+                handler._kii._push_task_running = false;
+            } else {
+                CHECK( tio_handler_start(&handler, &author, no_action, NULL) == TIO_ERR_FAIL );
+                CHECK( call_task_create == 0 );
+                CHECK( handler._cb_action == nullptr );
+                CHECK( handler._kii._author.author_id[0] == '\0' );
+            }
+        }
+    }
+}
+
 // Stands in for the platform's task creation: counts the calls and returns the
 // result the test chose.
 struct TaskCreateCtx {

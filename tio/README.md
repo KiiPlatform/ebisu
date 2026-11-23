@@ -242,8 +242,10 @@ one, it estimates the time since the last MQTT message it sent from the recv
 timeout and its own waits, which misses the time spent elsewhere, such as in
 the action callback.
 
-MQTT keep alive interval must be larger than recv/ send timeout.
-Twice as large as recv/ send timeout works fine but recommend few minutes to avoid congestion.
+The keep-alive interval, 300 seconds unless set, has to be longer than the recv
+timeout, which then has to be above 0: `tio_handler_start()` fails otherwise.
+It should be longer than the send timeout too; a few minutes avoids
+congestion.
 
 ```c
     tio_handler_set_mqtt_to_sock_recv(handler, 15);

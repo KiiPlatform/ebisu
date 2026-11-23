@@ -332,6 +332,14 @@ Starting tasks:
 - `kii_start_push_task()` and `tio_handler_start()` refuse a keep-alive above
   65535, with `KII_ERR_FAIL` and `TIO_ERR_FAIL`. 1.x sent the broker the value
   cut down to 16 bits.
+- With a keep-alive above 0, `kii_start_push_task()` and `tio_handler_start()`
+  also refuse a receive timeout of 0, the default, or one not below the
+  keep-alive. Set it with `kii_set_mqtt_to_sock_recv()` or
+  `tio_handler_set_mqtt_to_sock_recv()`, as the MQTT socket's own. 1.x
+  started the task with either, and as it sends PINGREQ between receives, on
+  an idle connection one came late or not at all: the broker closed the
+  connection after one and a half keep-alives, and the task connected again. tio's keep-alive is 300 seconds unless set, so a tio
+  application that never set the timeout now fails to start.
 - The result of the system's `task_create` counts, so it has to return
   `EBISU_TASK_OK` when it succeeds. Anything else makes `kii_start_push_task()`
   return the new `KII_ERR_CREATE_TASK` and `tio_handler_start()` return
