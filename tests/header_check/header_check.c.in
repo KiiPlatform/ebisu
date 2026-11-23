@@ -1,0 +1,10 @@
+/* Generated from tests/header_check/header_check.c.in. */
+
+/* First, so it has to compile on its own. */
+#include <@header@>
+/* Again, which its include guard has to make harmless. */
+#include <@header@>
+
+/* ISO C forbids an empty translation unit, which a header of nothing but
+ * macros, such as ebisu_version.h, would otherwise leave. */
+typedef int ebisu_header_check_@header_id@;

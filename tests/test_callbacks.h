@@ -1,3 +1,6 @@
+#ifndef EBISU_TESTS_TEST_CALLBACKS_H
+#define EBISU_TESTS_TEST_CALLBACKS_H
+
 #include <khc_socket_callback.h>
 #include <functional>
 
@@ -65,3 +68,5 @@ inline void cb_push(const char* message, size_t message_length, void *userdata) 
 }
 }
 }
+
+#endif
