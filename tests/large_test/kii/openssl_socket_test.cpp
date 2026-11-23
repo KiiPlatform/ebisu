@@ -904,6 +904,61 @@ TEST_CASE( "The OpenSSL socket resumes the session of the last connection to the
     ebisu_openssl_tls_free(&tls);
 }
 
+// A resumed connection checks no certificate, so a session was resumed for as
+// long as the server took it, which can be many hours. It is now offered for
+// an hour after the full handshake that checked the server's certificate, or
+// as long as ebisu_openssl_tls_set_session_lifetime() sets, however often it
+// is resumed meanwhile and whatever new tickets the server gives.
+TEST_CASE( "The OpenSSL socket resumes a session for as long as it is set to" ) {
+    // TLS 1.3, which gives new tickets on each connection, resumed or not,
+    // and TLS 1.2, which gives one with each full handshake.
+    const int version = GENERATE(0, TLS1_2_VERSION);
+    INFO( "version " << version );
+    {
+        LocalServer server(AF_INET, true, version);
+        REQUIRE( server.listening );
+        CaFile ca;
+        ebisu_openssl_tls_t tls;
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr, nullptr) );
+        ebisu_openssl_socket_t sock;
+        ebisu_openssl_socket_init(&sock, 5, 5);
+        ebisu_openssl_socket_set_tls(&sock, &tls);
+
+        SECTION("for the time set after the full handshake, resumed or not meanwhile") {
+            // Resumed after 2.5 seconds, and then not after 4.5, though only
+            // 2 after the connection that resumed, and the tickets TLS 1.3
+            // gave it.
+            REQUIRE( ebisu_openssl_tls_set_session_lifetime(&tls, 4) );
+            CHECK_FALSE( connect_resumed(&sock, server) );
+            std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+            CHECK( connect_resumed(&sock, server) );
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+            CHECK_FALSE( connect_resumed(&sock, server) );
+            // The session of that full handshake.
+            CHECK( connect_resumed(&sock, server) );
+        }
+
+        SECTION("for none with 0") {
+            REQUIRE( ebisu_openssl_tls_set_session_lifetime(&tls, 0) );
+            CHECK_FALSE( connect_resumed(&sock, server) );
+            CHECK_FALSE( connect_resumed(&sock, server) );
+        }
+
+        SECTION("for an hour unless set") {
+            CHECK_FALSE( connect_resumed(&sock, server) );
+            CHECK( connect_resumed(&sock, server) );
+        }
+
+        ebisu_openssl_tls_free(&tls);
+    }
+
+    SECTION("not for a configuration that wasn't set up") {
+        ebisu_openssl_tls_t tls;
+        memset(&tls, 0, sizeof(tls));
+        CHECK_FALSE( ebisu_openssl_tls_set_session_lifetime(&tls, 60) );
+    }
+}
+
 namespace {
 
 // Whether host has addresses of both IPv4 and IPv6.
