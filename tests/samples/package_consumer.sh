@@ -30,7 +30,7 @@ done
 
 # The major version README.md's example asks the package for. A build that
 # says it is another, as master's did while it was becoming 3.0 but was
-# described from v2.0.0, fails both ways below.
+# described from 2.0's tag, fails both ways below.
 major=$(sed -n 's/^find_package(ebisu \([0-9][0-9]*\) CONFIG REQUIRED)$/\1/p' "$root/README.md")
 if [ -z "$major" ]; then
     echo "README.md has no find_package(ebisu <major> CONFIG REQUIRED)" >&2

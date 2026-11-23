@@ -6,9 +6,10 @@ each version's [release notes](https://github.com/KiiPlatform/ebisu/releases).
 
 ## Breaking changes in 3.0
 
-Compared with 1.3, the last 1.x release line. v2.0.0 was tagged on the way, and
-what it changed is included here. 3.0 has not been released yet, so this section
-follows `master`.
+Compared with 1.3, the last 1.x release line. What 2.0 changed on the way is
+included here: its development, tagged `v2.0.0-dev`, is part of master's
+history, while 2.0.0 itself is released from `release/2.0`. 3.0 has not been
+released yet, so this section follows `master`.
 
 Every application changes how it gives ebisu its sockets and its system, and
 most then have one more edit and a rebuild.
