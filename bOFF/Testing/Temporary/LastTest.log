@@ -1,0 +1,79 @@
+Start testing: Nov 23 11:26 CET
+----------------------------------------------------------
+1/4 Testing: small_test_khc
+1/4 Test: small_test_khc
+Command: "/private/tmp/claude-501/-Users-flozano-Projects-ebisu/746d0b83-eb84-47ef-b72e-32291ac710f9/scratchpad/wt_ci/bOFF/tests/small_test/small_test_khc"
+Directory: /private/tmp/claude-501/-Users-flozano-Projects-ebisu/746d0b83-eb84-47ef-b72e-32291ac710f9/scratchpad/wt_ci/tests/small_test/khc
+"small_test_khc" start time: Nov 23 11:26 CET
+Output:
+----------------------------------------------------------
+Random Buffer Size: 72
+===============================================================================
+All tests passed (940 assertions in 22 test cases)
+
+<end of output>
+Test time =   0.55 sec
+----------------------------------------------------------
+Test Passed.
+"small_test_khc" end time: Nov 23 11:26 CET
+"small_test_khc" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/4 Testing: small_test_kii
+2/4 Test: small_test_kii
+Command: "/private/tmp/claude-501/-Users-flozano-Projects-ebisu/746d0b83-eb84-47ef-b72e-32291ac710f9/scratchpad/wt_ci/bOFF/tests/small_test/small_test_kii"
+Directory: /private/tmp/claude-501/-Users-flozano-Projects-ebisu/746d0b83-eb84-47ef-b72e-32291ac710f9/scratchpad/wt_ci/tests/small_test/kii
+"small_test_kii" start time: Nov 23 11:26 CET
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (417 assertions in 5 test cases)
+
+<end of output>
+Test time =   0.48 sec
+----------------------------------------------------------
+Test Passed.
+"small_test_kii" end time: Nov 23 11:26 CET
+"small_test_kii" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/4 Testing: small_test_jkii
+3/4 Test: small_test_jkii
+Command: "/private/tmp/claude-501/-Users-flozano-Projects-ebisu/746d0b83-eb84-47ef-b72e-32291ac710f9/scratchpad/wt_ci/bOFF/tests/small_test/small_test_jkii"
+Directory: /private/tmp/claude-501/-Users-flozano-Projects-ebisu/746d0b83-eb84-47ef-b72e-32291ac710f9/scratchpad/wt_ci/tests/small_test/jkii
+"small_test_jkii" start time: Nov 23 11:26 CET
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (243 assertions in 72 test cases)
+
+<end of output>
+Test time =   0.35 sec
+----------------------------------------------------------
+Test Passed.
+"small_test_jkii" end time: Nov 23 11:26 CET
+"small_test_jkii" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/4 Testing: small_test_tio
+4/4 Test: small_test_tio
+Command: "/private/tmp/claude-501/-Users-flozano-Projects-ebisu/746d0b83-eb84-47ef-b72e-32291ac710f9/scratchpad/wt_ci/bOFF/tests/small_test/small_test_tio"
+Directory: /private/tmp/claude-501/-Users-flozano-Projects-ebisu/746d0b83-eb84-47ef-b72e-32291ac710f9/scratchpad/wt_ci/tests/small_test/tio
+"small_test_tio" start time: Nov 23 11:26 CET
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (64 assertions in 6 test cases)
+
+<end of output>
+Test time =   0.41 sec
+----------------------------------------------------------
+Test Passed.
+"small_test_tio" end time: Nov 23 11:26 CET
+"small_test_tio" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 23 11:26 CET
+
+small =   1.80 sec*proc
+
