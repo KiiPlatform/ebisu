@@ -594,6 +594,11 @@ static const ebisu_socket_ops_t openssl_ops = {
 };
 
 /* Says why an operation failed, for last_error, and returns EBISU_SOCK_FAIL. */
+/* ebisu_openssl_socket_t's kept. */
+#define KEPT_NOTHING 0
+#define KEPT_END 1
+#define KEPT_FAILURE 2
+
 static ebisu_sock_code_t fail_with(ebisu_openssl_socket_t* ctx,
         ebisu_sock_error_t error, long detail)
 {
@@ -1057,6 +1062,7 @@ static ebisu_sock_code_t
     ctx->socket = sock;
     ctx->ssl = ssl;
     ctx->ssl_failed = false;
+    ctx->kept = KEPT_NOTHING;
     return EBISU_SOCK_OK;
 
 fail:
@@ -1103,6 +1109,15 @@ static ebisu_sock_code_t
 {
     ebisu_openssl_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_openssl_socket_t, base);
     *out_actual_length = 0;
+    /* What openssl_recv_wait() came to first, as SSL_read() returned it then. */
+    if (ctx->kept != KEPT_NOTHING) {
+        const unsigned char kept = ctx->kept;
+        ctx->kept = KEPT_NOTHING;
+        if (kept == KEPT_END) {
+            return EBISU_SOCK_OK;
+        }
+        return fail_with(ctx, ctx->kept_error, ctx->kept_detail);
+    }
     clear_errors();
     /* A read can write too: an alert, or a handshake the peer asked for. */
     sigpipe_guard_t guard;
@@ -1163,25 +1178,96 @@ static bool
     return false;
 }
 
+/* Whether openssl_recv() would return without waiting, now that the socket
+   has something: SSL_peek() reads it without waiting, records that carry no
+   data included, such as a TLS 1.3 server's session tickets. The end of the
+   stream without a close_notify, and a failure, are kept for openssl_recv() to
+   return as SSL_read() came to them: one called after them may not, as after
+   a reset, which a second read takes for the end of the stream. */
+static bool has_data_now(ebisu_openssl_socket_t* ctx)
+{
+    int flags = fcntl(ctx->socket, F_GETFL, 0);
+    if (flags < 0 || fcntl(ctx->socket, F_SETFL, flags | O_NONBLOCK) != 0) {
+        /* For openssl_recv() to read, waiting as it would have. */
+        return true;
+    }
+    clear_errors();
+    sigpipe_guard_t guard;
+    sigpipe_block(&guard);
+    char byte;
+    int ret = SSL_peek(ctx->ssl, &byte, 1);
+    sigpipe_restore(&guard);
+    const int saved_errno = errno;
+    const int ssl_error = ret > 0 ? SSL_ERROR_NONE : SSL_get_error(ctx->ssl, ret);
+    (void)fcntl(ctx->socket, F_SETFL, flags);
+    if (ret > 0) {
+        return true;
+    }
+    switch (ssl_error) {
+    case SSL_ERROR_WANT_READ:
+        /* No data yet: records without any, or part of a record. */
+        return false;
+    case SSL_ERROR_WANT_WRITE:
+        /* A reply to the peer, such as to a TLS 1.3 key update, which the
+           socket can't take yet: openssl_recv() sends it, waiting as it
+           would have. */
+    case SSL_ERROR_ZERO_RETURN:
+        /* A close_notify, which SSL_read() returns again. */
+        return true;
+    default:
+        break;
+    }
+    ctx->recv_ssl_error = ssl_error;
+    ctx->recv_errno = saved_errno;
+    ctx->ssl_failed = true;
+    if (ssl_error == SSL_ERROR_SYSCALL && saved_errno == 0) {
+        ctx->kept = KEPT_END;
+        return true;
+    }
+    log_ssl_failure(ctx->logger, "receive", ssl_error, saved_errno);
+    ctx->kept_error = io_error(ssl_error, saved_errno, &ctx->kept_detail);
+    ctx->kept = KEPT_FAILURE;
+    return true;
+}
+
 /* What OpenSSL has read and decrypted, and not yet returned, is no longer on
-   the socket, where poll() looks: SSL_pending() counts it. A failure of poll(),
-   but for a signal, is for openssl_recv() to report. */
+   the socket, where poll() looks: SSL_pending() counts it. What the socket has
+   may be no data at all, though, which has_data_now() tells: poll() alone took
+   a TLS 1.3 server's session tickets for data, and openssl_recv() then waited
+   for its whole timeout. A failure of poll(), but for a signal, is for
+   openssl_recv() to report. */
 static bool
     openssl_recv_wait(ebisu_socket_t* self, uint32_t timeout_ms)
 {
     ebisu_openssl_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_openssl_socket_t, base);
-    if (SSL_pending(ctx->ssl) > 0) {
+    if (ctx->kept != KEPT_NOTHING || SSL_pending(ctx->ssl) > 0) {
         return true;
     }
-    struct pollfd p;
-    p.fd = ctx->socket;
-    p.events = POLLIN;
-    p.revents = 0;
-    int ret = poll(&p, 1, timeout_ms > INT_MAX ? INT_MAX : (int)timeout_ms);
-    if (ret < 0 && errno == EINTR) {
-        return false;
+    const int64_t deadline_ms = monotonic_ms() + (int64_t)timeout_ms;
+    for (;;) {
+        int64_t left_ms = deadline_ms - monotonic_ms();
+        if (left_ms < 0) {
+            left_ms = 0;
+        }
+        struct pollfd p;
+        p.fd = ctx->socket;
+        p.events = POLLIN;
+        p.revents = 0;
+        int ret = poll(&p, 1, left_ms > INT_MAX ? INT_MAX : (int)left_ms);
+        if (ret == 0) {
+            return false;
+        }
+        if (ret < 0) {
+            if (errno != EINTR) {
+                return true;
+            }
+        } else if (has_data_now(ctx)) {
+            return true;
+        }
+        if (left_ms == 0) {
+            return false;
+        }
     }
-    return ret != 0;
 }
 
 static ebisu_sock_error_t

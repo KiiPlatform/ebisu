@@ -94,6 +94,12 @@ typedef struct ebisu_openssl_socket_t {
      * has it. */
     unsigned char last_address[28];
     unsigned char last_address_size; /**< \private */
+    /** \private What recv_wait came to before recv could, for recv to return:
+     * 0 for nothing, 1 for the end of the stream, 2 for a failure, which
+     * kept_error and kept_detail are. */
+    unsigned char kept;
+    ebisu_sock_error_t kept_error; /**< \private */
+    long kept_detail; /**< \private */
 } ebisu_openssl_socket_t;
 
 /**
