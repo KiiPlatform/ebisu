@@ -893,6 +893,117 @@ TEST_CASE( "The mbedTLS socket's recv_wait waits for something for recv to retur
     CHECK( client.recv(64) == "cdef" );
 }
 
+// A TLS 1.3 server sends its session tickets after the handshake: records
+// that carry nothing for recv to return. recv_wait asked the socket under it
+// alone, so it took them for something to return, and recv then waited for
+// its whole timeout. While a request's body is being sent, khc asks it
+// whether the server has answered early.
+TEST_CASE( "The mbedTLS socket's recv_wait doesn't take a TLS 1.3 server's tickets for data" ) {
+    Config config;
+    std::atomic<bool> go(false);
+    TlsServer server(pki().server(), [&go](SSL* ssl, int) {
+        wait_for(go);
+        SSL_write(ssl, "hello", 5);
+        char buffer[16];
+        SSL_read(ssl, buffer, sizeof(buffer));
+    });
+    Client client(&config.tls, 1);
+    REQUIRE( client.sock->ops->recv_wait != nullptr );
+    REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+    const char* protocol = ebisu_mbedtls_socket_get_protocol(&client.tls);
+    if (protocol == nullptr || std::string(protocol) != "TLSv1.3") {
+        go = true;
+        WARN( "TLS 1.3 wasn't negotiated: nothing to check" );
+        return;
+    }
+    // The tickets come right after the handshake.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    const auto start = std::chrono::steady_clock::now();
+    CHECK_FALSE( client.sock->ops->recv_wait(client.sock, 300) );
+    const auto waited = std::chrono::steady_clock::now() - start;
+    CHECK( waited >= std::chrono::milliseconds(250) );
+    CHECK( waited < std::chrono::milliseconds(2000) );
+    CHECK_FALSE( client.sock->ops->recv_wait(client.sock, 0) );
+
+    // What comes after them is.
+    go = true;
+    CHECK( client.sock->ops->recv_wait(client.sock, 5000) );
+    CHECK( client.recv(64) == "hello" );
+}
+
+// recv_wait reads ahead of recv: the first byte of data, or the end of the
+// stream or a failure first. recv returns what reading it would have.
+TEST_CASE( "The mbedTLS socket's recv returns what its recv_wait came to first" ) {
+    Config config;
+    std::atomic<bool> go(false);
+    char buffer[64];
+
+    SECTION("data, whole, though recv_wait read its first byte") {
+        TlsServer server(pki().server(), [&go](SSL* ssl, int) {
+            wait_for(go);
+            SSL_write(ssl, "hello", 5);
+            char ignored[16];
+            SSL_read(ssl, ignored, sizeof(ignored));
+        });
+        Client client(&config.tls, 1);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+        go = true;
+        CHECK( client.sock->ops->recv_wait(client.sock, 5000) );
+        CHECK( client.sock->ops->recv_wait(client.sock, 0) );
+        CHECK( client.recv(1) == "h" );
+        CHECK( client.recv(64) == "ello" );
+    }
+
+    SECTION("a record that doesn't decrypt") {
+        TlsServer server(pki().server(), [&go](SSL* ssl, int fd) {
+            wait_for(go);
+            const unsigned char record[] = { 0x17, 0x03, 0x03, 0x00, 0x20,
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+                17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 };
+            (void)!write(fd, record, sizeof(record));
+            char ignored[16];
+            SSL_read(ssl, ignored, sizeof(ignored));
+        });
+        Client client(&config.tls, 1);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+        go = true;
+        CHECK( client.sock->ops->recv_wait(client.sock, 5000) );
+        size_t received = 1;
+        CHECK( client.sock->ops->recv(client.sock, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
+        CHECK( received == 0 );
+        CHECK( client.error() == EBISU_SOCK_ERROR_TLS );
+        CHECK_FALSE( client.sock->ops->recv_timed_out(client.sock) );
+    }
+
+    SECTION("a reset") {
+        // False where SO_LINGER can't be set, as under qemu-arm's emulation
+        // of Linux, which doesn't have it.
+        std::atomic<bool> reset(true);
+        std::atomic<bool> tried(false);
+        TlsServer server(pki().server(), [&go, &reset, &tried](SSL*, int fd) {
+            wait_for(go);
+            struct linger l = { 1, 0 };
+            reset = setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l)) == 0;
+            tried = true;
+        });
+        Client client(&config.tls, 1);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+        go = true;
+        wait_for(tried);
+        if (!reset) {
+            WARN( "SO_LINGER can't be set here: no reset to check" );
+            return;
+        }
+        CHECK( client.sock->ops->recv_wait(client.sock, 5000) );
+        size_t received = 1;
+        CHECK( client.sock->ops->recv(client.sock, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
+        CHECK( received == 0 );
+        CHECK( client.error() != EBISU_SOCK_ERROR_NONE );
+        CHECK_FALSE( client.sock->ops->recv_timed_out(client.sock) );
+    }
+}
+
 TEST_CASE( "The mbedTLS socket over a socket without recv_wait has none" ) {
     Config config;
     ebisu_posix_tcp_socket_t tcp;
