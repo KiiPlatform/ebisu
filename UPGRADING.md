@@ -542,6 +542,12 @@ khc, which kii and tio report in their own codes:
   `KHC_ERR_FAIL` for a space or a control character, leaving what was set, and
   `khc_perform()` returns `KHC_ERR_FAIL`, without connecting, for a request
   header with a CR or LF in it. 1.x sent them as they were.
+- `khc_perform()` starts each request afresh, as `khc_reset_except_request()`
+  does, so the same request can be performed again without it. 1.x read the
+  next response with what the last one had left behind, and could end its body
+  early, returning `KHC_ERR_OK`. A status code and the other results of the
+  last request are now cleared when the next `khc_perform()` starts, even when
+  it fails before reaching the server.
 - GET, HEAD and DELETE send no body, and don't call the read callback.
 - Each chunk of a request body is sent in one send, with its size line and CRLF,
   from the stream buffer. 1.x sent the three separately. The read callback is

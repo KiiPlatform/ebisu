@@ -97,16 +97,15 @@ khc_code_t khc_perform(khc_t* khc) {
     }
     const bool can_wait = khc->_system != NULL && khc->_system->ops != NULL &&
         khc->_system->ops->delay_ms != NULL;
+    // Each request starts from what the request is, not from what the last
+    // one's response left behind. Left over, a Content-Length body's count of
+    // the bytes received, or a close-delimited body's end of stream, ended the
+    // next response's body early, with KHC_ERR_OK, unless
+    // khc_reset_except_request() was called in between.
+    khc_reset_except_request(khc);
     if (khc->_timeout_ms > 0) {
         khc->_started_ms = _now_ms(khc);
     }
-    khc->_state = KHC_STATE_IDLE;
-    khc->_result = KHC_ERR_OK;
-    khc->_again = false;
-    khc->_close_failed = false;
-    khc->_resp_header_skipped = false;
-    // Only this request's response may set it.
-    khc->_resp_date = -1;
 
     // malloc the necessary resources
     if (khc->_resp_header_buff == NULL) {

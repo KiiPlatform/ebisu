@@ -440,6 +440,10 @@ void khc_reset_except_cb(khc_t* khc);
  * khc_set_resp_header_buff(khc_t*, char*, size_t).
  *
  * The body is read again through the read callback, which must start it over.
+ *
+ * khc_perform(khc_t*) does the same when it starts, so the same request can be
+ * performed again without this. What this adds is clearing the last
+ * response's results, such as khc_get_status_code(khc_t*), before then.
  * \param [out] khc instance.
  * \see khc_reset_except_cb(khc_t*)
  */
@@ -454,6 +458,11 @@ void khc_reset_except_request(khc_t* khc);
  * khc_set_cb_write(khc_t*, KHC_CB_WRITE, void*) and
  * khc_set_cb_header(khc_t*, KHC_CB_HEADER, void*)
  * called.
+ *
+ * Each call starts from the request alone: what the last one's response left
+ * behind is reset first, as by khc_reset_except_request(khc_t*). A body is
+ * read through the read callback each time, which must start it over.
+ *
  * This method blocks until the HTTP session ends.
  * \param [in, out] khc instance.
  * \returns KHC_ERR_OK if the response was read whole. KHC_ERR_FAIL, without
@@ -734,8 +743,9 @@ void khc_enable_absolute_target(
  * \brief Get HTTP status code.
  *
  * \param [in] khc instance.
- * \returns the three-digit HTTP status code of the response, or 0 if none
- * has been parsed since khc_init(khc_t*), khc_reset_except_cb(khc_t*) or
+ * \returns the three-digit HTTP status code of the last khc_perform(khc_t*)'s
+ * response, or 0 if it parsed none, or none has been performed since
+ * khc_init(khc_t*), khc_reset_except_cb(khc_t*) or
  * khc_reset_except_request(khc_t*).
  */
 uint16_t khc_get_status_code(
@@ -753,8 +763,9 @@ uint16_t khc_get_status_code(
  * \param [in] khc instance.
  * \returns true if the close callback returned EBISU_SOCK_FAIL in the last
  * khc_perform(khc_t*), or EBISU_SOCK_AGAIN once the request had timed out or been
- * cancelled, when it isn't called again; false if it hasn't since khc_init(khc_t*),
- * khc_reset_except_cb(khc_t*) or khc_reset_except_request(khc_t*).
+ * cancelled, when it isn't called again; false if it didn't, or none has been
+ * performed since khc_init(khc_t*), khc_reset_except_cb(khc_t*) or
+ * khc_reset_except_request(khc_t*).
  */
 bool khc_get_close_failed(khc_t* khc);
 
@@ -784,8 +795,8 @@ ebisu_sock_error_t khc_get_sock_error(khc_t* khc, long* out_detail);
  *
  * \param [in] khc instance.
  * \returns true if the last khc_perform(khc_t*) skipped a header, false if it
- * hasn't since khc_init(khc_t*), khc_reset_except_cb(khc_t*) or
- * khc_reset_except_request(khc_t*).
+ * didn't, or none has been performed since khc_init(khc_t*),
+ * khc_reset_except_cb(khc_t*) or khc_reset_except_request(khc_t*).
  */
 bool khc_get_resp_header_skipped(khc_t* khc);
 
