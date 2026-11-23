@@ -238,7 +238,9 @@ of the application's own, as the
   chips' ROM. TLS 1.2, over another socket of the system's, as the mbedTLS
   port's, with the same checks of the server's certificate, the clock's dates
   among them, or the system's with `POLARSSL_HAVE_TIME`, the same
-  `last_error`, logger and `recv_wait`. PolarSSL 1.3 has no configuration
+  `last_error`, logger and `recv_wait`, and the same session resumption, built
+  with `EBISU_TLS_RESUME`, through `ebisu_polarssl_socket_set_session_resume()`.
+  PolarSSL 1.3 has no configuration
   connections share: the `ebisu_polarssl_tls_t` keeps the CA certificates,
   the verification and a CTR_DRBG of its own, seeded from PolarSSL's entropy
   sources, and sets each connection's context from them as it connects, then
