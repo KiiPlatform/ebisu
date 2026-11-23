@@ -263,34 +263,75 @@ static int connect_within(SOCKET sock, const struct sockaddr* addr, int addr_len
     return error;
 }
 
+/* What a socket keeps of the address it last connected to, in
+   last_address[28]: a SOCKADDR_IN6 at most. */
+#define LAST_ADDRESS_MAX 28
+typedef char last_address_fits[sizeof(SOCKADDR_IN6) <= LAST_ADDRESS_MAX ? 1 : -1];
+
+/* A socket connected to addr within timeout_s, or INVALID_SOCKET, with the
+   Winsock error in out_error. */
+static SOCKET connect_to_address(const ADDRINFOEXW* addr, unsigned int timeout_s,
+        int* out_error)
+{
+    SOCKET sock = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+    if (sock == INVALID_SOCKET) {
+        *out_error = WSAGetLastError();
+        return INVALID_SOCKET;
+    }
+    *out_error = connect_within(sock, addr->ai_addr, (int)addr->ai_addrlen, timeout_s);
+    if (*out_error == 0) {
+        return sock;
+    }
+    closesocket(sock);
+    return INVALID_SOCKET;
+}
+
 /* A socket connected to one of host's addresses, looked up and each tried
-   within timeout_s, or INVALID_SOCKET, with why in out_error and
-   out_detail. */
+   within timeout_s, or INVALID_SOCKET, with why in out_error and out_detail.
+   They are tried in the order the lookup gives them, but for the one the last
+   connection was made to, last_address of last_address_size bytes, which goes
+   first if the host still has it, and becomes the one connected to. A server
+   whose addresses don't share their TLS sessions resumes one only on the
+   address that made it, and the lookup's order can change from one to the
+   next. */
 static SOCKET connect_to_host(const char* host, uint16_t port, unsigned int timeout_s,
-        ebisu_logger_t* logger, ebisu_sock_error_t* out_error, long* out_detail)
+        ebisu_logger_t* logger, ebisu_sock_error_t* out_error, long* out_detail,
+        unsigned char* last_address, unsigned char* last_address_size)
 {
     ADDRINFOEXW* addrs = look_up(host, port, timeout_s, logger, out_error, out_detail);
     if (addrs == NULL) {
         return INVALID_SOCKET;
     }
 
-    /* The first address that accepts, IPv6 or IPv4. Each gets the whole
-       timeout: one that doesn't answer leaves the rest as much time as the
-       first had. */
-    SOCKET sock = INVALID_SOCKET;
-    int last_error = 0;
-    for (ADDRINFOEXW* addr = addrs; addr != NULL; addr = addr->ai_next) {
-        sock = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
-        if (sock == INVALID_SOCKET) {
-            last_error = WSAGetLastError();
-            continue;
-        }
-        last_error = connect_within(sock, addr->ai_addr, (int)addr->ai_addrlen, timeout_s);
-        if (last_error == 0) {
+    const ADDRINFOEXW* first = NULL;
+    for (const ADDRINFOEXW* addr = addrs; addr != NULL && *last_address_size > 0;
+            addr = addr->ai_next) {
+        if (addr->ai_addrlen == *last_address_size &&
+                memcmp(addr->ai_addr, last_address, *last_address_size) == 0) {
+            first = addr;
             break;
         }
-        closesocket(sock);
-        sock = INVALID_SOCKET;
+    }
+    /* Then the first address that accepts, IPv6 or IPv4. Each gets the whole
+       timeout: one that doesn't answer leaves the rest as much time as the
+       first had. */
+    const ADDRINFOEXW* connected = NULL;
+    SOCKET sock = INVALID_SOCKET;
+    int last_error = 0;
+    if (first != NULL) {
+        sock = connect_to_address(first, timeout_s, &last_error);
+        connected = first;
+    }
+    for (const ADDRINFOEXW* addr = addrs; sock == INVALID_SOCKET && addr != NULL;
+            addr = addr->ai_next) {
+        if (addr != first) {
+            sock = connect_to_address(addr, timeout_s, &last_error);
+            connected = addr;
+        }
+    }
+    if (sock != INVALID_SOCKET && connected->ai_addrlen <= LAST_ADDRESS_MAX) {
+        memcpy(last_address, connected->ai_addr, connected->ai_addrlen);
+        *last_address_size = (unsigned char)connected->ai_addrlen;
     }
     FreeAddrInfoExW(addrs);
     if (sock == INVALID_SOCKET) {

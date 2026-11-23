@@ -125,6 +125,12 @@ typedef struct ebisu_schannel_socket_t {
     /* A record being encrypted: header, at most cbMaximumMessage bytes of
        data, and trailer. */
     char* send_buf; /**< \private */
+
+    /* The address the last connection was made to, a struct sockaddr of at
+       most 28 bytes, a struct sockaddr_in6's size, and its size, 0 for none.
+       The next connection tries it first if the host still has it. */
+    unsigned char last_address[28]; /**< \private */
+    unsigned char last_address_size; /**< \private */
 } ebisu_schannel_socket_t;
 
 /**
