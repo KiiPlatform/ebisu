@@ -253,6 +253,17 @@ typedef struct ebisu_mbedtls_socket_t {
     bool _again;
     /** \private Whether the last receive failed for its timeout. */
     bool _recv_timed_out;
+    /** \private Whether reads take only what the socket under it has, for
+     * recv_wait: mbedTLS is told to read again rather than wait. */
+    bool _no_wait;
+    /** \private What recv_wait came to before recv could, for recv to
+     * return: the first byte of data, which _peeked is, or the end of the
+     * stream or a failure, which _kept_ret is, as mbedtls_ssl_read() returned
+     * it. */
+    bool _has_peeked;
+    bool _has_kept; /**< \private */
+    unsigned char _peeked; /**< \private */
+    int _kept_ret; /**< \private */
     /** \private What the socket under it said of its last failure. */
     ebisu_sock_error_t _transport_error;
     long _transport_detail; /**< \private */
