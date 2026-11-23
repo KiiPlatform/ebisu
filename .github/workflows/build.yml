@@ -426,7 +426,8 @@ jobs:
 
   # The PolarSSL port's tests, experimental: the mbedTLS port's, against
   # PolarSSL 1.3.8, as vendors' SDKs ship it, mbedTLS 1.3.22, the last of its
-  # API, and 1.3.8 without CTR_DRBG and entropy, under valgrind. Built with
+  # API, and 1.3.8 without CTR_DRBG and entropy, and without GCM and CCM, where
+  # no cipher suite has authenticated encryption, under valgrind. Built with
   # -DEBISU_TLS_RESUME=ON, as the mbedTLS port's are, so that they test
   # session resumption too.
   polarssl-port:
@@ -444,6 +445,8 @@ jobs:
         include:
           - polarssl: 1.3.8
             variant: no-drbg
+          - polarssl: 1.3.8
+            variant: no-aead
     steps:
       - name: Checkout
         uses: actions/checkout@v7

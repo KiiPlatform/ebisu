@@ -3,12 +3,15 @@
 # installs it into a prefix, with threads, as the PolarSSL port's sockets of a
 # configuration need when they are used on more than one task at once.
 #
-# Usage: tests/polarssl/install_polarssl.sh <version> <prefix> [no-drbg]
+# Usage: tests/polarssl/install_polarssl.sh <version> <prefix> [no-drbg|no-aead]
 #   version: 1.3.8, PolarSSL's, or 1.3.22, the last of mbedTLS 1.3, whose API
 #     is PolarSSL's
 #   no-drbg: built without POLARSSL_CTR_DRBG_C and POLARSSL_ENTROPY_C, as some
 #     of vendors' SDKs configure it, where the application gives TLS its random
 #     generator.
+#   no-aead: built without POLARSSL_GCM_C and POLARSSL_CCM_C, as some of
+#     vendors' SDKs configure it, where no cipher suite has authenticated
+#     encryption.
 #
 # PolarSSL installs no CMake package, which ebisu's CMake finds PolarSSL by:
 # this writes one, of the library it installs, as an application would name it
@@ -18,7 +21,7 @@ version=$1
 prefix=$2
 variant=${3:-}
 case "$variant" in
-    ''|no-drbg) ;;
+    ''|no-drbg|no-aead) ;;
     *) echo "no variant $variant" >&2; exit 2 ;;
 esac
 # The tags' archives: PolarSSL's releases have no archives of their own on
@@ -76,6 +79,11 @@ set_option POLARSSL_THREADING_PTHREAD set
 if [ "$variant" = no-drbg ]; then
     set_option POLARSSL_CTR_DRBG_C unset
     set_option POLARSSL_ENTROPY_C unset
+fi
+if [ "$variant" = no-aead ]; then
+    # Session tickets stay: PolarSSL seals them with AES-CBC.
+    set_option POLARSSL_GCM_C unset
+    set_option POLARSSL_CCM_C unset
 fi
 
 # Its CMakeLists.txt asks for CMake 2.6, which CMake 4 takes only with a policy

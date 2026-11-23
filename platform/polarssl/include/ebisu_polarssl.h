@@ -281,6 +281,9 @@ typedef struct ebisu_polarssl_socket_t {
      * the certificate to be checked for; 0 bytes for a name. */
     unsigned char _address_length;
     unsigned char _address[16]; /**< \private */
+    /** \private The header of the last record received, as the server sent
+     * it, which PolarSSL writes over: for saying why one was refused. */
+    unsigned char _record_header[5];
     /** \private Why the last operation that returned EBISU_SOCK_FAIL failed,
      * for last_error, and more of it. */
     ebisu_sock_error_t _error;
