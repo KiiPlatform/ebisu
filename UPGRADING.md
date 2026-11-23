@@ -538,6 +538,11 @@ khc, which kii and tio report in their own codes:
 - `khc_perform()` returns `KHC_ERR_FAIL`, without connecting, if a socket
   callback, the write callback or the header callback isn't set. 1.x crashed on
   reaching it.
+- `khc_perform()` returns `KHC_ERR_FAIL`, without connecting, for a response
+  header buffer or a stream buffer set with a size of 0, as through
+  `kii_set_resp_header_buff()` and `kii_set_stream_buff()` or tio's setters
+  for them. 1.x didn't bound reads into a header buffer of size 0 by it, and
+  ended a body early with a stream buffer of size 0.
 - `khc_set_host()`, `khc_set_path()` and `khc_set_method()` return
   `KHC_ERR_FAIL` for a space or a control character, leaving what was set, and
   `khc_perform()` returns `KHC_ERR_FAIL`, without connecting, for a request

@@ -1044,6 +1044,56 @@ TEST_CASE( "khc_perform needs its socket and callbacks" ) {
     }
 }
 
+// Reads into a response header buffer of size 0 weren't bounded by it, the
+// room left in it wrapping around, and a stream buffer of size 0 read nothing,
+// which ends a body. Either now fails the request before it connects. A NULL buffer
+// is still allocated, whatever size comes with it.
+TEST_CASE( "khc_perform needs room in the buffers it is given" ) {
+    std::vector<char> buffer(16);
+    const struct {
+        const char* given;
+        std::function<void(khc_t*)> set;
+        bool connects;
+    } cases[] = {
+        { "a header buffer of size 0",
+            [&buffer](khc_t* h) { khc_set_resp_header_buff(h, buffer.data(), 0); }, false },
+        { "a stream buffer of size 0",
+            [&buffer](khc_t* h) { khc_set_stream_buff(h, buffer.data(), 0); }, false },
+        { "a header buffer of size 1",
+            [&buffer](khc_t* h) { khc_set_resp_header_buff(h, buffer.data(), 1); }, true },
+        { "a stream buffer of size 1",
+            [&buffer](khc_t* h) { khc_set_stream_buff(h, buffer.data(), 1); }, true },
+        { "NULL buffers of size 0",
+            [](khc_t* h) {
+                khc_set_resp_header_buff(h, NULL, 0);
+                khc_set_stream_buff(h, NULL, 0);
+            }, true },
+    };
+    for (const auto& c : cases) {
+        INFO("given " << c.given);
+        khc_t http;
+        khc_init(&http);
+        khc_set_host(&http, "api.kii.com");
+        khc_set_method(&http, "GET");
+        khc_set_path(&http, "/api/apps");
+
+        int on_connect_called = 0;
+        khct::cb::SockCtx s_ctx;
+        s_ctx.on_connect = [&on_connect_called](void*, const char*, uint16_t) {
+            ++on_connect_called;
+            return EBISU_SOCK_FAIL;
+        };
+        khct::cb::IOCtx io_ctx;
+        khc_set_socket(&http, s_ctx.socket());
+        khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
+        khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+        c.set(&http);
+        CHECK( khc_perform(&http) == (c.connects ? KHC_ERR_SOCK_CONNECT : KHC_ERR_FAIL) );
+        CHECK( on_connect_called == (c.connects ? 1 : 0) );
+    }
+}
+
 // A request with no body has nothing to read.
 TEST_CASE( "khc_perform does without the read callback" ) {
     HeaderResult r = perform_with_small_header_buffer(
