@@ -188,6 +188,83 @@ static void format_port(uint16_t port, char out[6])
     out[n] = '\0';
 }
 
+#if defined(EBISU_TLS_RESUME)
+/* How long an address is connected to again after the lookup that gave it. */
+#define ADDRESS_LIFETIME_MS ((uint64_t)3600 * 1000)
+
+/* What the socket keeps of an address: a sockaddr_in6 at most. */
+typedef union {
+    struct sockaddr any;
+    struct sockaddr_in in;
+#if LWIP_IPV6
+    struct sockaddr_in6 in6;
+#endif
+} kept_address_t;
+typedef char kept_address_fits[sizeof(kept_address_t) <= 28 ? 1 : -1];
+
+/* FNV-1a, of 32 bits, of a host's name: the address is kept for the host
+   without its name. */
+static uint32_t host_hash(const char* host)
+{
+    uint32_t hash = 2166136261u;
+    for (const unsigned char* p = (const unsigned char*)host; *p != '\0'; ++p) {
+        hash ^= *p;
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+/* A connection to the address kept for host and port, if there is one,
+   looked up less than ADDRESS_LIFETIME_MS ago: the socket, or -1, the address
+   then forgotten. */
+static int connect_to_kept(ebisu_lwip_tcp_socket_t* sock, const char* host, uint16_t port)
+{
+    if (sock->_memory_system == NULL || sock->_last_address_size == 0 ||
+            sock->_last_host != host_hash(host) || sock->_last_port != port ||
+            ebisu_system_monotonic_ms(sock->_memory_system) - sock->_last_looked_up_ms >=
+                ADDRESS_LIFETIME_MS) {
+        sock->_last_address_size = 0;
+        return -1;
+    }
+    kept_address_t kept;
+    memset(&kept, 0, sizeof(kept));
+    memcpy(&kept, sock->_last_address, sock->_last_address_size);
+    struct addrinfo address;
+    memset(&address, 0, sizeof(address));
+    address.ai_family = kept.any.sa_family;
+    address.ai_socktype = SOCK_STREAM;
+    address.ai_protocol = IPPROTO_TCP;
+    address.ai_addrlen = sock->_last_address_size;
+    address.ai_addr = &kept.any;
+    int s = connect_to(sock, &address);
+    if (s < 0) {
+        /* Gone, or not answering: the host is looked up, and the error is
+           that connection's. */
+        log_to(sock->_logger, EBISU_LOG_DEBUG,
+                "the address of the last connection to %s didn't connect: looking it up.",
+                host);
+        sock->_last_address_size = 0;
+        sock->_error = EBISU_SOCK_ERROR_NONE;
+        sock->_error_detail = 0;
+    }
+    return s;
+}
+
+/* Keeps the address of a connection made after a lookup. */
+static void keep_address(ebisu_lwip_tcp_socket_t* sock, const char* host, uint16_t port,
+        const struct addrinfo* address)
+{
+    if (sock->_memory_system == NULL || address->ai_addrlen > sizeof(sock->_last_address)) {
+        return;
+    }
+    memcpy(sock->_last_address, address->ai_addr, address->ai_addrlen);
+    sock->_last_address_size = (unsigned char)address->ai_addrlen;
+    sock->_last_host = host_hash(host);
+    sock->_last_port = port;
+    sock->_last_looked_up_ms = ebisu_system_monotonic_ms(sock->_memory_system);
+}
+#endif
+
 static ebisu_sock_code_t tcp_connect(ebisu_socket_t* self, const char* host, uint16_t port)
 {
     ebisu_lwip_tcp_socket_t* sock = EBISU_CONTAINER_OF(self, ebisu_lwip_tcp_socket_t, base);
@@ -201,6 +278,13 @@ static ebisu_sock_code_t tcp_connect(ebisu_socket_t* self, const char* host, uin
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
+#if defined(EBISU_TLS_RESUME)
+    int kept = connect_to_kept(sock, host, port);
+    if (kept >= 0) {
+        sock->_socket = kept;
+        return EBISU_SOCK_OK;
+    }
+#endif
     format_port(port, service);
     /* An address as written is taken as it is, without asking a server. The
        result is one of lwIP's MEMP_NUM_NETDB, 1 unless lwipopts.h says more,
@@ -240,6 +324,9 @@ static ebisu_sock_code_t tcp_connect(ebisu_socket_t* self, const char* host, uin
                 (unsigned int)port, sock->_error_detail);
         return EBISU_SOCK_FAIL;
     }
+#if defined(EBISU_TLS_RESUME)
+    keep_address(sock, host, port, &address);
+#endif
     sock->_socket = s;
     return EBISU_SOCK_OK;
 }
@@ -363,6 +450,17 @@ void ebisu_lwip_tcp_socket_set_logger(ebisu_lwip_tcp_socket_t* sock,
 {
     sock->_logger = logger;
 }
+
+#if defined(EBISU_TLS_RESUME)
+void ebisu_lwip_tcp_socket_set_address_memory(ebisu_lwip_tcp_socket_t* sock,
+        ebisu_system_t* system)
+{
+    sock->_memory_system = system;
+    if (system == NULL) {
+        sock->_last_address_size = 0;
+    }
+}
+#endif
 
 void ebisu_lwip_tcp_socket_set_keepalive(ebisu_lwip_tcp_socket_t* sock,
         unsigned int idle_s, unsigned int interval_s, unsigned int count)

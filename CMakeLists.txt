@@ -47,7 +47,11 @@ option(EBISU_SESSION "Compile in sessions, which renew a thing's tokens" ON)
 # TLS session resumption in the ports for devices, the mbedTLS and PolarSSL
 # ports': a socket keeps the session of its last connection, for the next to
 # the same host to resume, once ebisu_mbedtls_socket_set_session_resume() or
-# ebisu_polarssl_socket_set_session_resume() asks it to.
+# ebisu_polarssl_socket_set_session_resume() asks it to. And the lwIP socket,
+# under them, connects again to the address of its last connection, once
+# ebisu_lwip_tcp_socket_set_address_memory() asks it to, as a server whose
+# addresses don't share their sessions resumes one only on the address that
+# made it.
 # OFF leaves out the code and the memory it takes, as not defining
 # EBISU_TLS_RESUME does in a build without CMake, which defines it, when it
 # does, for the port and for everything using it. The OpenSSL and Schannel

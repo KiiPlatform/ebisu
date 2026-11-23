@@ -37,6 +37,8 @@
    server: a name not among them fails at once. */
 #define DNS_LOCAL_HOSTLIST 1
 #define DNS_LOCAL_HOSTLIST_IS_DYNAMIC 1
+/* server.test, and moving.test, which a test of the socket's moves. */
+#define MEMP_NUM_LOCALHOSTLIST 2
 #if TEST_LWIP_1
 /* No server until a test sets one, where lwIP 1.4 has one of its own, and 2.0
    on none without this. */

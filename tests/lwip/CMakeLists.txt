@@ -50,6 +50,9 @@ target_link_libraries(lwip_test_port PUBLIC Threads::Threads)
 
 # ebisu, with its lwIP socket, which its CMake builds as lwipcore is there.
 set(BUILD_SHARED_LIBS OFF)
+# Configuration b with the address the socket keeps for TLS sessions to
+# resume, configuration a without, as by default.
+set(EBISU_TLS_RESUME ${config_b} CACHE BOOL "" FORCE)
 add_subdirectory(${ebisu_root} ebisu EXCLUDE_FROM_ALL)
 if(NOT TARGET ebisu_lwip)
     message(FATAL_ERROR "ebisu's CMake built no ebisu_lwip with lwipcore there")

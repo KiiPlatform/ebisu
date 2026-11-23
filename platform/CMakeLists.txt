@@ -140,6 +140,10 @@ endif()
 # isn't.
 if(TARGET lwipcore)
     add_library(ebisu_lwip STATIC lwip/src/ebisu_lwip_tcp.c lwip/src/ebisu_lwip_dns.c)
+    # As for the TLS ports: it changes the socket's layout.
+    if(EBISU_TLS_RESUME)
+        target_compile_definitions(ebisu_lwip PUBLIC EBISU_TLS_RESUME)
+    endif()
     target_include_directories(ebisu_lwip
         PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lwip/include>)

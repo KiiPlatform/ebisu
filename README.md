@@ -330,7 +330,11 @@ ports resume TLS sessions: a socket that
 `ebisu_mbedtls_socket_set_session_resume()` or
 `ebisu_polarssl_socket_set_session_resume()` asks to keeps the session of its
 last TLS 1.2 connection, for the next to the same host and port, which then
-skips the server's certificate and the key exchange. Off, none of its code is
+skips the server's certificate and the key exchange. The lwIP socket under
+them, which `ebisu_lwip_tcp_socket_set_address_memory()` asks to, connects
+again to the address of its last connection, as lwIP's DNS client gives one of
+a host's addresses, not always the same, and a server whose addresses don't
+share their sessions resumes one only on the address that made it. Off, none of its code is
 built and the socket is the size it was: for a Cortex-M4, on, each port is some
 400 bytes larger and its socket some 170, and each socket asked to keeps its
 session in memory the library allocates, about 2 KB with mbedTLS 2.4 or

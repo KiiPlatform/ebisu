@@ -493,3 +493,126 @@ TEST_CASE( "The lwIP socket sets its timeouts as lwIP takes them" ) {
 #endif
     ops->close(&sock.base);
 }
+
+#if defined(EBISU_TLS_RESUME)
+namespace {
+
+// A system whose monotonic_ms is the test's to move on.
+struct Clocked {
+    ebisu_system_t system;
+    ebisu_system_ops_t ops;
+    uint64_t now_ms;
+
+    static uint64_t monotonic(ebisu_system_t* self) {
+        return ((Clocked*)self)->now_ms;
+    }
+
+    Clocked() : now_ms(1000) {
+        memset(&ops, 0, sizeof(ops));
+        ops.monotonic_ms = monotonic;
+        system.ops = &ops;
+    }
+};
+
+// Has moving.test resolve to address alone, from lwIP's local host list.
+void move_name(const char* address)
+{
+    ip_addr_t addr;
+    REQUIRE( ipaddr_aton(address, &addr) );
+    LOCK_TCPIP_CORE();
+    dns_local_removehost("moving.test", nullptr);
+    err_t added = dns_local_addhost("moving.test", &addr);
+    UNLOCK_TCPIP_CORE();
+    REQUIRE( added == ERR_OK );
+}
+
+const uint64_t MINUTE_MS = 60 * 1000;
+
+}
+
+// lwIP's DNS client gives one of a host's addresses, not always the same, and
+// a server whose addresses don't share their TLS sessions resumes one only on
+// the address that made it. Built with EBISU_TLS_RESUME, a socket asked to
+// connects again to the address of its last connection to a host, for an
+// hour after the lookup that gave it. Here the name moves to an address that
+// never answers, and a connection that looked it up again would time out.
+TEST_CASE( "The lwIP socket connects again to the address it last connected to, when asked to" ) {
+    Server server(4);
+    move_name("127.0.0.1");
+    Clocked clock;
+    ebisu_lwip_tcp_socket_t sock;
+    ebisu_lwip_tcp_socket_init(&sock, 5, 1);
+    const ebisu_socket_ops_t* ops = sock.base.ops;
+
+    SECTION("not unless asked") {
+        REQUIRE( ops->connect(&sock.base, "moving.test", server.port) == EBISU_SOCK_OK );
+        server.accept_one();
+        REQUIRE( ops->close(&sock.base) == EBISU_SOCK_OK );
+        move_name(SILENT);
+        CHECK( ops->connect(&sock.base, "moving.test", server.port) == EBISU_SOCK_FAIL );
+    }
+
+    SECTION("for an hour after the lookup, without looking it up") {
+        ebisu_lwip_tcp_socket_set_address_memory(&sock, &clock.system);
+        REQUIRE( ops->connect(&sock.base, "moving.test", server.port) == EBISU_SOCK_OK );
+        server.accept_one();
+        REQUIRE( ops->close(&sock.base) == EBISU_SOCK_OK );
+        move_name(SILENT);
+        clock.now_ms += 59 * MINUTE_MS;
+        REQUIRE( ops->connect(&sock.base, "moving.test", server.port) == EBISU_SOCK_OK );
+        server.accept_one();
+        REQUIRE( ops->close(&sock.base) == EBISU_SOCK_OK );
+        // The hour from the lookup, not from that connection.
+        clock.now_ms += 2 * MINUTE_MS;
+        long detail = 0;
+        CHECK( ops->connect(&sock.base, "moving.test", server.port) == EBISU_SOCK_FAIL );
+        CHECK( ops->last_error(&sock.base, &detail) == EBISU_SOCK_ERROR_TIMEOUT );
+    }
+
+    SECTION("only for the same host and port") {
+        ebisu_lwip_tcp_socket_set_address_memory(&sock, &clock.system);
+        REQUIRE( ops->connect(&sock.base, "moving.test", server.port) == EBISU_SOCK_OK );
+        server.accept_one();
+        REQUIRE( ops->close(&sock.base) == EBISU_SOCK_OK );
+        move_name(SILENT);
+        CHECK( ops->connect(&sock.base, "moving.test", (uint16_t)(server.port + 1)) ==
+                EBISU_SOCK_FAIL );
+    }
+
+    SECTION("looked up again once that address doesn't connect") {
+        Logs logs;
+        ebisu_lwip_tcp_socket_set_logger(&sock, logs.get());
+        ebisu_lwip_tcp_socket_set_address_memory(&sock, &clock.system);
+        uint16_t port = 0;
+        {
+            Server gone;
+            port = gone.port;
+            REQUIRE( ops->connect(&sock.base, "moving.test", port) == EBISU_SOCK_OK );
+            gone.accept_one();
+            REQUIRE( ops->close(&sock.base) == EBISU_SOCK_OK );
+        }
+        // Nothing listens there now, at the address kept or at the one looked
+        // up, the same: the error is the lookup's connection's.
+        long detail = 0;
+        CHECK( ops->connect(&sock.base, "moving.test", port) == EBISU_SOCK_FAIL );
+        CHECK( ops->last_error(&sock.base, &detail) == EBISU_SOCK_ERROR_CONNECT );
+#ifndef EBISU_NO_LOG
+        CHECK( logs.mentions(
+                "the address of the last connection to moving.test didn't connect: looking it up.") );
+#endif
+    }
+
+    SECTION("none once told so") {
+        ebisu_lwip_tcp_socket_set_address_memory(&sock, &clock.system);
+        REQUIRE( ops->connect(&sock.base, "moving.test", server.port) == EBISU_SOCK_OK );
+        server.accept_one();
+        REQUIRE( ops->close(&sock.base) == EBISU_SOCK_OK );
+        ebisu_lwip_tcp_socket_set_address_memory(&sock, nullptr);
+        move_name(SILENT);
+        CHECK( ops->connect(&sock.base, "moving.test", server.port) == EBISU_SOCK_FAIL );
+    }
+
+    ops->close(&sock.base);
+}
+#endif
+

@@ -8,6 +8,9 @@
 #include <ebisu_dns.h>
 #include <ebisu_log.h>
 #include <ebisu_socket.h>
+#if defined(EBISU_TLS_RESUME)
+#include <ebisu_system.h>
+#endif
 
 #include <stdbool.h>
 
@@ -82,6 +85,21 @@ typedef struct ebisu_lwip_tcp_socket_t {
     unsigned int _keepalive_count; /**< \private */
     /** \private What ebisu_lwip_tcp_socket_set_nodelay() sets. */
     bool _nodelay;
+#if defined(EBISU_TLS_RESUME)
+    /** \private The system whose monotonic_ms times the address kept, set
+     * by ebisu_lwip_tcp_socket_set_address_memory(), or NULL to keep none. */
+    ebisu_system_t* _memory_system;
+    /** \private The address the last connection was made to, a struct
+     * sockaddr of at most 28 bytes, a struct sockaddr_in6's size, and its
+     * size, 0 for none; the host it is of, by an FNV-1a hash of its name, and
+     * the port; and when the lookup that gave it was, by _memory_system's
+     * monotonic_ms. */
+    unsigned char _last_address[28];
+    unsigned char _last_address_size; /**< \private */
+    uint32_t _last_host; /**< \private */
+    uint16_t _last_port; /**< \private */
+    uint64_t _last_looked_up_ms; /**< \private */
+#endif
 } ebisu_lwip_tcp_socket_t;
 
 /**
@@ -127,6 +145,35 @@ void ebisu_lwip_tcp_socket_set_connect_timeout(ebisu_lwip_tcp_socket_t* sock,
  */
 void ebisu_lwip_tcp_socket_set_logger(ebisu_lwip_tcp_socket_t* sock,
         ebisu_logger_t* logger);
+
+#if defined(EBISU_TLS_RESUME)
+/**
+ * \brief Has the socket connect again to the address its last connection
+ * went to, in a build with EBISU_TLS_RESUME.
+ *
+ * lwIP's DNS client gives one of a host's addresses, and of a host that has
+ * several, not always the same. A server whose addresses don't share their
+ * TLS sessions resumes one only on the address that made it, so a TLS socket
+ * over this one, such as the mbedTLS port's with
+ * ebisu_mbedtls_socket_set_session_resume(), would resume few. Asked to, the
+ * socket keeps the address of each connection it makes after a lookup, and
+ * its next connection to the same host and port goes there, without looking
+ * the host up, for an hour after that lookup, by system's monotonic_ms. Then
+ * the host is looked up again, as it is when that address doesn't connect.
+ *
+ * Built as the TLS ports' resumption is: with EBISU_TLS_RESUME defined, by
+ * CMake's -DEBISU_TLS_RESUME=ON, for the port and for everything using it, as
+ * it changes the socket's layout. Built without it, as by default, this
+ * function isn't there, and none of what it does is built.
+ *
+ * \param [in,out] sock The socket.
+ * \param [in] system The system whose monotonic_ms times the address kept,
+ * which has to outlive the socket, or NULL, as the socket starts, to keep
+ * none, forgetting the one it has.
+ */
+void ebisu_lwip_tcp_socket_set_address_memory(ebisu_lwip_tcp_socket_t* sock,
+        ebisu_system_t* system);
+#endif
 
 /**
  * \brief Sets whether TCP checks an idle connection is still there.

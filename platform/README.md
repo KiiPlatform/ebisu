@@ -154,7 +154,12 @@ of the application's own, as the
   `lwip_getaddrinfo()`, which takes an address as written as it is, and gives
   a name's first address only, of the family `LWIP_DNS_ADDRTYPE_DEFAULT` puts
   first, which it connects to without blocking, within its connect timeout:
-  the lookup takes as long as lwIP's DNS client does. A receive that times out
+  the lookup takes as long as lwIP's DNS client does. Built with
+  `EBISU_TLS_RESUME`, a socket that `ebisu_lwip_tcp_socket_set_address_memory()`
+  asks to connects again to the address of its last connection to a host,
+  without looking it up, for an hour after the lookup that gave it, so that a
+  TLS socket over it resumes its session on a server whose addresses don't
+  share theirs. A receive that times out
   leaves the connection as it was, a peer that closes it is the end of the
   stream and one that resets it a failure, but for lwIP 2.0, whose receive
   takes a reset for the end of the stream too. It waits for a connection and
