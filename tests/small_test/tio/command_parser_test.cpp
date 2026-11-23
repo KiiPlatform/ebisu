@@ -5,8 +5,12 @@
 #include "command_parser.h"
 #include "jkii.h"
 #include "test_callbacks.h"
+#include <memory>
 #include <string>
+#include <vector>
 #include <string.h>
+#include <stdint.h>
+#include <type_traits>
 typedef struct expected_parsed_actions {
     const char* command_id;
     tio_action_t *expected_actions;
@@ -22,6 +26,24 @@ TEST_CASE( "_get_object_in_array" ) {
 
     char* obj_str = NULL;
     size_t obj_str_len = 0;
+
+    // An element that isn't an object, or what isn't an array, used to read as
+    // the end of the array, so the command was taken as good.
+    SECTION("An element that isn't an object fails") {
+        const char arr[] = "[{\"a\":1},7,{\"b\":2}]";
+        CHECK( _get_object_in_array(&resource, NULL, NULL, arr, strlen(arr), 0,
+                    &obj_str, &obj_str_len) == _CMD_PARSE_OK );
+        CHECK( _get_object_in_array(&resource, NULL, NULL, arr, strlen(arr), 1,
+                    &obj_str, &obj_str_len) == _CMD_PARSE_FAIL );
+        CHECK( _get_object_in_array(&resource, NULL, NULL, arr, strlen(arr), 3,
+                    &obj_str, &obj_str_len) == _CMD_PARSE_ARRAY_OUT_OF_INDEX );
+    }
+
+    SECTION("What isn't an array fails") {
+        const char obj[] = "{\"a\":1}";
+        CHECK( _get_object_in_array(&resource, NULL, NULL, obj, strlen(obj), 0,
+                    &obj_str, &obj_str_len) == _CMD_PARSE_FAIL );
+    }
 
     SECTION("Get object at index 0") {
         _cmd_parser_code_t p_res = _get_object_in_array(
@@ -79,6 +101,16 @@ TEST_CASE( "_get_object_in_array" ) {
     }
 }
 
+// Leaves the stack below the caller's frame filled with JSMN_STRING, so a
+// callee reading a jsmntok_t that jsmn never wrote sees a string token.
+static void __attribute__((noinline)) fill_stack_with_jsmn_string()
+{
+    volatile int fill[4096];
+    for (size_t i = 0; i < sizeof(fill) / sizeof(fill[0]); ++i) {
+        fill[i] = JSMN_STRING;
+    }
+}
+
 TEST_CASE( "_parse_first_kv" ) {
     // TODO: Add other types test.
     SECTION("Int value") {
@@ -117,6 +149,49 @@ TEST_CASE( "_parse_first_kv" ) {
         REQUIRE( out_value_type == JSMN_PRIMITIVE );
     }
 
+    // jsmn fills only as many tokens as the object has, so an object without
+    // a key/value pair must be rejected before the key and value tokens are
+    // read. The stack is filled first so that unfilled tokens look like a
+    // string key rather than whatever happened to be left there.
+    SECTION("Empty object") {
+        const char json_obj[] = "{}";
+        char* out_key = NULL;
+        size_t out_key_len = 0;
+        char* out_value = NULL;
+        size_t out_value_len = 0;
+        jsmntype_t out_value_type = JSMN_OBJECT;
+        fill_stack_with_jsmn_string();
+        _cmd_parser_code_t p_res = _parse_first_kv(
+                json_obj,
+                strlen(json_obj),
+                &out_key,
+                &out_key_len,
+                &out_value,
+                &out_value_len,
+                &out_value_type);
+
+        REQUIRE( p_res == _CMD_PARSE_FAIL );
+    }
+
+    SECTION("Key without value") {
+        const char json_obj[] = "{\"a\"}";
+        char* out_key = NULL;
+        size_t out_key_len = 0;
+        char* out_value = NULL;
+        size_t out_value_len = 0;
+        jsmntype_t out_value_type = JSMN_OBJECT;
+        fill_stack_with_jsmn_string();
+        _cmd_parser_code_t p_res = _parse_first_kv(
+                json_obj,
+                strlen(json_obj),
+                &out_key,
+                &out_key_len,
+                &out_value,
+                &out_value_len,
+                &out_value_type);
+
+        REQUIRE( p_res == _CMD_PARSE_FAIL );
+    }
 }
 
 TEST_CASE( "_parse_action_object" ) {
@@ -167,6 +242,55 @@ TEST_CASE( "_parse_action_object" ) {
 
 }
 
+// An integer action value is a long, as 2.x's ABI has it: any JSON integer
+// that fits in one reaches the action handler.
+static_assert(std::is_same<
+        decltype(((tio_action_value_t*)0)->param.long_value), long>::value,
+        "long_value is a long");
+
+TEST_CASE( "_parse_action integer values" ) {
+    tio_handler_t handler;
+    jkii_token_t tokens[16];
+    jkii_resource_t resource = { tokens, 16 };
+    handler._kii._json_resource = &resource;
+
+    const struct {
+        const char* text;
+        int64_t value;
+    } cases[] = {
+        { "23", 23 },
+        { "-23", -23 },
+        { "2147483647", INT32_MAX },
+        { "-2147483648", INT32_MIN },
+        { "2147483648", (int64_t)INT32_MAX + 1 },
+        { "-2147483649", (int64_t)INT32_MIN - 1 },
+        { "4294967296", INT64_C(4294967296) },
+        { "9223372036854775807", INT64_MAX },
+        { "-9223372036854775808", INT64_MIN }
+    };
+    const char alias[] = "myalias";
+
+    for (const auto& c : cases) {
+        INFO("value " << c.text);
+        std::string actions =
+            std::string("[{\"setValue\":") + c.text + "}]";
+        tio_action_t action;
+        memset(&action, 0, sizeof(action));
+
+        _cmd_parser_code_t p_res = _parse_action(
+                &handler,
+                alias,
+                strlen(alias),
+                actions.c_str(),
+                actions.length(),
+                0,
+                &action);
+        CHECK( p_res == _CMD_PARSE_OK );
+        CHECK( action.action_value.type == TIO_TYPE_INTEGER );
+        CHECK( action.action_value.param.long_value == c.value );
+    }
+}
+
 void cb_parsed_action(char* command_id, tio_action_t* action, void* expected_actions) {
     expected_parsed_actions* expected = (expected_parsed_actions *) expected_actions;
     REQUIRE( strcmp(command_id, expected->command_id) == 0 );
@@ -195,6 +319,10 @@ void cb_parsed_action(char* command_id, tio_action_t* action, void* expected_act
 
             }
     }
+}
+
+static void cb_parsed_action_count(char* command_id, tio_action_t* action, void* called) {
+    ++(*(int*)called);
 }
 
 TEST_CASE( "_parse_command" ) {
@@ -252,6 +380,16 @@ TEST_CASE( "_parse_command" ) {
         REQUIRE( TIO_ERR_OK == res);
         REQUIRE( 2 == expected.matched_count);
     }
+
+    // The alias has to map to an array of actions. "" left nothing for
+    // jkii_parse to parse, which asserted and aborted the process.
+    SECTION("alias mapped to an empty string") {
+        const char command[] = "{\"commandID\":\"c\",\"actions\":[{\"alias\":\"\"}]}";
+        int called = 0;
+        tio_code_t res = _parse_command(&handler, command, strlen(command), cb_parsed_action_count, &called);
+        REQUIRE( TIO_ERR_PARSE_JSON == res);
+        REQUIRE( 0 == called);
+    }
 }
 
 // _handle_command builds the action-result request body. The action name in it
@@ -267,6 +405,40 @@ static tio_bool_t cb_action_ok(
     data->json[0] = '\0';
     ++(*(int*)userdata);
     return KII_TRUE;
+}
+
+// A JSON object as long as tio_action_result_data_t::json has room for.
+static std::string longest_data() {
+    const size_t size = sizeof(((tio_action_result_data_t*)0)->json);
+    return "{\"k\":\"" + std::string(size - 1 - 8, 'v') + "\"}";
+}
+
+// Succeeds with data, but for setTemp, which fails with data and a message.
+static tio_bool_t cb_action_with_data(
+        tio_action_t* action,
+        tio_action_err_t* err,
+        tio_action_result_data_t* data,
+        void* userdata) {
+    (void)userdata;
+    const int fails = action->action_name_length == 7 &&
+        memcmp(action->action_name, "setTemp", 7) == 0;
+    strcpy(data->json, fails ? "{\"max\":30}" : "{\"temp\":23}");
+    strcpy(err->err_message, fails ? "too \"hot\"" : "");
+    return fails ? KII_FALSE : KII_TRUE;
+}
+
+// Fails, with the longest message and data the types allow.
+static tio_bool_t cb_action_longest(
+        tio_action_t* action,
+        tio_action_err_t* err,
+        tio_action_result_data_t* data,
+        void* userdata) {
+    (void)action;
+    (void)userdata;
+    strcpy(data->json, longest_data().c_str());
+    memset(err->err_message, '"', sizeof(err->err_message) - 1);
+    err->err_message[sizeof(err->err_message) - 1] = '\0';
+    return KII_FALSE;
 }
 
 TEST_CASE( "_handle_command action name length" ) {
@@ -325,9 +497,50 @@ TEST_CASE( "_handle_command action name length" ) {
         REQUIRE( sent.find("{\"turnPower\":{\"succeeded\":true}}") != std::string::npos );
     }
 
-    // The result body is built in a 256 byte work buffer, so a name at least
-    // that long is rejected rather than sized onto the stack.
-    SECTION("an action name longer than the work buffer is rejected") {
+    // Each alias's results are an array of their own, separated by commas
+    // within it only: the first result of every alias after the first used
+    // to start with one, which made the body invalid JSON.
+    SECTION("the results of several aliases form valid JSON") {
+        int called = 0;
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":["
+            "{\"alias1\":[{\"turnPower\":true},{\"setTemp\":23}]},"
+            "{\"alias2\":[{\"setMode\":\"eco\"}]},"
+            "{\"alias3\":[{\"setSpeed\":2},{\"setSwing\":false}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_OK );
+        REQUIRE( called == 5 );
+        REQUIRE( sent.find(
+                "{\"actionResults\":["
+                "{\"alias1\":[{\"turnPower\":{\"succeeded\":true}},{\"setTemp\":{\"succeeded\":true}}]},"
+                "{\"alias2\":[{\"setMode\":{\"succeeded\":true}}]},"
+                "{\"alias3\":[{\"setSpeed\":{\"succeeded\":true}},{\"setSwing\":{\"succeeded\":true}}]}]}")
+                != std::string::npos );
+    }
+
+    SECTION("a result's data, and a failure's message, are written to the result body") {
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":["
+            "{\"alias1\":[{\"turnPower\":true},{\"setTemp\":40}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_with_data, nullptr);
+
+        REQUIRE( res == TIO_ERR_OK );
+        INFO( sent );
+        CHECK( sent.find(
+                "{\"actionResults\":[{\"alias1\":["
+                "{\"turnPower\":{\"succeeded\":true,\"data\":{\"temp\":23}}},"
+                "{\"setTemp\":{\"succeeded\":false,\"errorMessage\":\"too \\\"hot\\\"\","
+                "\"data\":{\"max\":30}}}]}]}")
+                != std::string::npos );
+    }
+
+    // The result was put together in 256 bytes on the stack, and a failure's
+    // message in 128 inside them, so what the callback's own types allow
+    // didn't fit: the command's results were given up, its actions done.
+    SECTION("a long action name is written to the result body whole") {
         int called = 0;
         std::string long_name(300, 'a');
         std::string command =
@@ -336,6 +549,615 @@ TEST_CASE( "_handle_command action name length" ) {
         tio_code_t res = _handle_command(
                 &handler, command.c_str(), command.length(), cb_action_ok, &called);
 
+        REQUIRE( res == TIO_ERR_OK );
+        REQUIRE( called == 1 );
+        CHECK( sent.find("[{\"" + long_name + "\":{\"succeeded\":true}}]") != std::string::npos );
+    }
+
+    SECTION("the longest message and data a callback can give are written whole") {
+        std::string name(100, 'n');
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"" +
+            name + "\":true},{\"" + name + "\":false}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_longest, nullptr);
+
+        REQUIRE( res == TIO_ERR_OK );
+        // Every character of the message escaped.
+        std::string message;
+        for (int i = 0; i < TIO_ACTION_ERR_MESSAGE_MAX_SIZE - 1; ++i) {
+            message += "\\\"";
+        }
+        const std::string result = "{\"" + name + "\":{\"succeeded\":false,\"errorMessage\":\"" +
+            message + "\",\"data\":" + longest_data() + "}}";
+        CHECK( sent.find("{\"actionResults\":[{\"alias1\":[" + result + "," + result + "]}]}")
+                != std::string::npos );
+    }
+
+    SECTION("results the application's buffer has no room for are too large") {
+        char small_buff[512];
+        kii_set_buff(&handler._kii, small_buff, sizeof(small_buff));
+        std::string name(100, 'n');
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"" +
+            name + "\":true},{\"" + name + "\":false}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_longest, nullptr);
+        CHECK( res == TIO_ERR_TOO_LARGE_DATA );
+        CHECK( sent.empty() );
+    }
+}
+
+// kii_api_call_run reports only transport errors, so a refused action-result
+// request used to come back as TIO_ERR_OK, and the results were lost without
+// the error callback being told.
+TEST_CASE( "_handle_command response status" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+
+    char kii_buff[2048];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // Each section sets the response before calling _handle_command.
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [](void*, const char*, unsigned int) { return KHC_SOCK_OK; };
+    http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    size_t resp_pos = 0;
+    std::string resp;
+    http_ctx.on_recv = [&resp_pos, &resp](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        size_t n = resp.size() - resp_pos;
+        if (n > length_to_read) { n = length_to_read; }
+        memcpy(buffer, resp.data() + resp_pos, n);
+        resp_pos += n;
+        *out_actual_length = n;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&handler._kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&handler._kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&handler._kii, khct::cb::mock_close, &http_ctx);
+    char resp_hdr_buff[512];
+    khc_set_resp_header_buff(&handler._kii._khc, resp_hdr_buff, sizeof(resp_hdr_buff));
+
+    int called = 0;
+    std::string command =
+        "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+
+    SECTION("2xx is success") {
+        resp = "HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_OK );
+        REQUIRE( called == 1 );
+    }
+
+    SECTION("500 is reported") {
+        const std::string body = "{\"errorCode\":\"INTERNAL_SERVER_ERROR\"}";
+        resp = "HTTP/1.1 500 Internal Server Error\r\nContent-Length: " +
+            std::to_string(body.size()) + "\r\n\r\n" + body;
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_RESP_STATUS );
+        REQUIRE( called == 1 );
+    }
+
+    SECTION("401 is reported") {
+        const std::string body = "{\"errorCode\":\"WRONG_TOKEN\"}";
+        resp = "HTTP/1.1 401 Unauthorized\r\nContent-Length: " +
+            std::to_string(body.size()) + "\r\n\r\n" + body;
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_RESP_STATUS );
+        REQUIRE( called == 1 );
+    }
+}
+
+// Commands arrive over MQTT, so an alias or action object without a key/value
+// pair has to be turned into a parse error: no action called, nothing sent, and
+// the result request _handle_command already started released.
+TEST_CASE( "_handle_command empty objects" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+
+    char kii_buff[2048];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // No request may be performed, so connecting is recorded and fails.
+    bool connected = false;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&connected](void*, const char*, unsigned int) {
+        connected = true;
+        return KHC_SOCK_FAIL;
+    };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+
+    SECTION("an empty alias object is rejected") {
+        int called = 0;
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":[{}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_PARSE_JSON );
+        REQUIRE( called == 0 );
+        REQUIRE( !connected );
+        REQUIRE( handler._kii._req_headers == NULL );
+    }
+
+    SECTION("an empty action object is rejected") {
+        int called = 0;
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_PARSE_JSON );
+        REQUIRE( called == 0 );
+        REQUIRE( !connected );
+        REQUIRE( handler._kii._req_headers == NULL );
+    }
+}
+
+// The result body opens with {"actionResults":[ before any action runs. When
+// that did not fit the HTTP buffer the error was dropped, so _handle_command
+// carried on with the request headers already freed: it ran the actions, and
+// sent a body missing its opening if the rest happened to fit.
+TEST_CASE( "_handle_command result body opening does not fit" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+
+    // Too short for {"actionResults":[ and its terminator, long enough for
+    // {"alias1":[ -- so the appends that follow do not catch it either.
+    char kii_buff[16];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // Nothing should reach the socket; it answers anyway, so that sending is
+    // seen as such rather than as a connection error.
+    std::string sent;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [](void*, const char*, unsigned int) { return KHC_SOCK_OK; };
+    http_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    size_t resp_pos = 0;
+    const std::string resp = "HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n";
+    http_ctx.on_recv = [&resp_pos, &resp](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        size_t n = resp.size() - resp_pos;
+        if (n > length_to_read) { n = length_to_read; }
+        memcpy(buffer, resp.data() + resp_pos, n);
+        resp_pos += n;
+        *out_actual_length = n;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&handler._kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&handler._kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&handler._kii, khct::cb::mock_close, &http_ctx);
+    char resp_hdr_buff[512];
+    khc_set_resp_header_buff(&handler._kii._khc, resp_hdr_buff, sizeof(resp_hdr_buff));
+
+    SECTION("the action is not run") {
+        int called = 0;
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
         REQUIRE( res == TIO_ERR_TOO_LARGE_DATA );
+        REQUIRE( called == 0 );
+        REQUIRE( sent.empty() );
+    }
+
+    SECTION("a command without actions is not sent") {
+        int called = 0;
+        std::string command = "{\"commandID\":\"cmd1\",\"actions\":[]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_TOO_LARGE_DATA );
+        REQUIRE( sent.empty() );
+    }
+}
+
+// A command with nothing to parse where JSON is expected: an MQTT message with
+// an empty body, or an alias mapped to "" rather than to an array of actions.
+// Either left jkii_parse a zero length, which it asserted against. An alias
+// mapped to whitespace was parsed against the tokens left by the previous parse
+// instead, in every build. All of them have to be rejected like any other
+// malformed command.
+TEST_CASE( "_handle_command nothing to parse" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+
+    char kii_buff[2048];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // The result request is begun before the actions are parsed. A rejected
+    // command must abandon it rather than send it, so connecting fails the
+    // test.
+    int connects = 0;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&connects](void*, const char*, unsigned int) {
+        ++connects;
+        return KHC_SOCK_FAIL;
+    };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+
+    std::string command;
+
+    SECTION("empty payload") {
+        command = "";
+    }
+
+    SECTION("alias mapped to an empty string") {
+        command = "{\"commandID\":\"c\",\"actions\":[{\"alias\":\"\"}]}";
+    }
+
+    SECTION("alias mapped to whitespace") {
+        command = "{\"commandID\":\"c\",\"actions\":[{\"alias\":\"  \"}]}";
+    }
+
+    // Copied to an allocation of exactly its length, without a terminator, as
+    // a payload arrives.
+    std::unique_ptr<char[]> payload(new char[command.size()]);
+    memcpy(payload.get(), command.data(), command.size());
+
+    int called = 0;
+    tio_code_t res = _handle_command(
+            &handler, payload.get(), command.size(), cb_action_ok, &called);
+
+    REQUIRE( res == TIO_ERR_PARSE_JSON );
+    REQUIRE( called == 0 );
+    REQUIRE( connects == 0 );
+    // Released, as on the other paths that abandon the request.
+    REQUIRE( handler._kii._req_headers == NULL );
+}
+
+// A command's ID is a segment of the path its results are sent to, and went
+// into it as it came: one with a slash, a question mark or a line end sent
+// the results, with the thing's token, to another path than the command's.
+TEST_CASE( "_handle_command refuses a command ID that can't be a path segment" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = {tokens, 64};
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    char kii_buff[2048];
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    std::string sent;
+    int connects = 0;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&connects](void*, const char*, unsigned int) {
+        ++connects;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    size_t resp_pos = 0;
+    const std::string resp = "HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n";
+    http_ctx.on_recv = [&resp_pos, &resp](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
+        resp_pos += *out_actual_length;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&handler._kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&handler._kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&handler._kii, khct::cb::mock_close, &http_ctx);
+
+    auto handle = [&](const std::string& id, int* called) {
+        const std::string command =
+            "{\"commandID\":\"" + id + "\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+        return _handle_command(&handler, command.c_str(), command.length(), cb_action_ok, called);
+    };
+
+    SECTION("one that can't, with no action run and nothing sent") {
+        // As JSON has them: a slash may come escaped, and a line end has to.
+        for (const char* id : { "", ".", "..", "a/b", "a\\/b", "../../things/other", "a?b", "a#b",
+                "a%2Fb", "a b", "a\\r\\nX-Injected: 1", "a\\u0000b", "a\\\\b", "a\\u007fb" }) {
+            CAPTURE( std::string(id) );
+            int called = 0;
+            CHECK( handle(id, &called) == TIO_ERR_PARSE_JSON );
+            CHECK( called == 0 );
+        }
+        CHECK( connects == 0 );
+        CHECK( handler._kii._req_headers == nullptr );
+    }
+
+    SECTION("one that can, as the server gives them") {
+        int called = 0;
+        CHECK( handle("0af7a7e0-88d1-11e8-9a94-0af02ef8c0d5", &called) == TIO_ERR_OK );
+        CHECK( called == 1 );
+        // 2.x sends the whole URL in the request line.
+        CHECK( sent.find("PUT https://api.kii.com/thing-if/apps/appid/targets/thing:thingid/commands/"
+                    "0af7a7e0-88d1-11e8-9a94-0af02ef8c0d5/action-results HTTP/1.1") == 0 );
+    }
+
+    SECTION("one with what a segment may have") {
+        int called = 0;
+        CHECK( handle("a.b-c_d~e:f@g", &called) == TIO_ERR_OK );
+        CHECK( called == 1 );
+        CHECK( sent.find("/commands/a.b-c_d~e:f@g/action-results HTTP/1.1") != std::string::npos );
+    }
+}
+
+// A primitive action value such as abc or - is not JSON, which jsmn tokenized
+// all the same, and jkii cannot read a number out of range such as 1e999. The
+// action used to reach the callback with its value type and value never set.
+static void cb_parsed_action_copy(char* command_id, tio_action_t* action, void* userdata) {
+    std::vector<tio_action_t>* actions = (std::vector<tio_action_t>*)userdata;
+    actions->push_back(*action);
+}
+
+TEST_CASE( "_parse_command primitive values" ) {
+    tio_handler_t handler;
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    handler._kii._json_resource = &resource;
+
+    std::vector<tio_action_t> actions;
+
+    SECTION("JSON primitives are read with their type") {
+        const char command[] =
+            "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":["
+            "{\"a\":true},{\"b\":false},{\"c\":null},"
+            "{\"d\":23},{\"e\":-5},{\"f\":1.5},{\"g\":-2e3}]}]}";
+        tio_code_t res = _parse_command(
+                &handler, command, strlen(command), cb_parsed_action_copy, &actions);
+
+        REQUIRE( res == TIO_ERR_OK );
+        REQUIRE( actions.size() == 7 );
+        REQUIRE( actions[0].action_value.type == TIO_TYPE_BOOLEAN );
+        REQUIRE( actions[0].action_value.param.bool_value == KII_TRUE );
+        REQUIRE( actions[1].action_value.type == TIO_TYPE_BOOLEAN );
+        REQUIRE( actions[1].action_value.param.bool_value == KII_FALSE );
+        REQUIRE( actions[2].action_value.type == TIO_TYPE_NULL );
+        REQUIRE( actions[3].action_value.type == TIO_TYPE_INTEGER );
+        REQUIRE( actions[3].action_value.param.long_value == 23 );
+        REQUIRE( actions[4].action_value.type == TIO_TYPE_INTEGER );
+        REQUIRE( actions[4].action_value.param.long_value == -5 );
+        REQUIRE( actions[5].action_value.type == TIO_TYPE_DOUBLE );
+        REQUIRE( actions[5].action_value.param.double_value == 1.5 );
+        REQUIRE( actions[6].action_value.type == TIO_TYPE_DOUBLE );
+        REQUIRE( actions[6].action_value.param.double_value == -2000.0 );
+    }
+
+    SECTION("primitives jkii cannot read are rejected") {
+        const char* values[] = { "abc", "-", "tru", "0e", "1e999" };
+        for (const char* value : values) {
+            CAPTURE( value );
+            actions.clear();
+            std::string command =
+                "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"setX\":" +
+                std::string(value) + "}]}]}";
+            tio_code_t res = _parse_command(
+                    &handler, command.c_str(), command.length(),
+                    cb_parsed_action_copy, &actions);
+
+            REQUIRE( res == TIO_ERR_PARSE_JSON );
+            REQUIRE( actions.empty() );
+        }
+    }
+}
+
+// The same through _handle_command, which has started the result request by
+// the time it reads an action: no action called, nothing sent, and the
+// request released.
+TEST_CASE( "_handle_command invalid primitive values" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+
+    char kii_buff[2048];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // No request may be performed, so connecting is recorded and fails.
+    bool connected = false;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&connected](void*, const char*, unsigned int) {
+        connected = true;
+        return KHC_SOCK_FAIL;
+    };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+
+    const char* values[] = { "abc", "-", "tru", "0e", "1e999" };
+    for (const char* value : values) {
+        CAPTURE( value );
+        int called = 0;
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"setX\":" +
+            std::string(value) + "}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_PARSE_JSON );
+        REQUIRE( called == 0 );
+        REQUIRE( !connected );
+        REQUIRE( handler._kii._req_headers == NULL );
+    }
+}
+
+// jsmn is built non-strict, so a command object with an unquoted key parses,
+// with the key as a primitive token. Looking /commandID or /actions up in it
+// has to be a parse error rather than an assertion.
+TEST_CASE( "_handle_command unquoted key" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+
+    char kii_buff[2048];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // No request may be performed, so connecting is recorded and fails.
+    bool connected = false;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&connected](void*, const char*, unsigned int) {
+        connected = true;
+        return KHC_SOCK_FAIL;
+    };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+
+    SECTION("an unquoted commandID key is rejected") {
+        int called = 0;
+        std::string command =
+            "{commandID:\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_PARSE_JSON );
+        REQUIRE( called == 0 );
+        REQUIRE( !connected );
+    }
+
+    SECTION("an unquoted actions key is rejected") {
+        int called = 0;
+        std::string command =
+            "{\"commandID\":\"cmd1\",actions:[{\"alias1\":[{\"turnPower\":true}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_PARSE_JSON );
+        REQUIRE( called == 0 );
+        REQUIRE( !connected );
+    }
+}
+
+TEST_CASE( "_parse_command unquoted key" ) {
+    tio_handler_t handler;
+    jkii_token_t tokens[25];
+    jkii_resource_t resource = { tokens, 25 };
+    handler._kii._json_resource = &resource;
+
+    int called = 0;
+    const char command[] = "{commandID:\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+    tio_code_t res = _parse_command(&handler, command, strlen(command), cb_parsed_action_count, &called);
+
+    REQUIRE( res == TIO_ERR_PARSE_JSON );
+    REQUIRE( called == 0 );
+}
+
+// An alias or an action that isn't an object, or an alias whose actions aren't
+// an array, ended the walk as the end of the array would: the command was
+// taken as good, with the actions before it alone, and those after it were
+// dropped. A malformed command is refused whole, before any of its actions
+// runs, wherever the malformed part is.
+static const char* const malformed_commands[] = {
+    // An alias that isn't an object, after one that is.
+    "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]},\"junk\",{\"alias2\":[{\"setTemp\":23}]}]}",
+    // An action that isn't an object, after one that is.
+    "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true},7,{\"setTemp\":23}]}]}",
+    // An alias whose actions are an object, not an array.
+    "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":{\"turnPower\":{\"power\":true}}}]}",
+    // The same, after an alias that is good.
+    "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]},{\"alias2\":{\"setTemp\":{\"t\":23}}}]}",
+    // An empty action object, after an action that is good.
+    "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true},{}]}]}",
+    // A value jkii can't read, after an action that is good.
+    "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true},{\"setX\":1e999}]}]}",
+};
+
+TEST_CASE( "_parse_command malformed commands" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = {tokens, 64};
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    for (const char* command : malformed_commands) {
+        CAPTURE( command );
+        int called = 0;
+        tio_code_t res = _parse_command(&handler, command, strlen(command),
+                cb_parsed_action_count, &called);
+        CHECK( res == TIO_ERR_PARSE_JSON );
+        CHECK( called == 0 );
+    }
+}
+
+TEST_CASE( "_handle_command malformed commands" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = {tokens, 64};
+    kii_set_json_parser_resource(&handler._kii, &resource);
+
+    char kii_buff[2048];
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // No request may be performed, so connecting is recorded and fails.
+    bool connected = false;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&connected](void*, const char*, unsigned int) {
+        connected = true;
+        return KHC_SOCK_FAIL;
+    };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&handler._kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&handler._kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&handler._kii, khct::cb::mock_close, &http_ctx);
+
+    for (const char* command : malformed_commands) {
+        CAPTURE( command );
+        connected = false;
+        int called = 0;
+        tio_code_t res = _handle_command(
+                &handler, command, strlen(command), cb_action_ok, &called);
+        CHECK( res == TIO_ERR_PARSE_JSON );
+        CHECK( called == 0 );
+        CHECK( !connected );
+        CHECK( handler._kii._req_headers == nullptr );
     }
 }
