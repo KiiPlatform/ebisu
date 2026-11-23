@@ -350,6 +350,10 @@ typedef struct khc_t {
 
     size_t _read_size; /**< \private **/
     bool _read_req_end; /**< \private **/
+    /** \private Whether the server answered before the request's body was
+     * sent whole, and the rest isn't sent: RFC 9112, section 9.5. An interim
+     * 1xx response, with nothing after it, has the rest sent after all. */
+    bool _req_body_cut;
     /* The request body's length, or KHC_REQ_BODY_LENGTH_UNKNOWN to send it
      * chunked. */
     size_t _req_body_length; /**< \private **/
@@ -462,6 +466,16 @@ void khc_reset_except_request(khc_t* khc);
  * Each call starts from the request alone: what the last one's response left
  * behind is reset first, as by khc_reset_except_request(khc_t*). A body is
  * read through the read callback each time, which must start it over.
+ *
+ * A server may answer before the request's body is sent whole, with a 401 or
+ * a 413 for instance, and close the connection. With a socket that has
+ * recv_wait, khc looks for that before each part of the body, and after a
+ * send that fails, as RFC 9112, section 9.5, has a client do: it stops
+ * sending, reads the response, and returns as for any other, its status code
+ * the server's, with the rest of the body neither read nor sent. An interim
+ * 1xx response with nothing after it has the rest sent after all. Without
+ * recv_wait, khc reads once the request is sent, and a send that fails fails
+ * the request.
  *
  * This method blocks until the HTTP session ends.
  * \param [in, out] khc instance.

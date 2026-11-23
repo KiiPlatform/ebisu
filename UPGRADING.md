@@ -558,6 +558,13 @@ khc, which kii and tio report in their own codes:
   failed it only for a body's first part, read with the headers, and took it
   for the rest, counting the more as received: a `Content-Length` body could
   end early with `KHC_ERR_OK`.
+- A response the server sends before the request's body is sent whole, as a
+  401 or a 413 the server then closes the connection after, is read and
+  returned, with its status code, rather than lost to the send that found the
+  connection closed, which 1.x returned as `KHC_ERR_SOCK_SEND`: khc looks for
+  it with the socket's `recv_wait`, as RFC 9112 asks of a client, and stops
+  sending the body. The read callback isn't asked for the rest of the body.
+  Without `recv_wait`, khc sends the whole request first, as 1.x did.
 - GET, HEAD and DELETE send no body, and don't call the read callback.
 - Each chunk of a request body is sent in one send, with its size line and CRLF,
   from the stream buffer. 1.x sent the three separately. The read callback is
