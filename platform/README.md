@@ -97,7 +97,10 @@ of the application's own, as the
   `-DEBISU_LOG=OFF`. `ebisu_schannel_socket_get_protocol()` and
   `ebisu_schannel_socket_get_cipher()` give the TLS version and cipher suite a
   connection negotiated, the suite by its standard name from Windows 10 on.
-  Needs Windows 8 or later, and only what it provides,
+  Its sockets share one credentials handle, which Schannel resumes TLS sessions
+  with: a connection offers the server the session of an earlier one to the
+  same host, and the server's certificate is checked all the same, resumed or
+  not. Needs Windows 8 or later, and only what it provides,
   `ws2_32`, `secur32` and `crypt32`, which it links.
 
 - **FreeRTOS** (`ebisu_freertos.h`, library `ebisu_freertos`):

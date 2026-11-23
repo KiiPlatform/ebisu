@@ -352,6 +352,8 @@ class Server:
         self.server_names = []
         self.ends = []
         self.versions = []
+        # Whether each connection's handshake resumed a session.
+        self.reused = []
         self.lock = threading.Lock()
         threading.Thread(target=self.accept, daemon=True).start()
 
@@ -392,6 +394,7 @@ class Server:
             conn.handshake()
             with self.lock:
                 self.versions.append(conn.tls.version())
+                self.reused.append(conn.tls.session_reused)
             end = serve_commands(conn)
         except (EOFError, ConnectionError, ssl.SSLError, socket.timeout) as e:
             end = 'error: %r' % e
@@ -480,6 +483,8 @@ class Test:
         self.gated_env = gated_env
         self.names = itertools.count(1)
         self.failures = 0
+        # On Windows itself, rather than under wine.
+        self.windows = False
 
     def gated_host(self, ms):
         """A name no other run looks up, whose lookup ends ms milliseconds
@@ -567,6 +572,27 @@ def run_tests(t, d):
             result_code(steps, 0) == ('connect', 'OK') and step(steps, 1) == ('send', 'OK 11') and
             recv_result(steps, 2)[::4] == ('OK', 'hello\\n') and step(steps, 3) == ('close', 'OK'), out)
     t.check('close sends close_notify', good.end(n) == 'close_notify', out + '\nserver: %s' % good.end(n))
+
+    # Two connections of one socket: the second resumes the first's session,
+    # which Schannel does only on a connection made with the same
+    # credentials. Wine's Schannel needn't resume at all, so under wine only
+    # the connections are checked, and whether it resumed is said.
+    n = len(good.ends)
+    with good.lock:
+        r = len(good.reused)
+    out, steps = t.run(port, 5, 'connect', 'send:echo one\\n', 'recv:100', 'close',
+                       'connect', 'send:echo two\\n', 'recv:100', 'close')
+    good.end(n + 1)
+    with good.lock:
+        reused = good.reused[r:]
+    both = (result_code(steps, 0) == ('connect', 'OK') and recv_result(steps, 2)[::4] == ('OK', 'one\\n') and
+            result_code(steps, 4) == ('connect', 'OK') and recv_result(steps, 6)[::4] == ('OK', 'two\\n'))
+    if t.windows:
+        t.check('the second connection resumes the first one\'s session, and says so',
+                both and reused == [False, True] and 'resumed the TLS session with localhost' in out,
+                out + '\nserver: resumed %s' % reused)
+    else:
+        t.check('two connections of one socket (resumed under wine: %s)' % reused, both, out)
 
     # (bytes, how the server cuts the ciphertext up, the client's buffer)
     for size, mode, bufsize in ((1000000, 'whole', 65536), (1000000, 'random', 4096),
@@ -1030,6 +1056,7 @@ def on_windows(exe, d):
         powershell("Add-DnsClientNrptRule -Namespace '.%s' -NameServers 127.0.0.1; Clear-DnsClientCache"
                    % GATED_DOMAIN)
         t = Test([exe], dict(os.environ), dict(os.environ))
+        t.windows = True
         run_tests(t, d)
         return t
     finally:
