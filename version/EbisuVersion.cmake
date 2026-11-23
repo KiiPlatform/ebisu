@@ -150,9 +150,8 @@ function(set_git_version_and_generate_header)
     # gave them, so a minor release, which may add to them, breaks the ABI, and
     # a patch release doesn't: an application built against 2.0 doesn't load
     # 2.1's libraries, rather than run with structs of another size, and loads
-    # 2.0.1's. 2.0.0's had the major alone, and 1.x's the whole
-    # major.minor.patch, which had consumers relink for 1.3.1 -> 1.3.2 with
-    # nothing about the interface changed.
+    # 2.0.1's. 1.x's was the whole major.minor.patch, which had consumers
+    # relink for 1.3.1 -> 1.3.2 with nothing about the interface changed.
     string(REGEX MATCH "^[0-9]+\\.[0-9]+" SOVERSION_STRING ${VERSION_STRING})
 
     # `git describe` output as-is, or what version/VERSION holds, so a build 19
