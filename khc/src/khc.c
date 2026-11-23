@@ -84,6 +84,16 @@ khc_code_t khc_perform(khc_t* khc) {
             khc->_cb_header == NULL || khc->_cb_write == NULL) {
         return KHC_ERR_FAIL;
     }
+    // A buffer given with a size of 0. The room left in a response header
+    // buffer, its size less one for the NUL, wrapped around, and reads into
+    // it were no longer bounded by it. A stream buffer was read into with a
+    // size of 0, which a socket answers as the end of the stream, ending a
+    // body at what came with the headers. A NULL buffer is allocated, as
+    // khc_init() leaves them.
+    if ((khc->_resp_header_buff != NULL && khc->_resp_header_buff_size == 0) ||
+            (khc->_stream_buff != NULL && khc->_stream_buff_size == 0)) {
+        return KHC_ERR_FAIL;
+    }
     // A timeout needs a clock to be measured with.
     if (khc->_timeout_ms > 0 && (khc->_system == NULL ||
             khc->_system->ops == NULL || khc->_system->ops->monotonic_ms == NULL)) {

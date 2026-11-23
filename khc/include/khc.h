@@ -468,6 +468,9 @@ void khc_reset_except_request(khc_t* khc);
  * \returns KHC_ERR_OK if the response was read whole. KHC_ERR_FAIL, without
  * connecting, if the socket, one of its operations other than recv_timed_out,
  * the write callback or the header callback is not set. The read callback may be left out for a request with no body.
+ * KHC_ERR_FAIL too, without connecting, for a buffer set with a size of 0 by
+ * khc_set_resp_header_buff(khc_t*, char*, size_t) or
+ * khc_set_stream_buff(khc_t*, char*, size_t).
  */
 khc_code_t khc_perform(khc_t* khc);
 
@@ -605,7 +608,8 @@ khc_code_t khc_set_req_headers(khc_t* khc, khc_slist_t* headers);
 
  * \param [out] khc instance.
  * \param [in] buffer pointer to the buffer.
- * \param [in] buff_size size of the buffer.
+ * \param [in] buff_size size of the buffer, at least 1 for a buffer that isn't
+ * NULL: khc_perform(khc_t*) returns KHC_ERR_FAIL for 0.
  */
 void khc_set_resp_header_buff(khc_t* khc, char* buffer, size_t buff_size);
 
@@ -629,7 +633,8 @@ void khc_set_resp_header_buff(khc_t* khc, char* buffer, size_t buff_size);
  *
  * \param [out] khc instance.
  * \param [in] buffer pointer to the buffer.
- * \param [in] buff_size size of the buffer.
+ * \param [in] buff_size size of the buffer, at least 1 for a buffer that isn't
+ * NULL: khc_perform(khc_t*) returns KHC_ERR_FAIL for 0.
  */
 void khc_set_stream_buff(khc_t* khc, char* buffer, size_t buff_size);
 
