@@ -51,11 +51,13 @@ void sample_tls_init(const char* ca, size_t ca_size)
 }
 
 void sample_tls_socket_init(sample_tls_socket_t* tls, ebisu_socket_t* transport,
-        ebisu_clock_t* clock, ebisu_logger_t* logger)
+        ebisu_clock_t* clock, ebisu_logger_t* logger, ebisu_system_t* system,
+        unsigned int handshake_sec)
 {
     ebisu_polarssl_socket_init(tls, transport, &tls_config);
     ebisu_polarssl_socket_set_clock(tls, clock);
     ebisu_polarssl_socket_set_logger(tls, logger);
+    ebisu_polarssl_socket_set_handshake_timeout(tls, system, handshake_sec);
 }
 
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

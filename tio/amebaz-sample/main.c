@@ -32,6 +32,11 @@
 
 #define TO_RECV_SEC 15
 #define TO_SEND_SEC 15
+/* The TLS handshake as a whole: each wait in it has the receive timeout, and
+   a server that sends a little at a time would otherwise hold it as long as
+   it likes. Room for a handshake of software cryptography, at this chip's
+   speed. */
+#define HANDSHAKE_SEC 30
 
 /* In words. Each task makes TLS connections, whose handshake takes the most
    of it: the application's, which onboards, and the handler's and the
@@ -242,7 +247,8 @@ static void init_socket(sample_socket_t* sock)
     ebisu_lwip_tcp_socket_set_logger(&sock->tcp, sample_logger());
     /* The system's clock: the server clock app_task() sets on it. */
     sample_tls_socket_init(&sock->tls, &sock->tcp.base,
-            ebisu_system_clock(&sample_system.base), sample_logger());
+            ebisu_system_clock(&sample_system.base), sample_logger(),
+            &sample_system.base, HANDSHAKE_SEC);
 }
 
 static void app_task(void* arg)
