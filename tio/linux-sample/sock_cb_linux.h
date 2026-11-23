@@ -14,6 +14,10 @@ typedef struct {
     int socket;
     unsigned int to_recv;
     unsigned int to_send;
+    /* Whether SSL_read() or SSL_write() ended the connection with an error,
+       after which SSL_shutdown() must not be called. 1 or 0, set by
+       sock_cb_connect(). */
+    int ssl_failed;
 } socket_context_t;
 
 khc_sock_code_t

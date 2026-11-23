@@ -5,6 +5,7 @@
 #include <sys/uio.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -18,6 +19,59 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
+
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+/* Before 1.1.0, OpenSSL leaves its locking to the application, and without it
+   the tasks' connections corrupt its state. The ID of a thread it takes from
+   the address of errno, which is one per thread here. */
+static pthread_mutex_t openssl_locks[CRYPTO_NUM_LOCKS];
+
+static void openssl_lock(int mode, int n, const char* file, int line)
+{
+    (void)file;
+    (void)line;
+    if (mode & CRYPTO_LOCK) {
+        pthread_mutex_lock(&openssl_locks[n]);
+    } else {
+        pthread_mutex_unlock(&openssl_locks[n]);
+    }
+}
+#endif
+
+/* What SSL_get_error() answers depends on this thread's error queue being empty
+   before the call it is asked about, and errno says something only if that call
+   set it. A failure earlier on the thread leaves both behind: the task making a
+   request is often the one whose last connection failed. */
+static void clear_errors(void)
+{
+    ERR_clear_error();
+    errno = 0;
+}
+
+static void print_ssl_failure(const char* what, int ssl_error, int saved_errno)
+{
+    if (ssl_error == SSL_ERROR_SYSCALL) {
+        printf("failed to %s: errno=%d: %s\n", what, saved_errno, strerror(saved_errno));
+    } else if (ssl_error == SSL_ERROR_SSL) {
+        char sslErrStr[120];
+        ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
+        printf("failed to %s: %s\n", what, sslErrStr);
+    } else {
+        printf("failed to %s: SSL_get_error()=%d\n", what, ssl_error);
+    }
+}
+
+static void init_openssl(void)
+{
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+    for (int i = 0; i < CRYPTO_NUM_LOCKS; ++i) {
+        pthread_mutex_init(&openssl_locks[i], NULL);
+    }
+    CRYPTO_set_locking_callback(openssl_lock);
+#endif
+    SSL_library_init();
+    SSL_load_error_strings();
+}
 
 khc_sock_code_t
     sock_cb_connect(void* sock_ctx, const char* host,
@@ -68,7 +122,9 @@ khc_sock_code_t
         return KHC_SOCK_FAIL;
     }
 
-    SSL_library_init();
+    /* The tasks connect at the same time, and it is not safe to run twice. */
+    static pthread_once_t openssl_initialized = PTHREAD_ONCE_INIT;
+    pthread_once(&openssl_initialized, init_openssl);
     const SSL_METHOD *method =
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L)
         TLSv1_2_client_method();
@@ -102,6 +158,7 @@ khc_sock_code_t
         return KHC_SOCK_FAIL;
     }
 
+    clear_errors();
     ret = SSL_connect(ssl);
     if (ret != 1) {
         char sslErrStr[120];
@@ -112,6 +169,7 @@ khc_sock_code_t
 
     ctx->socket = sock;
     ctx->ssl = ssl;
+    ctx->ssl_failed = 0;
     ctx->ssl_ctx = ssl_ctx;
     return KHC_SOCK_OK;
 }
@@ -123,14 +181,20 @@ khc_sock_code_t
             size_t* out_sent_length)
 {
     socket_context_t* ctx = (socket_context_t*)socket_context;
+    clear_errors();
     int ret = SSL_write(ctx->ssl, buffer, length);
     if (ret > 0) {
         *out_sent_length = ret;
         return KHC_SOCK_OK;
-    } else {
-        printf("failed to send\n");
-        return KHC_SOCK_FAIL;
     }
+    /* errno first, before anything else can change it. */
+    int saved_errno = errno;
+    int ssl_error = SSL_get_error(ctx->ssl, ret);
+    if (ssl_error == SSL_ERROR_SYSCALL || ssl_error == SSL_ERROR_SSL) {
+        ctx->ssl_failed = 1;
+    }
+    print_ssl_failure("send", ssl_error, saved_errno);
+    return KHC_SOCK_FAIL;
 }
 
 khc_sock_code_t
@@ -141,30 +205,39 @@ khc_sock_code_t
 {
     socket_context_t* ctx = (socket_context_t*)socket_context;
     *out_actual_length = 0;
+    clear_errors();
     int ret = SSL_read(ctx->ssl, buffer, length_to_read);
     if (ret > 0) {
         *out_actual_length = ret;
         return KHC_SOCK_OK;
-    } else if (ret == 0) {
-        int ssl_error = SSL_get_error(ctx->ssl, ret);
-        if (ssl_error == SSL_ERROR_ZERO_RETURN) {
-            return KHC_SOCK_OK;
-        } else if (ssl_error == SSL_ERROR_WANT_READ || ssl_error == SSL_ERROR_WANT_WRITE) {
-            return KHC_SOCK_AGAIN;
-        } else if (ssl_error == SSL_ERROR_SYSCALL){
-            if (errno == 0){
-                return KHC_SOCK_OK;
-            } else {
-                printf("SSL_ERROR_SYSCALL: errno=%d: %s\n", errno, strerror(errno));
-                return KHC_SOCK_FAIL;
-            }
-        } else {
-            return KHC_SOCK_FAIL;
-        }
-        return KHC_SOCK_FAIL;
-    } else {
-        return KHC_SOCK_FAIL;
     }
+    /* errno first, before anything else can change it. */
+    int saved_errno = errno;
+    int ssl_error = SSL_get_error(ctx->ssl, ret);
+    switch (ssl_error) {
+    case SSL_ERROR_ZERO_RETURN:
+        return KHC_SOCK_OK;
+    case SSL_ERROR_WANT_READ:
+    case SSL_ERROR_WANT_WRITE:
+        /* The receive timeout, as these sockets block. Not KHC_SOCK_AGAIN,
+           on which khc reads again at once, and for good if the server has
+           gone. */
+        return KHC_SOCK_FAIL;
+    case SSL_ERROR_SYSCALL:
+        ctx->ssl_failed = 1;
+        /* The end of the stream, from a peer that sent no close_notify. */
+        if (saved_errno == 0) {
+            return KHC_SOCK_OK;
+        }
+        break;
+    case SSL_ERROR_SSL:
+        ctx->ssl_failed = 1;
+        break;
+    default:
+        break;
+    }
+    print_ssl_failure("receive", ssl_error, saved_errno);
+    return KHC_SOCK_FAIL;
 }
 
 khc_sock_code_t
@@ -176,19 +249,24 @@ khc_sock_code_t
        the normal outcome against a server that closes the connection itself.
        Everything below is torn down regardless, so a unidirectional shutdown is
        all we need. SSL_get_error() is only meaningful for a negative return.
+       It must not be called at all on a connection that already failed, as
+       OpenSSL says, and fails there.
        See https://www.openssl.org/docs/man3.0/man3/SSL_shutdown.html */
     int shutdown_ok = 1;
-    int ret = SSL_shutdown(ctx->ssl);
-    if (ret < 0) {
-        int sslErr = SSL_get_error(ctx->ssl, ret);
-        if (sslErr != SSL_ERROR_SYSCALL && sslErr != SSL_ERROR_ZERO_RETURN) {
-            char sslErrStr[120];
-            ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
-            printf("failed to shutdown: %s\n", sslErrStr);
-            shutdown_ok = 0;
+    if (ctx->ssl_failed == 0) {
+        clear_errors();
+        int ret = SSL_shutdown(ctx->ssl);
+        if (ret < 0) {
+            int sslErr = SSL_get_error(ctx->ssl, ret);
+            if (sslErr != SSL_ERROR_SYSCALL && sslErr != SSL_ERROR_ZERO_RETURN) {
+                char sslErrStr[120];
+                ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
+                printf("failed to shutdown: %s\n", sslErrStr);
+                shutdown_ok = 0;
+            }
+            /* Otherwise the peer closed the transport without a close_notify,
+               which is harmless while we are tearing the connection down. */
         }
-        /* Otherwise the peer closed the transport without a close_notify,
-           which is harmless while we are tearing the connection down. */
     }
     close(ctx->socket);
     SSL_free(ctx->ssl);

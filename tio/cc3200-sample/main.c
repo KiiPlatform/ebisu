@@ -104,6 +104,10 @@ extern uVectorEntry __vector_table;
 
 static OsiLockObj_t m_mutex;
 
+// Stack size in bytes and priority of the handler's MQTT task, which
+// task_create_cb_impl() takes as its userdata.
+static task_context_t mqtt_task_ctx = { OSI_STACK_SIZE * 4, 1 };
+
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- End
 //*****************************************************************************
@@ -665,7 +669,7 @@ void handler_init(
 
 //    tio_handler_set_cb_push(handler, pushed_message_callback, NULL);
 
-    tio_handler_set_cb_task_create(handler, task_create_cb_impl, NULL);
+    tio_handler_set_cb_task_create(handler, task_create_cb_impl, &mqtt_task_ctx);
     tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl, NULL);
 
     tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_sock_ctx);

@@ -212,6 +212,12 @@ int main(int argc, char** argv)
         exit(1);
     }
 
+    // A write to a connection the peer has reset raises SIGPIPE, which ends
+    // the process. SSL_write() can make one, and so can SSL_shutdown() in
+    // sock_cb_close(), which sends close_notify when a task reconnects. Have
+    // the write fail with EPIPE instead.
+    signal(SIGPIPE, SIG_IGN);
+
     tio_updater_t updater;
 
     socket_context_t updater_http_ctx;
@@ -287,7 +293,7 @@ int main(int argc, char** argv)
                     exit(1);
                 }
                 if (password == NULL) {
-                    printf("password is not specifeid.\n");
+                    printf("password is not specified.\n");
                     exit(1);
                 }
                 tio_code_t result = tio_handler_onboard(
@@ -305,7 +311,9 @@ int main(int argc, char** argv)
                 printf("Onboarding succeeded!\n");
                 break;
             }
-            printf("option %s : %s\n", optName, optarg);
+            // Not the password, which a terminal's scrollback and a service's
+            // log keep.
+            printf("option %s : %s\n", optName, c == 1 ? "(given)" : optarg);
             switch(c) {
                 case 0:
                     vendorThingID = optarg;
