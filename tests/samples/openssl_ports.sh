@@ -13,6 +13,8 @@
 #   differ from 3.x's.
 # DOCKER names the container tool, docker by default; DOCKER_OPTS adds options
 # to its run, such as --security-opt label=disable for podman with SELinux.
+# UBUNTU_MIRROR, such as http://azure.archive.ubuntu.com/ubuntu, is where the
+# container gets its packages, archive.ubuntu.com by default.
 set -euo pipefail
 version=$1
 root=$(cd "$(dirname "$0")/../.." && pwd)
@@ -31,19 +33,27 @@ if [ "${OPENSSL_PORTS_INSIDE:-}" != 1 ]; then
     trap 'rm -rf "$out"' EXIT
     "$root/version/ebisu_version.sh" "$out/ebisu_version.h"
     # shellcheck disable=SC2086
-    "${DOCKER:-docker}" run --rm ${DOCKER_OPTS:-} -e OPENSSL_PORTS_INSIDE=1 \
+    "${DOCKER:-docker}" run --rm ${DOCKER_OPTS:-} -e OPENSSL_PORTS_INSIDE=1 -e UBUNTU_MIRROR \
         -v "$root:/src:ro" -v "$out:/out" docker.io/library/ubuntu:18.04 \
         bash /src/tests/samples/openssl_ports.sh "$version"
     exit
 fi
 
+if [ -n "${UBUNTU_MIRROR:-}" ]; then
+    sed -i -e "s|http://archive.ubuntu.com/ubuntu/|${UBUNTU_MIRROR%/}/|" \
+        -e "s|http://security.ubuntu.com/ubuntu/|${UBUNTU_MIRROR%/}/|" /etc/apt/sources.list
+fi
+
 # The archive has been unreachable from the runners for minutes at a time:
 # apt-get update then goes on without the lists it couldn't fetch, and install
-# fails. Both again, after a while, before giving up.
+# fails. It has also sent its files at a few kB/s, which apt-get takes for a
+# connection that still works, so that the job ran out of time with nothing
+# in its log. Each attempt is bounded, and tried again, after a while, before
+# giving up.
 apt=(apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30)
 for attempt in 1 2 3 4 5; do
-    if "${apt[@]}" update -qq >/dev/null &&
-            "${apt[@]}" install -y -qq --no-install-recommends \
+    if timeout 120 "${apt[@]}" update -qq >/dev/null &&
+            timeout 300 "${apt[@]}" install -y -qq --no-install-recommends \
                 build-essential perl wget ca-certificates >/dev/null; then
         break
     fi
@@ -62,7 +72,8 @@ case $series in
     [34].*) url="https://github.com/openssl/openssl/releases/download/openssl-$version/openssl-$version.tar.gz" ;;
     *) url="https://www.openssl.org/source/old/$series/openssl-$version.tar.gz" ;;
 esac
-wget -q "$url"
+# Bounded for the same reason, and tried again by wget.
+timeout 300 wget -q --tries=3 --timeout=30 "$url"
 echo "$sha256  openssl-$version.tar.gz" | sha256sum -c -
 tar xzf "openssl-$version.tar.gz"
 cd "openssl-$version"
