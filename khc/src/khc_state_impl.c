@@ -184,6 +184,33 @@ static const char* request_path(khc_t* khc) {
      + sizeof(schema_https) - 1 + KHC_HOST_MAX_SIZE - 1 + KHC_PATH_MAX_SIZE - 1 + 1 \
      + sizeof(http_version) - 1)
 
+// Whether the server has sent something, while the request is still being
+// sent, as the socket's recv_wait says without waiting. It returns true only
+// for what recv has to return: data, the end of the stream or a failure, a
+// TLS record without data not counting. Without it, khc sends the whole
+// request before it reads.
+static bool _response_waiting(khc_t* khc) {
+    const ebisu_socket_ops_t* ops = khc->_socket->ops;
+    return ops->recv_wait != NULL && ops->recv_wait(khc->_socket, 0);
+}
+
+// A send failed: the server may have answered and closed the connection,
+// the answer having arrived before the send found it closed. If the socket
+// has it to return, it is the response, rather than the failure.
+static void _send_failed(khc_t* khc) {
+    _record_sock_error(khc);
+    if (_response_waiting(khc)) {
+        _khc_log(khc, EBISU_LOG_DEBUG,
+                "sending failed with %lu bytes of the body sent: reading the server's answer",
+                (unsigned long)khc->_req_body_sent);
+        khc->_req_body_cut = true;
+        khc->_state = KHC_STATE_RESP_STATUS_READ;
+        return;
+    }
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_SOCK_SEND;
+}
+
 void khc_state_req_line(khc_t* khc) {
     char request_line[REQUEST_LINE_MAX_LEN + 1];
 
@@ -220,9 +247,7 @@ void khc_state_req_line(khc_t* khc) {
         return;
     }
     if (send_res == EBISU_SOCK_FAIL) {
-        _record_sock_error(khc);
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_SEND;
+        _send_failed(khc);
         return;
     }
 }
@@ -256,9 +281,7 @@ void khc_state_req_host_header(khc_t* khc) {
         return;
     }
     if (send_res == EBISU_SOCK_FAIL) {
-        _record_sock_error(khc);
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_SEND;
+        _send_failed(khc);
         return;
     }
 }
@@ -306,9 +329,7 @@ void khc_state_req_header_send(khc_t* khc) {
         return;
     }
     if (send_res == EBISU_SOCK_FAIL) {
-        _record_sock_error(khc);
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_SEND;
+        _send_failed(khc);
         return;
     }
 }
@@ -336,9 +357,7 @@ void khc_state_req_header_send_crlf(khc_t* khc) {
         return;
     }
     if (send_res == EBISU_SOCK_FAIL) {
-        _record_sock_error(khc);
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_SEND;
+        _send_failed(khc);
         return;
     }
 }
@@ -403,7 +422,6 @@ void khc_state_req_header_end(khc_t* khc) {
             khc->_req_body_sent = 0;
             khc->_state = KHC_STATE_REQ_BODY_READ;
         } else {
-            khc->_resp_header_read_size = 0;
             khc->_state = KHC_STATE_RESP_STATUS_READ;
         }
         khc->_read_req_end = false;
@@ -414,9 +432,7 @@ void khc_state_req_header_end(khc_t* khc) {
         return;
     }
     if (send_res == EBISU_SOCK_FAIL) {
-        _record_sock_error(khc);
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_SEND;
+        _send_failed(khc);
         return;
     }
 }
@@ -439,6 +455,18 @@ static size_t _hex_digits(size_t size) {
 // be sent, so that each part goes out in one send: over TLS, one record rather
 // than three for each chunk.
 void khc_state_req_body_read(khc_t* khc) {
+    // A server may answer before the body is all sent, a 401 or a 413 for
+    // instance, and close the connection: RFC 9112, section 9.5, has the
+    // client look for that while it sends, and stop. Sent on regardless, the
+    // body met a closed connection, and the answer was lost with it.
+    if (_response_waiting(khc)) {
+        _khc_log(khc, EBISU_LOG_DEBUG,
+                "the server answered with %lu bytes of the body sent: reading it",
+                (unsigned long)khc->_req_body_sent);
+        khc->_req_body_cut = true;
+        khc->_state = KHC_STATE_RESP_STATUS_READ;
+        return;
+    }
     if (khc->_req_body_length != KHC_REQ_BODY_LENGTH_UNKNOWN) {
         size_t want = khc->_req_body_left < khc->_stream_buff_size ?
             khc->_req_body_left : khc->_stream_buff_size;
@@ -522,7 +550,6 @@ void khc_state_req_body_send(khc_t* khc) {
         if (khc->_read_req_end) {
             _khc_log(khc, EBISU_LOG_DEBUG, "> (a body of %lu bytes)",
                     (unsigned long)khc->_req_body_sent);
-            khc->_resp_header_read_size = 0;
             khc->_state = KHC_STATE_RESP_STATUS_READ;
         } else {
             khc->_state = KHC_STATE_REQ_BODY_READ;
@@ -534,9 +561,7 @@ void khc_state_req_body_send(khc_t* khc) {
         return;
     }
     if (send_res == EBISU_SOCK_FAIL) {
-        _record_sock_error(khc);
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_SEND;
+        _send_failed(khc);
         return;
     }
 }
@@ -689,6 +714,14 @@ void khc_state_resp_header_callback(khc_t* khc) {
 
     if (header_size == 0) {
         if (100 <= khc->_status_code && khc->_status_code < 200) {
+            // An interim response that came before the body was sent whole,
+            // with nothing of another after it: the server waits for the rest
+            // of the body, which is sent before the final response is read.
+            if (khc->_req_body_cut && khc->_resp_header_read_size == 0) {
+                khc->_req_body_cut = false;
+                khc->_state = KHC_STATE_REQ_BODY_READ;
+                return;
+            }
             // The final response may have come with this one, its status
             // line whole: then there is nothing to wait for.
             if (_find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size) != NULL) {

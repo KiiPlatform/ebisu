@@ -247,6 +247,7 @@ void khc_reset_except_request(khc_t* khc) {
     khc->_current_req_header = NULL;
     khc->_read_size = 0;
     khc->_read_req_end = false;
+    khc->_req_body_cut = false;
     khc->_req_body_left = 0;
     khc->_req_body_sent = 0;
     khc->_req_frame_start = 0;
