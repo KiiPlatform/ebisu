@@ -13,14 +13,9 @@
 # added passes, functions and enumerators appended to an enum, as an
 # application built against the release still runs with the candidate.
 #
-# One exception: against v2.0.0 alone, the soname may have gone from 2.0.0's,
-# which had the major alone or no version, to major.minor, as 2.0.1 changed
-# it. 2.0.0 had no users to keep binary compatibility for. The types and the
-# functions are still compared with 2.0.0's.
-#
 # A tree whose X.Y has no release yet has nothing to keep, and passes.
 #
-# Needs cmake, ninja, git, readelf, patchelf and abidiff (libabigail). Builds
+# Needs cmake, ninja, git, readelf and abidiff (libabigail). Builds
 # into $COMPAT_WORK, by default ${RUNNER_TEMP:-/tmp}/ebisu-compat, and writes
 # a report to $GITHUB_STEP_SUMMARY when it is set.
 set -euo pipefail
@@ -63,16 +58,6 @@ soname() {
     readelf -d "$1" | sed -n 's/.*Library soname: \[\(.*\)\].*/\1/p'
 }
 
-# Whether release TAG's soname OLD for library LIB may be NEW.
-soname_change_allowed() {
-    local tag=$1 lib=$2 old=$3 new=$4
-    [ "$tag" = v2.0.0 ] || return 1
-    case "$old" in
-        "lib$lib.so" | "lib$lib.so.2") [ "$new" = "lib$lib.so.2.0" ] ;;
-        *) return 1 ;;
-    esac
-}
-
 build "$candidate" candidate
 version=$(sed -n 's/^#define EBISU_VERSION "\(.*\)"$/\1/p' \
     "$(find "$work/candidate/build" -name ebisu_version.h | head -1)")
@@ -106,16 +91,7 @@ for tag in $releases; do
         old_soname=$(soname "$old"); new_soname=$(soname "$new")
         soname_note=$new_soname
         if [ "$old_soname" != "$new_soname" ]; then
-            if soname_change_allowed "$tag" "$lib" "$old_soname" "$new_soname"; then
-                # Compared under the candidate's soname, so that abidiff
-                # reports what else changed, if anything.
-                cp "$old" "$work/$tag/lib$lib.renamed"
-                old="$work/$tag/lib$lib.renamed"
-                patchelf --set-soname "$new_soname" "$old"
-                soname_note="$old_soname -> $new_soname (allowed against $tag)"
-            else
-                soname_note="**$old_soname -> $new_soname**"; failed=1
-            fi
+            soname_note="**$old_soname -> $new_soname**"; failed=1
         fi
         report="$work/$tag-lib$lib.abidiff"
         set +e
