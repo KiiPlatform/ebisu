@@ -78,6 +78,7 @@
       "displayName": "Small tests under ASan/UBSan",
       "description": "Catches what valgrind cannot, such as overruns of .rodata",
       "filter": { "include": { "label": "small" } },
+      "environment": { "ASAN_OPTIONS": "strict_string_checks=1" },
       "execution": { "jobs": 0 }
     }
   ]
