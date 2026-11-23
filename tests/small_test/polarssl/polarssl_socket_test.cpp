@@ -6,6 +6,7 @@
 // as PolarSSL has no configuration to set them in.
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
+#include <polarssl/version.h>
 
 // OpenSSL's first: PolarSSL's headers define macros, ASN1_BOOLEAN and the
 // like, of the names of OpenSSL's types.
@@ -891,6 +892,115 @@ TEST_CASE( "The PolarSSL socket's recv_wait waits for something for recv to retu
     CHECK( client.sock->ops->recv_wait(client.sock, 5000) );
     CHECK( std::chrono::steady_clock::now() - start < std::chrono::milliseconds(1000) );
     CHECK( client.recv(64) == "cdef" );
+}
+
+// A record that carries nothing for recv to return, in TLS 1.2, which is all
+// PolarSSL speaks: a server's HelloRequest, which the socket declines with a
+// warning alert. recv_wait asked the socket under it alone, so it took the
+// record for something to return, and recv then waited for its whole timeout.
+// While a request's body is being sent, khc asks it whether the server has
+// answered early.
+TEST_CASE( "The PolarSSL socket's recv_wait doesn't take a record without data for data" ) {
+    Config config;
+    std::atomic<bool> asked(false);
+    std::atomic<bool> done(false);
+    TlsServer server(pki().server(), [&asked, &done](SSL* ssl, int) {
+        // The HelloRequest, which SSL_do_handshake() sends and returns.
+        asked = SSL_renegotiate(ssl) == 1 && SSL_do_handshake(ssl) == 1;
+        wait_for(done);
+    }, 1, TLS1_2_VERSION);
+    Client client(&config.tls, 1);
+    REQUIRE( client.sock->ops->recv_wait != nullptr );
+    REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+    REQUIRE( wait_for(asked) );
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+#if POLARSSL_VERSION_NUMBER < 0x01030900
+    // Before 1.3.9, ssl_read() returned a HelloRequest it declined as data,
+    // the message's four bytes, as its ChangeLog says.
+    done = true;
+    WARN( "PolarSSL before 1.3.9 gives a HelloRequest as data: nothing to check" );
+    return;
+#endif
+
+    const auto start = std::chrono::steady_clock::now();
+    CHECK_FALSE( client.sock->ops->recv_wait(client.sock, 300) );
+    const auto waited = std::chrono::steady_clock::now() - start;
+    CHECK( waited >= std::chrono::milliseconds(250) );
+    CHECK( waited < std::chrono::milliseconds(2000) );
+    CHECK_FALSE( client.sock->ops->recv_wait(client.sock, 0) );
+    done = true;
+}
+
+// recv_wait reads ahead of recv: the first byte of data, or the end of the
+// stream or a failure first. recv returns what reading it would have.
+TEST_CASE( "The PolarSSL socket's recv returns what its recv_wait came to first" ) {
+    Config config;
+    std::atomic<bool> go(false);
+    char buffer[64];
+
+    SECTION("data, whole, though recv_wait read its first byte") {
+        TlsServer server(pki().server(), [&go](SSL* ssl, int) {
+            wait_for(go);
+            SSL_write(ssl, "hello", 5);
+            char ignored[16];
+            SSL_read(ssl, ignored, sizeof(ignored));
+        });
+        Client client(&config.tls, 1);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+        go = true;
+        CHECK( client.sock->ops->recv_wait(client.sock, 5000) );
+        CHECK( client.sock->ops->recv_wait(client.sock, 0) );
+        CHECK( client.recv(1) == "h" );
+        CHECK( client.recv(64) == "ello" );
+    }
+
+    SECTION("a record that doesn't decrypt") {
+        TlsServer server(pki().server(), [&go](SSL* ssl, int fd) {
+            wait_for(go);
+            const unsigned char record[] = { 0x17, 0x03, 0x03, 0x00, 0x20,
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+                17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 };
+            (void)!write(fd, record, sizeof(record));
+            char ignored[16];
+            SSL_read(ssl, ignored, sizeof(ignored));
+        });
+        Client client(&config.tls, 1);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+        go = true;
+        CHECK( client.sock->ops->recv_wait(client.sock, 5000) );
+        size_t received = 1;
+        CHECK( client.sock->ops->recv(client.sock, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
+        CHECK( received == 0 );
+        CHECK( client.error() == EBISU_SOCK_ERROR_TLS );
+        CHECK_FALSE( client.sock->ops->recv_timed_out(client.sock) );
+    }
+
+    SECTION("a reset") {
+        // False where SO_LINGER can't be set, as under qemu-arm's emulation
+        // of Linux, which doesn't have it.
+        std::atomic<bool> reset(true);
+        std::atomic<bool> tried(false);
+        TlsServer server(pki().server(), [&go, &reset, &tried](SSL*, int fd) {
+            wait_for(go);
+            struct linger l = { 1, 0 };
+            reset = setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l)) == 0;
+            tried = true;
+        });
+        Client client(&config.tls, 1);
+        REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+        go = true;
+        wait_for(tried);
+        if (!reset) {
+            WARN( "SO_LINGER can't be set here: no reset to check" );
+            return;
+        }
+        CHECK( client.sock->ops->recv_wait(client.sock, 5000) );
+        size_t received = 1;
+        CHECK( client.sock->ops->recv(client.sock, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
+        CHECK( received == 0 );
+        CHECK( client.error() != EBISU_SOCK_ERROR_NONE );
+        CHECK_FALSE( client.sock->ops->recv_timed_out(client.sock) );
+    }
 }
 
 TEST_CASE( "The PolarSSL socket over a socket without recv_wait has none" ) {

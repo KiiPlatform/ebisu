@@ -369,6 +369,15 @@ static int bio_recv(void* arg, unsigned char* buffer, size_t length)
         sock->_handshake_ran_out = true;
         return POLARSSL_ERR_NET_WANT_READ;
     }
+    /* For recv_wait: only what the socket under it has already, which it
+       then returns without waiting. Nothing more is as for a socket that
+       doesn't block, which call_again() tells from PolarSSL's wanting to be
+       called again. */
+    if (sock->_no_wait && (transport->ops->recv_wait == NULL ||
+                           !transport->ops->recv_wait(transport, 0))) {
+        sock->_again = true;
+        return POLARSSL_ERR_NET_WANT_READ;
+    }
     switch (transport->ops->recv(transport, (char*)buffer, length, &received)) {
         case EBISU_SOCK_OK:
 #ifndef EBISU_NO_LOG
@@ -825,6 +834,8 @@ static ebisu_sock_code_t polarssl_connect(ebisu_socket_t* self, const char* host
     sock->_failed = false;
     memset(sock->_record_header, 0, sizeof(sock->_record_header));
     sock->_recv_timed_out = false;
+    sock->_has_peeked = false;
+    sock->_has_kept = false;
 #if !defined(POLARSSL_HAVE_TIME)
     if (sock->_clock == NULL && (sock->_tls->_verify == EBISU_TLS_VERIFY_FULL ||
                 sock->_tls->_verify == EBISU_TLS_VERIFY_CHAIN)) {
@@ -988,7 +999,28 @@ static ebisu_sock_code_t polarssl_recv(
     int ret;
     *out_actual_length = 0;
     sock->_recv_timed_out = false;
-    do {
+    /* What polarssl_recv_wait() came to first: a byte of data, with what else
+       of its record PolarSSL has, or what ssl_read() returned instead. */
+    if (sock->_has_peeked && length_to_read > 0) {
+        size_t more = ssl_get_bytes_avail(&sock->_ssl);
+        sock->_has_peeked = false;
+        buffer[0] = (char)sock->_peeked;
+        *out_actual_length = 1;
+        if (more > length_to_read - 1) {
+            more = length_to_read - 1;
+        }
+        if (more > 0) {
+            ret = ssl_read(&sock->_ssl, (unsigned char*)buffer + 1, more);
+            if (ret > 0) {
+                *out_actual_length += (size_t)ret;
+            }
+        }
+        return EBISU_SOCK_OK;
+    }
+    if (sock->_has_kept) {
+        sock->_has_kept = false;
+        ret = sock->_kept_ret;
+    } else do {
         sock->_timed_out = false;
         sock->_again = false;
         ret = ssl_read(&sock->_ssl, (unsigned char*)buffer, length_to_read);
@@ -1048,15 +1080,80 @@ static bool has_pending(const ssl_context* ssl)
     return ssl->in_hslen > 0 && ssl->in_hslen < ssl->in_msglen;
 }
 
-/* What PolarSSL has decrypted and recv hasn't returned, or has of a record, is
-   for recv to return without waiting. */
+/* Whether polarssl_recv() would return without waiting, now that the socket
+   under it has something: PolarSSL reads it without waiting, records that
+   carry no data included, such as a server's HelloRequest, which it declines.
+   A byte of data it reads, and the end of the stream or a failure it comes to,
+   are kept for polarssl_recv() to return. */
+static bool has_data_now(ebisu_polarssl_socket_t* sock)
+{
+    int ret;
+    sock->_no_wait = true;
+    do {
+        sock->_timed_out = false;
+        sock->_again = false;
+        ret = ssl_read(&sock->_ssl, &sock->_peeked, 1);
+    } while (call_again(sock, ret));
+    sock->_no_wait = false;
+    if (ret == 1) {
+        sock->_has_peeked = true;
+        return true;
+    }
+    if (ret == POLARSSL_ERR_NET_WANT_READ) {
+        /* No data yet: records without any, or part of a record. */
+        return false;
+    }
+    if (ret == POLARSSL_ERR_NET_WANT_WRITE) {
+        /* A reply to the server the socket under it can't take yet:
+           polarssl_recv() sends it, waiting as it would have. */
+        return true;
+    }
+    sock->_kept_ret = ret;
+    sock->_has_kept = true;
+    return true;
+}
+
+/* What PolarSSL has decrypted and recv hasn't returned is for recv to return
+   without waiting. What it holds besides, more messages of a record, and what
+   the socket under it has, may be no data at all, though, which
+   has_data_now() tells: taken for data, a server's HelloRequest had
+   polarssl_recv() wait for its whole timeout. After such records, the wait
+   goes on for what is left of timeout_ms, by the system's clock where the
+   socket has one, set by ebisu_polarssl_socket_set_handshake_timeout() or
+   ebisu_polarssl_socket_set_session_resume(). Without, it starts over: it may
+   then wait longer than timeout_ms, after records without data, but never
+   returns false before it has run out. */
 static bool polarssl_recv_wait(ebisu_socket_t* self, uint32_t timeout_ms)
 {
     ebisu_polarssl_socket_t* sock = EBISU_CONTAINER_OF(self, ebisu_polarssl_socket_t, base);
-    if (ssl_get_bytes_avail(&sock->_ssl) > 0 || has_pending(&sock->_ssl)) {
+#if defined(EBISU_TLS_RESUME)
+    ebisu_system_t* system = sock->_system != NULL ? sock->_system : sock->_resume_system;
+#else
+    ebisu_system_t* system = sock->_system;
+#endif
+    uint64_t start_ms = 0;
+    uint32_t left_ms = timeout_ms;
+    if (sock->_has_peeked || sock->_has_kept || ssl_get_bytes_avail(&sock->_ssl) > 0) {
         return true;
     }
-    return sock->_transport->ops->recv_wait(sock->_transport, timeout_ms);
+    if (has_pending(&sock->_ssl) && has_data_now(sock)) {
+        return true;
+    }
+    if (system != NULL) {
+        start_ms = ebisu_system_monotonic_ms(system);
+    }
+    for (;;) {
+        if (!sock->_transport->ops->recv_wait(sock->_transport, left_ms)) {
+            return false;
+        }
+        if (has_data_now(sock)) {
+            return true;
+        }
+        if (system != NULL) {
+            uint64_t gone_ms = ebisu_system_monotonic_ms(system) - start_ms;
+            left_ms = gone_ms >= timeout_ms ? 0 : (uint32_t)(timeout_ms - gone_ms);
+        }
+    }
 }
 
 /* With recv_wait when the socket under it has one, and without when it hasn't,
