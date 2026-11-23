@@ -748,7 +748,8 @@ jobs:
   # their builds do: the same files and include paths, for the boards'
   # Cortex-M4, linked whole so that a source a build leaves out fails. It also
   # checks that the version header their Makefiles write is the one CMake does,
-  # and reports the code size of the libraries and of a thing linked with them.
+  # and where both take the version from, and reports the code size of the
+  # libraries and of a thing linked with them.
   samples:
     name: cc3200 and gt202 samples (ebisu's sources, Cortex-M4, build)
     runs-on: ubuntu-latest
@@ -770,6 +771,8 @@ jobs:
         run: tests/samples/check_version_header.sh build/debug/generated/ebisu_version.h
       - name: version in a source archive
         run: tests/samples/check_archive_version.sh build/debug/generated/ebisu_version.h
+      - name: version in a copy, and from version/VERSION
+        run: tests/samples/check_version_sources.sh build/debug/generated/ebisu_version.h
       - name: build the samples' ebisu sources
         run: tests/samples/cross_build.sh
       # Into the job's summary: the shared libraries' text built each way, and

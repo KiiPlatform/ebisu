@@ -257,6 +257,16 @@ them, so build the application again for each minor release. The shared
 libraries' soname has the major and the minor, `libebisu_kii.so.3.0`, so that
 an application built against 3.0 doesn't load 3.1's.
 
+**Version.** The version, which names the shared libraries and the package and
+goes with each request in the `X-Kii-SDK` header, is what `git describe --tags`
+says in ebisu's own repository: a clone, a worktree or a submodule of it. A
+source archive made by git, as GitHub's are, says the version of the commit it
+was made from. A copy inside another project's repository, whose tags aren't
+ebisu's, or a clone made without the tags, builds as 0.0.0, with a warning.
+For a copy like that, write the version into `version/VERSION`, as `3.0.0`:
+when that file is there, it says the version over git, for
+`version/ebisu_version.sh` too.
+
 `tests/samples/package_consumer.sh` builds a program both ways against an
 installed copy, as CI does.
 
