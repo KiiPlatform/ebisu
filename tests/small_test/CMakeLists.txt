@@ -29,9 +29,29 @@ ebisu_add_test_suite(small_test_jkii
     LABEL small
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jkii
     SOURCES
+        jkii/src/jkii_escape_test.cpp
         jkii/src/jkii_primitive_test.cpp
         jkii/src/jkii_test.cpp
     LINK ${EBISU_JKII_OBJS})
+
+# jkii again, with jkii.c compiled with a strtod() that sets no errno, for the
+# primitive tests: a double out of range is told from what strtod() gives.
+get_target_property(jkii_other_sources ebisu_jkii_objs SOURCES)
+list(FILTER jkii_other_sources EXCLUDE REGEX "(^|/)jkii\\.c$")
+add_library(ebisu_jkii_strtod_without_errno_objs OBJECT
+    jkii/strtod_without_errno.c ${jkii_other_sources})
+target_include_directories(ebisu_jkii_strtod_without_errno_objs
+    PRIVATE $<TARGET_PROPERTY:ebisu_jkii_objs,INCLUDE_DIRECTORIES>
+        ${PROJECT_SOURCE_DIR}/jkii/src
+    INTERFACE $<TARGET_PROPERTY:ebisu_jkii_objs,INTERFACE_INCLUDE_DIRECTORIES>)
+ebisu_configure_target(ebisu_jkii_strtod_without_errno_objs)
+
+ebisu_add_test_suite(small_test_jkii_strtod_without_errno
+    LABEL small
+    WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jkii
+    SOURCES jkii/strtod_without_errno_test.cpp jkii/src/jkii_primitive_test.cpp
+    LINK ebisu_jkii_strtod_without_errno_objs ebisu_jsmn_objs
+    INCLUDES ${PROJECT_SOURCE_DIR}/jkii/libs/jsmn)
 
 ebisu_add_test_suite(small_test_tio
     LABEL small

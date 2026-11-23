@@ -77,9 +77,8 @@ typedef enum jkii_parse_err_t {
     /** JSON string is successfully parsed but type of root object
      * type is unmatched to using function.
      *
-     * jkii_parse(jkii_t*, const char*, size_t,
-     * jkii_field_t*) requires JSON object if JSON array is
-     * passed, then this error is returned.
+     * jkii_validate_root_object() requires a JSON object, and returns this
+     * error for anything else.
      */
     JKII_ERR_ROOT_TYPE,
 
@@ -137,15 +136,16 @@ typedef enum jkii_field_type_t {
      */
     JKII_FIELD_TYPE_ANY,
 
-    /** This values denotes an signed interger value. Maximum is
-     * INT_MAX and Minimum is INT_MIN. */
+    /** This value denotes a signed integer held as an int: from INT_MIN
+     * to INT_MAX. */
     JKII_FIELD_TYPE_INTEGER,
 
-    /** This values denotes an signed interger value. Maximum is
-     * LONG_MAX and Minimum is LONG_MIN. */
+    /** This value denotes a signed integer held as a long, outside the
+     * range of an int: from LONG_MIN to LONG_MAX. */
     JKII_FIELD_TYPE_LONG,
 
-    /** This value denotes an double value. */
+    /** This value denotes an double value. Expected of a field, it takes a
+     * number of any form, a whole one without a fraction included, as 25. */
     JKII_FIELD_TYPE_DOUBLE,
 
     /** This value denotes jkii_boolean_t value. */
@@ -239,7 +239,9 @@ typedef struct jkii_field_t {
 
     /** Field parse result. Output of
      * jkii_parse(jkii_t*, const char*, size_t,
-     * jkii_field_t*).
+     * jkii_field_t*), which sets it whatever it returns:
+     * jkii_field_err_t#JKII_FIELD_ERR_NOT_FOUND for each field when the
+     * string can't be read, as for jkii_parse_err_t#JKII_ERR_INVALID_INPUT.
      */
     jkii_field_err_t result;
 
@@ -264,6 +266,18 @@ typedef struct jkii_field_t {
      *     jkii_field_type_t#JKII_FIELD_TYPE_ANY, then
      *     jkii_field_t#result become
      *     jkii_parse_err_t#JKII_FIELD_ERR_OK.
+     *
+     * The actual type of an integer follows its value:
+     * jkii_field_type_t#JKII_FIELD_TYPE_INTEGER if it fits in an int,
+     * jkii_field_type_t#JKII_FIELD_TYPE_LONG if it fits only in a long.
+     * One that fits in neither is
+     * jkii_field_type_t#JKII_FIELD_TYPE_LONG with jkii_field_t#result
+     * jkii_field_err_t#JKII_FIELD_ERR_NUM_OVERFLOW or
+     * jkii_field_err_t#JKII_FIELD_ERR_NUM_UNDERFLOW. Expected as
+     * jkii_field_type_t#JKII_FIELD_TYPE_INTEGER or
+     * jkii_field_type_t#JKII_FIELD_TYPE_LONG, any integer matches, and one
+     * past the range of the expected type is reported as overflow or
+     * underflow.
      */
     jkii_field_type_t type;
 
@@ -324,11 +338,17 @@ typedef struct jkii_field_t {
     } field_copy; /**< \brief Copy of the parsed field value. Which member is
                        valid is given by jkii_field_t#type. */
 
-    /** Length of field_copy#string. ignored if field_copy#string is
-     * null or jkii_field_t#type is not
-     * jkii_field_type_t#JKII_FIELD_TYPE_STRING,
-     * jkii_field_type_t#JKII_FIELD_TYPE_OBJECT and
-     * jkii_field_type_t#JKII_FIELD_TYPE_ARRAY.
+    /** Length of field_copy#string. Leave it 0 for a field without a buffer,
+     * one read as a number or a boolean among them.
+     *
+     * Other than 0, it says field_copy holds a buffer's address, which
+     * jkii_parse() then never writes a number or a boolean over, whatever
+     * the document has: the field can be used again for another document
+     * with its buffer as it was. A number or a boolean found for such a
+     * field is, expected as jkii_field_type_t#JKII_FIELD_TYPE_ANY,
+     * jkii_field_err_t#JKII_FIELD_ERR_OK with its type and position and
+     * without its value, and, expected as a number or a boolean,
+     * jkii_field_err_t#JKII_FIELD_ERR_COPY.
      */
     size_t field_copy_buff_size;
 
