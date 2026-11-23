@@ -1012,12 +1012,15 @@ void khc_state_resp_body_read(khc* khc) {
 void khc_state_resp_body_callback(khc* khc) {
     size_t size = _resp_body_part(khc, khc->_body_read_size);
     size_t written = khc->_cb_write(khc->_stream_buff, size, khc->_write_data);
-    if (written < size) { // Error in write callback.
+    // Neither less nor more than it was given, as KHC_CB_WRITE says. Taken,
+    // more counted as received, and ended a Content-Length body before it had
+    // arrived whole, with KHC_ERR_OK.
+    if (written != size) { // Error in write callback.
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_WRITE_CALLBACK;
         return;
     }
-    khc->_resp_body_received += written;
+    khc->_resp_body_received += size;
     if (khc->_read_end || _resp_body_complete(khc)) {
         _end_resp_body(khc);
     } else {
@@ -1111,7 +1114,8 @@ void khc_state_resp_body_parse_chunk_body(khc* khc) {
         khc->_body_read_size :
         chunk_remain;
     size_t written = khc->_cb_write(khc->_stream_buff, target_size, khc->_write_data);
-    if (written < target_size) { // Error in write callback.
+    // As for a body that isn't chunked.
+    if (written != target_size) { // Error in write callback.
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_WRITE_CALLBACK;
         return;

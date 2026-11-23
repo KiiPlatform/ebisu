@@ -139,6 +139,11 @@ headers, or send a request other than the one asked for:
 - `khc_perform()` returns `KHC_ERR_FAIL`, without connecting, for a header with
   a CR or an LF in it, or when a socket callback, the write callback or the
   header callback isn't set.
+- `khc_perform()` returns `KHC_ERR_FAIL`, without connecting, for a response
+  header buffer or a stream buffer set with a size of 0, as through
+  `kii_set_resp_header_buff()` and `kii_set_stream_buff()`. 1.3 didn't bound
+  reads into a header buffer of size 0 by it, and ended a body early with a
+  stream buffer of size 0. A NULL buffer is still allocated.
 - `kii_api_call_append_header()` returns `KII_ERR_FAIL` for a name or a value
   with a CR or an LF in it.
 - Every kii call fails, rather than send its request without a path, when the
@@ -164,6 +169,17 @@ headers, or send a request other than the one asked for:
   exactly, which 1.3 took, now fails. Read the body by
   `kii_get_resp_body_length()`: it isn't a string, as it may hold a NUL of its
   own.
+- **Each request starts afresh.** `khc_perform()` resets what the last request
+  and its response left behind, as `khc_reset_except_cb()` does, which also
+  clears the request. 1.3 read the next response with the last one's state
+  unless `khc_reset_except_cb()` was called in between, and could end its body
+  early with `KHC_ERR_OK`. A request that fails before reaching the server no
+  longer keeps the status code of the one before it. kii resets khc before
+  each request, so this concerns an application calling khc itself.
+- **A write callback that returns more than it was given** fails the request
+  with `KHC_ERR_WRITE_CALLBACK`, as `KHC_CB_WRITE` says, wherever khc calls
+  it. 1.3 failed it only for a body's first part, read with the headers, and
+  took it for the rest. kii's own callback returns what it was given.
 - **ETags.** `kii_get_etag()` gives the last response's ETag until the next
   request is sent, and is empty when that response had none. It can be passed
   straight to `kii_put_object()` or `kii_patch_object()`.

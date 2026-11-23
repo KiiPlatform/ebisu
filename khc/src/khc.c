@@ -16,6 +16,8 @@ void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
     khc->_stream_buff_size = buff_size;
 }
 
+static void _reset_internal_states(khc* khc);
+
 khc_code khc_perform(khc* khc) {
     // Called without checking from here on. The read callback is left out of
     // this: a request need not have a body.
@@ -30,8 +32,22 @@ khc_code khc_perform(khc* khc) {
             return KHC_ERR_FAIL;
         }
     }
-    khc->_state = KHC_STATE_IDLE;
-    khc->_result = KHC_ERR_OK;
+    // A buffer given with a size of 0. The room left in a response header
+    // buffer, its size less one for the NUL, wrapped around, and reads into
+    // it were no longer bounded by it. A stream buffer was read into with a
+    // size of 0, which a socket answers as the end of the stream, ending a
+    // body at what came with the headers. A NULL buffer is allocated, as
+    // khc_init() leaves them.
+    if ((khc->_resp_header_buff != NULL && khc->_resp_header_buff_size == 0) ||
+            (khc->_stream_buff != NULL && khc->_stream_buff_size == 0)) {
+        return KHC_ERR_FAIL;
+    }
+    // Each request starts from what the request is, not from what the last
+    // one's response left behind. Left over, a Content-Length body's count of
+    // the bytes received, or a close-delimited body's end of stream, ended the
+    // next response's body early, with KHC_ERR_OK, unless
+    // khc_reset_except_cb() was called in between.
+    _reset_internal_states(khc);
 
     // malloc the necessary resources
     if (khc->_resp_header_buff == NULL) {
@@ -119,7 +135,21 @@ void khc_reset_except_cb(khc* khc) {
     khc->_path[0] = '\0';
     khc->_method[0] = '\0';
 
-    // Internal states.
+    _reset_internal_states(khc);
+
+    // Response header Buffer
+    khc->_resp_header_buff = NULL;
+    khc->_resp_header_buff_size = 0;
+    khc->_resp_header_buff_allocated = 0;
+    // Stream Buffer
+    khc->_stream_buff = NULL;
+    khc->_stream_buff_size = 0;
+    khc->_stream_buff_allocated = 0;
+}
+
+// What a request and its response change, which khc_perform() starts each
+// request from too.
+static void _reset_internal_states(khc* khc) {
     khc->_state = KHC_STATE_IDLE;
     khc->_current_req_header = NULL;
     khc->_read_size = 0;
@@ -139,15 +169,6 @@ void khc_reset_except_cb(khc* khc) {
     khc->_body_read_size = 0;
     khc->_result = KHC_ERR_OK;
     khc->_sent_length = 0;
-
-    // Response header Buffer
-    khc->_resp_header_buff = NULL;
-    khc->_resp_header_buff_size = 0;
-    khc->_resp_header_buff_allocated = 0;
-    // Stream Buffer
-    khc->_stream_buff = NULL;
-    khc->_stream_buff_size = 0;
-    khc->_stream_buff_allocated = 0;
 }
 
 void khc_enable_insecure(
