@@ -6,7 +6,8 @@
 /** \brief Major version, matching the soname of the shared libraries. */
 #define EBISU_SOVERSION "@soversion@"
 /**
- * \brief `git describe` output for the tree this was built from.
+ * \brief `git describe` output for the tree this was built from, or what
+ * version/VERSION holds.
  *
  * Carries the distance from the last tag, so a development build is
  * distinguishable from the release it follows. EBISU_VERSION cannot: it has to

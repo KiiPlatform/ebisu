@@ -1,5 +1,6 @@
-# Derives the project version from `git describe --tags`, or from what git wrote
-# into a source archive, and exposes it as a generated ebisu_version.h.
+# Derives the project version from `git describe --tags`, from what git wrote
+# into a source archive, or from version/VERSION where there is one, and
+# exposes it as a generated ebisu_version.h.
 
 # Captured at include time so the function does not depend on who calls it.
 set(EBISU_VERSION_MODULE_DIR ${CMAKE_CURRENT_LIST_DIR})
@@ -8,14 +9,6 @@ function(set_git_version_and_generate_header)
     # Must stay numeric major.minor.patch: it feeds the VERSION and SOVERSION
     # target properties, which CMake rejects in any other form.
     set(FALLBACK_VERSION "0.0.0")
-
-    execute_process(
-        COMMAND git describe --tags
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-        OUTPUT_VARIABLE GIT_DESCRIBE
-        ERROR_VARIABLE GIT_DESCRIBE_ERROR
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
 
     # `git describe` runs at configure time only, and nothing told the build
     # when its answer changed: after a commit, a checkout or a new tag, the
@@ -53,28 +46,102 @@ function(set_git_version_and_generate_header)
         endforeach()
     endif()
 
+    # And version/VERSION: this directory, which changes when the file is added
+    # or removed, and the file itself, when it is there.
+    set(version_file ${EBISU_VERSION_MODULE_DIR}/VERSION)
+    set_property(DIRECTORY APPEND
+        PROPERTY CMAKE_CONFIGURE_DEPENDS ${EBISU_VERSION_MODULE_DIR})
+    if(EXISTS ${version_file})
+        set_property(DIRECTORY APPEND
+            PROPERTY CMAKE_CONFIGURE_DEPENDS ${version_file})
+    endif()
+
     # A source archive made by git, as GitHub's are, has no repository to ask.
     # git fills archive_version.txt in when it makes one (export-subst, in
-    # .gitattributes), and that then is the answer, over what was asked above:
-    # unpacked inside another project's repository, an archive would otherwise
-    # take that project's tags for its own.
+    # .gitattributes), with what `git describe --tags` would have said and
+    # when the commit was made.
+    set(archive_describe "")
+    set(archive_time "")
     file(READ ${EBISU_VERSION_MODULE_DIR}/archive_version.txt archive_version)
     if(archive_version MATCHES "describe=([^\n]*)\ntime=([0-9]+)")
-        set(GIT_DESCRIBE "${CMAKE_MATCH_1}")
+        set(archive_describe "${CMAKE_MATCH_1}")
         set(archive_time "${CMAKE_MATCH_2}")
     endif()
 
-    if(GIT_DESCRIBE)
-        string(REGEX MATCH "v[0-9]+\\.[0-9]+\\.[0-9]+" VERSION_STRING ${GIT_DESCRIBE})
-        if(VERSION_STRING)
-            string(REGEX REPLACE "^v" "" VERSION_STRING ${VERSION_STRING})
-            message(STATUS "Git: ${GIT_DESCRIBE}, Version: ${VERSION_STRING}")
-        else()
-            message(WARNING "Invalid Git tag format: ${GIT_DESCRIBE}, using ${FALLBACK_VERSION}")
-            set(VERSION_STRING "${FALLBACK_VERSION}")
+    # The version comes from the first of these there is:
+    #
+    # - version/VERSION. ebisu's repository has none. It is for a copy whose
+    #   version git can't tell, and says it over anything git would.
+    # - What git wrote into a source archive.
+    # - `git describe --tags`, when this is the top of a git working tree:
+    #   ebisu's own repository, a clone, a worktree or a submodule of it.
+    #   Copied into another project's repository instead, as a library often
+    #   is, git would answer with that project's tags.
+    #
+    # Without any, the version is the fallback, with a warning saying why.
+    # Each is set here first, as a function sees its caller's variables.
+    set(GIT_DESCRIBE "")
+    set(VERSION_STRING "")
+    set(described_by "")
+    set(why "")
+    if(EXISTS ${version_file})
+        file(READ ${version_file} GIT_DESCRIBE)
+        string(STRIP "${GIT_DESCRIBE}" GIT_DESCRIBE)
+        if(NOT GIT_DESCRIBE MATCHES
+                "^v?([0-9]+\\.[0-9]+\\.[0-9]+)[-+.0-9A-Za-z]*$")
+            message(FATAL_ERROR "${version_file} has to hold a version and "
+                "nothing else, as 3.0.0 or v3.0.0-rc.1, not: ${GIT_DESCRIBE}")
         endif()
+        set(VERSION_STRING "${CMAKE_MATCH_1}")
+        set(described_by "${version_file}")
     else()
-        message(WARNING "Failed to retrieve Git tag: ${GIT_DESCRIBE_ERROR}, using ${FALLBACK_VERSION}")
+        if(archive_time)
+            set(GIT_DESCRIBE "${archive_describe}")
+            set(described_by "the source archive")
+            set(why "the source archive is of a commit no tag comes before")
+        else()
+            execute_process(
+                COMMAND git rev-parse --show-cdup
+                WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+                RESULT_VARIABLE cdup_result
+                OUTPUT_VARIABLE cdup
+                ERROR_QUIET
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+            if(NOT cdup_result EQUAL 0)
+                string(CONCAT why "ebisu is in neither a git repository "
+                    "nor a source archive made by git")
+            elseif(NOT cdup STREQUAL "")
+                string(CONCAT why "ebisu is in another project's git "
+                    "repository, whose tags aren't ebisu's")
+            else()
+                execute_process(
+                    COMMAND git describe --tags
+                    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+                    OUTPUT_VARIABLE GIT_DESCRIBE
+                    ERROR_VARIABLE GIT_DESCRIBE_ERROR
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+                    ERROR_STRIP_TRAILING_WHITESPACE
+                )
+                set(described_by "git")
+                string(CONCAT why "`git describe --tags` failed "
+                    "(${GIT_DESCRIBE_ERROR}), as it does in a clone made "
+                    "without the tags")
+            endif()
+        endif()
+        if(GIT_DESCRIBE MATCHES "v([0-9]+\\.[0-9]+\\.[0-9]+)")
+            set(VERSION_STRING "${CMAKE_MATCH_1}")
+        elseif(NOT GIT_DESCRIBE STREQUAL "")
+            string(CONCAT why "${described_by} describes it as "
+                "${GIT_DESCRIBE}, which holds no vX.Y.Z")
+        endif()
+    endif()
+    if(VERSION_STRING)
+        message(STATUS "Version: ${VERSION_STRING} (${GIT_DESCRIBE}, from "
+            "${described_by})")
+    else()
+        message(WARNING "${why}. ebisu builds as ${FALLBACK_VERSION}, unless "
+            "${version_file} says its version, as 3.0.0.")
         set(VERSION_STRING "${FALLBACK_VERSION}")
     endif()
 
@@ -87,10 +154,10 @@ function(set_git_version_and_generate_header)
     # relink for 1.3.1 -> 1.3.2 with nothing about the interface changed.
     string(REGEX MATCH "^[0-9]+\\.[0-9]+" SOVERSION_STRING ${VERSION_STRING})
 
-    # `git describe` output as-is, so a build 19 commits past v1.3.2 is
-    # distinguishable from the release itself. The numeric version cannot carry
+    # `git describe` output as-is, or what version/VERSION holds, so a build 19
+    # commits past v1.3.2 is distinguishable from the release itself. The numeric version cannot carry
     # that: it feeds VERSION and SOVERSION, which CMake requires to be numeric.
-    if(GIT_DESCRIBE)
+    if(NOT GIT_DESCRIBE STREQUAL "")
         set(VERSION_FULL_STRING "${GIT_DESCRIBE}")
     else()
         set(VERSION_FULL_STRING "${VERSION_STRING}")
@@ -104,8 +171,9 @@ function(set_git_version_and_generate_header)
 
     # When the source built was committed, in seconds since the epoch. Nothing
     # built from it runs earlier, which lets khc refuse a server's date from
-    # before then. A source archive says when; otherwise, outside git, the day
-    # this was written.
+    # before then. A source archive says when. In another project's repository
+    # git gives that project's last commit, which is no earlier than the copy
+    # of ebisu in it. Outside git, the day this was written.
     execute_process(
         COMMAND git log -1 --format=%ct
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}

@@ -286,6 +286,12 @@ With CMake:
   `BUILD_SHARED_LIBS` says, static libraries if it says nothing, as CMake does:
   it declares that option, on by default, only when configured from its own
   root, so that it no longer makes the project's own libraries shared.
+- ebisu asks git for its version only at the top of a git working tree: its own
+  repository, a clone, a worktree or a submodule of it. Copied into another
+  project's repository, 1.3 took that project's tags for its own; 3.0 builds as
+  0.0.0 and warns, as it does in a clone made without the tags. For a copy like
+  that, write the version into `version/VERSION`, as `3.0.0`: when that file is
+  there, it says the version over git, for `version/ebisu_version.sh` too.
 - The Makefiles at the root, in each component, in `tio/linux-sample` and in the
   tests are gone. See Building in the [README](./README.md#building). The cc3200
   and gt202 samples keep theirs, in `legacy/`, where the two have moved from
