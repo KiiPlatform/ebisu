@@ -259,7 +259,10 @@ an application built against 3.0 doesn't load 3.1's.
 
 **Version.** The version, which names the shared libraries and the package and
 goes with each request in the `X-Kii-SDK` header, is what `git describe --tags`
-says in ebisu's own repository: a clone, a worktree or a submodule of it. A
+says in ebisu's own repository: a clone, a worktree or a submodule of it.
+Releases are tagged `vX.Y.Z`, and master carries a `vX.Y.0-dev` tag where the
+next version started, so that it says the version it is becoming: `v3.0.0-dev`
+until 3.0 is released. A
 source archive made by git, as GitHub's are, says the version of the commit it
 was made from. A copy inside another project's repository, whose tags aren't
 ebisu's, or a clone made without the tags, builds as 0.0.0, with a warning.
