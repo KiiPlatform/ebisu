@@ -166,6 +166,10 @@ if(TARGET MbedTLS::mbedtls)
         PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/mbedtls/include>)
     target_link_libraries(ebisu_mbedtls PUBLIC ebisu_core MbedTLS::mbedtls)
+    # It changes the socket's layout, so whatever uses the port has it too.
+    if(EBISU_TLS_RESUME)
+        target_compile_definitions(ebisu_mbedtls PUBLIC EBISU_TLS_RESUME)
+    endif()
     ebisu_configure_target(ebisu_mbedtls)
 endif()
 

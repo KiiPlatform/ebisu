@@ -276,6 +276,30 @@ typedef struct ebisu_mbedtls_socket_t {
      * for last_error, and more of it. */
     ebisu_sock_error_t _error;
     long _error_detail; /**< \private */
+#if defined(EBISU_TLS_RESUME)
+    /** \private The system whose monotonic_ms times the sessions kept, set
+     * by ebisu_mbedtls_socket_set_session_resume(), or NULL to keep none. */
+    ebisu_system_t* _resume_system;
+    /** \private The session of the last connection, offered to the next to
+     * the same host and port, and whether there is one. */
+    mbedtls_ssl_session _session;
+    bool _has_session;
+    /** \private Of the connection the session is from: its host, by an
+     * FNV-1a hash, its port, when the server's certificate was checked, by
+     * _resume_system's monotonic_ms, and how: the configuration's mode, and
+     * its pin, by the same hash, 0 for none. */
+    uint32_t _session_host;
+    uint16_t _session_port; /**< \private */
+    uint64_t _session_checked_ms; /**< \private */
+    ebisu_tls_verify_t _session_verify; /**< \private */
+    uint32_t _session_pin; /**< \private */
+    /** \private Of the connection under way: its host and port, the same
+     * way, and whether its handshake checked a certificate, which one that
+     * resumed a session doesn't. */
+    uint32_t _host_hash;
+    uint16_t _port; /**< \private */
+    bool _cert_checked; /**< \private */
+#endif
 #if MBEDTLS_VERSION_NUMBER < 0x02120000
     /** \private The configuration's, copied at connect, with a verify
      * callback of the socket's, which mbedTLS before 2.18 sets for a
@@ -362,6 +386,43 @@ void ebisu_mbedtls_socket_set_clock(ebisu_mbedtls_socket_t* sock, ebisu_clock_t*
  * the socket starts, for the diagnostics to go nowhere.
  */
 void ebisu_mbedtls_socket_set_logger(ebisu_mbedtls_socket_t* sock, ebisu_logger_t* logger);
+
+#if defined(EBISU_TLS_RESUME)
+/**
+ * \brief Has the socket resume TLS sessions, in a build with EBISU_TLS_RESUME.
+ *
+ * The port is built with EBISU_TLS_RESUME defined, by CMake's
+ * -DEBISU_TLS_RESUME=ON, for the port and for everything using it, as it
+ * changes the socket's layout. Built without it, as by default, this function
+ * isn't there, and the socket keeps no session, none of the code that would
+ * is built, and it takes no more memory.
+ *
+ * Built with it, the socket keeps the session of each TLS 1.2 connection
+ * once its handshake is done, and offers it to its next connection to the
+ * same host and port. A server that takes it resumes the session, sending
+ * neither its certificate nor a key exchange, which on a small device costs
+ * more than many a request. A connection that resumes checks no certificate,
+ * so a session is offered for an hour after the full handshake that checked
+ * the server's, however often it is resumed meanwhile, by system's
+ * monotonic_ms, and while the configuration checks certificates as it did
+ * then, by ebisu_mbedtls_tls_set_verify()'s mode and pin. A handshake that
+ * fails drops it.
+ *
+ * The session takes the room of an mbedtls_ssl_session in the socket, and
+ * what mbedTLS allocates for it: the server's ticket, and, with
+ * MBEDTLS_SSL_KEEP_PEER_CERTIFICATE, as mbedTLS before 2.16 always has it, a
+ * copy of the server's certificate. A socket that connects to a server
+ * seldom, such as one the MQTT task keeps its connection on, does better
+ * without it.
+ *
+ * \param [in,out] sock The socket.
+ * \param [in] system The system whose monotonic_ms times sessions, which has
+ * to outlive the socket, or NULL, as the socket starts, to keep none, freeing
+ * the one it has.
+ */
+void ebisu_mbedtls_socket_set_session_resume(ebisu_mbedtls_socket_t* sock,
+        ebisu_system_t* system);
+#endif
 
 /**
  * \brief The TLS version the connection open negotiated.

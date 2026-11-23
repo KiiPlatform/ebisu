@@ -199,7 +199,11 @@ of the application's own, as the
   name, and each certificate's dates at an `ebisu_clock_t`'s time, in place of
   mbedTLS's own check at the system's, or at the system's time without one, as
   mbedTLS has it with `MBEDTLS_HAVE_TIME_DATE`: a device without a real-time
-  clock connects with the clock alone. Random numbers come from PSA's
+  clock connects with the clock alone. Built with `EBISU_TLS_RESUME`
+  (`-DEBISU_TLS_RESUME=ON`), off by default, a socket that
+  `ebisu_mbedtls_socket_set_session_resume()` asks to resumes the TLS 1.2
+  session of its last connection to the same host and port, for an hour after
+  the full handshake that checked the server's certificate. Random numbers come from PSA's
   generator, which `ebisu_mbedtls_tls_init()` starts, from mbedTLS's entropy
   sources, or with mbedTLS 2 from a CTR_DRBG of the configuration's, seeded
   from them, but for an mbedTLS 2 built without `MBEDTLS_CTR_DRBG_C` or

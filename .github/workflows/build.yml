@@ -371,7 +371,9 @@ jobs:
   # latest, 4.2.0, each built from its release with threads, as
   # tests/mbedtls/install_mbedtls.sh does, and 2.4.0 again without CTR_DRBG and
   # entropy, as some of vendors' SDKs configure it, where the tests give TLS
-  # its random generator. The build job runs them against Ubuntu's.
+  # its random generator. Built with -DEBISU_TLS_RESUME=ON, so that they test
+  # session resumption too. The build job runs them against Ubuntu's, without
+  # it, as by default.
   mbedtls-port:
     name: mbedtls port (${{ matrix.mbedtls }}${{ matrix.variant && format(', {0}', matrix.variant) || '' }}, valgrind)
     runs-on: ubuntu-latest
@@ -409,7 +411,7 @@ jobs:
       - name: mbedTLS ${{ matrix.mbedtls }} ${{ matrix.variant }}
         run: EBISU_DOWNLOADS="$HOME/ebisu-downloads" tests/mbedtls/install_mbedtls.sh ${{ matrix.mbedtls }} "$RUNNER_TEMP/mbedtls" ${{ matrix.variant }}
       - name: configure
-        run: cmake --preset debug -DEBISU_TEST_JUNIT=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/mbedtls"
+        run: cmake --preset debug -DEBISU_TEST_JUNIT=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/mbedtls" -DEBISU_TLS_RESUME=ON
       - name: build
         run: cmake --build --preset debug --target small_test_mbedtls
       # As the build job's small tests: see there for --test-dir.
