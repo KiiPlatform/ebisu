@@ -147,7 +147,9 @@ khc_sock_code_t sock_cb_recv(
 {
     socket_context_t* ctx = (socket_context_t*)sock_ctx;
     *out_actual_length = 0;
-    size_t received = 0;
+    // SSL_read() and t_recv() return the length read, or a negative error,
+    // which a size_t would turn into a huge length.
+    int received = 0;
     int res = A_OK;
     do
     {
@@ -178,7 +180,7 @@ khc_sock_code_t sock_cb_recv(
         if (ctx->show_debug != 0) {
             printf("%.*s", received, buffer);
         }
-        *out_actual_length = received;
+        *out_actual_length = (size_t)received;
         return KHC_SOCK_OK;
     } else if (received == 0) {
         return KHC_SOCK_OK;
@@ -213,7 +215,9 @@ khc_sock_code_t mqtt_cb_recv(
 {
     socket_context_t* ctx = (socket_context_t*)sock_ctx;
     *out_actual_length = 0;
-    size_t received = 0;
+    // SSL_read() and t_recv() return the length read, or a negative error,
+    // which a size_t would turn into a huge length.
+    int received = 0;
     int res = A_OK;
     do
     {
@@ -236,7 +240,7 @@ khc_sock_code_t mqtt_cb_recv(
     } while (res != A_SOCK_INVALID);/* A_ERROR is timeout, retry */
 
     if (received > 0) {
-        *out_actual_length = received;
+        *out_actual_length = (size_t)received;
         return KHC_SOCK_OK;
     } else if (received == 0) {
         return KHC_SOCK_OK;
