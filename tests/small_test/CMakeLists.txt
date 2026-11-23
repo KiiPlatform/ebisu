@@ -5,9 +5,12 @@ ebisu_add_test_suite(small_test_khc
     LABEL small
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/khc
     SOURCES
+        khc/chunk_size_line_test.cpp
         khc/header_parser_test.cpp
         khc/http_test.cpp
         khc/response_chunk_test.cpp
+        khc/response_end_test.cpp
+        khc/response_parse_test.cpp
         khc/response_test.cpp
         khc/slist_test.cpp
         khc/state_trans_test.cpp
@@ -22,6 +25,7 @@ ebisu_add_test_suite(small_test_kii
     SOURCES
         kii/mqtt_test.cpp
         kii/simple_test.cpp
+        kii/thing_test.cpp
     LINK ${EBISU_KII_OBJS}
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/kii ${PROJECT_SOURCE_DIR}/kii)
 

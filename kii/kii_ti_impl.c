@@ -2,7 +2,6 @@
 #include "kii_impl.h"
 #include "kii_req_impl.h"
 #include "jkii_wrapper.h"
-#include "jkii_utils.h"
 #include <string.h>
 
 kii_code_t _get_anonymous_token(
@@ -20,7 +19,12 @@ kii_code_t _get_anonymous_token(
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
+    // khc keeps a path shorter than the buffer may hold one, and refuses
+    // one that would break the request line.
+    khc_code path_res = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (path_res != KHC_ERR_OK) {
+        return _convert_code(path_res);
+    }
 
     // Request headers.
     ret = _set_content_type(kii, "application/json");
@@ -48,7 +52,7 @@ kii_code_t _get_anonymous_token(
     kii->_rw_buff_req_size = content_len;
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     ret = _convert_code(code);
@@ -106,7 +110,12 @@ kii_code_t _onboard(
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
+    // khc keeps a path shorter than the buffer may hold one, and refuses
+    // one that would break the request line.
+    khc_code path_res = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (path_res != KHC_ERR_OK) {
+        return _convert_code(path_res);
+    }
 
     // Request headers.
     ret = _set_auth_bearer_token(kii, token);
@@ -128,72 +137,35 @@ kii_code_t _onboard(
     }
 
     // Request body.
-    int content_len = 0;
-    char esc_vid[strlen(vendor_thing_id) * 2 + 1];
-    char esc_pass[strlen(password) * 2 + 1];
-    jkii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid));
-    jkii_escape_str(password, esc_pass, sizeof(esc_vid));
-
-    content_len += snprintf(
-            kii->_rw_buff,
-            kii->_rw_buff_size,
-            "{\"vendorThingID\":\"%s\",\"thingPassword\":\"%s\"",
-            esc_vid, esc_pass);
-    if (content_len >= kii->_rw_buff_size) {
+    int content_len = _kii_body_append(kii, 0,
+            "{\"vendorThingID\":\"", vendor_thing_id, "");
+    content_len = _kii_body_append(kii, content_len,
+            "\",\"thingPassword\":\"", password, "\"");
+    if (thing_type != NULL) {
+        content_len = _kii_body_append(kii, content_len,
+                ",\"thingType\":\"", thing_type, "\"");
+    }
+    if (firmware_version != NULL) {
+        content_len = _kii_body_append(kii, content_len,
+                ",\"firmwareVersion\":\"", firmware_version, "\"");
+    }
+    if (layout_position != NULL) {
+        content_len = _kii_body_append(kii, content_len,
+                ",\"layoutPosition\":\"", layout_position, "\"");
+    }
+    if (content_len < 0) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
 
-    if (thing_type != NULL) {
-        char esc[strlen(thing_type) * 2 + 1];
-        jkii_escape_str(thing_type, esc, sizeof(esc));
-        content_len += snprintf(
-                &kii->_rw_buff[content_len],
-                kii->_rw_buff_size - content_len,
-                ",\"thingType\":\"%s\"",
-                esc);
-        if (content_len >= kii->_rw_buff_size) {
-            _req_headers_free_all(kii);
-            return KII_ERR_TOO_LARGE_DATA;
-        }
-    }
-
-    if (firmware_version != NULL) {
-        char esc[strlen(firmware_version) * 2 + 1];
-        jkii_escape_str(firmware_version, esc, sizeof(esc));
-        content_len += snprintf(
-                &kii->_rw_buff[content_len],
-                kii->_rw_buff_size - content_len,
-                ",\"firmwareVersion\":\"%s\"",
-                esc);
-        if (content_len >= kii->_rw_buff_size) {
-            _req_headers_free_all(kii);
-            return KII_ERR_TOO_LARGE_DATA;
-        }
-    }
-
-    if (layout_position != NULL) {
-        char esc[strlen(layout_position) * 2 + 1];
-        jkii_escape_str(layout_position, esc, sizeof(esc));
-        content_len += snprintf(
-                &kii->_rw_buff[content_len],
-                kii->_rw_buff_size - content_len,
-                ",\"layoutPosition\":\"%s\"",
-                esc);
-        if (content_len >= kii->_rw_buff_size) {
-            _req_headers_free_all(kii);
-            return KII_ERR_TOO_LARGE_DATA;
-        }
-    }
-
     if (thing_properties != NULL) {
-        char esc[strlen(thing_properties) * 2 + 1];
-        jkii_escape_str(thing_properties, esc, sizeof(esc));
+        // A JSON object, not a string: embedded as given, unlike the values
+        // above, which are escaped to go between quotes.
         content_len += snprintf(
                 &kii->_rw_buff[content_len],
                 kii->_rw_buff_size - content_len,
                 ",\"thingProperties\":%s",
-                esc);
+                thing_properties);
         if (content_len >= kii->_rw_buff_size) {
             _req_headers_free_all(kii);
             return KII_ERR_TOO_LARGE_DATA;
@@ -211,7 +183,7 @@ kii_code_t _onboard(
     kii->_rw_buff_req_size = content_len;
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     ret = _convert_code(code);
@@ -230,24 +202,9 @@ kii_code_t _onboard(
         return KII_ERR_FAIL;
     }
 
-    jkii_field_t fields[3];
-    jkii_parse_err_t result;
-    memset(fields, 0, sizeof(fields));
-    fields[0].name = "accessToken";
-    fields[0].type = JKII_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = kii->_author.access_token;
-    fields[0].field_copy_buff_size = sizeof(kii->_author.access_token) /
-        sizeof(kii->_author.access_token[0]);
-    fields[1].name = "thingID";
-    fields[1].type = JKII_FIELD_TYPE_STRING;
-    fields[1].field_copy.string = kii->_author.author_id;
-    fields[1].field_copy_buff_size = sizeof(kii->_author.author_id) /
-        sizeof(kii->_author.author_id[0]);
-    fields[2].name = NULL;
-
-    result = _jkii_read_object(kii, buff, buff_size, fields);
-    if (result != JKII_ERR_OK) {
-        return KII_ERR_PARSE_JSON;
+    kii_code_t res = _kii_read_author(kii, buff, buff_size, "thingID", "accessToken");
+    if (res != KII_ERR_OK) {
+        return res;
     }
 
     return KII_ERR_OK;
@@ -268,7 +225,12 @@ kii_code_t _put_firmware_version(
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
+    // khc keeps a path shorter than the buffer may hold one, and refuses
+    // one that would break the request line.
+    khc_code path_res = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (path_res != KHC_ERR_OK) {
+        return _convert_code(path_res);
+    }
 
     // Request headers.
     ret = _set_auth_header(kii);
@@ -290,19 +252,16 @@ kii_code_t _put_firmware_version(
     }
 
     // Request body.
-    int content_len = snprintf(
-            kii->_rw_buff,
-            kii->_rw_buff_size,
-            "{\"firmwareVersion\":\"%s\"}",
-            firmware_version);
-    if (content_len >= kii->_rw_buff_size) {
+    int content_len = _kii_body_append(kii, 0,
+            "{\"firmwareVersion\":\"", firmware_version, "\"}");
+    if (content_len < 0) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
     kii->_rw_buff_req_size = content_len;
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     ret = _convert_code(code);
@@ -333,7 +292,12 @@ kii_code_t _get_firmware_version(
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
+    // khc keeps a path shorter than the buffer may hold one, and refuses
+    // one that would break the request line.
+    khc_code path_res = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (path_res != KHC_ERR_OK) {
+        return _convert_code(path_res);
+    }
 
     // Request headers.
     ret = _set_auth_header(kii);
@@ -350,7 +314,7 @@ kii_code_t _get_firmware_version(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     ret = _convert_code(code);
@@ -401,10 +365,12 @@ kii_code_t _upload_state(
     khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
 
-    if (opt_normalizer_host != NULL) {
-        khc_set_host(&kii->_khc, opt_normalizer_host);
-    } else {
-        khc_set_host(&kii->_khc, kii->_app_host);
+    // The application's host fits, set by kii_set_site(). The caller's may
+    // not.
+    khc_code host_res = khc_set_host(&kii->_khc, opt_normalizer_host != NULL ?
+                opt_normalizer_host : kii->_app_host);
+    if (host_res != KHC_ERR_OK) {
+        return _convert_code(host_res);
     }
     khc_set_method(&kii->_khc, method);
 
@@ -412,7 +378,12 @@ kii_code_t _upload_state(
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
+    // khc keeps a path shorter than the buffer may hold one, and refuses
+    // one that would break the request line.
+    khc_code path_res = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (path_res != KHC_ERR_OK) {
+        return _convert_code(path_res);
+    }
 
     // Request headers.
     ret = _set_auth_header(kii);
@@ -442,7 +413,7 @@ kii_code_t _upload_state(
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_set_cb_read(&kii->_khc, state_read_cb, state_read_cb_data);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
     _req_headers_free_all(kii);
 

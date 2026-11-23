@@ -16,7 +16,12 @@ kii_code_t _thing_auth(
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
+    // khc keeps a path shorter than the buffer may hold one, and refuses
+    // one that would break the request line.
+    khc_code path_res = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (path_res != KHC_ERR_OK) {
+        return _convert_code(path_res);
+    }
 
     // Request headers.
     kii_code_t res = _set_app_id_header(kii);
@@ -42,24 +47,18 @@ kii_code_t _thing_auth(
         }
     }
     // Request body.
-    char esc_vid[strlen(vendor_thing_id) * 2 + 1];
-    char esc_pass[strlen(password) * 2 + 1];
-    jkii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid));
-    jkii_escape_str(password, esc_pass, sizeof(esc_vid));
-
-    int content_len = snprintf(
-            kii->_rw_buff,
-            kii->_rw_buff_size,
-            "{\"username\":\"VENDOR_THING_ID:%s\", \"password\":\"%s\", \"grant_type\":\"password\"}",
-            esc_vid, esc_pass);
-    if (content_len >= kii->_rw_buff_size) {
+    int content_len = _kii_body_append(kii, 0,
+            "{\"username\":\"VENDOR_THING_ID:", vendor_thing_id, "");
+    content_len = _kii_body_append(kii, content_len,
+            "\", \"password\":\"", password, "\", \"grant_type\":\"password\"}");
+    if (content_len < 0) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
     kii->_rw_buff_req_size = content_len;
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);
@@ -78,7 +77,12 @@ kii_code_t _thing_register(
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
+    // khc keeps a path shorter than the buffer may hold one, and refuses
+    // one that would break the request line.
+    khc_code path_res = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (path_res != KHC_ERR_OK) {
+        return _convert_code(path_res);
+    }
 
     // Request headers.
     kii_code_t res = _set_app_id_header(kii);
@@ -105,26 +109,20 @@ kii_code_t _thing_register(
     }
 
     // Request body.
-    char esc_vid[strlen(vendor_thing_id) * 2 + 1];
-    char esc_pass[strlen(password) * 2 + 1];
-    char esc_type[strlen(thing_type) * 2 + 1];
-    jkii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid));
-    jkii_escape_str(password, esc_pass, sizeof(esc_vid));
-    jkii_escape_str(thing_type, esc_type, sizeof(esc_type));
-
-    int content_len = snprintf(
-            kii->_rw_buff,
-            kii->_rw_buff_size,
-            "{\"_vendorThingID\":\"%s\", \"_thingType\":\"%s\", \"_password\":\"%s\"}",
-            esc_vid, esc_type, esc_pass);
-    if (content_len >= kii->_rw_buff_size) {
+    int content_len = _kii_body_append(kii, 0,
+            "{\"_vendorThingID\":\"", vendor_thing_id, "");
+    content_len = _kii_body_append(kii, content_len,
+            "\", \"_thingType\":\"", thing_type, "");
+    content_len = _kii_body_append(kii, content_len,
+            "\", \"_password\":\"", password, "\"}");
+    if (content_len < 0) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
     kii->_rw_buff_req_size = content_len;
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);

@@ -54,7 +54,7 @@ kii_code_t _post_object(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
     return _convert_code(code);
 }
@@ -117,7 +117,7 @@ kii_code_t _put_object(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);
@@ -174,7 +174,7 @@ kii_code_t _patch_object(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);
@@ -223,7 +223,7 @@ kii_code_t _delete_object(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);
@@ -272,7 +272,7 @@ kii_code_t _get_object(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);
@@ -322,7 +322,7 @@ kii_code_t _upload_body(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code res = khc_perform(&kii->_khc);
+    khc_code res = _kii_perform(kii);
     _req_headers_free_all(kii);
     return _convert_code(res);
 }
@@ -370,7 +370,7 @@ kii_code_t _download_body(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code res = khc_perform(&kii->_khc);
+    khc_code res = _kii_perform(kii);
     _req_headers_free_all(kii);
     return _convert_code(res);
 }

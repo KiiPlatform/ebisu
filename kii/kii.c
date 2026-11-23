@@ -1,5 +1,6 @@
 #include "kii.h"
 #include "kii_impl.h"
+#include "jkii_wrapper.h"
 #include <string.h>
 
 #define KII_SDK_INFO "sn=te;sv=1.2.4"
@@ -15,7 +16,11 @@ size_t _cb_write_buff(char *buffer, size_t size, void *userdata)
     }
     size_t remain = kii->_rw_buff_size - kii->_rw_buff_written;
     size_t req_size = size;
-    if (remain < req_size)
+    // One byte is kept for a NUL after the body, which the buffer, zeroed
+    // above, then has. A safety net, and no part of the API: the body is
+    // kii_get_resp_body_length() bytes, and nothing says it is a string. But
+    // whoever reads it as one all the same stops within the buffer.
+    if (remain <= req_size)
     {
         // Insufficient buffer size.
         return 0;
@@ -289,7 +294,7 @@ kii_code_t _convert_code(khc_code khc_c) {
         case KHC_ERR_SOCK_CONNECT:
             return KII_ERR_SOCK_CONNECT;
         case KHC_ERR_SOCK_CLOSE:
-            return KII_ERR_SOCK_CONNECT;
+            return KII_ERR_SOCK_CLOSE;
         case KHC_ERR_SOCK_SEND:
             return KII_ERR_SOCK_SEND;
         case KHC_ERR_SOCK_RECV:
@@ -304,8 +309,46 @@ kii_code_t _convert_code(khc_code khc_c) {
             return KII_ERR_TOO_LARGE_DATA;
         case KHC_ERR_FAIL:
             return KII_ERR_FAIL;
+        case KHC_ERR_INVALID_RESPONSE:
+            return KII_ERR_INVALID_RESPONSE;
     }
     return KII_ERR_FAIL;
+}
+
+kii_code_t _kii_read_author(
+        kii_t* kii,
+        char* buff,
+        size_t buff_size,
+        const char* id_name,
+        const char* token_name)
+{
+    jkii_field_t fields[3];
+    memset(fields, 0, sizeof(fields));
+    fields[0].name = id_name;
+    fields[0].type = JKII_FIELD_TYPE_STRING;
+    fields[1].name = token_name;
+    fields[1].type = JKII_FIELD_TYPE_STRING;
+    fields[2].name = NULL;
+
+    // Read through once before anything of it is kept: a response that can't
+    // be read whole, without the ID or the token, or with one longer than
+    // kii_author_t has room for, leaves the author as it was. jkii copies a
+    // string as it is in the response, so its length is the copy's.
+    if (_jkii_read_object(kii, buff, buff_size, fields) != JKII_ERR_OK ||
+            (size_t)(fields[0].end - fields[0].start) >= sizeof(kii->_author.author_id) ||
+            (size_t)(fields[1].end - fields[1].start) >= sizeof(kii->_author.access_token)) {
+        return KII_ERR_PARSE_JSON;
+    }
+
+    fields[0].field_copy.string = kii->_author.author_id;
+    fields[0].field_copy_buff_size = sizeof(kii->_author.author_id);
+    fields[1].field_copy.string = kii->_author.access_token;
+    fields[1].field_copy_buff_size = sizeof(kii->_author.access_token);
+    if (_jkii_read_object(kii, buff, buff_size, fields) != JKII_ERR_OK) {
+        // Not after the check, which is the same.
+        return KII_ERR_PARSE_JSON;
+    }
+    return KII_ERR_OK;
 }
 
 void _reset_buff(kii_t* kii) {
@@ -313,7 +356,24 @@ void _reset_buff(kii_t* kii) {
     kii->_rw_buff_written = 0;
     kii->_rw_buff_req_size = 0;
     kii->_rw_buff[0] = '\0';
+    /* The last response's ETag stays until the request is sent, in
+     * _kii_perform(): the application gives it to this call, straight from
+     * kii_get_etag(), for its If-Match. */
+}
+
+khc_code _kii_perform(kii_t* kii) {
+    /* The request's headers are made, an If-Match among them, so the last
+     * response's ETag can go: only this request's response may set it. */
     kii->_etag[0] = '\0';
+    khc_code code = khc_perform(&kii->_khc);
+    // A response without a body wrote nothing over the request's, which is
+    // done with. The same safety net as in _cb_write_buff(): whoever reads the
+    // buffer as a string finds an empty one, not the request.
+    if (kii->_khc._cb_write == _cb_write_buff && kii->_rw_buff_written == 0 &&
+            kii->_rw_buff != NULL && kii->_rw_buff_size > 0) {
+        kii->_rw_buff[0] = '\0';
+    }
+    return code;
 }
 
 void _req_headers_free_all(kii_t* kii) {
@@ -322,17 +382,13 @@ void _req_headers_free_all(kii_t* kii) {
 }
 
 int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len) {
-    char header_cpy[header_len + 1];
-    memcpy(header_cpy, header, header_len);
-    header_cpy[header_len] = '\0';
-
     const char etag_lower[] = "etag";
     const char etag_upper[] = "ETAG";
     size_t key_len = strlen(etag_lower);
     int state = 0;
     int j = 0;
     for (int i = 0; i < header_len; ++i) {
-        char c = header_cpy[i];
+        char c = header[i];
 
         if (state == 0) {
             if (c == etag_lower[i] || c == etag_upper[i]) {

@@ -113,16 +113,21 @@ typedef enum kii_code_t
 {
     KII_ERR_OK, /**< \brief Succeeded */
     KII_ERR_SOCK_CONNECT, /**< \brief Socket error in connection. */
-    KII_ERR_SOCK_CLOSE, /**< \brief Socket error in closing. */
+    KII_ERR_SOCK_CLOSE, /**< \brief No longer returned: closing doesn't change a request's result. */
     KII_ERR_SOCK_SEND, /**< \brief Socket error in sending data. */
     KII_ERR_SOCK_RECV, /**< \brief Socket error in receiving data. */
     KII_ERR_HEADER_CALLBACK, /**< \brief Error in header callback. */
-    KII_ERR_WRITE_CALLBACK, /**< \brief Error in write callback. */
+    KII_ERR_WRITE_CALLBACK, /**< \brief Error in a write callback the application gave. */
     KII_ERR_ALLOCATION, /**< \brief Error in memory allocation. */
-    KII_ERR_TOO_LARGE_DATA, /**< \brief Data is larger than expected. */
+    KII_ERR_TOO_LARGE_DATA, /**< \brief Data is larger than expected, as a response too large for the buffer set by kii_set_buff() is. */
     KII_ERR_RESP_STATUS, /**< \brief REST API returns error status code. */
     KII_ERR_PARSE_JSON, /**< \brief REST API returns error status code. */
-    KII_ERR_FAIL /**< \brief Other errors. */
+    KII_ERR_FAIL, /**< \brief Other errors. */
+    /* Added after KII_ERR_FAIL so that the codes above keep their values. */
+    KII_ERR_CREATE_TASK, /**< \brief Error in creating task. */
+    /** \brief The response isn't HTTP kii can read: its status line isn't
+     * one, or its framing doesn't say where its body ends. */
+    KII_ERR_INVALID_RESPONSE
 } kii_code_t;
 
 /** \brief Represents scope of bucket/ topic. */
@@ -245,7 +250,10 @@ typedef struct kii_t {
     KII_PUSH_RECEIVED_CB _cb_push_received; /**< \private */
     void* _push_data; /**< \private */
 
-    int _mqtt_connected; /**< \private */
+    /* Whether a task runs on this kii_t: the push task, or the task of the
+     * tio_updater_t it belongs to. KII_TRUE or KII_FALSE. In the place of
+     * _mqtt_connected, which nothing read, so that the layout stays 2.0's. */
+    int _task_running; /**< \private */
 
     char* _mqtt_buffer; /**< \private */
     size_t _mqtt_buffer_size; /**< \private */
@@ -590,15 +598,20 @@ kii_code_t kii_get_mqtt_endpoint(
  *  After succeeded, asynchronous task is started and
  * cb_push is called when message is delivered to the
  * thing.
+ * The task is created by the callback set by kii_set_cb_task_create().
+ * If that callback is not set, or fails to create the task, no task is
+ * started and KII_ERR_CREATE_TASK is returned.
 
  * \param [in,out] kii kii_t instance.
  * \param [in] keep_alive_interval_sec MQTT Keep-Alive interval in seconds.
  * MQTT keep alive interval in seconds. If 0, Keep Alive mechanism is disabled.
  * Otherwise, pingReq is sent to MQTT broker periodically with the specified interval.
  * Too short interval causes network congestion. We recommend to set this to few minutes.
+ * At most 65535, the largest MQTT can carry.
  * \param [in] cb_push  Callback called when push message delivered.
  * \param [in] userdata Context object passed to cb_push.
- * \return kii_code_t
+ * \return kii_code_t. KII_ERR_FAIL if keep_alive_interval_sec is larger than
+ * 65535, and the task is not started.
  */
 kii_code_t kii_start_push_task(
 		kii_t* kii,
@@ -827,7 +840,9 @@ kii_code_t kii_api_call_append_body(
  * \param [in] kii kii_t instance.
  * \param [in] key Key of http header.
  * \param [in] value Value of http header.
- * \return kii_code_t.
+ * \return kii_code_t. KII_ERR_TOO_LARGE_DATA if the header is longer than the
+ * buffer set by kii_set_buff(). It is put together on the stack of the task
+ * calling this, which has to have room for it.
  */
 kii_code_t
 kii_api_call_append_header(
@@ -871,7 +886,10 @@ kii_code_t kii_api_call_run(kii_t* kii);
  * You don't have to take account the buffer size used by those response.
 
  * You can change the size of buffer depending on the request/ response size.
- * It must be enough large to store whole request/ response except for method listed above.
+ * It must be enough large to store whole request/ response except for method listed above:
+ * a response's body can be at most one byte shorter than the buffer, and a
+ * longer one fails the call as KII_ERR_TOO_LARGE_DATA. The body in it is
+ * kii_get_resp_body_length() bytes, and is not a string: read it by that length.
  * Typically, 4096 bytes is enough. However it varies depending on your data schema used to define
  * object or thing. If object becomes large, consider putting them in object body.
 
@@ -1091,6 +1109,9 @@ void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb_continue, void
 
  * Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback or
  * un-recoverble error occurs.
+ * If it has a connection to the MQTT broker open, it closes it first with the
+ * callback set by kii_set_cb_mqtt_sock_close(), so exit_cb is called with no
+ * MQTT connection open.
  * In exit_cb, you'll need to free memory used for MQTT buffer set by kii_set_mqtt_buff(),
  * Memory used for the userdata passed to following callbacks in case not yet freed.
 
@@ -1168,6 +1189,11 @@ void kii_set_cb_slist_resource(
 /**
  * \brief Get Etag value.
  *
+ * It is kii_t's, and stays as it is until the next request is sent: it can be
+ * given as it is to kii_put_object() or kii_patch_object(), or to
+ * kii_api_call_append_header() after kii_api_call_start(), for the If-Match of
+ * that request. Then it is that response's.
+ *
  * \param [in] kii kii_t instance.
  * \return Etag value in Etag response header.
  */
@@ -1184,6 +1210,8 @@ int kii_get_resp_status(kii_t* kii);
 /**
  * \brief Get response body length.
  * If the response is chunked, decoded response body length is returned.
+ * It is how much of the buffer set by kii_set_buff() is the body, which is
+ * not a string.
  *
  * \param [in] kii kii_t instance.
  * \return Length of response body.

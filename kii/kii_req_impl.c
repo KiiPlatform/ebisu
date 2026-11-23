@@ -1,3 +1,4 @@
+#include "kii_impl.h"
 #include "kii_req_impl.h"
 #include <string.h>
 
@@ -43,11 +44,13 @@ kii_code_t _set_bucket_path(
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     } else {
+        // khc keeps a path shorter than the buffer may hold one, and refuses
+        // one that would break the request line.
         khc_code ret = khc_set_path(&kii->_khc, kii->_rw_buff);
         if (ret == KHC_ERR_OK) {
             return KII_ERR_OK;
         } else {
-            return KII_ERR_TOO_LARGE_DATA;
+            return _convert_code(ret);
         }
     }
 }
@@ -78,7 +81,7 @@ kii_code_t _set_bucket_subscription_path(kii_t* kii, const kii_bucket_t* bucket)
     }
     khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
     if (kcode != KHC_ERR_OK) {
-        return KII_ERR_TOO_LARGE_DATA;
+        return _convert_code(kcode);
     }
     return KII_ERR_OK;
 }
@@ -112,7 +115,7 @@ kii_code_t _set_topic_path(
     }
     khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
     if (kcode != KHC_ERR_OK) {
-        return KII_ERR_TOO_LARGE_DATA;
+        return _convert_code(kcode);
     }
     return KII_ERR_OK;
 }
@@ -143,7 +146,7 @@ kii_code_t _set_topic_subscription_path(kii_t* kii, const kii_topic_t* topic) {
     }
     khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
     if (kcode != KHC_ERR_OK) {
-        return KII_ERR_TOO_LARGE_DATA;
+        return _convert_code(kcode);
     }
     return KII_ERR_OK;
 }

@@ -1,7 +1,44 @@
 #include "kii.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
+#include "jkii_utils.h"
 #include <string.h>
+
+/* Copies str to the buffer at len, and returns the new length, or -1. */
+static int _body_copy(kii_t* kii, int len, const char* str)
+{
+    size_t room = kii->_rw_buff_size - len;
+    size_t str_len = strlen(str);
+    if (str_len >= room) {
+        return -1;
+    }
+    memcpy(&kii->_rw_buff[len], str, str_len + 1);
+    return len + (int)str_len;
+}
+
+int _kii_body_append(
+        kii_t* kii,
+        int len,
+        const char* before,
+        const char* value,
+        const char* after)
+{
+    if (len < 0) {
+        return -1;
+    }
+    len = _body_copy(kii, len, before);
+    if (len < 0) {
+        return -1;
+    }
+    // Into the buffer itself: a value has to fit there anyway, and the
+    // application decides how long it is, so it can't size an array on the
+    // stack of the task making the request.
+    int escaped = jkii_escape_str(value, &kii->_rw_buff[len], kii->_rw_buff_size - len);
+    if (escaped < 0) {
+        return -1;
+    }
+    return _body_copy(kii, len + escaped, after);
+}
 
 static void _resource_cleanup(kii_t* kii)
 {
@@ -21,8 +58,15 @@ kii_code_t kii_api_call_start(
     _resource_cleanup(kii);
     
     khc_set_host(&kii->_khc, kii->_app_host);
-    khc_set_method(&kii->_khc, http_method);
-    khc_set_path(&kii->_khc, resource_path);
+    // Both come from the application. Too long for khc, or with what would
+    // break the request line, the request would go without them.
+    khc_code k_res = khc_set_method(&kii->_khc, http_method);
+    if (k_res == KHC_ERR_OK) {
+        k_res = khc_set_path(&kii->_khc, resource_path);
+    }
+    if (k_res != KHC_ERR_OK) {
+        return _convert_code(k_res);
+    }
 
     kii_code_t res = _set_app_id_header(kii);
     if (res != KII_ERR_OK) {
@@ -96,9 +140,22 @@ kii_code_t kii_api_call_append_header_or_default(
 
 kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* value)
 {
+    // A line end in either would make it two headers, or the end of them.
+    // khc_perform() would refuse it; refused here, the call fails where the
+    // header was given.
+    if (strpbrk(key, "\r\n") != NULL || strpbrk(value, "\r\n") != NULL) {
+        _req_headers_free_all(kii);
+        return KII_ERR_FAIL;
+    }
     size_t key_len = strlen(key);
     size_t val_len = strlen(value);
     size_t buff_size = key_len + val_len + 3;
+    // Which goes on the stack of the task making the request, and the
+    // application decides how long it is.
+    if (buff_size > kii->_rw_buff_size) {
+        _req_headers_free_all(kii);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
     char buff[buff_size];
 
     int header_len = snprintf(buff, buff_size, "%s: %s", key, value);
@@ -119,8 +176,14 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
 kii_code_t kii_api_call_run(kii_t* kii)
 {
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
+    // kii's own write callback fails only when the response doesn't fit in the
+    // buffer. One the application gave, to download an object, fails for its
+    // own reasons.
+    if (code == KHC_ERR_WRITE_CALLBACK && kii->_khc._cb_write == _cb_write_buff) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
     return _convert_code(code);
 }
