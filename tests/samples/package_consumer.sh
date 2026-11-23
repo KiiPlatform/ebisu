@@ -28,6 +28,15 @@ for f in LICENSE NOTICE; do
     cmp "$root/$f" "$work/prefix/share/doc/ebisu/$f"
 done
 
+# The major version README.md's example asks the package for. A build that
+# says it is another, as master's did while it was becoming 3.0 but was
+# described from v2.0.0, fails both ways below.
+major=$(sed -n 's/^find_package(ebisu \([0-9][0-9]*\) CONFIG REQUIRED)$/\1/p' "$root/README.md")
+if [ -z "$major" ]; then
+    echo "README.md has no find_package(ebisu <major> CONFIG REQUIRED)" >&2
+    exit 1
+fi
+
 mkdir "$work/consumer"
 cat > "$work/consumer/main.c" <<'SOURCE'
 #include <ebisu_dns_probe.h>
@@ -62,10 +71,10 @@ int main(void)
     return 0;
 }
 SOURCE
-cat > "$work/consumer/CMakeLists.txt" <<'SOURCE'
+cat > "$work/consumer/CMakeLists.txt" <<SOURCE
 cmake_minimum_required(VERSION 3.15)
 project(consumer C)
-find_package(ebisu CONFIG REQUIRED)
+find_package(ebisu $major CONFIG REQUIRED)
 add_executable(consumer main.c)
 target_link_libraries(consumer PRIVATE ebisu::dns_probe ebisu::openssl ebisu::posix ebisu::kii)
 SOURCE
@@ -77,7 +86,12 @@ echo "find_package:"
 LD_LIBRARY_PATH="$libdir" "$work/consumer/build/consumer"
 
 # The ports first: they call into the library, which comes after them.
-PKG_CONFIG_PATH="$libdir/pkgconfig" pkg-config --modversion ebisu-kii
+version=$(PKG_CONFIG_PATH="$libdir/pkgconfig" pkg-config --modversion ebisu-kii)
+echo "$version"
+case $version in
+    "$major".*) ;;
+    *) echo "ebisu-kii is $version, not the $major.x README.md asks for" >&2; exit 1 ;;
+esac
 cc "$work/consumer/main.c" -o "$work/consumer/consumer-pc" \
     $(PKG_CONFIG_PATH="$libdir/pkgconfig" pkg-config --cflags --libs ebisu-dns-probe ebisu-openssl ebisu-posix ebisu-kii)
 echo "pkg-config:"
