@@ -646,11 +646,31 @@ def run_tests(t, d):
             recv_result(steps, 2)[::4] == ('OK', 'he') and wait_result(steps, 3)[0] == '1' and
             recv_result(steps, 4)[::4] == ('OK', 'llo\\n'), out)
 
-    out, steps = t.run(port, 10, 'connect', 'send:partial 3000 split record\\n', 'wait:10000', 'recv:100',
-                       'close')
-    w = wait_result(steps, 2)
-    t.check('recv_wait: true for half a record, whose rest recv waits for',
-            w[0] == '1' and w[1] < 2500 and recv_result(steps, 3)[::4] == ('OK', 'split record\\n'), out)
+    # Half a record is no data yet: recv would wait for the rest. recv_wait
+    # took it for data, and so would khc's look for an early response while a
+    # body is being sent.
+    out, steps = t.run(port, 10, 'connect', 'send:partial 3000 split record\\n', 'wait:500', 'wait:10000',
+                       'recv:100', 'close')
+    w = [wait_result(steps, i) for i in (2, 3)]
+    r = recv_result(steps, 4)
+    t.check('recv_wait: false for half a record, %s ms, then true once the rest comes, %s ms later, '
+            'which recv returns at once, %s ms' % (w[0][1], w[1][1], r[3]),
+            w[0][0] == '0' and 400 <= w[0][1] <= 2000 and w[1][0] == '1' and 1500 <= w[1][1] < 9000 and
+            r[::4] == ('OK', 'split record\\n') and r[3] < 1000, out)
+
+    # recv_wait reads ahead of recv, so it comes to the end of the stream or a
+    # failure first. recv returns what reading it would have: read again
+    # after a reset, the socket gives the end of the stream, which a body that
+    # ends with the connection takes for its end.
+    out, steps = t.run(port, 10, 'connect', 'send:fin_mid cut short\\n', 'wait:10000', 'recv:100', 'close')
+    t.check('recv_wait: true for a connection closed in the middle of a record, which recv fails',
+            wait_result(steps, 2)[0] == '1' and recv_result(steps, 3)[:3] == ('FAIL', 0, '0'), out)
+
+    out, steps = t.run(port, 10, 'connect', 'send:echo x\\n', 'recv:100', 'send:reset\\n', 'wait:10000',
+                       'recv:100', 'close')
+    t.check('recv_wait: true for a reset, which recv fails as such, %s' % (last_error(steps, 5),),
+            wait_result(steps, 4)[0] == '1' and recv_result(steps, 5)[:3] == ('FAIL', 0, '0') and
+            last_error(steps, 5)[0] == 'CLOSED', out)
 
     out, steps = t.run(port, 10, 'connect', 'send:close_notify bye\\n', 'recv:100', 'wait:10000',
                        'recv:100', 'close')

@@ -299,6 +299,7 @@ static void teardown(ebisu_schannel_socket_t* ctx)
     ctx->plain = NULL;
     ctx->plain_len = 0;
     ctx->peer_closed = 0;
+    ctx->kept_failure = 0;
 }
 
 static SOCKET tcp_connect(ebisu_schannel_socket_t* ctx, uint16_t port)
@@ -359,10 +360,11 @@ static int send_all(ebisu_schannel_socket_t* ctx, const char* data, size_t lengt
  * using its socket after every idle timeout. A recv() that only starts once
  * select() has seen data, the end of the stream or an error never blocks, so
  * a timeout here leaves the socket as it was, and the TLS stream with it. */
+static read_result_t read_ready(ebisu_schannel_socket_t* ctx);
+
 static read_result_t read_some(ebisu_schannel_socket_t* ctx)
 {
-    size_t room = TLS_MAX_RECORD_SIZE - ctx->recv_len;
-    if (room == 0) {
+    if (ctx->recv_len == TLS_MAX_RECORD_SIZE) {
         log_to(ctx->logger, EBISU_LOG_ERROR, "a TLS record larger than %d bytes.",
                 TLS_MAX_RECORD_SIZE);
         set_error(ctx, EBISU_SOCK_ERROR_TLS, 0);
@@ -401,7 +403,20 @@ static read_result_t read_some(ebisu_schannel_socket_t* ctx)
         set_error(ctx, EBISU_SOCK_ERROR_TIMEOUT, 0);
         return READ_TIMEOUT;
     }
+    return read_ready(ctx);
+}
 
+/* Reads what the socket has, once select() has seen it ready, which never
+   blocks. */
+static read_result_t read_ready(ebisu_schannel_socket_t* ctx)
+{
+    size_t room = TLS_MAX_RECORD_SIZE - ctx->recv_len;
+    if (room == 0) {
+        log_to(ctx->logger, EBISU_LOG_ERROR, "a TLS record larger than %d bytes.",
+                TLS_MAX_RECORD_SIZE);
+        set_error(ctx, EBISU_SOCK_ERROR_TLS, 0);
+        return READ_ERROR;
+    }
     int received = recv(ctx->socket, ctx->recv_buf + ctx->recv_len,
             (int)room, 0);
     if (received == SOCKET_ERROR) {
@@ -1110,6 +1125,11 @@ static ebisu_sock_code_t
         set_error(ctx, EBISU_SOCK_ERROR_OTHER, 0);
         return EBISU_SOCK_FAIL;
     }
+    /* A failure schannel_recv_wait() came to first, its error set then. */
+    if (ctx->kept_failure) {
+        ctx->kept_failure = 0;
+        return EBISU_SOCK_FAIL;
+    }
 
     for (;;) {
         /* Plaintext left from a record decrypted before. */
@@ -1186,27 +1206,76 @@ static ebisu_sock_error_t
     return ctx->error;
 }
 
-/* What schannel_recv() would return without reading the socket comes first:
-   plaintext left from a record, the end of the stream, or the start of a
-   record, whose rest it waits for as it would anyway. Then select(), as
-   read_some() waits, which leaves the socket as it was. A failure of select(),
-   or no connection, is for schannel_recv() to report. */
+/* Whether schannel_recv() would return without waiting: with plaintext left
+   from a record, the end of the stream, or a failure. What has arrived is
+   decrypted, and what the socket has read once select() sees it, which never
+   blocks: a record that carries no data, or the start of one, is no data yet,
+   and the wait goes on for what is left of timeout_ms. They counted as data,
+   and schannel_recv() then waited for the rest. The end of the stream it
+   comes to, and a failure, are kept for schannel_recv(). A failure of
+   select(), or no connection, is for schannel_recv() to report. */
 static bool
     schannel_recv_wait(ebisu_socket_t* self, uint32_t timeout_ms)
 {
     ebisu_schannel_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_schannel_socket_t, base);
     if (ctx->recv_buf == NULL || ctx->plain_len > 0 || ctx->peer_closed ||
-            ctx->recv_len > 0) {
+            ctx->kept_failure) {
         return true;
     }
-    fd_set readable;
-    FD_ZERO(&readable);
-    FD_SET(ctx->socket, &readable);
-    struct timeval timeout;
-    timeout.tv_sec = (long)(timeout_ms / 1000);
-    timeout.tv_usec = (long)(timeout_ms % 1000) * 1000;
-    /* Winsock ignores the first argument. */
-    return select(0, &readable, NULL, NULL, &timeout) != 0;
+    const ULONGLONG start_ms = GetTickCount64();
+    for (;;) {
+        if (ctx->recv_len > 0) {
+            decrypt_result_t decrypted = decrypt_record(ctx);
+            if (decrypted == DECRYPT_OK) {
+                if (ctx->plain_len > 0) {
+                    return true;
+                }
+                /* A record without data, dropped: the next may have some. */
+                continue;
+            }
+            if (decrypted == DECRYPT_CLOSED) {
+                ctx->peer_closed = 1;
+                return true;
+            }
+            if (decrypted == DECRYPT_ERROR) {
+                ctx->kept_failure = 1;
+                return true;
+            }
+            /* DECRYPT_INCOMPLETE: the rest of the record is to come. */
+        }
+        const ULONGLONG gone_ms = GetTickCount64() - start_ms;
+        const ULONGLONG left_ms = gone_ms >= timeout_ms ? 0 : timeout_ms - gone_ms;
+        fd_set readable;
+        FD_ZERO(&readable);
+        FD_SET(ctx->socket, &readable);
+        struct timeval timeout;
+        timeout.tv_sec = (long)(left_ms / 1000);
+        timeout.tv_usec = (long)(left_ms % 1000) * 1000;
+        /* Winsock ignores the first argument. */
+        int ready = select(0, &readable, NULL, NULL, &timeout);
+        if (ready == 0) {
+            return false;
+        }
+        if (ready == SOCKET_ERROR) {
+            return true;
+        }
+        read_result_t read = read_ready(ctx);
+        if (read == READ_EOF) {
+            /* As schannel_recv() takes it. */
+            if (ctx->recv_len == 0) {
+                ctx->peer_closed = 1;
+            } else {
+                log_to(ctx->logger, EBISU_LOG_ERROR,
+                        "connection closed in the middle of a TLS record.");
+                ctx->kept_failure = 1;
+            }
+            return true;
+        }
+        if (read == READ_ERROR) {
+            ctx->kept_failure = 1;
+            return true;
+        }
+    }
 }
 
 /* Sends close_notify. Fails only if Schannel cannot make one. Not being able

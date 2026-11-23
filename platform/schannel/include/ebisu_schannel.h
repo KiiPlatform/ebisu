@@ -95,6 +95,9 @@ typedef struct ebisu_schannel_socket_t {
     /* The peer ended the stream: TLS close_notify, or the end of the TCP
        stream at a record boundary. */
     int peer_closed; /**< \private */
+    /* A failure recv_wait came to before recv could, for recv to return,
+       whose error is the socket's last. */
+    int kept_failure; /**< \private */
     /* Whether the last receive failed because nothing arrived within
        to_recv, for recv_timed_out. */
     int recv_timed_out; /**< \private */
