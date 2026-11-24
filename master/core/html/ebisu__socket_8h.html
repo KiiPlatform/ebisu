@@ -207,7 +207,7 @@ Enumerations</h2></td></tr>
 <tr><td class="fieldname"><a id="a7b634b2cbb6bc4349dab223fbee058baa914e89bcb40f7ddc05c46892a3150874" name="a7b634b2cbb6bc4349dab223fbee058baa914e89bcb40f7ddc05c46892a3150874"></a>EBISU_SOCK_FAIL&#160;</td><td class="fielddoc"><p>Return this code when operation failed. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a7b634b2cbb6bc4349dab223fbee058baa3d0e5d85e07a8c0918b3b24ceaa53a44" name="a7b634b2cbb6bc4349dab223fbee058baa3d0e5d85e07a8c0918b3b24ceaa53a44"></a>EBISU_SOCK_AGAIN&#160;</td><td class="fielddoc"><p>Return this code when operation is in progress. </p>
-<p>This code is used when the underlying socket is non-blocking mode. The operation is called again with the same arguments until it returns EBISU_SOCK_OK or EBISU_SOCK_FAIL. </p>
+<p>This code is used when the underlying socket is non-blocking mode. The operation is called again with the same arguments until it returns EBISU_SOCK_OK or EBISU_SOCK_FAIL. A request khc gives up on meanwhile, as it timed out or was cancelled, calls close instead, whichever operation returned this, connect included. </p>
 </td></tr>
 </table>
 

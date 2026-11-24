@@ -300,7 +300,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true to go on, false to cancel the request: <a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a> closes the connection, if one is open, and returns KHC_ERR_CANCELLED. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>true to go on, false to cancel the request: <a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a> closes the connection, if one is open or on the way, and returns KHC_ERR_CANCELLED. </dd></dl>
 
 </div>
 </div>
@@ -1270,7 +1270,7 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
 </div><div class="memdoc">
 
 <p>Set the socket requests are sent on. </p>
-<p>Its send operation is called several times during the HTTP session, depending on the size of the request, and its recv operation until the length of data it reads is 0. Each request is sent with "Connection: Close", so once connected, its close operation is called at the end of every request. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Its send operation is called several times during the HTTP session, depending on the size of the request, and its recv operation until the length of data it reads is 0. Each request is sent with "Connection: Close", so once connected, its close operation is called at the end of every request. It is also called for a connect that returned EBISU_SOCK_AGAIN, should the request time out or be cancelled before the connect ends; not for one that returned EBISU_SOCK_FAIL. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">khc</td><td>instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">socket</td><td>The socket. It has to outlive khc, or be replaced first. </td></tr>
@@ -1369,7 +1369,7 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
 </div><div class="memdoc">
 
 <p>Set how long a request may take. </p>
-<p>From the start of <a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a> to the end of the response. Once it has passed, <a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a> closes the connection, if one is open, and returns KHC_ERR_TIMEOUT. It is checked between steps, so a socket operation that blocks runs to its own timeout first: it bounds a response that trickles in through receives that each end in time, or a slow handshake made of many.</p>
+<p>From the start of <a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a> to the end of the response. Once it has passed, <a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a> closes the connection, if one is open or on the way, and returns KHC_ERR_TIMEOUT. It is checked between steps, so a socket operation that blocks runs to its own timeout first: it bounds a response that trickles in through receives that each end in time, or a slow handshake made of many.</p>
 <p>It needs the monotonic_ms of the system set by <a class="el" href="#ae310e3fc9866494b832a99fb6ab050e9" title="Set the system: its clock times a request, and its delay waits for a socket that isn&#39;t ready.">khc_set_system(khc_t*, ebisu_system_t*)</a>: without one, <a class="el" href="#ac2eccf72ab3ae08ee7aa026d47d0a34e" title="Perform the HTTP session.">khc_perform(khc_t*)</a> returns KHC_ERR_FAIL without connecting. <a class="el" href="#ad413a75131c9b3c9206949044dd1e7a9" title="Set initial value to members of khc.">khc_init(khc_t*)</a> sets none, and the resets leave it.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
