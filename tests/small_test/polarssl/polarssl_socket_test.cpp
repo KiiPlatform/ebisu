@@ -899,7 +899,9 @@ TEST_CASE( "The PolarSSL socket's recv_wait waits for something for recv to retu
 // warning alert. recv_wait asked the socket under it alone, so it took the
 // record for something to return, and recv then waited for its whole timeout.
 // While a request's body is being sent, khc asks it whether the server has
-// answered early.
+// answered early. PolarSSL before 1.3.9 gave the HelloRequest it declined
+// from ssl_read() as data, the message's four bytes, as its ChangeLog says:
+// recv_wait took them for data too.
 TEST_CASE( "The PolarSSL socket's recv_wait doesn't take a record without data for data" ) {
     Config config;
     std::atomic<bool> asked(false);
@@ -908,19 +910,15 @@ TEST_CASE( "The PolarSSL socket's recv_wait doesn't take a record without data f
         // The HelloRequest, which SSL_do_handshake() sends and returns.
         asked = SSL_renegotiate(ssl) == 1 && SSL_do_handshake(ssl) == 1;
         wait_for(done);
+        SSL_write(ssl, "ok", 2);
+        char ignored[16];
+        SSL_read(ssl, ignored, sizeof(ignored));
     }, 1, TLS1_2_VERSION);
     Client client(&config.tls, 1);
     REQUIRE( client.sock->ops->recv_wait != nullptr );
     REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
     REQUIRE( wait_for(asked) );
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-#if POLARSSL_VERSION_NUMBER < 0x01030900
-    // Before 1.3.9, ssl_read() returned a HelloRequest it declined as data,
-    // the message's four bytes, as its ChangeLog says.
-    done = true;
-    WARN( "PolarSSL before 1.3.9 gives a HelloRequest as data: nothing to check" );
-    return;
-#endif
 
     const auto start = std::chrono::steady_clock::now();
     CHECK_FALSE( client.sock->ops->recv_wait(client.sock, 300) );
@@ -929,6 +927,34 @@ TEST_CASE( "The PolarSSL socket's recv_wait doesn't take a record without data f
     CHECK( waited < std::chrono::milliseconds(2000) );
     CHECK_FALSE( client.sock->ops->recv_wait(client.sock, 0) );
     done = true;
+    // The data after it.
+    CHECK( client.sock->ops->recv_wait(client.sock, 5000) );
+    CHECK( client.recv(64) == "ok" );
+}
+
+// PolarSSL before 1.3.9 gave the HelloRequest it declined from ssl_read() as
+// data, and recv returned its four bytes, all zeros, for the server's.
+TEST_CASE( "The PolarSSL socket's recv doesn't return a HelloRequest as data" ) {
+    Config config;
+    std::atomic<bool> asked(false);
+    TlsServer server(pki().server(), [&asked](SSL* ssl, int) {
+        asked = SSL_renegotiate(ssl) == 1 && SSL_do_handshake(ssl) == 1;
+        SSL_write(ssl, "ok", 2);
+        char ignored[16];
+        SSL_read(ssl, ignored, sizeof(ignored));
+    }, 1, TLS1_2_VERSION);
+    Client client(&config.tls);
+    REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
+    REQUIRE( wait_for(asked) );
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    SECTION("read whole") {
+        CHECK( client.recv(64) == "ok" );
+    }
+    SECTION("read a byte at a time") {
+        CHECK( client.recv(1) == "o" );
+        CHECK( client.recv(1) == "k" );
+    }
 }
 
 // recv_wait reads ahead of recv: the first byte of data, or the end of the

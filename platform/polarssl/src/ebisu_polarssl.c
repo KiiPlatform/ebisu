@@ -989,6 +989,24 @@ static ebisu_sock_code_t polarssl_send(
     return EBISU_SOCK_FAIL;
 }
 
+/* ssl_read(), as 1.3.9 on have it: before, a server's HelloRequest that
+   PolarSSL declined, with the warning alert it sends, came back as data, the
+   message's four bytes, all zeros. Those are dropped, and the caller told to
+   read again, as 1.3.9 does. It is the one record of a handshake message that
+   ssl_read() returns from on a client; any other fails it. */
+static int read_data(ebisu_polarssl_socket_t* sock, unsigned char* buffer, size_t length)
+{
+    int ret = ssl_read(&sock->_ssl, buffer, length);
+#if POLARSSL_VERSION_NUMBER < 0x01030900
+    if (ret > 0 && sock->_ssl.in_msgtype == SSL_MSG_HANDSHAKE) {
+        sock->_ssl.in_offt = NULL;
+        sock->_ssl.in_msglen = 0;
+        ret = POLARSSL_ERR_NET_WANT_READ;
+    }
+#endif
+    return ret;
+}
+
 static ebisu_sock_code_t polarssl_recv(
         ebisu_socket_t* self,
         char* buffer,
@@ -1010,7 +1028,7 @@ static ebisu_sock_code_t polarssl_recv(
             more = length_to_read - 1;
         }
         if (more > 0) {
-            ret = ssl_read(&sock->_ssl, (unsigned char*)buffer + 1, more);
+            ret = read_data(sock, (unsigned char*)buffer + 1, more);
             if (ret > 0) {
                 *out_actual_length += (size_t)ret;
             }
@@ -1023,7 +1041,7 @@ static ebisu_sock_code_t polarssl_recv(
     } else do {
         sock->_timed_out = false;
         sock->_again = false;
-        ret = ssl_read(&sock->_ssl, (unsigned char*)buffer, length_to_read);
+        ret = read_data(sock, (unsigned char*)buffer, length_to_read);
     } while (call_again(sock, ret));
     if (ret > 0) {
         *out_actual_length = (size_t)ret;
@@ -1092,7 +1110,7 @@ static bool has_data_now(ebisu_polarssl_socket_t* sock)
     do {
         sock->_timed_out = false;
         sock->_again = false;
-        ret = ssl_read(&sock->_ssl, &sock->_peeked, 1);
+        ret = read_data(sock, &sock->_peeked, 1);
     } while (call_again(sock, ret));
     sock->_no_wait = false;
     if (ret == 1) {
