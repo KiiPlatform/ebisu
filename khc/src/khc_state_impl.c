@@ -167,22 +167,15 @@ void khc_state_connect(khc_t* khc) {
 
 static const char schema_https[] = "https://";
 static const char schema_http[] = "http://";
-static const char http_version[] = "HTTP/1.1\r\n";
+static const char http_version[] = " HTTP/1.1\r\n";
+static const char host_key[] = "HOST: ";
+static const char crlf[] = "\r\n";
 
 // The path, as an empty one has to go out as "/".
 static const char* request_path(khc_t* khc) {
     // Path must be started with '/'
     return khc->_path[0] != '\0' ? khc->_path : "/";
 }
-
-// The longest request line, as "GET /v1/users HTTP/1.1\r\n" or, for an absolute
-// target, "GET https://host/v1/users HTTP/1.1\r\n": the setters keep the
-// method, the host and the path shorter than their buffers. The line's buffer
-// is of this size, not of the line's, as MSVC has no variable length arrays.
-#define REQUEST_LINE_MAX_LEN \
-    (KHC_METHOD_MAX_SIZE - 1 + 1 \
-     + sizeof(schema_https) - 1 + KHC_HOST_MAX_SIZE - 1 + KHC_PATH_MAX_SIZE - 1 + 1 \
-     + sizeof(http_version) - 1)
 
 // Whether the server has sent something, while the request is still being
 // sent, as the socket's recv_wait says without waiting. It returns true only
@@ -211,157 +204,6 @@ static void _send_failed(khc_t* khc) {
     khc->_result = KHC_ERR_SOCK_SEND;
 }
 
-void khc_state_req_line(khc_t* khc) {
-    char request_line[REQUEST_LINE_MAX_LEN + 1];
-
-    request_line[0] = '\0';
-    strcat(request_line, khc->_method);
-    strcat(request_line, " ");
-    // Otherwise the host goes in the Host header, which is all a server wants.
-    if (khc->_absolute_target) {
-        strcat(request_line, khc->_enable_insecure ? schema_http : schema_https);
-        strcat(request_line, khc->_host);
-    }
-    strcat(request_line, request_path(khc));
-    strcat(request_line, " ");
-    strcat(request_line, http_version);
-    char* send_pos = &request_line[khc->_sent_length];
-    size_t send_len = strlen(send_pos);
-    size_t sent_len = 0;
-    ebisu_sock_code_t send_res = khc->_socket->ops->send(khc->_socket, send_pos, send_len, &sent_len);
-    if (send_res == EBISU_SOCK_OK) {
-        if (sent_len < send_len) {
-            khc->_sent_length += sent_len;
-            // retry.
-            return;
-        } else {
-            khc->_sent_length = 0;
-        }
-        // Without its CRLF.
-        _khc_log(khc, EBISU_LOG_DEBUG, "> %.*s", (int)(strlen(request_line) - 2), request_line);
-        khc->_state = KHC_STATE_REQ_HOST_HEADER;
-        return;
-    }
-    if (send_res == EBISU_SOCK_AGAIN) {
-        khc->_again = true;
-        return;
-    }
-    if (send_res == EBISU_SOCK_FAIL) {
-        _send_failed(khc);
-        return;
-    }
-}
-
-void khc_state_req_host_header(khc_t* khc) {
-    const char hdr_key[] = "HOST: ";
-    // The key, the longest host khc_set_host() takes, the CRLF and the NUL.
-    char buff[sizeof(hdr_key) - 1 + KHC_HOST_MAX_SIZE - 1 + 2 + 1];
-    ebisu_strbuf_t line;
-    ebisu_strbuf_init(&line, buff, sizeof(buff));
-    ebisu_strbuf_appendf(&line, "%s%s\r\n", hdr_key, khc->_host);
-    char* send_pos = &buff[khc->_sent_length];
-    size_t send_len = strlen(send_pos);
-    size_t sent_len = 0;
-    ebisu_sock_code_t send_res = khc->_socket->ops->send(khc->_socket, send_pos, send_len, &sent_len);
-    if (send_res == EBISU_SOCK_OK) {
-        if (sent_len < send_len) {
-            khc->_sent_length += sent_len;
-            // retry.
-            return;
-        } else {
-            khc->_sent_length = 0;
-        }
-        _khc_log(khc, EBISU_LOG_DEBUG, "> %s%s", hdr_key, khc->_host);
-        khc->_state = KHC_STATE_REQ_HEADER;
-        khc->_current_req_header = khc->_req_headers;
-        return;
-    }
-    if (send_res == EBISU_SOCK_AGAIN) {
-        khc->_again = true;
-        return;
-    }
-    if (send_res == EBISU_SOCK_FAIL) {
-        _send_failed(khc);
-        return;
-    }
-}
-
-void khc_state_req_header(khc_t* khc) {
-    if (khc->_current_req_header == NULL) {
-        khc->_state = KHC_STATE_REQ_HEADER_END;
-        return;
-    }
-    char* data = khc->_current_req_header->data;
-    if (data == NULL) {
-        // Skip if data is NULL.
-        khc->_current_req_header = khc->_current_req_header->next;
-        return;
-    }
-    size_t len = strlen(data);
-    if (len == 0) {
-        // Skip if nothing to send.
-        khc->_current_req_header = khc->_current_req_header->next;
-        return;
-    }
-    khc->_state = KHC_STATE_REQ_HEADER_SEND;
-}
-
-void khc_state_req_header_send(khc_t* khc) {
-    char* line = khc->_current_req_header->data;
-    char* send_pos = &line[khc->_sent_length];
-    size_t send_len = strlen(send_pos);
-    size_t sent_len = 0;
-    ebisu_sock_code_t send_res = khc->_socket->ops->send(khc->_socket, send_pos, send_len, &sent_len);
-    if (send_res == EBISU_SOCK_OK) {
-        if (sent_len < send_len) {
-            khc->_sent_length += sent_len;
-            // retry.
-            return;
-        } else {
-            khc->_sent_length = 0;
-        }
-        _khc_log_header(khc, '>', line, strlen(line));
-        khc->_state = KHC_STATE_REQ_HEADER_SEND_CRLF;
-        return;
-    }
-    if (send_res == EBISU_SOCK_AGAIN) {
-        khc->_again = true;
-        return;
-    }
-    if (send_res == EBISU_SOCK_FAIL) {
-        _send_failed(khc);
-        return;
-    }
-}
-
-void khc_state_req_header_send_crlf(khc_t* khc) {
-    char crlf[] = "\r\n";
-    char* send_pos = &crlf[khc->_sent_length];
-    size_t send_len = strlen(send_pos);
-    size_t sent_len = 0;
-    ebisu_sock_code_t send_res = khc->_socket->ops->send(khc->_socket, send_pos, send_len, &sent_len);
-    if (send_res == EBISU_SOCK_OK) {
-        if (sent_len < send_len) {
-            khc->_sent_length += sent_len;
-            // retry.
-            return;
-        } else {
-            khc->_sent_length = 0;
-        }
-        khc->_current_req_header = khc->_current_req_header->next;
-        khc->_state = KHC_STATE_REQ_HEADER;
-        return;
-    }
-    if (send_res == EBISU_SOCK_AGAIN) {
-        khc->_again = true;
-        return;
-    }
-    if (send_res == EBISU_SOCK_FAIL) {
-        _send_failed(khc);
-        return;
-    }
-}
-
 // Whether the request has a body to read from the read callback.
 static bool _has_req_body(khc_t* khc) {
     return khc_method_can_have_body(khc) && khc->_cb_read != NULL &&
@@ -384,56 +226,172 @@ static size_t _decimal(size_t value, char* out) {
     return len;
 }
 
-void khc_state_req_header_end(khc_t* khc) {
-    static const char connection_close[] = "Connection: Close\r\n\r\n";
-    char text[sizeof("Content-Length: \r\n") + sizeof(size_t) * 3 + sizeof(connection_close)];
-    text[0] = '\0';
+static const char connection_close[] = "Connection: Close\r\n\r\n";
+
+// The size of the head's end: the body's length, or that it is chunked, and
+// Connection, with the empty line that ends the head.
+#define HEAD_END_SIZE \
+    (sizeof("Content-Length: \r\n") + sizeof(size_t) * 3 + sizeof(connection_close))
+
+// What ends the head, after the application's headers.
+static void _head_end(khc_t* khc, char out[HEAD_END_SIZE]) {
+    out[0] = '\0';
     if(!khc_method_can_have_body(khc)) {
         // Nothing more than Connection.
     } else if(khc->_cb_read == NULL) {
-        strcpy(text, "Content-Length: 0\r\n");
+        strcpy(out, "Content-Length: 0\r\n");
     } else if(khc->_req_body_length != KHC_REQ_BODY_LENGTH_UNKNOWN) {
-        strcpy(text, "Content-Length: ");
-        size_t len = strlen(text);
-        len += _decimal(khc->_req_body_length, &text[len]);
-        strcpy(&text[len], "\r\n");
+        strcpy(out, "Content-Length: ");
+        size_t len = strlen(out);
+        len += _decimal(khc->_req_body_length, &out[len]);
+        strcpy(&out[len], "\r\n");
     } else {
-        strcpy(text, "Transfer-Encoding: chunked\r\n");
+        strcpy(out, "Transfer-Encoding: chunked\r\n");
     }
-    strcat(text, connection_close);
-    char* send_pos = &text[khc->_sent_length];
-    size_t send_len = strlen(send_pos);
-    size_t sent_len = 0;
-    ebisu_sock_code_t send_res = khc->_socket->ops->send(khc->_socket, send_pos, send_len, &sent_len);
-    if (send_res == EBISU_SOCK_OK) {
-        if (sent_len < send_len) {
-            khc->_sent_length += sent_len;
-            // retry.
+    strcat(out, connection_close);
+}
+
+// The parts of the request's head, in the order they are sent: the request
+// line, the Host header, each of the application's headers, and the end.
+enum {
+    HEAD_METHOD,
+    HEAD_SPACE,
+    HEAD_SCHEME,
+    HEAD_TARGET_HOST,
+    HEAD_PATH,
+    HEAD_VERSION,
+    HEAD_HOST_KEY,
+    HEAD_HOST,
+    HEAD_HOST_CRLF,
+    HEAD_HEADER,
+    HEAD_HEADER_CRLF,
+    HEAD_END,
+    HEAD_DONE
+};
+
+// The first header from node on that has something to send: one without
+// data, or with empty data, is skipped.
+static khc_slist_t* _next_header(khc_slist_t* node) {
+    while (node != NULL && (node->data == NULL || node->data[0] == '\0')) {
+        node = node->next;
+    }
+    return node;
+}
+
+// The scheme and host before the path, for an absolute target. Otherwise the
+// host goes in the Host header only, which is all a server wants.
+static const char* _target_scheme(khc_t* khc) {
+    if (!khc->_absolute_target) {
+        return "";
+    }
+    return khc->_enable_insecure ? schema_http : schema_https;
+}
+
+static const char* _target_host(khc_t* khc) {
+    return khc->_absolute_target ? khc->_host : "";
+}
+
+// The part of the head khc is at.
+static const char* _head_part(khc_t* khc, const char* end) {
+    switch (khc->_req_head_part) {
+        case HEAD_METHOD: return khc->_method;
+        case HEAD_SPACE: return " ";
+        case HEAD_SCHEME: return _target_scheme(khc);
+        case HEAD_TARGET_HOST: return _target_host(khc);
+        case HEAD_PATH: return request_path(khc);
+        case HEAD_VERSION: return http_version;
+        case HEAD_HOST_KEY: return host_key;
+        case HEAD_HOST: return khc->_host;
+        case HEAD_HEADER: return khc->_current_req_header->data;
+        case HEAD_HOST_CRLF:
+        case HEAD_HEADER_CRLF: return crlf;
+        case HEAD_END: return end;
+        default: return "";
+    }
+}
+
+// Moves on to the part of the head after the one khc is at.
+static void _next_head_part(khc_t* khc) {
+    switch (khc->_req_head_part) {
+        case HEAD_HOST_CRLF:
+            khc->_current_req_header = _next_header(khc->_req_headers);
+            break;
+        case HEAD_HEADER_CRLF:
+            khc->_current_req_header = _next_header(khc->_current_req_header->next);
+            break;
+        default:
+            ++khc->_req_head_part;
+            khc->_req_head_offset = 0;
             return;
-        } else {
-            khc->_sent_length = 0;
+    }
+    khc->_req_head_part = (khc->_current_req_header != NULL) ? HEAD_HEADER : HEAD_END;
+    khc->_req_head_offset = 0;
+}
+
+// Logs the head, a line at a time, without the CRLFs.
+static void _log_head(khc_t* khc, const char* end) {
+#ifndef EBISU_NO_LOG
+    if (khc->_logger == NULL) {
+        return;
+    }
+    _khc_log(khc, EBISU_LOG_DEBUG, "> %s %s%s%s HTTP/1.1", khc->_method,
+            _target_scheme(khc), _target_host(khc), request_path(khc));
+    _khc_log(khc, EBISU_LOG_DEBUG, "> %s%s", host_key, khc->_host);
+    for (khc_slist_t* header = _next_header(khc->_req_headers); header != NULL;
+            header = _next_header(header->next)) {
+        _khc_log_header(khc, '>', header->data, strlen(header->data));
+    }
+    _khc_log_lines(khc, '>', end);
+#else
+    (void)khc;
+    (void)end;
+#endif
+}
+
+// Puts the request's head in the stream buffer, to be sent with what fits of
+// the body after it. Sent a line at a time, each line went in a send of its
+// own, over TLS a record of its own, and a socket without TCP_NODELAY held
+// back each after the first until the server acknowledged it, which a server
+// may delay: by 40 ms on Linux. A head larger than the buffer goes a buffer
+// at a time.
+void khc_state_req_line(khc_t* khc) {
+    char end[HEAD_END_SIZE];
+    _head_end(khc, end);
+    char* buff = khc->_stream_buff;
+    size_t size = khc->_stream_buff_size;
+    size_t used = 0;
+    while (khc->_req_head_part != HEAD_DONE && used < size) {
+        const char* part = _head_part(khc, end);
+        size_t len = strlen(part);
+        // At most the part's length, which it never passes.
+        size_t offset = (khc->_req_head_offset < len) ? khc->_req_head_offset : len;
+        size_t left = len - offset;
+        size_t n = (left < size - used) ? left : size - used;
+        memcpy(&buff[used], &part[offset], n);
+        used += n;
+        khc->_req_head_offset = offset + n;
+        if (n == left) {
+            _next_head_part(khc);
         }
-        _khc_log_lines(khc, '>', text);
-        // A method without a body ends the request here: its headers say
-        // nothing of one, so a body, or even the chunk ending an empty one,
-        // would be taken for the start of another request.
-        if (_has_req_body(khc)) {
-            khc->_req_body_left = khc->_req_body_length;
-            khc->_req_body_sent = 0;
-            khc->_state = KHC_STATE_REQ_BODY_READ;
-        } else {
-            khc->_state = KHC_STATE_RESP_STATUS_READ;
-        }
+    }
+    khc->_req_frame_start = 0;
+    khc->_req_frame_size = used;
+    khc->_sent_length = 0;
+    khc->_state = KHC_STATE_REQ_BODY_SEND;
+    if (khc->_req_head_part != HEAD_DONE) {
+        return;
+    }
+    _log_head(khc, end);
+    // A method without a body ends the request here: its headers say
+    // nothing of one, so a body, or even the chunk ending an empty one,
+    // would be taken for the start of another request.
+    if (_has_req_body(khc)) {
+        khc->_req_body_left = khc->_req_body_length;
+        khc->_req_body_sent = 0;
         khc->_read_req_end = false;
-        return;
-    }
-    if (send_res == EBISU_SOCK_AGAIN) {
-        khc->_again = true;
-        return;
-    }
-    if (send_res == EBISU_SOCK_FAIL) {
-        _send_failed(khc);
-        return;
+        khc->_state = KHC_STATE_REQ_BODY_READ;
+    } else {
+        khc->_read_req_end = true;
     }
 }
 
@@ -451,15 +409,19 @@ static size_t _hex_digits(size_t size) {
     return digits;
 }
 
-// Reads the next part of the body into the stream buffer, framed as it is to
-// be sent, so that each part goes out in one send: over TLS, one record rather
-// than three for each chunk.
+// Reads the body into the stream buffer, after what of the head waits there,
+// until the buffer is full or the body ends, framed as it is to be sent, so
+// that the buffer goes out in one send: over TLS, one record, a chunk's size
+// line and CRLF in it, and the chunk that ends the body too, should it fit.
 void khc_state_req_body_read(khc_t* khc) {
+    // What of the head waits to be sent, with this.
+    size_t used = khc->_req_frame_size;
     // A server may answer before the body is all sent, a 401 or a 413 for
     // instance, and close the connection: RFC 9112, section 9.5, has the
     // client look for that while it sends, and stop. Sent on regardless, the
-    // body met a closed connection, and the answer was lost with it.
-    if (_response_waiting(khc)) {
+    // body met a closed connection, and the answer was lost with it. Before
+    // the head is sent, there is nothing to answer.
+    if (used == 0 && _response_waiting(khc)) {
         _khc_log(khc, EBISU_LOG_DEBUG,
                 "the server answered with %lu bytes of the body sent: reading it",
                 (unsigned long)khc->_req_body_sent);
@@ -467,48 +429,58 @@ void khc_state_req_body_read(khc_t* khc) {
         khc->_state = KHC_STATE_RESP_STATUS_READ;
         return;
     }
+    char* buff = khc->_stream_buff;
+    size_t size = khc->_stream_buff_size;
     if (khc->_req_body_length != KHC_REQ_BODY_LENGTH_UNKNOWN) {
-        size_t want = khc->_req_body_left < khc->_stream_buff_size ?
-            khc->_req_body_left : khc->_stream_buff_size;
-        size_t got = khc->_cb_read(khc->_stream_buff, want, khc->_read_data);
-        if (got == 0 || got > want) {
-            _fail_req_body(khc, KHC_ERR_READ_CALLBACK);
-            return;
+        while (khc->_req_body_left > 0 && used < size) {
+            size_t want = (khc->_req_body_left < size - used) ?
+                khc->_req_body_left : size - used;
+            size_t got = khc->_cb_read(&buff[used], want, khc->_read_data);
+            if (got == 0 || got > want) {
+                _fail_req_body(khc, KHC_ERR_READ_CALLBACK);
+                return;
+            }
+            khc->_req_body_left -= got;
+            khc->_req_body_sent += got;
+            used += got;
         }
-        khc->_req_body_left -= got;
-        khc->_req_body_sent += got;
-        khc->_read_size = got;
         khc->_read_req_end = khc->_req_body_left == 0;
-        khc->_req_frame_start = 0;
-        khc->_req_frame_size = got;
-        khc->_state = KHC_STATE_REQ_BODY_SEND;
-        return;
+    } else {
+        while (!khc->_read_req_end) {
+            // Room for the longest size line a chunk that fits can have
+            // before the data, and for CRLF after it.
+            size_t room = size - used;
+            size_t line_room = _hex_digits(room) + 2;
+            if (room <= line_room + 2) {
+                if (used == 0) {
+                    _fail_req_body(khc, KHC_ERR_TOO_LARGE_DATA);
+                    return;
+                }
+                // The next chunk goes in the next send.
+                break;
+            }
+            size_t capacity = room - line_room - 2;
+            char* data = &buff[used + line_room];
+            size_t got = khc->_cb_read(data, capacity, khc->_read_data);
+            if (got > capacity) {
+                _fail_req_body(khc, KHC_ERR_READ_CALLBACK);
+                return;
+            }
+            // The size line right after what is there, then the data.
+            char line[KHC_CHUNK_SIZE_LINE_SIZE];
+            size_t line_len = _khc_chunk_size_line(got, line);
+            memmove(&buff[used + line_len], data, got);
+            memcpy(&buff[used], line, line_len);
+            memcpy(&buff[used + line_len + got], "\r\n", 2);
+            used += line_len + got + 2;
+            khc->_req_body_sent += got;
+            // The chunk of size 0 ends the body.
+            khc->_read_req_end = got == 0;
+        }
     }
-
-    // Room for the longest size line a chunk that fits can have before the
-    // data, and for CRLF after it.
-    size_t line_room = _hex_digits(khc->_stream_buff_size) + 2;
-    if (khc->_stream_buff_size <= line_room + 2) {
-        _fail_req_body(khc, KHC_ERR_TOO_LARGE_DATA);
-        return;
-    }
-    size_t capacity = khc->_stream_buff_size - line_room - 2;
-    char* data = &khc->_stream_buff[line_room];
-    size_t got = khc->_cb_read(data, capacity, khc->_read_data);
-    if (got > capacity) {
-        _fail_req_body(khc, KHC_ERR_READ_CALLBACK);
-        return;
-    }
-    char line[KHC_CHUNK_SIZE_LINE_SIZE];
-    size_t line_len = _khc_chunk_size_line(got, line);
-    khc->_req_frame_start = line_room - line_len;
-    memcpy(&khc->_stream_buff[khc->_req_frame_start], line, line_len);
-    memcpy(&data[got], "\r\n", 2);
-    khc->_req_frame_size = line_len + got + 2;
-    khc->_req_body_sent += got;
-    khc->_read_size = got;
-    // The chunk of size 0 ends the body.
-    khc->_read_req_end = got == 0;
+    khc->_req_frame_start = 0;
+    khc->_req_frame_size = used;
+    khc->_sent_length = 0;
     khc->_state = KHC_STATE_REQ_BODY_SEND;
 }
 
@@ -534,6 +506,7 @@ size_t _khc_chunk_size_line(size_t size, char out[KHC_CHUNK_SIZE_LINE_SIZE]) {
     return len;
 }
 
+// Sends what the stream buffer holds: the head, the body, or both.
 void khc_state_req_body_send(khc_t* khc) {
     char* send_pos = &khc->_stream_buff[khc->_req_frame_start + khc->_sent_length];
     size_t send_len = khc->_req_frame_size - khc->_sent_length;
@@ -544,15 +517,20 @@ void khc_state_req_body_send(khc_t* khc) {
             khc->_sent_length += sent_len;
             // retry.
             return;
-        } else {
-            khc->_sent_length = 0;
         }
-        if (khc->_read_req_end) {
-            _khc_log(khc, EBISU_LOG_DEBUG, "> (a body of %lu bytes)",
-                    (unsigned long)khc->_req_body_sent);
-            khc->_state = KHC_STATE_RESP_STATUS_READ;
-        } else {
+        khc->_sent_length = 0;
+        khc->_req_frame_start = 0;
+        khc->_req_frame_size = 0;
+        if (khc->_req_head_part != HEAD_DONE) {
+            khc->_state = KHC_STATE_REQ_LINE;
+        } else if (!khc->_read_req_end) {
             khc->_state = KHC_STATE_REQ_BODY_READ;
+        } else {
+            if (_has_req_body(khc)) {
+                _khc_log(khc, EBISU_LOG_DEBUG, "> (a body of %lu bytes)",
+                        (unsigned long)khc->_req_body_sent);
+            }
+            khc->_state = KHC_STATE_RESP_STATUS_READ;
         }
         return;
     }
@@ -716,10 +694,13 @@ void khc_state_resp_header_callback(khc_t* khc) {
         if (100 <= khc->_status_code && khc->_status_code < 200) {
             // An interim response that came before the body was sent whole,
             // with nothing of another after it: the server waits for the rest
-            // of the body, which is sent before the final response is read.
+            // of the body, which is sent before the final response is read,
+            // from where sending stopped: what the stream buffer still holds
+            // after a send that failed, or the next of the body.
             if (khc->_req_body_cut && khc->_resp_header_read_size == 0) {
                 khc->_req_body_cut = false;
-                khc->_state = KHC_STATE_REQ_BODY_READ;
+                khc->_state = (khc->_req_frame_size > 0) ?
+                    KHC_STATE_REQ_BODY_SEND : KHC_STATE_REQ_BODY_READ;
                 return;
             }
             // The final response may have come with this one, its status
@@ -1268,11 +1249,13 @@ const KHC_STATE_HANDLER state_handlers[] = {
     khc_state_idle,
     khc_state_connect,
     khc_state_req_line,
-    khc_state_req_host_header,
-    khc_state_req_header,
-    khc_state_req_header_send,
-    khc_state_req_header_send_crlf,
-    khc_state_req_header_end,
+    // KHC_STATE_REQ_HOST_HEADER to KHC_STATE_REQ_HEADER_END, which are no
+    // longer entered.
+    khc_state_req_body_send,
+    khc_state_req_body_send,
+    khc_state_req_body_send,
+    khc_state_req_body_send,
+    khc_state_req_body_send,
     khc_state_req_body_read,
     // KHC_STATE_REQ_BODY_SEND_SIZE, which is no longer entered.
     khc_state_req_body_send,

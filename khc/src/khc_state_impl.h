@@ -22,11 +22,6 @@ size_t _khc_chunk_size_line(size_t size, char out[KHC_CHUNK_SIZE_LINE_SIZE]);
 void khc_state_idle(khc_t* khc);
 void khc_state_connect(khc_t* khc);
 void khc_state_req_line(khc_t* khc);
-void khc_state_req_host_header(khc_t* khc);
-void khc_state_req_header(khc_t* khc);
-void khc_state_req_header_send(khc_t* khc);
-void khc_state_req_header_send_crlf(khc_t* khc);
-void khc_state_req_header_end(khc_t* khc);
 void khc_state_req_body_read(khc_t* khc);
 void khc_state_req_body_send(khc_t* khc);
 

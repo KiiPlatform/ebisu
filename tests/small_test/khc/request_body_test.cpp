@@ -16,14 +16,19 @@ struct Request {
     // Whether the read callback says it read one byte more than it was asked
     // for.
     bool overrun = false;
+    // The most the read callback gives at a time, 0 for as much as asked.
+    size_t piece = 0;
 };
 
 struct Sent {
     khc_code_t res;
     // Up to the blank line that ends them.
     std::string headers;
-    // Each send after the headers.
+    // What of each send comes after the headers: the first may be the rest
+    // of the send that ended them.
     std::vector<std::string> body_sends;
+    // Each send, whole.
+    std::vector<std::string> sends;
     // What the read callback was asked for, each time.
     std::vector<size_t> read_sizes;
     int closes;
@@ -80,22 +85,29 @@ Sent perform(const Request& req) {
     size_t read_offset = 0;
     io_ctx.on_read = [&](char* buffer, size_t size, void*) {
         sent.read_sizes.push_back(size);
-        size_t n = req.body.copy(buffer, size, read_offset);
+        size_t n = req.body.copy(buffer, req.piece > 0 && req.piece < size ? req.piece : size, read_offset);
         read_offset += n;
         return req.overrun && n > 0 ? size + 1 : n;
     };
 
     sent.res = khc_perform(&http);
 
-    size_t i = 0;
-    for (; i < sends.size(); ++i) {
-        sent.headers += sends[i];
-        if (sent.headers.find("\r\n\r\n") != std::string::npos) {
-            ++i;
-            break;
-        }
+    sent.sends = sends;
+    std::string wire;
+    for (const std::string& s : sends) {
+        wire += s;
     }
-    sent.body_sends.assign(sends.begin() + i, sends.end());
+    size_t head_end = wire.find("\r\n\r\n");
+    head_end = (head_end == std::string::npos) ? wire.size() : head_end + 4;
+    sent.headers = wire.substr(0, head_end);
+    size_t pos = 0;
+    for (const std::string& s : sends) {
+        if (pos + s.size() > head_end) {
+            size_t from = (pos < head_end) ? head_end - pos : 0;
+            sent.body_sends.push_back(s.substr(from));
+        }
+        pos += s.size();
+    }
     return sent;
 }
 
@@ -118,29 +130,54 @@ bool has(const std::string& s, const std::string& part) {
 }
 
 // The size line, the data and the CRLF of each chunk went out in three sends:
-// over TLS, three records for each chunk.
+// over TLS, three records for each chunk. The head goes in the stream buffer
+// first, and the body after it, until the buffer is full or the body ends.
 TEST_CASE( "Each chunk of a request body is sent in one write" ) {
+    const std::string head = "POST /api/apps HTTP/1.1\r\nHOST: api.kii.com\r\n"
+        "Transfer-Encoding: chunked\r\nConnection: Close\r\n\r\n";
+
     SECTION("a body of three chunks") {
         Request req;
         req.body = body_of(2500);
         Sent sent = perform(req);
         REQUIRE( sent.res == KHC_ERR_OK );
-        CHECK( has(sent.headers, "Transfer-Encoding: chunked\r\n") );
-        // The stream buffer less room for "3f9\r\n", the size line of the
-        // longest chunk that fits, and the CRLF after it.
-        CHECK( sent.read_sizes == std::vector<size_t>({ 1017, 1017, 1017, 1017 }) );
-        REQUIRE( sent.body_sends.size() == 4 );
-        CHECK( sent.body_sends[0] == chunk("3f9", req.body.substr(0, 1017)) );
-        CHECK( sent.body_sends[1] == chunk("3f9", req.body.substr(1017, 1017)) );
-        CHECK( sent.body_sends[2] == chunk("1d2", req.body.substr(2034)) );
-        CHECK( sent.body_sends[3] == "0\r\n\r\n" );
+        CHECK( sent.headers == head );
+        // What is left of the stream buffer, less room for the size line of
+        // the longest chunk that fits, "3f9\r\n" in a buffer of 1024, with
+        // the CRLF after the data: after the head, 1024 - 93 - 5 - 2; then a
+        // whole buffer; then the rest of the buffer after the last data,
+        // which the read callback ends.
+        CHECK( sent.read_sizes == std::vector<size_t>({ 924, 1017, 1017, 451 }) );
+        REQUIRE( sent.sends.size() == 3 );
+        CHECK( sent.sends[0] == head + chunk("39c", req.body.substr(0, 924)) );
+        CHECK( sent.sends[1] == chunk("3f9", req.body.substr(924, 1017)) );
+        CHECK( sent.sends[2] == chunk("22f", req.body.substr(1941)) + "0\r\n\r\n" );
     }
 
-    SECTION("an empty body") {
+    SECTION("an empty body, in the send of the head") {
         Request req;
         Sent sent = perform(req);
         REQUIRE( sent.res == KHC_ERR_OK );
-        CHECK( sent.body_sends == std::vector<std::string>({ "0\r\n\r\n" }) );
+        CHECK( sent.sends == std::vector<std::string>({ head + "0\r\n\r\n" }) );
+    }
+
+    SECTION("a small body, and the chunk that ends it, in the send of the head") {
+        Request req;
+        req.body = "{\"power\":true}";
+        Sent sent = perform(req);
+        REQUIRE( sent.res == KHC_ERR_OK );
+        CHECK( sent.sends == std::vector<std::string>({
+            head + chunk("e", req.body) + "0\r\n\r\n" }) );
+    }
+
+    SECTION("a read callback that gives a piece at a time, each a chunk of the same send") {
+        Request req;
+        req.body = "abcdef";
+        req.piece = 2;
+        Sent sent = perform(req);
+        REQUIRE( sent.res == KHC_ERR_OK );
+        CHECK( sent.sends == std::vector<std::string>({
+            head + chunk("2", "ab") + chunk("2", "cd") + chunk("2", "ef") + "0\r\n\r\n" }) );
     }
 
     SECTION("a stream buffer with room for a byte of data") {
@@ -183,9 +220,12 @@ TEST_CASE( "A request body of known length is sent with a Content-Length" ) {
         REQUIRE( sent.res == KHC_ERR_OK );
         CHECK( has(sent.headers, "Content-Length: 2500\r\n") );
         CHECK_FALSE( has(sent.headers, "Transfer-Encoding") );
-        CHECK( sent.read_sizes == std::vector<size_t>({ 1024, 1024, 452 }) );
+        // After the head, 87 bytes, the rest of the buffer; then a whole one.
+        CHECK( sent.read_sizes == std::vector<size_t>({ 937, 1024, 539 }) );
         CHECK( sent.body_sends == std::vector<std::string>({
-            req.body.substr(0, 1024), req.body.substr(1024, 1024), req.body.substr(2048) }) );
+            req.body.substr(0, 937), req.body.substr(937, 1024), req.body.substr(1961) }) );
+        REQUIRE( sent.sends.size() == 3 );
+        CHECK( sent.sends[0] == sent.headers + req.body.substr(0, 937) );
     }
 
     SECTION("of 0, without asking the read callback") {
@@ -206,7 +246,8 @@ TEST_CASE( "A request body of known length is sent with a Content-Length" ) {
         Sent sent = perform(req);
         CHECK( sent.res == KHC_ERR_READ_CALLBACK );
         CHECK( sent.read_sizes == std::vector<size_t>({ 10, 7 }) );
-        CHECK( sent.body_sends == std::vector<std::string>({ "abc" }) );
+        // Read in the buffer with the head, nothing of it was sent.
+        CHECK( sent.sends.empty() );
         CHECK( sent.closes == 1 );
     }
 

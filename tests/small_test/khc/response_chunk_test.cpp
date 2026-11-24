@@ -47,8 +47,10 @@ TEST_CASE( "HTTP chunked response test" ) {
     };
 
     int on_send_called = 0;
-    s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+    size_t sent_total = 0;
+    s_ctx.on_send = [=, &on_send_called, &sent_total](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         ++on_send_called;
+        sent_total += length;
         *out_sent_length = length;
         return EBISU_SOCK_OK;
     };
@@ -102,7 +104,8 @@ TEST_CASE( "HTTP chunked response test" ) {
     REQUIRE( on_connect_called == 1 );
     // A GET sends no body: the request line, the host header and the end of
     // the headers, without calling the read callback.
-    REQUIRE( on_send_called == 3 );
+    // The head, a stream buffer at a time.
+    REQUIRE( on_send_called == (int)((sent_total + buff_size - 1) / buff_size) );
     REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called == 3 );
     REQUIRE( on_header_called == 12 );
@@ -156,8 +159,10 @@ TEST_CASE( "small buffer size test" ) {
     };
 
     int on_send_called = 0;
-    s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+    size_t sent_total = 0;
+    s_ctx.on_send = [=, &on_send_called, &sent_total](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         ++on_send_called;
+        sent_total += length;
         *out_sent_length = length;
         return EBISU_SOCK_OK;
     };
@@ -207,7 +212,8 @@ TEST_CASE( "small buffer size test" ) {
     REQUIRE( on_connect_called == 1 );
     // A GET sends no body: the request line, the host header and the end of
     // the headers, without calling the read callback.
-    REQUIRE( on_send_called == 3 );
+    // The head, a stream buffer at a time.
+    REQUIRE( on_send_called == (int)((sent_total + buff_size - 1) / buff_size) );
     REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called > 0 );
     REQUIRE( on_header_called == 12 );
@@ -265,8 +271,10 @@ TEST_CASE( "random buffer size test" ) {
     };
 
     int on_send_called = 0;
-    s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+    size_t sent_total = 0;
+    s_ctx.on_send = [=, &on_send_called, &sent_total](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         ++on_send_called;
+        sent_total += length;
         *out_sent_length = length;
         return EBISU_SOCK_OK;
     };
@@ -316,7 +324,8 @@ TEST_CASE( "random buffer size test" ) {
     REQUIRE( on_connect_called == 1 );
     // A GET sends no body: the request line, the host header and the end of
     // the headers, without calling the read callback.
-    REQUIRE( on_send_called == 3 );
+    // The head, a stream buffer at a time.
+    REQUIRE( on_send_called == (int)((sent_total + buff_size - 1) / buff_size) );
     REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called > 0 );
     REQUIRE( on_header_called == 12 );
@@ -377,8 +386,10 @@ TEST_CASE( "random chunk body test" ) {
     };
 
     int on_send_called = 0;
-    s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+    size_t sent_total = 0;
+    s_ctx.on_send = [=, &on_send_called, &sent_total](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         ++on_send_called;
+        sent_total += length;
         *out_sent_length = length;
         return EBISU_SOCK_OK;
     };
@@ -471,8 +482,10 @@ TEST_CASE( "HTTP response 400 test(chunked)" ) {
     };
 
     int on_send_called = 0;
-    s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+    size_t sent_total = 0;
+    s_ctx.on_send = [=, &on_send_called, &sent_total](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         ++on_send_called;
+        sent_total += length;
         *out_sent_length = length;
         return EBISU_SOCK_OK;
     };
@@ -521,7 +534,8 @@ TEST_CASE( "HTTP response 400 test(chunked)" ) {
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 400 );
     REQUIRE( on_connect_called == 1 );
-    REQUIRE( on_send_called == 3 );
+    // The head, a stream buffer at a time.
+    REQUIRE( on_send_called == (int)((sent_total + DEFAULT_STREAM_BUFF_SIZE - 1) / DEFAULT_STREAM_BUFF_SIZE) );
     REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called == 1 );
     REQUIRE( on_header_called == 2 );
