@@ -42,7 +42,7 @@ Sent perform(const Request& req) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, req.method.c_str());
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
     khc_set_stream_buff(&http, stream_buff.data(), stream_buff.size());
     if (req.body_length != KHC_REQ_BODY_LENGTH_UNKNOWN) {
         khc_set_req_body_length(&http, req.body_length);
@@ -324,20 +324,39 @@ TEST_CASE( "khc refuses what would break the request line or a header" ) {
         khc_set_socket(&http, s_ctx.socket());
         khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
         khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
-        for (const char* bad : { "X-A: 1\r\nX-B: 2", "X-A: 1\nX-B: 2", "X-A: 1\r", "X-A: 1\r\n\r\nGET / HTTP/1.1" }) {
-            CAPTURE( std::string(bad) );
-            khc_slist_t* headers = khc_slist_append(NULL, "X-Good: 1", 9);
-            headers = khc_slist_append(headers, bad, strlen(bad));
-            khc_set_req_headers(&http, headers);
+        const std::vector<std::string> bad_headers = {
+            // No CRLF at the end, or only half of one.
+            "X-A: 1",
+            "X-A: 1\r\nX-B: 2",
+            "X-A: 1\r",
+            // A line end that isn't a CRLF, inside a header.
+            "X-A: 1\nX-B: 2\r\n",
+            "X-A: 1\rX-B: 2\r\n",
+            "X-A: 1\r\nX-B: 2\n\r\n",
+            // An empty line, which ends the headers.
+            "\r\n",
+            "X-A: 1\r\n\r\n",
+            "X-A: 1\r\n\r\nGET / HTTP/1.1\r\n",
+            // A NUL.
+            std::string("X-A: 1\0X-B: 2\r\n", 16),
+        };
+        for (const std::string& bad : bad_headers) {
+            CAPTURE( bad );
+            const std::string headers = "X-Good: 1\r\n" + bad;
+            khc_set_req_headers(&http, headers.data(), headers.size());
             CHECK( khc_perform(&http) == KHC_ERR_FAIL );
-            khc_slist_free_all(headers);
         }
         CHECK( connects == 0 );
         // Ones without go on to connect.
-        khc_slist_t* headers = khc_slist_append(NULL, "X-Good: a b\tc", 13);
-        khc_set_req_headers(&http, headers);
+        const std::string good = "X-Good: a b\tc\r\nX-Other: 2\r\n";
+        khc_set_req_headers(&http, good.data(), good.size());
         CHECK( khc_perform(&http) == KHC_ERR_SOCK_CONNECT );
-        khc_slist_free_all(headers);
         CHECK( connects == 1 );
+        // As do none at all, NULL or of length 0.
+        khc_set_req_headers(&http, NULL, 0);
+        CHECK( khc_perform(&http) == KHC_ERR_SOCK_CONNECT );
+        khc_set_req_headers(&http, good.data(), 0);
+        CHECK( khc_perform(&http) == KHC_ERR_SOCK_CONNECT );
+        CHECK( connects == 3 );
     }
 }

@@ -131,7 +131,6 @@ add_subdirectory(${ebisu_root} ebisu EXCLUDE_FROM_ALL)
 
 add_executable(ebisu_freertos_sample
     main.c
-    header_pool.c
     log.c
     net.c
     mbedtls_threading.c

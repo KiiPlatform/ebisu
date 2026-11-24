@@ -223,14 +223,9 @@ static void _cb_receive_push(const kii_mqtt_message_t* message, void* userdata) 
     }
 }
 
-void tio_handler_set_cb_slist_resource(
-        tio_handler_t* handler,
-        KHC_CB_SLIST_ALLOC cb_alloc,
-        KHC_CB_SLIST_FREE cb_free,
-        void* cb_alloc_data,
-        void* cb_free_data)
+void tio_handler_set_req_header_buff(tio_handler_t* handler, char* buff, size_t buff_size)
 {
-    kii_set_cb_slist_resource(&handler->_kii, cb_alloc, cb_free, cb_alloc_data, cb_free_data);
+    kii_set_req_header_buff(&handler->_kii, buff, buff_size);
 }
 
 tio_code_t tio_handler_onboard(
@@ -516,14 +511,9 @@ static void* _update_state(void* data) {
     return NULL;
 }
 
-void tio_updater_set_cb_slist_resource(
-        tio_updater_t* updater,
-        KHC_CB_SLIST_ALLOC cb_alloc,
-        KHC_CB_SLIST_FREE cb_free,
-        void* cb_alloc_data,
-        void* cb_free_data)
+void tio_updater_set_req_header_buff(tio_updater_t* updater, char* buff, size_t buff_size)
 {
-    kii_set_cb_slist_resource(&updater->_kii, cb_alloc, cb_free, cb_alloc_data, cb_free_data);
+    kii_set_req_header_buff(&updater->_kii, buff, buff_size);
 }
 
 tio_code_t tio_updater_onboard(

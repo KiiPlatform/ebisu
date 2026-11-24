@@ -82,6 +82,34 @@ static void _stop(khc_t* khc, khc_code_t reason) {
     }
 }
 
+// Whether headers are lines, each with something before its CRLF, and no CR,
+// LF or NUL elsewhere: a line end inside one would make it two headers, an
+// empty line would end them, and a NUL is no header text.
+static bool _headers_are_lines(const char* headers, size_t length) {
+    if (length == 0) {
+        return true;
+    }
+    if (headers == NULL || length < 2 || headers[length - 2] != '\r' ||
+            headers[length - 1] != '\n') {
+        return false;
+    }
+    size_t line_start = 0;
+    for (size_t i = 0; i < length; ++i) {
+        const char c = headers[i];
+        if (c == '\0' || c == '\n') {
+            return false;
+        }
+        if (c == '\r') {
+            if (i + 1 >= length || headers[i + 1] != '\n' || i == line_start) {
+                return false;
+            }
+            ++i;
+            line_start = i + 1;
+        }
+    }
+    return true;
+}
+
 khc_code_t khc_perform(khc_t* khc) {
     // Called without checking from here on. The read callback is left out of
     // this: a request need not have a body.
@@ -106,11 +134,8 @@ khc_code_t khc_perform(khc_t* khc) {
             khc->_system->ops == NULL || khc->_system->ops->monotonic_ms == NULL)) {
         return KHC_ERR_FAIL;
     }
-    // A header with a line end in it would be two, or the end of the headers.
-    for (const khc_slist_t* header = khc->_req_headers; header != NULL; header = header->next) {
-        if (header->data != NULL && strpbrk(header->data, "\r\n") != NULL) {
-            return KHC_ERR_FAIL;
-        }
+    if (!_headers_are_lines(khc->_req_headers, khc->_req_headers_length)) {
+        return KHC_ERR_FAIL;
     }
     const bool can_wait = khc->_system != NULL && khc->_system->ops != NULL &&
         khc->_system->ops->delay_ms != NULL;
@@ -235,6 +260,7 @@ void khc_init(khc_t* khc) {
 
 void khc_reset_except_cb(khc_t* khc) {
     khc->_req_headers = NULL;
+    khc->_req_headers_length = 0;
     khc->_host[0] = '\0';
     khc->_path[0] = '\0';
     khc->_method[0] = '\0';
@@ -255,7 +281,6 @@ void khc_reset_except_cb(khc_t* khc) {
 void khc_reset_except_request(khc_t* khc) {
     // Internal states.
     khc->_state = KHC_STATE_IDLE;
-    khc->_current_req_header = NULL;
     khc->_req_head_part = 0;
     khc->_req_head_offset = 0;
     khc->_read_req_end = false;

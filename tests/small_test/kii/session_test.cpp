@@ -1173,6 +1173,72 @@ TEST_CASE( "A token onboarding obtained is renewed by onboarding again" ) {
     }
 }
 
+// The headers of a request, between its request line and the empty line.
+std::string headers_of(const std::string& request) {
+    size_t start = request.find("\r\n") + 2;
+    return request.substr(start, request.find("\r\n\r\n") + 2 - start);
+}
+
+// A renewal during a request writes its headers after the request's, in the
+// buffer kii_set_req_header_buff() gave, and the request goes again with the
+// new token in place of the old, its other headers as they were.
+TEST_CASE( "A renewal's headers go after the request's, in the header buffer given" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_session_set_password(&session, "vid", "pw");
+    kii_author_t author = make_author("th.1", "token-one-longer-than-the-next", "");
+    kii_session_set_author(&session, &author);
+    session._renew_mode = KII_RENEW_BY_ONBOARDING;
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+
+    SECTION("with room for both") {
+        char headers[1024];
+        memset(headers, 0, sizeof(headers));
+        kii_set_req_header_buff(&c.kii, headers, sizeof(headers));
+        c.http.responses = { REFUSED, onboarded("at2"), DONE };
+        REQUIRE( c.start(BODY) == KII_ERR_OK );
+        REQUIRE( kii_api_call_append_header(&c.kii, "X-After", "1") == KII_ERR_OK );
+        REQUIRE( kii_api_call_run(&c.kii) == KII_ERR_OK );
+        REQUIRE( kii_get_resp_status(&c.kii) == 200 );
+        REQUIRE( c.http.requests.size() == 3 );
+        REQUIRE( onboarding_again(c.http.requests[1]) );
+
+        // The same headers but the token, the one before and the ones after
+        // where they were.
+        std::string expected = headers_of(c.http.requests[0]);
+        const std::string old_line = "Authorization: Bearer token-one-longer-than-the-next\r\n";
+        REQUIRE( contains(expected, old_line) );
+        expected.replace(expected.find(old_line), old_line.size(), "Authorization: Bearer at2\r\n");
+        CHECK( headers_of(c.http.requests[2]) == expected );
+        CHECK( contains(expected, "X-After: 1\r\n") );
+        CHECK( contains(c.http.requests[2], BODY) );
+        // Nothing left of either token, or of the renewal's headers.
+        CHECK( std::string(headers, sizeof(headers)) == std::string(sizeof(headers), '\0') );
+    }
+
+    SECTION("without room for the renewal's, the renewal fails before it is sent") {
+        // The request's headers, the token's line among them, and a little.
+        char headers[200];
+        kii_set_req_header_buff(&c.kii, headers, sizeof(headers));
+        khct::cb::LoggerCtx log;
+        kii_set_logger(&c.kii, log.get());
+        c.http.responses = { REFUSED };
+        REQUIRE( c.start(BODY) == KII_ERR_OK );
+        REQUIRE( c.kii._req_headers_len + 32 < sizeof(headers) );
+        // As any renewal that fails: the caller gets the 403.
+        CHECK( kii_api_call_run(&c.kii) == KII_ERR_OK );
+        CHECK( kii_get_resp_status(&c.kii) == 403 );
+        CHECK( c.http.requests.size() == 1 );
+        CHECK( std::string(headers, sizeof(headers)) == std::string(sizeof(headers), '\0') );
+#ifndef EBISU_NO_LOG
+        // Which says why.
+        CHECK( log.mentions("header doesn't fit in the request header buffer") );
+#endif
+    }
+}
+
 TEST_CASE( "Without the thing's credentials, an onboarded token is not renewed" ) {
     Platform platform;
     kii_session_t session;

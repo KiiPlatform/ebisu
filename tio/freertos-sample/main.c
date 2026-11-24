@@ -13,7 +13,6 @@
 #include <task.h>
 
 #include "board.h"
-#include "header_pool.h"
 #include "log.h"
 #include "mbedtls_threading.h"
 #include "net.h"
@@ -26,6 +25,10 @@
 #define UPDATER_HTTP_BUFF_SIZE 4096
 #define STREAM_BUFF_SIZE 1024
 #define RESP_HEADER_BUFF_SIZE 256
+/* A request's headers, and a renewal's of the token after them: under 500
+   bytes with an app ID of 8 characters and tokens of 43, under 900 with the
+   longest kii keeps. */
+#define REQ_HEADER_BUFF_SIZE 1024
 
 #define TO_RECV_SEC 15
 #define TO_SEND_SEC 15
@@ -52,11 +55,11 @@ static char handler_http_buff[HANDLER_HTTP_BUFF_SIZE];
 static char handler_mqtt_buff[HANDLER_MQTT_BUFF_SIZE];
 static char handler_stream_buff[STREAM_BUFF_SIZE];
 static char handler_resp_header_buff[RESP_HEADER_BUFF_SIZE];
-static header_pool_t handler_headers;
+static char handler_req_header_buff[REQ_HEADER_BUFF_SIZE];
 static char updater_http_buff[UPDATER_HTTP_BUFF_SIZE];
 static char updater_stream_buff[STREAM_BUFF_SIZE];
 static char updater_resp_header_buff[RESP_HEADER_BUFF_SIZE];
-static header_pool_t updater_headers;
+static char updater_req_header_buff[REQ_HEADER_BUFF_SIZE];
 
 static tio_handler_t handler;
 static tio_updater_t updater;
@@ -195,9 +198,8 @@ static void init_handler(void)
     tio_handler_set_stream_buff(&handler, handler_stream_buff, sizeof(handler_stream_buff));
     tio_handler_set_resp_header_buff(&handler, handler_resp_header_buff,
             sizeof(handler_resp_header_buff));
-    header_pool_init(&handler_headers);
-    tio_handler_set_cb_slist_resource(&handler, header_pool_alloc, header_pool_free,
-            &handler_headers, &handler_headers);
+    tio_handler_set_req_header_buff(&handler, handler_req_header_buff,
+            sizeof(handler_req_header_buff));
     tio_handler_set_keep_alive_interval(&handler, HANDLER_KEEP_ALIVE_SEC);
 }
 
@@ -216,9 +218,8 @@ static void init_updater(void)
     tio_updater_set_stream_buff(&updater, updater_stream_buff, sizeof(updater_stream_buff));
     tio_updater_set_resp_header_buff(&updater, updater_resp_header_buff,
             sizeof(updater_resp_header_buff));
-    header_pool_init(&updater_headers);
-    tio_updater_set_cb_slist_resource(&updater, header_pool_alloc, header_pool_free,
-            &updater_headers, &updater_headers);
+    tio_updater_set_req_header_buff(&updater, updater_req_header_buff,
+            sizeof(updater_req_header_buff));
     tio_updater_set_interval(&updater, EBISU_SAMPLE_UPDATE_PERIOD);
 }
 

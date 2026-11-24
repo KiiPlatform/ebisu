@@ -27,7 +27,7 @@ TEST_CASE( "HTTP chunked response test" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     khct::cb::SockCtx s_ctx;
     khc_set_socket(&http, s_ctx.socket());
@@ -138,7 +138,7 @@ TEST_CASE( "small buffer size test" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
     khc_set_stream_buff(&http, buff, buff_size);
 
     khct::cb::SockCtx s_ctx;
@@ -250,7 +250,7 @@ TEST_CASE( "random buffer size test" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
     khc_set_stream_buff(&http, buff.data(), buff_size);
 
     khct::cb::SockCtx s_ctx;
@@ -366,7 +366,7 @@ TEST_CASE( "random chunk body test" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     khct::cb::SockCtx s_ctx;
     khc_set_socket(&http, s_ctx.socket());
@@ -462,7 +462,7 @@ TEST_CASE( "HTTP response 400 test(chunked)" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     khct::cb::SockCtx s_ctx;
     khc_set_socket(&http, s_ctx.socket());
@@ -571,7 +571,7 @@ ChunkedResult perform_chunked(
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     khct::cb::SockCtx s_ctx;
     khc_set_socket(&http, s_ctx.socket());

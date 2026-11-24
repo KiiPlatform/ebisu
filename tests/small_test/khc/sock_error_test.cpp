@@ -25,7 +25,7 @@ struct Fixture {
         khc_set_host(&http, "api.kii.com");
         khc_set_method(&http, "GET");
         khc_set_path(&http, "/api/apps");
-        khc_set_req_headers(&http, NULL);
+        khc_set_req_headers(&http, NULL, 0);
         script.attach(&http);
         io.on_header = [](char*, size_t size, void*) { return size; };
         io.on_write = [](char*, size_t size, void*) { return size; };

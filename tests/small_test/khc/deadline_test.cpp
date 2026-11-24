@@ -31,7 +31,7 @@ struct Fixture {
         khc_set_host(&http, "api.kii.com");
         khc_set_method(&http, "GET");
         khc_set_path(&http, "/api/apps");
-        khc_set_req_headers(&http, NULL);
+        khc_set_req_headers(&http, NULL, 0);
         khc_set_socket(&http, s_ctx.socket());
         khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
         khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);

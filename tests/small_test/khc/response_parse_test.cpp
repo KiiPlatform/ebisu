@@ -34,7 +34,7 @@ Outcome perform(const Reply& reply) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, reply.method.c_str());
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
     khc_set_resp_header_buff(&http, header_buff.data(), header_buff.size());
     khc_set_stream_buff(&http, stream_buff.data(), stream_buff.size());
 

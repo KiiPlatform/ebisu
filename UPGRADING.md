@@ -128,7 +128,7 @@ same ones. Replace the names, with no aliases for them:
 | 1.x | 3.0 |
 |---|---|
 | `khc` | `khc_t` |
-| `khc_code`, `khc_state`, `khc_slist` | `khc_code_t`, `khc_state_t`, `khc_slist_t` |
+| `khc_code`, `khc_state` | `khc_code_t`, `khc_state_t` |
 | `kii_mqtt_task_state`, `kii_mqtt_error`, `kii_mqtt_task_info` | `kii_mqtt_task_state_t`, `kii_mqtt_error_t`, `kii_mqtt_task_info_t` |
 | `tio_updater_set_cb_error()` | `tio_updater_set_cb_err()` |
 | `tio_updater_set_buff()` | `tio_updater_set_http_buff()` |
@@ -136,7 +136,7 @@ same ones. Replace the names, with no aliases for them:
 With GNU sed, for each source file:
 
 ```
-sed -i -e 's/\b\(khc_code\|khc_state\|khc_slist\)\b/\1_t/g' \
+sed -i -e 's/\b\(khc_code\|khc_state\)\b/\1_t/g' \
     -e 's/\bkii_mqtt_\(task_state\|error\|task_info\)\b/kii_mqtt_\1_t/g' \
     -e 's/\bkhc\( *\*\)/khc_t\1/g' -e 's/sizeof(khc)/sizeof(khc_t)/g' \
     -e 's/\btio_updater_set_cb_error\b/tio_updater_set_cb_err/g' \
@@ -165,6 +165,29 @@ array, so `jkii_token_t`, `jkii_resource_t`, `JKII_CB_RESOURCE_ALLOC` and
 memory the tokens took can go too. `jkii.h` no longer includes `jsmn.h`, which
 isn't installed, so code that used jsmn's names through it, such as
 `jsmntok_t` or `jsmn_parse()`, has to have jsmn of its own.
+
+**Request headers are lines in a buffer, not a list.** khc took them as a
+`khc_slist_t`, and kii allocated one node and a copy of each header, with
+`malloc()` or with allocators given to `kii_set_cb_slist_resource()`. In 3.0
+khc takes the headers as lines one after the other, each with its CRLF, and kii
+writes them in a buffer of the application's, or in one it allocates for the
+request. `khc_slist_t`, `KHC_CB_SLIST_ALLOC`, `KHC_CB_SLIST_FREE`,
+`khc_cb_slist_alloc()`, `khc_cb_slist_free()`, `khc_slist_append()`,
+`khc_slist_append_using_cb_alloc()`, `khc_slist_free_all()` and
+`khc_slist_free_all_using_cb_free()` are gone, and what took them:
+
+| 1.x | 3.0 |
+|---|---|
+| `khc_set_req_headers(&http, list)` | `khc_set_req_headers(&http, "A: 1\r\nB: 2\r\n", length)` |
+| `kii_set_cb_slist_resource()` | `kii_set_req_header_buff(&kii, buff, size)`, or delete the call |
+| `tio_handler_set_cb_slist_resource()` | `tio_handler_set_req_header_buff(&handler, buff, size)`, or delete the call |
+| `tio_updater_set_cb_slist_resource()` | `tio_updater_set_req_header_buff(&updater, buff, size)`, or delete the call |
+
+An application that gave allocators to keep the headers off the heap, as 1.x's
+samples did with a pool, gives a buffer instead: 1024 bytes are enough for
+kii's headers and a token's renewal. Deleting the call has kii allocate one of
+`KII_REQ_HEADER_BUFF_SIZE` bytes for each request, one allocation where there
+was one for each header and its copy.
 
 **`kii_set_mqtt_to_sock_send()` and `tio_handler_set_mqtt_to_sock_send()` are
 gone.** Delete the call. They stored a value nothing read, in 1.x as well, so
@@ -446,8 +469,11 @@ kii:
 - `kii_ti_put_firmware_version()` escapes the version, as onboarding always has.
   A caller that escaped it first should stop.
 - `kii_api_call_append_header()` returns `KII_ERR_TOO_LARGE_DATA` for a header
-  longer than the buffer set by `kii_set_buff()`. 1.x took any length, on the
-  stack of the task calling it.
+  that doesn't fit in what is left of the request header buffer, and logs its
+  name at `EBISU_LOG_WARNING`. 1.x took any length, on the stack of the task
+  calling it. A session's renewal of the token, during a request, writes its
+  headers after the request's in the same buffer: one that doesn't fit leaves
+  the caller the request's 403, as any failed renewal does.
 - `kii_api_call_start()` returns `KII_ERR_TOO_LARGE_DATA`, sending nothing, for
   a path of 256 bytes or more or a method of 16 or more, and so do
   `kii_execute_server_code()` and `kii_execute_server_code_version()` for an
@@ -590,9 +616,6 @@ khc, which kii and tio report in their own codes:
   plain HTTP needs the URL: ask for it with `khc_enable_absolute_target()`,
   `kii_enable_absolute_target()`, `tio_handler_enable_absolute_target()` or
   `tio_updater_enable_absolute_target()`.
-- `khc_slist_free_all()` and `khc_slist_free_all_using_cb_free()` clear each
-  node's string before freeing it, as a request header may carry a token. A
-  free callback finds it all zeros.
 
 jkii:
 

@@ -24,7 +24,7 @@ TEST_CASE( "HTTP minimal" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     khct::cb::SockCtx s_ctx;
     khc_set_socket(&http, s_ctx.socket());
@@ -163,7 +163,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     khct::cb::SockCtx s_ctx;
     khc_set_socket(&http, s_ctx.socket());
@@ -348,14 +348,12 @@ TEST_CASE( "Socket send partial" ) {
     khct::http::Resp resp;
     resp.headers = { "HTTP/1.0 200 OK" };
 
-    char req_header[] = "X-KII-dummy-Header: test partial.";
-    khc_slist_t* req_headers = NULL;
-    req_headers = khc_slist_append(req_headers, req_header, strlen(req_header));
+    const char req_headers[] = "X-KII-dummy-Header: test partial.\r\n";
 
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "POST");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, req_headers);
+    khc_set_req_headers(&http, req_headers, strlen(req_headers));
 
     khct::cb::SockCtx s_ctx;
     khc_set_socket(&http, s_ctx.socket());
@@ -509,8 +507,6 @@ TEST_CASE( "Socket send partial" ) {
     REQUIRE( http._state == KHC_STATE_FINISHED );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
-
-    khc_slist_free_all(req_headers);
 }
 
 TEST_CASE( "state abnormal tests." ) {
@@ -524,7 +520,7 @@ TEST_CASE( "state abnormal tests." ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
     khc_set_stream_buff(&http, stream_buff, buff_size);
     khc_set_resp_header_buff(&http, resp_header_buff, resp_header_buff_size);
 
@@ -620,6 +616,9 @@ TEST_CASE( "state abnormal tests." ) {
     SECTION("a head larger than the stream buffer goes a buffer at a time.") {
         const size_t small = 16;
         khc_set_stream_buff(&http, stream_buff, small);
+        // Headers across several of them.
+        const std::string headers = "X-A: 1\r\nX-Long: " + std::string(40, 'x') + "\r\n";
+        khc_set_req_headers(&http, headers.data(), headers.size());
         http._state = KHC_STATE_REQ_LINE;
 
         std::string sent;
@@ -635,7 +634,8 @@ TEST_CASE( "state abnormal tests." ) {
             state_handlers[http._state](&http);
             REQUIRE( http._result == KHC_ERR_OK );
         }
-        const std::string head = "GET /api/apps HTTP/1.1\r\nHOST: api.kii.com\r\nConnection: Close\r\n\r\n";
+        const std::string head = "GET /api/apps HTTP/1.1\r\nHOST: api.kii.com\r\n" + headers +
+            "Connection: Close\r\n\r\n";
         REQUIRE( http._state == KHC_STATE_RESP_STATUS_READ );
         REQUIRE( sent == head );
         REQUIRE( offered.size() == (head.size() + small - 1) / small );
@@ -1287,7 +1287,7 @@ TEST_CASE( "Enable insecure" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     REQUIRE( http._enable_insecure == false );
     khc_enable_insecure(&http, true);
@@ -1370,7 +1370,7 @@ static std::string sent_request(const char* method, const char* body) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, method);
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     std::string sent;
     std::istringstream resp("HTTP/1.1 204 No Content\r\n\r\n");

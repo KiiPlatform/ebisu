@@ -17,11 +17,11 @@ configures them, in QEMU, on another board, against Kii Cloud: see
   and Wi-Fi, then sets up tio as the [FreeRTOS
   sample](../freertos-sample/main.c) does, with the settings `build.sh` is
   given.
+  The buffers it gives tio, the request headers' among them, leave ebisu
+  nothing to take from the heap.
 - [net.c](net.c): joins the Wi-Fi network, and waits for an address from DHCP.
 - [random.c](random.c): random numbers for TLS, from the chip's crypto engine:
   see [Randomness](#randomness).
-- [header_pool.c](header_pool.c): a pool for the request headers, which with
-  the buffers main.c gives tio leaves ebisu nothing to take from the heap.
 - [log.c](log.c): the SDK's console, as the sample writes to it, and a logger
   for ebisu's ports, which say there why a connection failed.
 - [build.sh](build.sh): builds it all into the SDK's firmware.

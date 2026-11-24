@@ -96,15 +96,14 @@ two buffers:
   enough. Set it with `khc_set_resp_header_buff()`. Otherwise `khc_perform()`
   allocates 256 bytes with `malloc()` and frees them before returning.
 
-Request headers are a `khc_slist_t`, which belongs to the application and must
-stay valid until `khc_perform()` returns. `khc_slist_append()` allocates each
-node with `malloc()`, and `khc_slist_free_all()` frees the list.
-`khc_slist_append_using_cb_alloc()` and `khc_slist_free_all_using_cb_free()`
-take an allocator of your own instead, such as one handing out nodes from a
-static pool.
+Request headers are lines one after the other in memory of the application's,
+each `Name: value` and its CRLF, which `khc_set_req_headers()` takes with their
+length. `khc` sends them as they are and allocates nothing for them, so they
+must stay valid until `khc_perform()` returns. `khc_perform()` fails with
+`KHC_ERR_FAIL`, connecting to nothing, if they aren't lines of that kind: a CR
+or LF other than a line's CRLF, an empty line, a NUL, or no CRLF at the end.
 
-With both buffers set and the headers allocated by your own allocator, `khc`
-never calls `malloc()`.
+With both buffers set, `khc` never calls `malloc()`.
 
 ## Making a request
 
@@ -140,9 +139,8 @@ A `GET` request:
     khc_set_path(&http, "/index.html");
     khc_set_method(&http, "GET");
 
-    const char accept[] = "Accept: application/json";
-    khc_slist_t* headers = khc_slist_append(NULL, accept, strlen(accept));
-    khc_set_req_headers(&http, headers);
+    const char headers[] = "Accept: application/json\r\n";
+    khc_set_req_headers(&http, headers, strlen(headers));
 
     khc_set_stream_buff(&http, stream_buff, sizeof(stream_buff));
     khc_set_resp_header_buff(&http, header_buff, sizeof(header_buff));
@@ -155,7 +153,6 @@ A `GET` request:
     if (res == KHC_ERR_OK) {
         printf("status: %u\n", (unsigned)khc_get_status_code(&http));
     }
-    khc_slist_free_all(headers);
 ```
 
 To send a body, use a method that has one and set a read callback. It is
