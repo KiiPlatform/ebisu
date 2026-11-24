@@ -430,7 +430,7 @@ struct Http {
         khc_set_host(&http, "api.kii.com");
         khc_set_method(&http, "GET");
         khc_set_path(&http, "/x");
-        khc_set_req_headers(&http, NULL);
+        khc_set_req_headers(&http, NULL, 0);
     }
 
     // As kii does before each request.

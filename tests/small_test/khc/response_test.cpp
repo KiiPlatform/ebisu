@@ -29,7 +29,7 @@ TEST_CASE( "HTTP response test" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     khct::cb::SockCtx s_ctx;
     khc_set_socket(&http, s_ctx.socket());
@@ -129,7 +129,7 @@ TEST_CASE( "Ignore HTTP status 100" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     khct::cb::SockCtx s_ctx;
     khc_set_socket(&http, s_ctx.socket());
@@ -226,7 +226,7 @@ TEST_CASE( "Small resp header skip test" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
     khc_set_resp_header_buff(&http, resp_header_buff, resp_header_buff_size);
 
     khct::cb::SockCtx s_ctx;
@@ -325,7 +325,7 @@ TEST_CASE( "HTTP response 400 test" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     khct::cb::SockCtx s_ctx;
     khc_set_socket(&http, s_ctx.socket());
@@ -427,7 +427,7 @@ ContentLengthResult perform_with_header(
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, method.c_str());
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     khct::cb::SockCtx s_ctx;
     khc_set_socket(&http, s_ctx.socket());
@@ -549,7 +549,7 @@ khc_code_t perform_with_reads(const std::vector<std::string>& reads, uint16_t* s
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     khct::cb::SockCtx s_ctx;
     khc_set_socket(&http, s_ctx.socket());
@@ -741,7 +741,7 @@ ClosedResult perform_closing_after(const std::string& response) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     khct::cb::SockCtx s_ctx;
     khc_set_socket(&http, s_ctx.socket());
@@ -837,7 +837,7 @@ HeaderResult perform_with_small_header_buffer(const std::string& resp)
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
     khc_set_resp_header_buff(&http, resp_header_buff, sizeof(resp_header_buff));
 
     size_t resp_pos = 0;
@@ -914,7 +914,7 @@ TEST_CASE( "A header being skipped when the socket has nothing to read yet" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
     khc_set_resp_header_buff(&http, memory + 1, sizeof(memory) - 1);
 
     const std::string resp =
@@ -1028,7 +1028,7 @@ TEST_CASE( "khc_perform needs its socket and callbacks" ) {
         khc_set_host(&http, "api.kii.com");
         khc_set_method(&http, "GET");
         khc_set_path(&http, "/api/apps");
-        khc_set_req_headers(&http, NULL);
+        khc_set_req_headers(&http, NULL, 0);
 
         int on_connect_called = 0;
         khct::cb::SockCtx s_ctx;

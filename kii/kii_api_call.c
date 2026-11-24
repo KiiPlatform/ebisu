@@ -4,12 +4,8 @@
 #include "kii_session_impl.h"
 #include "ebisu_version.h"
 #include "jkii_utils.h"
-#include <ebisu_mem.h>
 #include <ebisu_str.h>
 #include <string.h>
-#ifdef _MSC_VER
-#include <malloc.h>
-#endif
 
 /* The SDK and its version, as git describe gives it for the tree built. */
 #define _SDK_INFO "sn=te;sv=" EBISU_VERSION_FULL
@@ -181,40 +177,25 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
         _req_headers_free_all(kii);
         return KII_ERR_FAIL;
     }
-    size_t key_len = strlen(key);
-    size_t val_len = strlen(value);
-    size_t buff_size = key_len + val_len + 3;
-    // Which goes on the stack of the task making the request, and the
-    // application decides how long it is.
-    if (buff_size > kii->_rw_buff_size) {
+    kii_code_t res = _req_headers_open(kii);
+    if (res != KII_ERR_OK) {
         _req_headers_free_all(kii);
-        return KII_ERR_TOO_LARGE_DATA;
+        return res;
     }
-#ifdef _MSC_VER
-    // MSVC has no variable length arrays. _alloca's is freed as the function
-    // returns, as the array would be as its block ends, which is the same here.
-    char* buff = _alloca(buff_size);
-#else
-    char buff[buff_size];
-#endif
-
+    // After the headers before it, as khc sends them.
     ebisu_strbuf_t header;
-    ebisu_strbuf_init(&header, buff, buff_size);
-    ebisu_strbuf_appendf(&header, "%s: %s", key, value);
+    ebisu_strbuf_init(&header, &kii->_req_headers[kii->_req_headers_len],
+            kii->_req_headers_size - kii->_req_headers_len);
+    ebisu_strbuf_appendf(&header, "%s: %s\r\n", key, value);
     if (!ebisu_strbuf_ok(&header)) {
-        ebisu_secure_zero(buff, buff_size);
+        // Its name only: the value may be a token.
+        _kii_log(kii, EBISU_LOG_WARNING,
+                "the %s header doesn't fit in the request header buffer of %lu bytes",
+                key, (unsigned long)kii->_req_headers_size);
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_slist_t* list = khc_slist_append_using_cb_alloc(kii->_req_headers, buff, header.len, kii->_cb_slist_alloc, kii->_slist_alloc_data);
-    // An Authorization header carries a token.
-    ebisu_secure_zero(buff, buff_size);
-    if (list == NULL) {
-        _req_headers_free_all(kii);
-        return KII_ERR_ALLOCATION;
-    }
-    kii->_req_headers = list;
-
+    kii->_req_headers_len += header.len;
     return KII_ERR_OK;
 }
 
@@ -232,7 +213,7 @@ kii_code_t _req_send(kii_t* kii)
         _req_headers_free_all(kii);
         return res;
     }
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, kii->_req_headers, kii->_req_headers_len);
     // A body kii holds whole in its buffer goes with its length, rather than
     // chunked, which some intermediaries handle poorly. One the application
     // streams through a callback of its own is still chunked.

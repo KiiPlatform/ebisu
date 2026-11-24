@@ -3,7 +3,13 @@
 #include "kii_session_impl.h"
 #include <ebisu_mem.h>
 #include <ebisu_str.h>
+#include <stdlib.h>
 #include <string.h>
+
+/* A buffer of 0 bytes would fail every request with KII_ERR_TOO_LARGE_DATA. */
+#if KII_REQ_HEADER_BUFF_SIZE < 1
+#error "KII_REQ_HEADER_BUFF_SIZE must be 1 or more"
+#endif
 
 const char _APP_KEY_HEADER[] = "X-Kii-Appkey: k";
 const char _CONTENT_LENGTH_ZERO[] = "Content-Length: 0";
@@ -143,10 +149,6 @@ void kii_init(kii_t* kii)
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
     khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
     _kii_clear_resp_headers(kii);
-    kii->_cb_slist_alloc = khc_cb_slist_alloc;
-    kii->_cb_slist_free = khc_cb_slist_free;
-    kii->_slist_alloc_data = NULL;
-    kii->_slist_free_data = NULL;
     kii->_cb_task_continue = NULL;
     kii->_task_continue_data = NULL;
     kii->_cb_task_exit = NULL;
@@ -326,16 +328,9 @@ void kii_set_mqtt_lock(kii_t* kii, ebisu_lock_t* lock) {
     kii->_mqtt_lock = lock;
 }
 
-void kii_set_cb_slist_resource(
-        kii_t* kii,
-        KHC_CB_SLIST_ALLOC cb_alloc,
-        KHC_CB_SLIST_FREE cb_free,
-        void* cb_alloc_data,
-        void* cb_free_data) {
-    kii->_cb_slist_alloc = cb_alloc;
-    kii->_cb_slist_free = cb_free;
-    kii->_slist_alloc_data = cb_alloc_data;
-    kii->_slist_free_data = cb_free_data;
+void kii_set_req_header_buff(kii_t* kii, char* buff, size_t buff_size) {
+    kii->_req_header_buff = buff;
+    kii->_req_header_buff_size = (buff != NULL) ? buff_size : 0;
 }
 
 void kii_enable_insecure_http(
@@ -519,9 +514,43 @@ void _kii_clear_buffers(kii_t* kii) {
     }
 }
 
+kii_code_t _req_headers_open(kii_t* kii)
+{
+    if (kii->_req_headers != NULL) {
+        return KII_ERR_OK;
+    }
+    if (kii->_req_header_buff != NULL) {
+        kii->_req_headers = kii->_req_header_buff;
+        kii->_req_headers_size = kii->_req_header_buff_size;
+        kii->_req_headers_allocated = false;
+    } else {
+        char* buff = malloc(KII_REQ_HEADER_BUFF_SIZE);
+        if (buff == NULL) {
+            return KII_ERR_ALLOCATION;
+        }
+        kii->_req_headers = buff;
+        kii->_req_headers_size = KII_REQ_HEADER_BUFF_SIZE;
+        kii->_req_headers_allocated = true;
+    }
+    kii->_req_headers_len = 0;
+    return KII_ERR_OK;
+}
+
 void _req_headers_free_all(kii_t* kii) {
-    khc_slist_free_all_using_cb_free(kii->_req_headers, kii->_cb_slist_free, kii->_slist_free_data);
+    if (kii->_req_headers != NULL) {
+        /* Whole: an Authorization header carries a token, and a header that
+         * didn't fit left part of itself after the others. */
+        ebisu_secure_zero(kii->_req_headers, kii->_req_headers_size);
+        if (kii->_req_headers_allocated) {
+            free(kii->_req_headers);
+        }
+    }
     kii->_req_headers = NULL;
+    kii->_req_headers_size = 0;
+    kii->_req_headers_len = 0;
+    kii->_req_headers_allocated = false;
+    /* khc would otherwise keep pointing at them. */
+    khc_set_req_headers(&kii->_khc, NULL, 0);
 }
 
 int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len) {

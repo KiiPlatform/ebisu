@@ -110,8 +110,9 @@ bool khc_method_can_have_body(khc_t* khc) {
     return true;
 }
 
-khc_code_t khc_set_req_headers(khc_t* khc, khc_slist_t* headers) {
+khc_code_t khc_set_req_headers(khc_t* khc, const char* headers, size_t length) {
     khc->_req_headers = headers;
+    khc->_req_headers_length = (headers != NULL) ? length : 0;
     return KHC_ERR_OK;
 }
 
@@ -289,7 +290,7 @@ static void _head_end(khc_t* khc, char out[HEAD_END_SIZE]) {
 }
 
 // The parts of the request's head, in the order they are sent: the request
-// line, the Host header, each of the application's headers, and the end.
+// line, the Host header, the application's headers, and the end.
 enum {
     HEAD_METHOD,
     HEAD_SPACE,
@@ -300,20 +301,10 @@ enum {
     HEAD_HOST_KEY,
     HEAD_HOST,
     HEAD_HOST_CRLF,
-    HEAD_HEADER,
-    HEAD_HEADER_CRLF,
+    HEAD_HEADERS,
     HEAD_END,
     HEAD_DONE
 };
-
-// The first header from node on that has something to send: one without
-// data, or with empty data, is skipped.
-static khc_slist_t* _next_header(khc_slist_t* node) {
-    while (node != NULL && (node->data == NULL || node->data[0] == '\0')) {
-        node = node->next;
-    }
-    return node;
-}
 
 // The scheme and host before the path, for an absolute target. Otherwise the
 // host goes in the Host header only, which is all a server wants.
@@ -328,40 +319,33 @@ static const char* _target_host(khc_t* khc) {
     return khc->_absolute_target ? khc->_host : "";
 }
 
-// The part of the head khc is at.
-static const char* _head_part(khc_t* khc, const char* end) {
-    switch (khc->_req_head_part) {
-        case HEAD_METHOD: return khc->_method;
-        case HEAD_SPACE: return " ";
-        case HEAD_SCHEME: return _target_scheme(khc);
-        case HEAD_TARGET_HOST: return _target_host(khc);
-        case HEAD_PATH: return request_path(khc);
-        case HEAD_VERSION: return http_version;
-        case HEAD_HOST_KEY: return host_key;
-        case HEAD_HOST: return khc->_host;
-        case HEAD_HEADER: return khc->_current_req_header->data;
-        case HEAD_HOST_CRLF:
-        case HEAD_HEADER_CRLF: return crlf;
-        case HEAD_END: return end;
-        default: return "";
+// The part of the head khc is at, and its length.
+static const char* _head_part(khc_t* khc, const char* end, size_t* out_len) {
+    if (khc->_req_head_part == HEAD_HEADERS && khc->_req_headers != NULL) {
+        *out_len = khc->_req_headers_length;
+        return khc->_req_headers;
     }
+    const char* part;
+    switch (khc->_req_head_part) {
+        case HEAD_METHOD: part = khc->_method; break;
+        case HEAD_SPACE: part = " "; break;
+        case HEAD_SCHEME: part = _target_scheme(khc); break;
+        case HEAD_TARGET_HOST: part = _target_host(khc); break;
+        case HEAD_PATH: part = request_path(khc); break;
+        case HEAD_VERSION: part = http_version; break;
+        case HEAD_HOST_KEY: part = host_key; break;
+        case HEAD_HOST: part = khc->_host; break;
+        case HEAD_HOST_CRLF: part = crlf; break;
+        case HEAD_END: part = end; break;
+        default: part = ""; break;
+    }
+    *out_len = strlen(part);
+    return part;
 }
 
 // Moves on to the part of the head after the one khc is at.
 static void _next_head_part(khc_t* khc) {
-    switch (khc->_req_head_part) {
-        case HEAD_HOST_CRLF:
-            khc->_current_req_header = _next_header(khc->_req_headers);
-            break;
-        case HEAD_HEADER_CRLF:
-            khc->_current_req_header = _next_header(khc->_current_req_header->next);
-            break;
-        default:
-            ++khc->_req_head_part;
-            khc->_req_head_offset = 0;
-            return;
-    }
-    khc->_req_head_part = (khc->_current_req_header != NULL) ? HEAD_HEADER : HEAD_END;
+    ++khc->_req_head_part;
     khc->_req_head_offset = 0;
 }
 
@@ -374,11 +358,8 @@ static void _log_head(khc_t* khc, const char* end) {
     _khc_log(khc, EBISU_LOG_DEBUG, "> %s %s%s%s HTTP/1.1", khc->_method,
             _target_scheme(khc), _target_host(khc), request_path(khc));
     _khc_log(khc, EBISU_LOG_DEBUG, "> %s%s", host_key, khc->_host);
-    for (khc_slist_t* header = _next_header(khc->_req_headers); header != NULL;
-            header = _next_header(header->next)) {
-        _khc_log_header(khc, '>', header->data, strlen(header->data));
-    }
-    _khc_log_lines(khc, '>', end);
+    _khc_log_lines(khc, '>', khc->_req_headers, khc->_req_headers_length);
+    _khc_log_lines(khc, '>', end, strlen(end));
 #else
     (void)khc;
     (void)end;
@@ -398,8 +379,8 @@ void khc_state_req_line(khc_t* khc) {
     size_t size = khc->_stream_buff_size;
     size_t used = 0;
     while (khc->_req_head_part != HEAD_DONE && used < size) {
-        const char* part = _head_part(khc, end);
-        size_t len = strlen(part);
+        size_t len;
+        const char* part = _head_part(khc, end, &len);
         // At most the part's length, which it never passes.
         size_t offset = (khc->_req_head_offset < len) ? khc->_req_head_offset : len;
         size_t left = len - offset;

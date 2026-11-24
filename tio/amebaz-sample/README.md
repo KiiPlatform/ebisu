@@ -17,6 +17,8 @@ Cloud: see [tests/freertos_large](../../tests/freertos_large/README.md#on-lwip).
 - [main.c](main.c): in place of the SDK's example's: starts the SDK's console
   and Wi-Fi, then sets up tio as the [AmebaZ2 sample](../amebaz2-sample/main.c)
   does, with the settings `build.sh` is given.
+  The buffers it gives tio, the request headers' among them, leave ebisu
+  nothing to take from the heap.
 - [sample_net.c](sample_net.c): joins the Wi-Fi network, and waits for an
   address from DHCP.
 - [sample_tls.h](sample_tls.h): the connections' TLS, with mbedTLS in
@@ -26,8 +28,6 @@ Cloud: see [tests/freertos_large](../../tests/freertos_large/README.md#on-lwip).
   [random_polarssl.c](random_polarssl.c): random numbers for TLS, from a
   CTR_DRBG of the sample's own, and the TLS library's allocator: see
   [Randomness](#randomness).
-- [header_pool.c](header_pool.c): a pool for the request headers, which with
-  the buffers main.c gives tio leaves ebisu nothing to take from the heap.
 - [log.c](log.c): the SDK's console, as the sample writes to it, and a logger
   for ebisu's ports, which say there why a connection failed.
 - [build.sh](build.sh): builds it all into the SDK's firmware, with the TLS

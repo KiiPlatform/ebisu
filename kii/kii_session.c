@@ -572,6 +572,26 @@ static kii_code_t _renew_locked(kii_t* kii, bool force)
     return res;
 }
 
+/* Where the request's Authorization header starts, the first, and its length
+ * with its CRLF: 0, and the end of the headers, when it has none. kii's
+ * headers are lines with a CRLF each, and no CR before it. */
+static size_t _find_auth_header(const kii_t* kii, size_t* out_len)
+{
+    static const char name[] = "Authorization:";
+    for (size_t pos = 0; pos < kii->_req_headers_len;) {
+        const char* line = &kii->_req_headers[pos];
+        const char* cr = memchr(line, '\r', kii->_req_headers_len - pos);
+        size_t line_len = (cr != NULL) ? (size_t)(cr - line) + 2 : kii->_req_headers_len - pos;
+        if (line_len >= sizeof(name) - 1 && memcmp(line, name, sizeof(name) - 1) == 0) {
+            *out_len = line_len;
+            return pos;
+        }
+        pos += line_len;
+    }
+    *out_len = 0;
+    return kii->_req_headers_len;
+}
+
 /* Whether the request being prepared carries the session's token. Looking at
  * the header itself, rather than at which function built it, also covers
  * requests an application builds with kii_api_call_start(). */
@@ -580,49 +600,42 @@ static bool _has_session_token(kii_t* kii)
     if (kii->_author.access_token[0] == '\0') {
         return false;
     }
+    size_t line_len;
+    size_t at = _find_auth_header(kii, &line_len);
     size_t prefix_len = strlen(_AUTH_HEADER_PREFIX);
-    for (khc_slist_t* node = kii->_req_headers; node != NULL; node = node->next) {
-        if (strncmp(node->data, _AUTH_HEADER_PREFIX, prefix_len) == 0 &&
-                strcmp(node->data + prefix_len, kii->_author.access_token) == 0) {
-            return true;
-        }
-    }
-    return false;
+    size_t token_len = strlen(kii->_author.access_token);
+    return line_len == prefix_len + token_len + 2 &&
+        memcmp(&kii->_req_headers[at], _AUTH_HEADER_PREFIX, prefix_len) == 0 &&
+        memcmp(&kii->_req_headers[at + prefix_len], kii->_author.access_token, token_len) == 0;
 }
 
-/* Points the request's Authorization header at kii->_author's token. */
+/* Points the request's Authorization header at kii->_author's token, in place
+ * of the one it had, or after its other headers. */
 static kii_code_t _replace_auth_header(kii_t* kii)
 {
-    char line[sizeof(_AUTH_HEADER_PREFIX) + KII_TOKEN_MAX_SIZE];
-    ebisu_strbuf_t sb;
-    ebisu_strbuf_init(&sb, line, sizeof(line));
-    ebisu_strbuf_appendf(&sb, "%s%s", _AUTH_HEADER_PREFIX, kii->_author.access_token);
-    if (!ebisu_strbuf_ok(&sb)) {
-        ebisu_secure_zero(line, sizeof(line));
+    kii_code_t res = _req_headers_open(kii);
+    if (res != KII_ERR_OK) {
+        return res;
+    }
+    size_t old_len;
+    size_t at = _find_auth_header(kii, &old_len);
+    size_t prefix_len = strlen(_AUTH_HEADER_PREFIX);
+    size_t token_len = strlen(kii->_author.access_token);
+    size_t new_len = prefix_len + token_len + 2;
+    size_t len = kii->_req_headers_len - old_len + new_len;
+    if (len > kii->_req_headers_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_slist_t* node = kii->_cb_slist_alloc(line, sb.len, kii->_slist_alloc_data);
-    ebisu_secure_zero(line, sizeof(line));
-    if (node == NULL) {
-        return KII_ERR_ALLOCATION;
-    }
-    node->next = NULL;
-
-    const char name[] = "Authorization:";
-    khc_slist_t** link = &kii->_req_headers;
-    while (*link != NULL && strncmp((*link)->data, name, strlen(name)) != 0) {
-        link = &(*link)->next;
-    }
-    if (*link != NULL) {
-        khc_slist_t* old = *link;
-        node->next = old->next;
-        /* With the token it replaces, as khc_slist_free_all() would. */
-        if (old->data != NULL) {
-            ebisu_secure_zero(old->data, strlen(old->data));
-        }
-        kii->_cb_slist_free(old, kii->_slist_free_data);
-    }
-    *link = node;
+    char* headers = kii->_req_headers;
+    /* The headers after it move to where the new line ends. What a shorter
+     * line leaves of the old token after them isn't sent, and is cleared with
+     * the rest once the request has been. */
+    memmove(&headers[at + new_len], &headers[at + old_len],
+            kii->_req_headers_len - at - old_len);
+    memcpy(&headers[at], _AUTH_HEADER_PREFIX, prefix_len);
+    memcpy(&headers[at + prefix_len], kii->_author.access_token, token_len);
+    memcpy(&headers[at + prefix_len + token_len], "\r\n", 2);
+    kii->_req_headers_len = len;
     return KII_ERR_OK;
 }
 
@@ -657,10 +670,24 @@ static kii_code_t _renew_and_restore(
     }
 
     /* The renewal is a request of its own through the same khc, which is
-     * copied whole to be put back afterwards. */
+     * copied whole to be put back afterwards. Its headers go after the
+     * request's, in the room left in the same buffer, or, without one yet, in
+     * one of their own. */
     khc_t request = kii->_khc;
-    khc_slist_t* headers = kii->_req_headers;
+    char* header_buff = kii->_req_header_buff;
+    size_t header_buff_size = kii->_req_header_buff_size;
+    char* headers = kii->_req_headers;
+    size_t headers_size = kii->_req_headers_size;
+    size_t headers_len = kii->_req_headers_len;
+    bool headers_allocated = kii->_req_headers_allocated;
+    if (headers != NULL) {
+        kii->_req_header_buff = headers + headers_len;
+        kii->_req_header_buff_size = headers_size - headers_len;
+    }
     kii->_req_headers = NULL;
+    kii->_req_headers_size = 0;
+    kii->_req_headers_len = 0;
+    kii->_req_headers_allocated = false;
     kii->_req_streamed = false;
     kii->_rw_buff = buff + keep;
     kii->_rw_buff_size = buff_size - keep;
@@ -673,7 +700,12 @@ static kii_code_t _renew_and_restore(
 
     _req_headers_free_all(kii);
     kii->_khc = request;
+    kii->_req_header_buff = header_buff;
+    kii->_req_header_buff_size = header_buff_size;
     kii->_req_headers = headers;
+    kii->_req_headers_size = headers_size;
+    kii->_req_headers_len = headers_len;
+    kii->_req_headers_allocated = headers_allocated;
     kii->_req_streamed = streamed;
     kii->_rw_buff = buff;
     kii->_rw_buff_size = buff_size;
@@ -683,7 +715,7 @@ static kii_code_t _renew_and_restore(
     kii->_resp_offset = 0;
     _kii_clear_resp_headers(kii);
     kii_code_t header_res = _replace_auth_header(kii);
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, kii->_req_headers, kii->_req_headers_len);
     if (res == KII_ERR_OK) {
         res = header_res;
     }

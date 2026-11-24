@@ -36,8 +36,8 @@ TEST_CASE( "khc_reset_except_request sends the same request again" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "POST");
     khc_set_path(&http, "/x");
-    khc_slist_t* headers = khc_slist_append(NULL, "X-Test: 1", strlen("X-Test: 1"));
-    khc_set_req_headers(&http, headers);
+    const char headers[] = "X-Test: 1\r\n";
+    khc_set_req_headers(&http, headers, strlen(headers));
 
     // The first response is chunked and the second is not: state left over from
     // reading the first would misread the second.
@@ -67,8 +67,6 @@ TEST_CASE( "khc_reset_except_request sends the same request again" ) {
     REQUIRE( khct::contains(script.requests[1], "POST /x HTTP/1.1\r\n") );
     REQUIRE( khct::contains(script.requests[1], "X-Test: 1\r\n") );
     REQUIRE( khct::contains(script.requests[1], body) );
-
-    khc_slist_free_all(headers);
 }
 
 TEST_CASE( "khc_get_close_failed says what the last request's close did" ) {
@@ -84,7 +82,7 @@ TEST_CASE( "khc_get_close_failed says what the last request's close did" ) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "POST");
     khc_set_path(&http, "/x");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
     const auto close_fails = [](void*) { return EBISU_SOCK_FAIL; };
     const auto close_works = [](void*) { return EBISU_SOCK_OK; };
     script.responses = {
@@ -119,7 +117,7 @@ namespace {
 struct Request {
     khct::HttpScript script;
     khct::cb::IOCtx io;
-    khc_slist_t* headers;
+    const char* headers = "X-Test: 1\r\n";
     char stream_buff[64];
     char resp_header_buff[256];
 
@@ -127,11 +125,6 @@ struct Request {
         io.on_read = [](char*, size_t, void*) { return (size_t)0; };
         io.on_write = [](char*, size_t size, void*) { return size; };
         io.on_header = [](char*, size_t size, void*) { return size; };
-        headers = khc_slist_append(NULL, "X-Test: 1", strlen("X-Test: 1"));
-    }
-
-    ~Request() {
-        khc_slist_free_all(headers);
     }
 
     Request(const Request&) = delete;
@@ -156,7 +149,7 @@ struct Request {
         khc_set_host(http, "api.kii.com");
         khc_set_method(http, "PUT");
         khc_set_path(http, "/x");
-        khc_set_req_headers(http, headers);
+        khc_set_req_headers(http, headers, strlen(headers));
         khc_set_req_body_length(http, KHC_REQ_BODY_LENGTH_UNKNOWN);
         if (own_buffers) {
             khc_set_stream_buff(http, stream_buff, sizeof(stream_buff));
@@ -209,7 +202,6 @@ TEST_CASE( "khc_reset_except_request leaves khc as if the request were new" ) {
             // are compared as pointers: given a char*, Catch prints the string
             // it points to, and these point into buffers that need not hold one.
             CHECK( used._state == fresh._state );
-            CHECK( used._current_req_header == fresh._current_req_header );
             CHECK( used._req_head_part == fresh._req_head_part );
             CHECK( used._req_head_offset == fresh._req_head_offset );
             CHECK( used._read_req_end == fresh._read_req_end );

@@ -33,6 +33,12 @@ bool _kii_field_fits(kii_t* kii, const jkii_field_t* field, size_t size, const c
  * khc_reset_except_cb(), which drops them. */
 void _reset_khc(kii_t* kii);
 
+/* Readies the request's header buffer for its first header: the one
+ * kii_set_req_header_buff() gave, or one of KII_REQ_HEADER_BUFF_SIZE bytes
+ * allocated for the request. KII_ERR_ALLOCATION if it can't be. */
+kii_code_t _req_headers_open(kii_t* kii);
+
+/* Clears the request's headers, and frees the buffer allocated for them. */
 void _req_headers_free_all(kii_t* kii);
 
 /* Clears the buffer set by kii_set_buff(), as kii->_rw_buff points at it, and

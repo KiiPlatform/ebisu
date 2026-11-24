@@ -99,6 +99,19 @@ extern "C" {
 #define KII_APP_HOST_MAX_SIZE 128
 /** \brief Size of the buffer holding the ETag of the last response. */
 #define KII_ETAG_MAX_SIZE 64
+
+/**
+ * \brief Size of the request header buffer kii allocates for a request, when
+ * kii_set_req_header_buff() gave none: enough for kii's headers and a
+ * renewal's at their longest, with room for some of the application's.
+ *
+ * It can be defined otherwise when kii is built, as 1 or more. It changes no
+ * type's layout, so what is built against kii needn't define it alike.
+ */
+#ifndef KII_REQ_HEADER_BUFF_SIZE
+#define KII_REQ_HEADER_BUFF_SIZE (1024 + KII_TOKEN_MAX_SIZE)
+#endif
+
 /** \brief Size of kii_ti_firmware_version_t::firmware_version. */
 #define KII_FIRMWARE_VERSION_MAX_SIZE 128
 
@@ -594,7 +607,16 @@ typedef struct kii_t {
     char* _resp_header_buff; /**< \private */
     size_t _resp_header_buff_size; /**< \private */
 
-    khc_slist_t* _req_headers; /**< \private */
+    /* What kii_set_req_header_buff() gave, or NULL. */
+    char* _req_header_buff; /**< \private */
+    size_t _req_header_buff_size; /**< \private */
+    /* The request's headers, lines one after the other, each with its CRLF,
+     * as khc takes them: in _req_header_buff, or in a buffer allocated for the
+     * request. NULL before the request's first header. */
+    char* _req_headers; /**< \private */
+    size_t _req_headers_size; /**< \private */
+    size_t _req_headers_len; /**< \private */
+    bool _req_headers_allocated; /**< \private */
 
     char _etag[KII_ETAG_MAX_SIZE]; /**< \private */
     /** \private Whether the last response had an ETag longer than _etag
@@ -607,11 +629,6 @@ typedef struct kii_t {
     int64_t _resp_step_count;
     /** \private The last response's X-Environment-Version, or -1. */
     int64_t _resp_environment_version;
-
-    KHC_CB_SLIST_ALLOC _cb_slist_alloc; /**< \private */
-    KHC_CB_SLIST_FREE _cb_slist_free; /**< \private */
-    void* _slist_alloc_data; /**< \private */
-    void* _slist_free_data; /**< \private */
 
     bool _insecure_mqtt; /**< \private */
     kii_mqtt_version_t _mqtt_version; /**< \private */
@@ -1857,10 +1874,12 @@ kii_code_t kii_api_call_set_body_reader(
  * \param [in] kii kii_t instance.
  * \param [in] key Key of http header.
  * \param [in] value Value of http header.
- * \return kii_code_t. KII_ERR_TOO_LARGE_DATA if the header is longer than the
- * buffer set by kii_set_buff(). It is put together on the stack of the task
- * calling this, which has to have room for it. KII_ERR_FAIL if the key or the
- * value has a CR or an LF in it, which would make it two headers.
+ * \return kii_code_t. KII_ERR_TOO_LARGE_DATA if the header doesn't fit in what
+ * the request's other headers leave of the buffer set by
+ * kii_set_req_header_buff(), or of the one kii allocates without it, which
+ * KII_ERR_ALLOCATION says it couldn't. KII_ERR_FAIL if the key or the value has
+ * a CR or an LF in it, which would make it two headers. On any error the
+ * request's headers are cleared, and it has to be started again.
  */
 kii_code_t
 kii_api_call_append_header(
@@ -2250,23 +2269,35 @@ void kii_set_cb_mqtt_event(kii_t* kii, KII_CB_MQTT_EVENT cb, void* userdata);
  */
 void kii_set_logger(kii_t* kii, ebisu_logger_t* logger);
 /**
- * \brief Set khc_slist_t (linked list) resource allocators.
-
- * If this method is not called, default allocators implemented with malloc/free is used to
- * allocate linked list used to construct HTTP request headers.
+ * \brief Set request header buffer.
+ *
+ * A request's headers are written in it, one after the other, as the request
+ * is prepared, and cleared when it has been sent: kii's own, such as the app ID
+ * and the access token, and those given to kii_api_call_append_header(). If
+ * this method is not called or set NULL to the buffer, kii allocates a buffer
+ * of KII_REQ_HEADER_BUFF_SIZE bytes for each request and frees it when the
+ * request ends, and a request fails with KII_ERR_ALLOCATION if it can't.
+ *
+ * A request whose headers don't fit fails with KII_ERR_TOO_LARGE_DATA, and
+ * the header is logged at EBISU_LOG_WARNING, by name. With a session, a renewal
+ * of the token during a request writes its headers in the room after the
+ * request's: one that doesn't fit leaves the caller the request's 403. With an
+ * app ID of 8 characters and a token of 43, kii's own headers and a renewal's
+ * take under 500 bytes in all; with the longest app ID, token and ETag kii
+ * keeps, under 900. The application's own headers add their length.
+ *
+ * If you set the buffer by the method, it is used by every HTTP session initiated afterwards
+ * by methods such as kii_auth_thing(), kii_post_object(), etc., until the method is called again.
+ * Memory used by the buffer must therefore stay valid, and must not be used for anything else,
+ * as long as the kii_t instance is in use.
+ * To release it earlier, call the method with NULL first.
  *
  * \param [out] kii kii_t instance.
- * \param [in] cb_alloc Callback allocates memory.
- * \param [in] cb_free Callback free memory.
- * \param [in] cb_alloc_data Context object pointer passed to cb_alloc.
- * \param [in] cb_free_data Context object pointer passed to cb_free.
+ * \param [in] buff Pointer to the buffer, or NULL for one allocated for each
+ * request.
+ * \param [in] buff_size Size of the buffer.
  */
-void kii_set_cb_slist_resource(
-        kii_t* kii,
-        KHC_CB_SLIST_ALLOC cb_alloc,
-        KHC_CB_SLIST_FREE cb_free,
-        void* cb_alloc_data,
-        void* cb_free_data);
+void kii_set_req_header_buff(kii_t* kii, char* buff, size_t buff_size);
 
 /**
  * \brief Get the ETag of the last response.

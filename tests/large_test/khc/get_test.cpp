@@ -11,7 +11,7 @@ TEST_CASE( "HTTP Get" ) {
     khc_set_host(&http, "api-jp.kii.com");
     khc_set_method(&http, "GET");
     khc_set_method(&http, "");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     ebisu::ltest::ssl::SSLData s_ctx;
 #ifdef PLAIN_HTTP

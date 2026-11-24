@@ -10,8 +10,8 @@ internet without privileges. CI runs it there against Kii Cloud.
 
 - [main.c](main.c): starts the network, then sets up tio as the [Linux
   sample](../linux-sample/example.c) does, with the settings CMake is given.
-- [header_pool.c](header_pool.c): a pool for the request headers, which with
-  the buffers main.c gives tio leaves ebisu nothing to take from the heap.
+  The buffers it gives tio, the request headers' among them, leave ebisu
+  nothing to take from the heap.
 - [net.c](net.c): FreeRTOS-Plus-TCP on the board's Ethernet, with an address
   from DHCP, and its hooks.
 - [random.c](random.c): PSA's random generator, which TLS and the TCP/IP stack

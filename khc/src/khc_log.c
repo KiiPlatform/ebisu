@@ -9,15 +9,22 @@ void khc_set_logger(khc_t* khc, ebisu_logger_t* logger)
 }
 
 #ifndef EBISU_NO_LOG
-void _khc_log_lines(khc_t* khc, char direction, const char* lines)
+void _khc_log_lines(khc_t* khc, char direction, const char* lines, size_t length)
 {
-    const char* end;
     if (khc->_logger == NULL) {
         return;
     }
-    while ((end = strstr(lines, "\r\n")) != NULL && end != lines) {
-        _khc_log_header(khc, direction, lines, (size_t)(end - lines));
-        lines = end + 2;
+    size_t start = 0;
+    for (size_t i = 0; i + 1 < length; ++i) {
+        if (lines[i] != '\r' || lines[i + 1] != '\n') {
+            continue;
+        }
+        if (i == start) {
+            return;
+        }
+        _khc_log_header(khc, direction, &lines[start], i - start);
+        start = i + 2;
+        ++i;
     }
 }
 

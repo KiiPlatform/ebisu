@@ -100,116 +100,6 @@ typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, void *userdata);
 typedef bool (*KHC_CB_CONTINUE)(void *userdata);
 
 /**
- * \brief Linked list.
- *
- * Linked list manages c string data.
- */
-typedef struct khc_slist_t {
-    char* data; /**< \brief Null terminated string */
-    struct khc_slist_t* next; /**< \brief Pointer to the next node. */
-} khc_slist_t;
-
-/**
- * \brief Custom khc_slist_t node allocator.
-
- * In this allocator, you need to allocate memory of khc_slist_t struct and it's data char array.
- * data char array must be NULL terminated so it requires str_length + 1 as length.
-
- * \param [in] str khc_slist_t content. String must be copied to khc_slist_t.data.
- * \param [in] str_length length of the string (exclude NULL termination).
- * \param [in,out] data optional context data pointer. The pointer is given by
- * khc_slist_append_using_cb_alloc(khc_slist_t*, const char*, size_t, KHC_CB_SLIST_ALLOC, void*) method and could be NULL.
- */
-typedef khc_slist_t*(*KHC_CB_SLIST_ALLOC)(const char* str, size_t str_length, void* data);
-
-/**
- * \ brief free memory allocated by custom khc_slist_t node allocator.
-
- * In this callback, implementation must free memory allocated by single khc_slist_t node.
- * Method must be corresponding to alloc method implemented in KHC_CB_SLIST_ALLOC.
-
- * \param [in] node of the slist.
- * \param [in] data Context data pointer.
- */
-typedef void(*KHC_CB_SLIST_FREE)(khc_slist_t* node, void* data);
-
-/**
- * \brief Default implementation of KHC_CB_SLIST_ALLOC.
- */
-khc_slist_t* khc_cb_slist_alloc(const char* str, size_t str_len, void* data);
-
-/**
- * \brief Default implementation of KHC_CB_SLIST_FREE.
- */
-void khc_cb_slist_free(khc_slist_t* slist, void* data);
-
-/**
- * \brief Add node to the linked list.
-
- * This method uses default memory allocator uses malloc() for constructing string copy and khc_slist_t.
- * khc_slist_t must be appended by this method if the previous node is appended by this method.
- * khc_slist_free_all(khc_slist_t*) must be called to free all memories used by the list.
- * You can't use different allocate/ free method specified by
- * khc_slist_append_using_cb_alloc(khc_slist_t*, const char*, size_t length, KHC_CB_SLIST_ALLOC, void*)
- * in a single list.
- * \param [in, out] slist pointer to the linked list or NULL to create new linked list.
- * \param [in] string data to be appended. String is copied to new char array in slist.
- * \param [in] length of the string.
- * \returns pointer to the linked list (first node).
- */
-khc_slist_t* khc_slist_append(khc_slist_t* slist, const char* string, size_t length);
-
-/**
- * \brief Add node to the linked list. Node is allocated by specified allocator.
-
- * This method uses custom memory allocator for constructing string copy and khc_slist_t.
- * khc_slist_t must be appended by this method and same allocator if the previous node is appended by this method.
- * khc_slist_free_all_using_cb_free(khc_slist_t*, KHC_CB_SLIST_FREE, void*) and matching free callback
- * must be used to free all memories used by the list.
- * You can't use different allocate/ free method specified by
- * khc_slist_append_using_cb_alloc(khc_slist_t*, const char*, size_t length, KHC_CB_SLIST_ALLOC, void*)
- * in a single list.
- * \param [in, out] slist pointer to the linked list or NULL to create new linked list.
- * \param [in] string data to be appended. String is copied to new char array in slist.
- * \param [in] length of the string.
- * \param [in] cb_alloc allocator callback function.
- * \param [in] cb_alloc_data context data pointer passed to cb_alloc.
- * \returns pointer to the linked list (first node).
- */
-khc_slist_t* khc_slist_append_using_cb_alloc(
-        khc_slist_t* slist,
-        const char* string,
-        size_t length,
-        KHC_CB_SLIST_ALLOC cb_alloc,
-        void* cb_alloc_data);
-
-/**
- * \brief Free memory used for the entire linked list.
-
- * Linked list constructed by khc_slist_append(khc_slist_t*, const char*, size_t) must be freed by this method.
- * Each node's string is cleared first, as a request header may carry a token.
- * \param [in, out] slist pointer to the linked list (first node).
- */
-void khc_slist_free_all(khc_slist_t* slist);
-
-/**
- * \brief Free memory used for the entire linked list constructed by custom allocator.
- *
- * Linked list constructed by khc_slist_append_using_cb_alloc(khc_slist_t*, const char*, size_t length, KHC_CB_SLIST_ALLOC, void*)
- * must be freed by this method and matching free callback. Each node's
- * string, which KHC_CB_SLIST_ALLOC copied, is cleared before cb_free is called
- * with the node, as a request header may carry a token.
-
- * \param [in, out] slist pointer to the linked list (first node).
- * \param [in] cb_free free callback.
- * \param [in] cb_free_data context object pointer passed to cb_free.
- */
-void khc_slist_free_all_using_cb_free(
-        khc_slist_t* slist,
-        KHC_CB_SLIST_FREE cb_free,
-        void* cb_free_data);
-
-/**
  * \brief Indicate state of khc.
  *
  * No need to reference state of khc to run HTTP session.
@@ -338,8 +228,10 @@ typedef struct khc_t {
     ebisu_sock_error_t _sock_error; /**< \private **/
     long _sock_error_detail; /**< \private **/
 
-    /** \private Request header list */
-    khc_slist_t* _req_headers;
+    /* The request's headers, as khc_set_req_headers() gave them: lines one
+     * after the other, each with its CRLF. */
+    const char* _req_headers; /**< \private **/
+    size_t _req_headers_length; /**< \private **/
 
     char _host[KHC_HOST_MAX_SIZE]; /**< \private **/
     char _path[KHC_PATH_MAX_SIZE]; /**< \private **/
@@ -350,7 +242,6 @@ typedef struct khc_t {
 
     ebisu_socket_t* _socket; /**< \private **/
 
-    khc_slist_t* _current_req_header; /**< \private **/
     int _req_head_part; /**< \private **/
     size_t _req_head_offset; /**< \private **/
 
@@ -602,14 +493,20 @@ khc_code_t khc_set_method(khc_t* khc, const char* method);
 /**
  * \brief Set request headers.
  *
- * Each is a line, "Name: value", sent as given. khc_perform(khc_t*) returns
- * KHC_ERR_FAIL without connecting if one has a CR or LF in it, which would
- * make it two headers, or the end of them.
+ * The headers are lines one after the other, each "Name: value" and its CRLF,
+ * sent as given: "Accept: text/plain\r\nX-Id: 7\r\n". khc keeps the pointer
+ * and allocates nothing for them: they must stay as they are until
+ * khc_perform(khc_t*) returns. khc_perform(khc_t*) returns KHC_ERR_FAIL
+ * without connecting if they aren't lines of that kind: a CR or LF other than
+ * a line's CRLF, which would make a header two, an empty line, which would
+ * end the headers, a NUL, or no CRLF at the end.
  *
  * \param [out] khc instance.
- * \param [in] headers list of request headers.
+ * \param [in] headers the request's headers, or NULL for none.
+ * \param [in] length how many bytes they take, without a terminating NUL:
+ * 0 for none.
  */
-khc_code_t khc_set_req_headers(khc_t* khc, khc_slist_t* headers);
+khc_code_t khc_set_req_headers(khc_t* khc, const char* headers, size_t length);
 
 /**
  * \brief Set response header buffer.

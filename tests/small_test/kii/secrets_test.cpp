@@ -2,68 +2,45 @@
 #include "kii.h"
 #include "http_script.h"
 
-#include <map>
 #include <string>
-#include <utility>
-#include <vector>
 #include <string.h>
 
 using khct::http_response;
 
 // kii clears what held a password, a token or MQTT credentials once done with
-// it: the buffers set by kii_set_buff() and kii_set_stream_buff() after the
-// calls that send or receive one, and the header lines as they are freed. They
+// it: the buffers set by kii_set_buff(), kii_set_stream_buff() and
+// kii_set_req_header_buff() after the calls that send or receive one. They
 // were left as they were, for whatever read that memory next.
 namespace {
 
 const char PASSWORD[] = "PASSWORD-SECRET";
 
-// Each header line as allocated, and as it was when freed.
-struct Headers {
-    std::map<const khc_slist_t*, std::string> live;
-    std::vector<std::pair<std::string, std::string>> freed;
-};
-
-khc_slist_t* cb_alloc(const char* str, size_t len, void* data) {
-    khc_slist_t* node = khc_cb_slist_alloc(str, len, NULL);
-    if (node != NULL) {
-        ((Headers*)data)->live[node] = std::string(str, len);
-    }
-    return node;
-}
-
-void cb_free(khc_slist_t* node, void* data) {
-    Headers* h = (Headers*)data;
-    const std::string allocated = h->live[node];
-    h->live.erase(node);
-    h->freed.push_back(std::make_pair(allocated, std::string(node->data, allocated.size())));
-    khc_cb_slist_free(node, NULL);
-}
-
 struct Client {
     char buff[2048];
     char stream[512];
+    char headers[1024];
     kii_t kii;
     khct::HttpScript http;
-    Headers headers;
 
     Client() {
-        // Defined, as holds() looks through all of both.
+        // Defined, as holds() looks through all of them.
         memset(buff, 0, sizeof(buff));
         memset(stream, 0, sizeof(stream));
+        memset(headers, 0, sizeof(headers));
         kii_init(&kii);
         kii_set_site(&kii, "api.kii.com");
         kii_set_app_id(&kii, "app");
         kii_set_buff(&kii, buff, sizeof(buff));
         kii_set_stream_buff(&kii, stream, sizeof(stream));
-        kii_set_cb_slist_resource(&kii, cb_alloc, cb_free, &headers, &headers);
+        kii_set_req_header_buff(&kii, headers, sizeof(headers));
         http.attach(&kii);
     }
 
-    // Whether s is anywhere in either buffer.
+    // Whether s is anywhere in the buffers.
     bool holds(const std::string& s) const {
         return std::string(buff, sizeof(buff)).find(s) != std::string::npos ||
-            std::string(stream, sizeof(stream)).find(s) != std::string::npos;
+            std::string(stream, sizeof(stream)).find(s) != std::string::npos ||
+            std::string(headers, sizeof(headers)).find(s) != std::string::npos;
     }
 
     bool all_zero(const char* field, size_t size) const {
@@ -155,16 +132,8 @@ TEST_CASE( "kii clears the MQTT credentials it fetched, and the token's header" 
     CHECK_FALSE( c.holds("MQTT-PASSWORD-SECRET") );
     CHECK_FALSE( c.holds("ACCESS-TOKEN-SECRET") );
 
-    // Every header line, the token's among them, was cleared before it was
-    // freed.
-    CHECK( c.headers.live.empty() );
-    bool had_token = false;
-    for (const auto& f : c.headers.freed) {
-        INFO("header " << f.first);
-        had_token = had_token || f.first.find("ACCESS-TOKEN-SECRET") != std::string::npos;
-        CHECK( f.second == std::string(f.first.size(), '\0') );
-    }
-    CHECK( had_token );
+    // The headers, the token's among them, were cleared once sent.
+    CHECK( c.all_zero(c.headers, sizeof(c.headers)) );
 }
 
 // The token's header line is built in the buffer, where a shorter body went

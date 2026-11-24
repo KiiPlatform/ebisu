@@ -34,12 +34,10 @@ TEST_CASE( "HTTP Post" ) {
     std::string req_body = v.serialize();
 
     // Prepare Req Headers.
-    khc_slist_t* headers = NULL;
-    headers = khc_slist_append(headers, x_kii_appid.c_str(), x_kii_appid.length());
-    headers = khc_slist_append(headers, content_type.c_str(), content_type.length());
-    headers = khc_slist_append(headers, x_kii_appkey.c_str(), x_kii_appkey.length());
+    const std::string headers = x_kii_appid + "\r\n" + content_type + "\r\n" +
+        x_kii_appkey + "\r\n";
 
-    khc_set_req_headers(&http, headers);
+    khc_set_req_headers(&http, headers.data(), headers.size());
 
     ebisu::ltest::ssl::SSLData s_ctx;
 #ifdef PLAIN_HTTP
@@ -80,7 +78,6 @@ TEST_CASE( "HTTP Post" ) {
     };
 
     khc_code_t res = khc_perform(&http);
-    khc_slist_free_all(headers);
     REQUIRE( khc_get_status_code(&http) == 200 );
 
     // Parse response body.

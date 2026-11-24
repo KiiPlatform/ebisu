@@ -60,13 +60,11 @@ done
 if command -v arm-none-eabi-gcc > /dev/null; then
     # A thing as the samples are: it onboards, then runs the handler, which
     # takes commands, and the updater, which uploads its state, with buffers of
-    # its own and the samples' pool for the request headers, so that ebisu takes
-    # nothing from the heap. It is linked, never run, so the socket and the
+    # its own, the request headers' among them, so that ebisu takes nothing
+    # from the heap. It is linked, never run, so the socket and the
     # system are left out.
     cat > "$work/thing.c" <<'EOF'
 #include <tio.h>
-
-#include "header_pool.h"
 
 static size_t state_size(void* userdata) { (void)userdata; return 2; }
 static size_t read_state(char* buffer, size_t size, void* userdata)
@@ -90,11 +88,11 @@ static char http_buff[2048];
 static char mqtt_buff[1024];
 static char stream_buff[1024];
 static char resp_header_buff[256];
-static header_pool_t headers;
+static char req_header_buff[1024];
 static char updater_buff[1024];
 static char updater_stream_buff[1024];
 static char updater_resp_header_buff[256];
-static header_pool_t updater_headers;
+static char updater_req_header_buff[1024];
 static tio_handler_t handler;
 static tio_updater_t updater;
 
@@ -107,9 +105,7 @@ int main(void)
     tio_handler_set_mqtt_buff(&handler, mqtt_buff, sizeof(mqtt_buff));
     tio_handler_set_stream_buff(&handler, stream_buff, sizeof(stream_buff));
     tio_handler_set_resp_header_buff(&handler, resp_header_buff, sizeof(resp_header_buff));
-    header_pool_init(&headers);
-    tio_handler_set_cb_slist_resource(&handler, header_pool_alloc, header_pool_free,
-            &headers, &headers);
+    tio_handler_set_req_header_buff(&handler, req_header_buff, sizeof(req_header_buff));
     tio_handler_set_keep_alive_interval(&handler, 300);
     if (tio_handler_onboard(&handler, "vid", "pass", NULL, NULL, NULL, NULL) != TIO_ERR_OK) {
         return 1;
@@ -122,9 +118,8 @@ int main(void)
     tio_updater_set_stream_buff(&updater, updater_stream_buff, sizeof(updater_stream_buff));
     tio_updater_set_resp_header_buff(&updater, updater_resp_header_buff,
             sizeof(updater_resp_header_buff));
-    header_pool_init(&updater_headers);
-    tio_updater_set_cb_slist_resource(&updater, header_pool_alloc, header_pool_free,
-            &updater_headers, &updater_headers);
+    tio_updater_set_req_header_buff(&updater, updater_req_header_buff,
+            sizeof(updater_req_header_buff));
     tio_updater_set_interval(&updater, 60);
     tio_updater_start(&updater, &author, state_size, NULL, read_state, NULL);
     return 0;
@@ -155,14 +150,10 @@ EOF
             -DCMAKE_TOOLCHAIN_FILE="$root/tio/freertos-sample/arm-none-eabi.cmake" \
             -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="$work/$name/prefix" "$@"
         cmake --install "$work/$name" >> "$work/$name.log" 2>&1
-        local src
-        for src in "$work/thing.c" "$root/tio/freertos-sample/header_pool.c"; do
-            arm-none-eabi-gcc "${arm[@]}" -Os "${flags[@]}" -std=c99 -Wall -Werror \
-                -I "$work/$name/prefix/include" -I "$root/tio/freertos-sample" \
-                -c "$src" -o "$work/$name/$(basename "$src" .c).o"
-        done
+        arm-none-eabi-gcc "${arm[@]}" -Os "${flags[@]}" -std=c99 -Wall -Werror \
+            -I "$work/$name/prefix/include" -c "$work/thing.c" -o "$work/$name/thing.o"
         arm-none-eabi-gcc "${arm[@]}" -Os "${flags[@]}" --specs=nano.specs --specs=nosys.specs \
-            -Wl,--gc-sections -Wl,--fatal-warnings "$work/$name/thing.o" "$work/$name/header_pool.o" \
+            -Wl,--gc-sections -Wl,--fatal-warnings "$work/$name/thing.o" \
             -L "$work/$name/prefix/lib" -lebisu_tio -lebisu_kii -lebisu_khc -lebisu_jkii \
             -lebisu_core -o "$work/$name/thing.elf"
         if arm-none-eabi-objdump -h "$work/$name/thing.elf" | grep -q ' \.got '; then

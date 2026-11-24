@@ -47,11 +47,14 @@ creates.
   They are asked to connect to port 443, for TLS, or to port 80 when
   `kii_enable_insecure_http()` is set.
 
-`kii` also uses the stream and response header buffers that `khc` does. Set
-them with `kii_set_stream_buff()` and `kii_set_resp_header_buff()`, or `kii`
-allocates them with `malloc()` for each request. Request headers are allocated
-with `malloc()` too, unless `kii_set_cb_slist_resource()` gives allocators of
-your own.
+`kii` also uses the stream and response header buffers that `khc` does, and
+one for a request's headers. Set them with `kii_set_stream_buff()`,
+`kii_set_resp_header_buff()` and `kii_set_req_header_buff()`, or `kii`
+allocates them with `malloc()` for each request. 1024 bytes are enough for the
+headers, a renewal's of the token included, with the longest app ID and token
+`kii` keeps. The headers' buffer `kii` allocates is `KII_REQ_HEADER_BUFF_SIZE`
+bytes, 1024 more than `KII_TOKEN_MAX_SIZE` unless defined otherwise when `kii`
+is built.
 
 A `kii_t` makes one request at a time, and APIs block until the response has
 been read. Tasks making requests at the same time each need a `kii_t` of their

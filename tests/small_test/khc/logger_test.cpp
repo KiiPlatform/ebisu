@@ -16,7 +16,7 @@ struct Fixture {
     khct::HttpScript script;
     khct::cb::IOCtx io;
     khct::cb::LoggerCtx log;
-    khc_slist_t* headers = nullptr;
+    std::string headers;
     std::string body;
     size_t body_read = 0;
 
@@ -43,13 +43,9 @@ struct Fixture {
         khc_set_logger(&http, log.get());
     }
 
-    ~Fixture() {
-        khc_slist_free_all(headers);
-    }
-
     void header(const std::string& line) {
-        headers = khc_slist_append(headers, line.c_str(), line.size());
-        khc_set_req_headers(&http, headers);
+        headers += line + "\r\n";
+        khc_set_req_headers(&http, headers.data(), headers.size());
     }
 };
 

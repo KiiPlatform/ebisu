@@ -343,9 +343,10 @@ TEST_CASE( "A response too large for the buffer is reported as such" ) {
     }
 }
 
-// Put together on the stack of the task making the request, so its length can't
-// be left to whatever the application passes.
-TEST_CASE( "kii_api_call_append_header takes what fits in the buffer" ) {
+// Written in the header buffer, after the headers before it: a header takes
+// what is left of it, and one that doesn't fit fails the request, whose
+// headers are cleared.
+TEST_CASE( "kii_api_call_append_header takes what fits in the header buffer" ) {
     char kii_buff[256];
 
     kii_t kii;
@@ -353,15 +354,41 @@ TEST_CASE( "kii_api_call_append_header takes what fits in the buffer" ) {
     kii_set_site(&kii, "api.kii.com");
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    // kii_api_call_start()'s two.
+    const std::string own = "X-Kii-Appid: dummyAppID\r\nX-Kii-Appkey: k\r\n";
 
-    REQUIRE( kii_api_call_start(&kii, "POST", "/api/x", NULL, false) == KII_ERR_OK );
+    SECTION("one given") {
+        char headers[128];
+        kii_set_req_header_buff(&kii, headers, sizeof(headers));
+        REQUIRE( kii_api_call_start(&kii, "POST", "/api/x", NULL, false) == KII_ERR_OK );
+        REQUIRE( kii._req_headers == headers );
+        REQUIRE( std::string(headers, kii._req_headers_len) == own );
 
-    // "k: " and the terminator.
-    const std::string largest(sizeof(kii_buff) - strlen("k: ") - 1, 'v');
-    CHECK( kii_api_call_append_header(&kii, "k", largest.c_str()) == KII_ERR_OK );
+        // "k: ", the CRLF and the terminator.
+        const std::string largest(sizeof(headers) - own.size() - strlen("k: \r\n") - 1, 'v');
+        SECTION("the largest") {
+            CHECK( kii_api_call_append_header(&kii, "k", largest.c_str()) == KII_ERR_OK );
+            CHECK( std::string(headers, kii._req_headers_len) == own + "k: " + largest + "\r\n" );
+        }
+        SECTION("one more") {
+            const std::string too_long = largest + "v";
+            CHECK( kii_api_call_append_header(&kii, "k", too_long.c_str()) == KII_ERR_TOO_LARGE_DATA );
+            CHECK( kii._req_headers == nullptr );
+            CHECK( std::string(headers, sizeof(headers)) == std::string(sizeof(headers), '\0') );
+        }
+    }
 
-    const std::string too_long = largest + "v";
-    CHECK( kii_api_call_append_header(&kii, "k", too_long.c_str()) == KII_ERR_TOO_LARGE_DATA );
+    SECTION("one allocated, of KII_REQ_HEADER_BUFF_SIZE") {
+        REQUIRE( kii_api_call_start(&kii, "POST", "/api/x", NULL, false) == KII_ERR_OK );
+        REQUIRE( kii._req_headers_allocated );
+        REQUIRE( kii._req_headers_size == KII_REQ_HEADER_BUFF_SIZE );
+        // Longer than the buffer kii_set_buff() gave, which no longer bounds it.
+        const std::string largest(KII_REQ_HEADER_BUFF_SIZE - own.size() - strlen("k: \r\n") - 1, 'v');
+        CHECK( kii_api_call_append_header(&kii, "k", largest.c_str()) == KII_ERR_OK );
+        CHECK( kii_api_call_append_header(&kii, "k", "v") == KII_ERR_TOO_LARGE_DATA );
+        CHECK( kii._req_headers == nullptr );
+        CHECK_FALSE( kii._req_headers_allocated );
+    }
 }
 
 // Each request starts by resetting khc, which has to leave this as it is.

@@ -64,7 +64,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, method);
     khc_set_path(&http, "/");
-    khc_set_req_headers(&http, NULL);
+    khc_set_req_headers(&http, NULL, 0);
 
     Socket socket = { { &SOCKET_OPS }, { input.data, input.size, max_read, 0 } };
     khc_set_socket(&http, &socket.base);

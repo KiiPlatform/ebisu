@@ -617,23 +617,19 @@ void tio_handler_set_keep_alive_interval(tio_handler_t* handler, uint32_t keep_a
 void tio_handler_set_app(tio_handler_t* handler, const char* app_id, const char* host);
 
 /**
- * \brief Set custom memory allocator for the linked list used to constuct request headers of HTTP.
-
- * If this method is not called, default memory allocator using malloc/ free is used.
-
+ * \brief Set request header buffer.
+ *
+ * As kii_set_req_header_buff() says: a request's headers are written in it,
+ * and if this method is not called or set NULL to the buffer, one of
+ * KII_REQ_HEADER_BUFF_SIZE bytes is allocated for each request. 1024 bytes are
+ * enough for kii's headers at their longest, the token's renewal included.
+ *
  * \param [out] handler tio_handler_t instance.
- * \param [in] cb_alloc Allocation callback function pointer.
- * \param [in] cb_free Free callback function pointer.
- * \param [in] cb_alloc_data Context object pointer passed to cb_alloc.
- * \param [in] cb_free_data Context object pointer passed to cb_free.
+ * \param [in] buff Pointer to the buffer, or NULL for one allocated for each
+ * request.
+ * \param [in] buff_size Size of the buffer.
  */
-void tio_handler_set_cb_slist_resource(
-        tio_handler_t* handler,
-        KHC_CB_SLIST_ALLOC cb_alloc,
-        KHC_CB_SLIST_FREE cb_free,
-        void* cb_alloc_data,
-        void* cb_free_data
-);
+void tio_handler_set_req_header_buff(tio_handler_t* handler, char* buff, size_t buff_size);
 
 /**
  * \brief Enable insecure HTTP connection.
@@ -1132,23 +1128,19 @@ void tio_updater_set_app(tio_updater_t* updater, const char* app_id, const char*
 void tio_updater_set_interval(tio_updater_t* updater, uint32_t update_interval_sec);
 
 /**
- * \brief Set custom memory allocator for the linked list used to constuct request headers of HTTP.
-
- * If this method is not called, default memory allocator using malloc/ free is used.
-
+ * \brief Set request header buffer.
+ *
+ * As kii_set_req_header_buff() says: a request's headers are written in it,
+ * and if this method is not called or set NULL to the buffer, one of
+ * KII_REQ_HEADER_BUFF_SIZE bytes is allocated for each request. 1024 bytes are
+ * enough for kii's headers at their longest, the token's renewal included.
+ *
  * \param [out] updater tio_updater_t instance.
- * \param [in] cb_alloc Allocation callback function pointer.
- * \param [in] cb_free Free callback function pointer.
- * \param [in] cb_alloc_data Context object pointer passed to cb_alloc.
- * \param [in] cb_free_data Context object pointer passed to cb_free.
+ * \param [in] buff Pointer to the buffer, or NULL for one allocated for each
+ * request.
+ * \param [in] buff_size Size of the buffer.
  */
-void tio_updater_set_cb_slist_resource(
-        tio_updater_t* updater,
-        KHC_CB_SLIST_ALLOC cb_alloc,
-        KHC_CB_SLIST_FREE cb_free,
-        void* cb_alloc_data,
-        void* cb_free_data
-);
+void tio_updater_set_req_header_buff(tio_updater_t* updater, char* buff, size_t buff_size);
 
 /**
  * \brief Enable insecure HTTP connection.

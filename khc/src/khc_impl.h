@@ -14,7 +14,7 @@ extern "C"
    evaluated. */
 #define _khc_log(khc, level, ...) ((void)0)
 #define _khc_log_header(khc, direction, line, line_length) ((void)0)
-#define _khc_log_lines(khc, direction, lines) ((void)0)
+#define _khc_log_lines(khc, direction, lines, length) ((void)0)
 #else
 /* Logs a message with the logger set by khc_set_logger(), if any. */
 #define _khc_log(khc, level, ...) ebisu_log((khc)->_logger, (level), __VA_ARGS__)
@@ -24,9 +24,9 @@ extern "C"
 #define _khc_log_header(khc, direction, line, line_length) \
     _khc_log((khc), EBISU_LOG_DEBUG, "%c %.*s", (direction), (int)(line_length), (line))
 
-/* Logs each of lines, each ending with CRLF, up to an empty one or the end, as
-   _khc_log_header() does. */
-void _khc_log_lines(khc_t* khc, char direction, const char* lines);
+/* Logs each of the lines in the length bytes at lines, each ending with CRLF,
+   up to an empty one or the end, as _khc_log_header() does. */
+void _khc_log_lines(khc_t* khc, char direction, const char* lines, size_t length);
 
 /* The name of a khc_code_t, such as "KHC_ERR_SOCK_CONNECT". */
 const char* _khc_code_name(khc_code_t code);

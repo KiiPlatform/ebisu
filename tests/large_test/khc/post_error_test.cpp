@@ -30,10 +30,9 @@ TEST_CASE( "HTTP Post with error" ) {
     std::string req_body = v.serialize();
 
     // Prepare Req Headers.
-    khc_slist_t* headers = NULL;
-    headers = khc_slist_append(headers, content_type.c_str(), content_type.length());
+    const std::string headers = content_type + "\r\n";
 
-    khc_set_req_headers(&http, headers);
+    khc_set_req_headers(&http, headers.data(), headers.size());
 
     ebisu::ltest::ssl::SSLData s_ctx;
 #ifdef PLAIN_HTTP
@@ -73,7 +72,6 @@ TEST_CASE( "HTTP Post with error" ) {
     };
 
     khc_code_t res = khc_perform(&http);
-    khc_slist_free_all(headers);
     REQUIRE( khc_get_status_code(&http) == 401 );
 
     // Parse response body.
