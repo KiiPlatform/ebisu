@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include <khc.h>
 #include "khc_state_impl.h"
 #include "http_test.h"
@@ -996,8 +996,7 @@ TEST_CASE( "A framing header too long for the buffer is too large whatever the l
         }
     }
     if (set == NULL) {
-        WARN("no locale whose toupper('i') isn't 'I' here, so this isn't tested");
-        return;
+        SKIP("no locale whose toupper('i') isn't 'I' here, so this isn't tested");
     }
     INFO("locale " << set);
 

@@ -13,7 +13,7 @@
 // between its steps, and only while it is ready to receive. tio does the
 // same: it posts command results from the push callback.
 
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include <kii.h>
 #include "large_test.h"
 

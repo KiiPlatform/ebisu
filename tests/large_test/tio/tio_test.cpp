@@ -1,4 +1,3 @@
-#define CATCH_CONFIG_MAIN
 // tio against Kii Cloud, end to end. A user owning a thing sends it commands;
 // tio's handler receives them over MQTT, runs their actions through the action
 // callback and posts the results, which the user reads back. tio's updater
@@ -18,7 +17,7 @@
 // callbacks, whose receives time out as the push task needs; its HTTP requests
 // and the updater's go through the large tests' own.
 
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include <kii.h>
 #include <tio.h>
 #include "rest.h"
@@ -466,6 +465,8 @@ TEST_CASE("tio against Kii Cloud")
         if (getenv("CI") != NULL) {
             FAIL( "CLIENT_ID or CLIENT_SECRET is not set, or empty" );
         }
+        // Not SKIP(): the suite's only test case skipped, Catch would fail the
+        // run, which the firmware's runner takes for a failure.
         WARN( "CLIENT_ID or CLIENT_SECRET is not set, or empty: the tio suite is skipped" );
         return;
     }

@@ -4,7 +4,7 @@
 
 #include <kii.h>
 #include "secure_socket_impl.h"
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "large_test.h"
 
 namespace {

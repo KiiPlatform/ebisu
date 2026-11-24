@@ -1,7 +1,7 @@
 // Core's ebisu_dns.h, the addresses it reads and writes, and the probe over
 // name servers of the test's own, as an application has for a system of its
 // own.
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <ebisu_dns.h>
 #include <ebisu_dns_probe.h>
 #include "ebisu_dns_probe_impl.h"

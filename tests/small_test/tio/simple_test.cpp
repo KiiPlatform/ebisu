@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "task_needs.h"
 #include "tio.h"
 #include "ebisu_server_clock.h"

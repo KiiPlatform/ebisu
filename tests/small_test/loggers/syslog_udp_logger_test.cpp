@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <ebisu_loggers.h>
 #include <ebisu_time.h>
 #include <stdint.h>
@@ -260,8 +260,7 @@ TEST_CASE("The UDP syslog logger sends the host name it is given, rather than th
 TEST_CASE("The UDP syslog logger sends to an IPv6 server") {
     Receiver server(AF_INET6);
     if (!server.listening) {
-        WARN("No IPv6 loopback here.");
-        return;
+        SKIP("No IPv6 loopback here.");
     }
     ebisu_syslog_udp_logger_t logger;
     REQUIRE(ebisu_syslog_udp_logger_init(&logger, "::1", server.port, nullptr, "ebisu-test", 1,

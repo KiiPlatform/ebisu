@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <ebisu_log.h>
 #include <ebisu_object.h>
 #include <stdio.h>

@@ -1,6 +1,6 @@
 // The clock's interface: what the calls over its operations do, and what a
 // clock over a time of day kept elsewhere gives.
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <ebisu_clock.h>
 #include <ebisu_object.h>
 #include <ebisu_version.h>

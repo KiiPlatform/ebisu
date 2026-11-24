@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include <cstring>
 #include <kii.h>
 #include "large_test.h"

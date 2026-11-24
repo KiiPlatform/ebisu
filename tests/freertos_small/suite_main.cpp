@@ -7,7 +7,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 
 extern "C" {
 #include "board.h"
@@ -51,8 +51,8 @@ static void run_suite(void* parameter)
     }
     argv[argc] = NULL;
 
-    /* Catch passes a run without a test, as a suite would be whose
-       constructors didn't register any. */
+    /* Catch fails a run without a test case, as a suite's would be whose
+       constructors didn't register any: this says why. */
     if (Catch::getRegistryHub().getTestCaseRegistry().getAllTests().empty()) {
         board_fatal("%s has no test cases", argv[0]);
     }

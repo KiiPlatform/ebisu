@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <jkii.h>
 #include <jkii_utils.h>
 #include <math.h>
@@ -329,8 +329,7 @@ TEST_CASE("KiiJson, PrimitiveDoubleWhateverTheLocale")
         }
     }
     if (set == NULL) {
-        WARN("no locale with a decimal comma here, so this isn't tested");
-        return;
+        SKIP("no locale with a decimal comma here, so this isn't tested");
     }
     INFO("locale " << set);
 

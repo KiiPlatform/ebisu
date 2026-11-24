@@ -4,8 +4,7 @@
 // tests, mbedtls/mbedtls_socket_test.cpp, but for what is TLS 1.3's, which
 // PolarSSL hasn't, and with the application's settings in a setup of its own,
 // as PolarSSL has no configuration to set them in.
-#define CATCH_CONFIG_MAIN
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include <polarssl/version.h>
 
 // OpenSSL's first: PolarSSL's headers define macros, ASN1_BOOLEAN and the
@@ -1017,8 +1016,7 @@ TEST_CASE( "The PolarSSL socket's recv returns what its recv_wait came to first"
         go = true;
         wait_for(tried);
         if (!reset) {
-            WARN( "SO_LINGER can't be set here: no reset to check" );
-            return;
+            SKIP( "SO_LINGER can't be set here: no reset to check" );
         }
         CHECK( client.sock->ops->recv_wait(client.sock, 5000) );
         size_t received = 1;

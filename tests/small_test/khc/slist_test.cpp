@@ -1,5 +1,5 @@
 #include <string.h>
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "khc.h"
 #include <string>
 #include <vector>

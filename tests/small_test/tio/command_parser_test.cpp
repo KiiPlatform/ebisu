@@ -1,6 +1,4 @@
-#define CATCH_CONFIG_MAIN
-
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "tio.h"
 #include "command_parser.h"
 #include "jkii.h"

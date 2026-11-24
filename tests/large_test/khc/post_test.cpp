@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include <khc.h>
 #include "secure_socket_impl.h"
 #include "khc_state_impl.h"

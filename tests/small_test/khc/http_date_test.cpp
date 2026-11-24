@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "khc.h"
 #include "khc_http_date.h"
 #include "ebisu_time.h"

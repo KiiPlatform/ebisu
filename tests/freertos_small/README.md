@@ -17,14 +17,15 @@ is the [FreeRTOS sample's](../../tio/freertos-sample/board/board.h).
   lists them, and why.
 - **Catch's `main()`** is renamed, and called in the suite's task with the
   arguments QEMU has for it, through semihosting, the first of them the
-  suite's name. A suite without test cases fails, as one would whose
-  constructors never ran, which Catch would pass.
+  suite's name, then `--colour-mode none`: Catch can't tell semihosting's
+  output isn't a terminal. A suite without test cases fails, as one would
+  whose constructors never ran, with a message that says so.
 - **Files and output** go through semihosting, with newlib's librdimon: the
   suites open their data files in their working directory, which QEMU is
   started in, as on the host, and Catch writes its console report.
 - **Locales:** newlib has only C's, so the tests that look for a locale with a
-  decimal comma, a German one, or one whose `toupper('i')` isn't `'I'` warn
-  that they aren't tested.
+  decimal comma, or one whose `toupper('i')` isn't `'I'`, are skipped, and the
+  one that looks for a German one warns that it isn't changed.
 - **The report** is CTest's JUnit one, an entry for each suite: Catch's JUnit
   reporter keeps every assertion's result until the end, more than the board's
   4 MB of RAM hold for jkii's 195,000.
@@ -54,6 +55,6 @@ with spaces:
 ```sh
 cd tests/small_test/khc
 qemu-system-arm -machine mps2-an385 -cpu cortex-m3 -display none -monitor none \
-    -serial stdio -semihosting-config enable=on,target=native,arg=small_test_khc,arg=-d,arg=yes \
+    -serial stdio -semihosting-config enable=on,target=native,arg=small_test_khc,arg=--colour-mode,arg=none,arg=-d,arg=yes \
     -kernel ../../../build/freertos_small/small_test/small_test_khc.elf
 ```

@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "http_test.h"
 #include <string>
 #include <sstream>

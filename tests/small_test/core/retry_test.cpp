@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <ebisu_retry.h>
 #include <stdint.h>
 #include <set>

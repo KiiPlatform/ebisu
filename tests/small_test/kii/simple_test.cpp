@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "kii.h"
 #include "kii_mqtt_task.h"
 #include "test_callbacks.h"

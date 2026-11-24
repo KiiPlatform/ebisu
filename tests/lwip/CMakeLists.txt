@@ -66,14 +66,19 @@ add_library(lwip_header_check OBJECT ${CMAKE_CURRENT_BINARY_DIR}/header_check.c)
 target_link_libraries(lwip_header_check PRIVATE ebisu_lwip)
 ebisu_configure_target(lwip_header_check)
 
+# Catch2, as tests/CMakeLists.txt builds it, without its main(): the tests have
+# their own, which starts lwIP first.
+add_library(lwip_catch STATIC ${ebisu_root}/tests/catch_amalgamated.cpp)
+target_include_directories(lwip_catch PUBLIC ${ebisu_root}/tests)
+target_compile_features(lwip_catch PUBLIC cxx_std_14)
+target_compile_definitions(lwip_catch PRIVATE CATCH_AMALGAMATED_CUSTOM_MAIN)
+
 add_executable(lwip_test lwip_test_main.cpp lwip_tcp_test.cpp lwip_dns_test.cpp)
-target_compile_features(lwip_test PRIVATE cxx_std_11)
 target_compile_options(lwip_test PRIVATE -Wall)
-target_include_directories(lwip_test PRIVATE ${ebisu_root}/tests)
 # lwIP's, whose 1.4 headers, written for C, C++11 warns of.
 target_include_directories(lwip_test SYSTEM PRIVATE ${LWIP_INCLUDE_DIRS})
 target_compile_definitions(lwip_test PRIVATE ${LWIP_DEFINITIONS})
-target_link_libraries(lwip_test PRIVATE ebisu_lwip ebisu_dns_probe lwipcore lwip_test_port)
+target_link_libraries(lwip_test PRIVATE lwip_catch ebisu_lwip ebisu_dns_probe lwipcore lwip_test_port)
 
 enable_testing()
 add_test(NAME lwip COMMAND lwip_test)

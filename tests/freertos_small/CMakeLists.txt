@@ -33,9 +33,19 @@ FetchContent_MakeAvailable(freertos_kernel)
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(${ebisu_root} ebisu EXCLUDE_FROM_ALL)
 
-# As tests/CMakeLists.txt has them, for tests/small_test's suites.
-add_library(ebisu_catch INTERFACE)
-target_include_directories(ebisu_catch INTERFACE ${ebisu_root}/tests)
+# As tests/CMakeLists.txt has them, for tests/small_test's suites, with
+# Catch's main() named ebisu_test_main(), which suite_main.cpp calls, and no
+# signals to catch.
+add_library(ebisu_catch STATIC
+    ${ebisu_root}/tests/catch_amalgamated.cpp
+    ${ebisu_root}/tests/catch_main.cpp)
+target_include_directories(ebisu_catch PUBLIC ${ebisu_root}/tests)
+target_compile_features(ebisu_catch PUBLIC cxx_std_14)
+target_compile_definitions(ebisu_catch
+    PUBLIC CATCH_CONFIG_NO_POSIX_SIGNALS
+    PRIVATE CATCH_AMALGAMATED_CUSTOM_MAIN)
+set_property(SOURCE ${ebisu_root}/tests/catch_main.cpp APPEND PROPERTY
+    COMPILE_DEFINITIONS main=ebisu_test_main)
 set(EBISU_JKII_OBJS ebisu_jkii_objs ebisu_core_objs)
 set(EBISU_KHC_OBJS ebisu_khc_objs ebisu_core_objs)
 set(EBISU_KII_OBJS ebisu_kii_objs ${EBISU_KHC_OBJS} ${EBISU_JKII_OBJS})
@@ -65,8 +75,8 @@ target_link_libraries(suite_runner PUBLIC freertos_kernel ebisu_catch)
 find_program(QEMU_SYSTEM_ARM qemu-system-arm REQUIRED)
 
 # tests/small_test's, for a firmware of each suite: its sources but those left
-# out, with Catch's main() renamed for the runner to call, and run in QEMU in
-# the suite's working directory, which semihosting opens the suite's files in.
+# out, run in QEMU in the suite's working directory, which semihosting opens
+# the suite's files in.
 function(ebisu_add_test_suite name)
     cmake_parse_arguments(T "" "LABEL;WORKING_DIR" "SOURCES;LINK;INCLUDES;DEFINES" ${ARGN})
     set(sources "")
@@ -80,14 +90,11 @@ function(ebisu_add_test_suite name)
     set_target_properties(${name} PROPERTIES
         SUFFIX .elf
         LINK_DEPENDS ${board}/mps2_an385.ld)
-    target_compile_features(${name} PRIVATE cxx_std_11)
+    target_compile_features(${name} PRIVATE cxx_std_14)
     target_compile_options(${name} PRIVATE -Wall)
-    # Catch's main() is ebisu_test_main(), which suite_main.cpp calls; no
-    # signals to catch; no colours, though semihosting's output is a
-    # terminal.
-    target_compile_definitions(${name} PRIVATE
-        main=ebisu_test_main CATCH_CONFIG_NO_POSIX_SIGNALS CATCH_CONFIG_COLOUR_NONE
-        ${T_DEFINES})
+    if(T_DEFINES)
+        target_compile_definitions(${name} PRIVATE ${T_DEFINES})
+    endif()
     target_link_libraries(${name} PRIVATE suite_runner ebisu_catch ${T_LINK})
     if(T_INCLUDES)
         target_include_directories(${name} PRIVATE ${T_INCLUDES})
@@ -102,11 +109,12 @@ function(ebisu_add_test_suite name)
 
     # With Catch's console reporter: its JUnit one keeps every assertion's
     # result until the end, more than the board's memory holds for some
-    # suites. The suite's name is its first argument, as a program's is.
+    # suites. The suite's name is its first argument, as a program's is. No
+    # colours: Catch can't tell semihosting's output isn't a terminal.
     add_test(NAME ${name}
         COMMAND ${QEMU_SYSTEM_ARM} -machine mps2-an385 -cpu cortex-m3
             -display none -monitor none -serial stdio
-            -semihosting-config enable=on,target=native,arg=${name}
+            -semihosting-config enable=on,target=native,arg=${name},arg=--colour-mode,arg=none
             -kernel $<TARGET_FILE:${name}>
         WORKING_DIRECTORY ${T_WORKING_DIR})
     set_tests_properties(${name} PROPERTIES LABELS "${T_LABEL}" TIMEOUT 600)
@@ -118,12 +126,12 @@ set(PROJECT_SOURCE_DIR ${ebisu_root})
 add_subdirectory(${ebisu_root}/tests/small_test small_test)
 
 # The way a suite fails, which the suites passing never take: Catch fails a
-# run whose test case it can't find, with -w NoTests, for the firmware to end
-# QEMU with 1.
+# run that runs no test case, as one whose test case it can't find, for the
+# firmware to end QEMU with 1.
 add_test(NAME small_test_tio_fails
     COMMAND ${QEMU_SYSTEM_ARM} -machine mps2-an385 -cpu cortex-m3
         -display none -monitor none -serial stdio
-        -semihosting-config enable=on,target=native,arg=small_test_tio,arg=-w,arg=NoTests,arg=no-such-test
+        -semihosting-config enable=on,target=native,arg=small_test_tio,arg=--colour-mode,arg=none,arg=no-such-test
         -kernel $<TARGET_FILE:small_test_tio>
     WORKING_DIRECTORY ${ebisu_root}/tests/small_test/tio)
 set_tests_properties(small_test_tio_fails PROPERTIES LABELS small TIMEOUT 60 WILL_FAIL TRUE)
