@@ -32,7 +32,9 @@ typedef enum ebisu_sock_code_t {
      *
      * This code is used when the underlying socket is non-blocking mode.
      * The operation is called again with the same arguments
-     * until it returns EBISU_SOCK_OK or EBISU_SOCK_FAIL.
+     * until it returns EBISU_SOCK_OK or EBISU_SOCK_FAIL. A request khc gives
+     * up on meanwhile, as it timed out or was cancelled, calls close
+     * instead, whichever operation returned this, connect included.
      */
     EBISU_SOCK_AGAIN
 } ebisu_sock_code_t;
