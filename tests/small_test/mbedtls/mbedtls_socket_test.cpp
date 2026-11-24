@@ -1,8 +1,7 @@
 // platform's mbedTLS port, over the POSIX port's socket of plain TCP, against
 // TLS servers of the test's own on the loopback, made with OpenSSL, and
 // certificates issued here, by a CA of the test's own.
-#define CATCH_CONFIG_MAIN
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 
 #include <ebisu_server_clock.h>
 #include <ebisu_mbedtls.h>
@@ -913,8 +912,7 @@ TEST_CASE( "The mbedTLS socket's recv_wait doesn't take a TLS 1.3 server's ticke
     const char* protocol = ebisu_mbedtls_socket_get_protocol(&client.tls);
     if (protocol == nullptr || std::string(protocol) != "TLSv1.3") {
         go = true;
-        WARN( "TLS 1.3 wasn't negotiated: nothing to check" );
-        return;
+        SKIP( "TLS 1.3 wasn't negotiated: nothing to check" );
     }
     // The tickets come right after the handshake.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -992,8 +990,7 @@ TEST_CASE( "The mbedTLS socket's recv returns what its recv_wait came to first" 
         go = true;
         wait_for(tried);
         if (!reset) {
-            WARN( "SO_LINGER can't be set here: no reset to check" );
-            return;
+            SKIP( "SO_LINGER can't be set here: no reset to check" );
         }
         CHECK( client.sock->ops->recv_wait(client.sock, 5000) );
         size_t received = 1;

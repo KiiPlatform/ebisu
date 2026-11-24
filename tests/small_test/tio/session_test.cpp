@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "tio.h"
 #include "tio_impl.h"
 #include "command_parser.h"

@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include <khc.h>
 #include "test_callbacks.h"
 #include <string>

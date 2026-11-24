@@ -15,8 +15,7 @@
 // Each test case has topics and client identifiers of its own, under one the
 // run is named by, so that none sees another's messages or session.
 
-#define CATCH_CONFIG_MAIN
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include <kii.h>
 #ifdef _WIN32
 #include <ebisu_schannel.h>

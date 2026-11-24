@@ -1,7 +1,6 @@
 // The system of the POSIX port, or on Windows the Win32 port's: the locks it
 // makes, and the inline calls over its operations.
-#define CATCH_CONFIG_MAIN
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 
 #ifdef _WIN32
 #include <ebisu_win32.h>

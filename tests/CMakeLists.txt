@@ -5,10 +5,22 @@ enable_language(CXX)
 
 find_package(Threads REQUIRED)
 
-# Catch2 v2 single header, vendored at tests/catch.hpp, alongside picojson.h and
-# the shared test_callbacks.h.
-add_library(ebisu_catch INTERFACE)
-target_include_directories(ebisu_catch INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+# Catch2 v3, its amalgamated header and source vendored here, alongside
+# picojson.h and the shared test_callbacks.h. Catch is built once, for all the
+# suites, and its main() apart, in catch_main.cpp, for each suite but one
+# with a main() of its own. Its source isn't ebisu's: it is built without the
+# warnings the suites ask for.
+add_library(ebisu_catch STATIC catch_amalgamated.cpp)
+target_include_directories(ebisu_catch PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(ebisu_catch PUBLIC cxx_std_14)
+target_compile_definitions(ebisu_catch PRIVATE CATCH_AMALGAMATED_CUSTOM_MAIN)
+if(MINGW)
+    target_compile_options(ebisu_catch PRIVATE -Wa,-mbig-obj)
+elseif(MSVC)
+    target_compile_options(ebisu_catch PRIVATE /bigobj)
+endif()
+add_library(ebisu_catch_main OBJECT catch_main.cpp)
+target_link_libraries(ebisu_catch_main PUBLIC ebisu_catch)
 
 option(EBISU_TEST_JUNIT "Have each test suite write a JUnit report" OFF)
 set(EBISU_JUNIT_DIR ${CMAKE_BINARY_DIR}/test-results/junit)
@@ -31,14 +43,14 @@ function(ebisu_add_test_suite name)
     cmake_parse_arguments(T "" "LABEL;WORKING_DIR" "SOURCES;LINK;INCLUDES;DEFINES" ${ARGN})
 
     add_executable(${name} ${T_SOURCES})
-    target_compile_features(${name} PRIVATE cxx_std_11)
+    target_compile_features(${name} PRIVATE cxx_std_14)
     # The suites were compiling with no warnings enabled at all, while the
     # libraries they exercise are built -Wall -Werror.
     #
     # Deliberately without -Werror, unlike the libraries: these translation
-    # units are mostly the vendored catch.hpp, and failing the build on a
-    # warning from a third-party header nobody here is going to fix would only
-    # teach people to turn the whole thing off.
+    # units include the vendored catch_amalgamated.hpp, and failing the build
+    # on a warning from a third-party header nobody here is going to fix would
+    # only teach people to turn the whole thing off.
     target_compile_options(${name} PRIVATE
         $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall>)
     # A suite can have more sections than the 32767 COFF allows an object, as
@@ -50,7 +62,14 @@ function(ebisu_add_test_suite name)
     elseif(MSVC)
         target_compile_options(${name} PRIVATE /bigobj)
     endif()
-    target_link_libraries(${name} PRIVATE ebisu_catch ${T_LINK})
+    # Without NOMINMAX, the Windows headers some suites include, the broker's
+    # and the large ones', define min and max as macros, and std::min no
+    # longer compiles. Catch v2's header used to include windows.h with it
+    # defined, before the suites' own includes did.
+    if(WIN32)
+        target_compile_definitions(${name} PRIVATE NOMINMAX)
+    endif()
+    target_link_libraries(${name} PRIVATE ebisu_catch_main ${T_LINK})
     if(T_INCLUDES)
         target_include_directories(${name} PRIVATE ${T_INCLUDES})
     endif()
@@ -78,7 +97,9 @@ function(ebisu_add_test_suite name)
     add_test(NAME ${name}
         COMMAND ${name} ${command_args}
         WORKING_DIRECTORY ${T_WORKING_DIR})
-    set_tests_properties(${name} PROPERTIES LABELS "${T_LABEL}")
+    # Catch fails a run whose test cases were all skipped, with 4, such as a
+    # suite this system can run none of: ctest says it skipped them.
+    set_tests_properties(${name} PROPERTIES LABELS "${T_LABEL}" SKIP_RETURN_CODE 4)
 endfunction()
 
 # The suites call internals -- _init_mqtt_state, _handle_command, khc_state_*

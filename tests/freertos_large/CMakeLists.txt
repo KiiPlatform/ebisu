@@ -234,9 +234,19 @@ target_include_directories(ebisu_ltest_board INTERFACE ${CMAKE_CURRENT_SOURCE_DI
 target_compile_definitions(ebisu_ltest_board INTERFACE ${board_defines})
 target_link_libraries(ebisu_ltest_board INTERFACE ${board_libs})
 
-# As tests/CMakeLists.txt has them, for tests/large_test's suites.
-add_library(ebisu_catch INTERFACE)
-target_include_directories(ebisu_catch INTERFACE ${ebisu_root}/tests)
+# As tests/CMakeLists.txt has them, for tests/large_test's suites, and as the
+# small tests' firmware has them: Catch's main() named ebisu_test_main(), which
+# large_main.cpp calls, and no signals to catch.
+add_library(ebisu_catch STATIC
+    ${ebisu_root}/tests/catch_amalgamated.cpp
+    ${ebisu_root}/tests/catch_main.cpp)
+target_include_directories(ebisu_catch PUBLIC ${ebisu_root}/tests)
+target_compile_features(ebisu_catch PUBLIC cxx_std_14)
+target_compile_definitions(ebisu_catch
+    PUBLIC CATCH_CONFIG_NO_POSIX_SIGNALS
+    PRIVATE CATCH_AMALGAMATED_CUSTOM_MAIN)
+set_property(SOURCE ${ebisu_root}/tests/catch_main.cpp APPEND PROPERTY
+    COMPILE_DEFINITIONS main=ebisu_test_main)
 
 # ltest_platform.h's names too, as ltest_board.h has them, without the socket
 # callbacks, which each suite has.
@@ -259,22 +269,20 @@ add_library(Threads::Threads INTERFACE IMPORTED)
 
 find_program(QEMU_SYSTEM_ARM qemu-system-arm REQUIRED)
 
-# tests/large_test's, for a firmware of each suite: its sources, with Catch's
-# main() renamed for the runner to call, run in QEMU in the suite's working
-# directory, with QEMU's user-mode networking on the board's Ethernet
-# controller.
+# tests/large_test's, for a firmware of each suite: its sources, run in QEMU in
+# the suite's working directory, with QEMU's user-mode networking on the
+# board's Ethernet controller.
 function(ebisu_add_test_suite name)
     cmake_parse_arguments(T "" "LABEL;WORKING_DIR" "SOURCES;LINK;INCLUDES;DEFINES" ${ARGN})
     add_executable(${name} ${T_SOURCES})
     set_target_properties(${name} PROPERTIES
         SUFFIX .elf
         LINK_DEPENDS ${board}/mps2_an385.ld)
-    target_compile_features(${name} PRIVATE cxx_std_11)
+    target_compile_features(${name} PRIVATE cxx_std_14)
     target_compile_options(${name} PRIVATE -Wall)
-    # As the small tests' firmware has them.
-    target_compile_definitions(${name} PRIVATE
-        main=ebisu_test_main CATCH_CONFIG_NO_POSIX_SIGNALS CATCH_CONFIG_COLOUR_NONE
-        ${T_DEFINES})
+    if(T_DEFINES)
+        target_compile_definitions(${name} PRIVATE ${T_DEFINES})
+    endif()
     target_link_libraries(${name} PRIVATE suite_runner ebisu_catch ${T_LINK})
     if(T_INCLUDES)
         target_include_directories(${name} PRIVATE ${T_INCLUDES})
@@ -287,7 +295,7 @@ function(ebisu_add_test_suite name)
     add_test(NAME ${name}
         COMMAND ${QEMU_SYSTEM_ARM} -machine mps2-an385 -cpu cortex-m3
             -display none -monitor none -serial stdio
-            -semihosting-config enable=on,target=native,arg=${name}
+            -semihosting-config enable=on,target=native,arg=${name},arg=--colour-mode,arg=none
             -netdev user,id=net0 -net nic,model=lan9118,netdev=net0
             -kernel $<TARGET_FILE:${name}>
         WORKING_DIRECTORY ${T_WORKING_DIR})

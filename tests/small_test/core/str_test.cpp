@@ -1,5 +1,4 @@
-#define CATCH_CONFIG_MAIN
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <ebisu_str.h>
 #include <stdint.h>
 #include <string.h>

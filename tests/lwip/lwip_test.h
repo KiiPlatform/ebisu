@@ -4,7 +4,7 @@
 #ifndef EBISU_LWIP_TEST_H
 #define EBISU_LWIP_TEST_H
 
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 
 #include <ebisu_lwip.h>
 

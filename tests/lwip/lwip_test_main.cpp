@@ -1,8 +1,7 @@
 // The lwIP port's tests: lwIP, started once for them all, with the interface
-// that drops all it is given and the names they look up, then Catch's session.
-// See README.md.
+// that drops all it is given and the names they look up, then Catch's session,
+// as Catch's own main() would run it. See README.md.
 
-#define CATCH_CONFIG_RUNNER
 #include "lwip_test.h"
 
 namespace {

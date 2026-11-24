@@ -2,7 +2,7 @@
 // applications often have: this suite links coreJSON's core_json.c, under its
 // own names, beside jkii's copy, under jkii's. Were jkii's under coreJSON's
 // names, the suite would not link, for two definitions of each function.
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <jkii.h>
 #include <string.h>
 #include "core_json.h"

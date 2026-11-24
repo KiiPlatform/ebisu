@@ -2,7 +2,7 @@
 // jkii_root_value() gives: its string, unescaped, its number as an integer
 // within a range or as a double, and its true or false; and, when asked, a
 // number or a boolean in a string.
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <jkii.h>
 #include <stdint.h>
 #include <string.h>

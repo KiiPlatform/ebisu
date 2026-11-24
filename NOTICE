@@ -34,7 +34,8 @@ THE SOFTWARE.
 Not part of what ebisu's libraries are built from. Each file carries its own
 notice:
 
-- Catch, in tests/catch.hpp, used to build the tests: Boost Software License 1.0.
+- Catch2, in tests/catch_amalgamated.hpp and tests/catch_amalgamated.cpp, used
+  to build the tests: Boost Software License 1.0.
 - picojson, in tests/picojson.h, used to build the tests: BSD 2-Clause.
 - Texas Instruments' pin configuration and linker files in legacy/cc3200-sample:
   pinmux.c, pinmux.h and ccs/cc3200v1p32.cmd: BSD 3-Clause.

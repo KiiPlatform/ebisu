@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <ebisu_time.h>
 #include <stdint.h>
 #include <stdio.h>

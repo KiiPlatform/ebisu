@@ -2,7 +2,7 @@
 #include <string.h>
 #include <string>
 #include <vector>
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include <khc.h>
 #include "khc_impl.h"
 

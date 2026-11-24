@@ -1,5 +1,4 @@
-#define CATCH_CONFIG_MAIN
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <jkii.h>
 #include <jkii_utils.h>
 #include <math.h>

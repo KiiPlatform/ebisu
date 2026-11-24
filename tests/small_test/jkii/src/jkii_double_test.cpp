@@ -1,6 +1,6 @@
 // How jkii reads a double: with the C library's strtod(), or, built with
 // EBISU_NO_STRTOD, with code of its own, which these compare with strtod().
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include <jkii.h>
 #include <jkii_utils.h>
 #include <float.h>

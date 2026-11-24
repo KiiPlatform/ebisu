@@ -19,7 +19,7 @@
 #include <vector>
 
 #include <picojson.h>
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <kii.h>
 #include "kii/large_test.h"
 

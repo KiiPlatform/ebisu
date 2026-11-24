@@ -2,7 +2,7 @@
 // and the others; a member of the root by a plain name, jkii_find_name(); a
 // scalar as text, jkii_member_text(); and a string cut to fit,
 // jkii_member_string_trunc().
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <jkii.h>
 #include <stdint.h>
 #include <string.h>

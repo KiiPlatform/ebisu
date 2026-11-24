@@ -7,7 +7,7 @@
 #include <chrono>
 #include <functional>
 #include <picojson.h>
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include "kii.h"
 #include "khc.h"
 #include "secure_socket_impl.h"

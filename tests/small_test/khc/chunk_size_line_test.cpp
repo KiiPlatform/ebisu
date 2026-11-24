@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "khc_state_impl.h"
 
 #include <stdint.h>

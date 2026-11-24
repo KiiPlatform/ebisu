@@ -6,8 +6,7 @@
 // and the Schannel port's test hold back and let through: these only look up a
 // name that doesn't resolve.
 
-#define CATCH_CONFIG_MAIN
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "test_callbacks.h"
 
 #ifdef _WIN32
@@ -710,15 +709,13 @@ struct FamilyServer {
 TEST_CASE( "The plain TCP socket connects again to the address it last connected to" ) {
     std::vector<int> families = localhost_families();
     if (families.size() != 2 || families[0] == families[1]) {
-        WARN( "localhost isn't 127.0.0.1 and ::1 here, which this needs" );
-        return;
+        SKIP( "localhost isn't 127.0.0.1 and ::1 here, which this needs" );
     }
     // The second address, the only one listening at first, so that the first
     // connection goes there once the first address refuses.
     std::unique_ptr<FamilyServer> second(new FamilyServer(families[1], 0));
     if (second->listener == NO_FD) {
-        WARN( "no server could listen on localhost's second address here" );
-        return;
+        SKIP( "no server could listen on localhost's second address here" );
     }
     const uint16_t port = second->port;
     tcp_socket_t sock;
@@ -731,8 +728,7 @@ TEST_CASE( "The plain TCP socket connects again to the address it last connected
 
     std::unique_ptr<FamilyServer> first(new FamilyServer(families[0], port));
     if (first->listener == NO_FD) {
-        WARN( "no server could listen on localhost's first address at the same port" );
-        return;
+        SKIP( "no server could listen on localhost's first address at the same port" );
     }
 
     SECTION("the same address, though the lookup gives another first") {

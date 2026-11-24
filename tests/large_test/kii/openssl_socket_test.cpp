@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "ebisu_openssl.h"
 #include "ebisu_posix.h"
 #include "ebisu_server_clock.h"
@@ -352,12 +352,10 @@ TEST_CASE( "The OpenSSL socket's recv_wait doesn't take a TLS 1.3 server's ticke
     Connection c;
 #ifdef TLS1_3_VERSION
     if (SSL_version(c.client.ssl) != TLS1_3_VERSION) {
-        WARN( "TLS 1.3 wasn't negotiated: nothing to check" );
-        return;
+        SKIP( "TLS 1.3 wasn't negotiated: nothing to check" );
     }
 #else
-    WARN( "no TLS 1.3 in this OpenSSL: nothing to check" );
-    return;
+    SKIP( "no TLS 1.3 in this OpenSSL: nothing to check" );
 #endif
     ebisu_socket_t* sock = &c.client.base;
 
@@ -407,8 +405,7 @@ TEST_CASE( "The OpenSSL socket's recv returns what its recv_wait came to first" 
         REQUIRE( sock->ops->send(sock, "x", 1, &sent) == EBISU_SOCK_OK );
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         if (!c.reset_server_socket()) {
-            WARN( "SO_LINGER can't be set here: no reset to check" );
-            return;
+            SKIP( "SO_LINGER can't be set here: no reset to check" );
         }
         CHECK( sock->ops->recv_wait(sock, 10000) == true );
         CHECK( sock->ops->recv(sock, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
@@ -1113,8 +1110,7 @@ bool has_both_families(const char* host)
 // reach.
 TEST_CASE( "The OpenSSL socket tries each of the host's addresses" ) {
     if (!has_both_families("localhost")) {
-        WARN( "localhost has no IPv4 and IPv6 addresses both: skipped" );
-        return;
+        SKIP( "localhost has no IPv4 and IPv6 addresses both" );
     }
     for (int family : { AF_INET, AF_INET6 }) {
         INFO( "server on " << (family == AF_INET6 ? "IPv6" : "IPv4") );

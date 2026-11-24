@@ -1,5 +1,4 @@
-#define CATCH_CONFIG_MAIN
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <ebisu_dns_probe.h>
 #include "ebisu_dns_probe_impl.h"
 #ifdef _WIN32
@@ -922,8 +921,7 @@ TEST_CASE("A probe asks a server repeated in resolv.conf once") {
     SECTION("but the same address on another interface is another server") {
         FakeServer silent6(FakeServer::SILENT, AF_INET6);
         if (!silent6.listening) {
-            WARN("No IPv6 loopback here.");
-            return;
+            SKIP("No IPv6 loopback here.");
         }
         // The loopback's address, which a scope doesn't change the way to.
         const std::string on_interface = "::1%" + std::to_string(an_interface().second);
@@ -1060,8 +1058,7 @@ TEST_CASE("A probe asks a server") {
 TEST_CASE("A probe asks a server over IPv6") {
     FakeServer server(FakeServer::ANSWER, AF_INET6);
     if (!server.listening) {
-        WARN("No IPv6 loopback here.");
-        return;
+        SKIP("No IPv6 loopback here.");
     }
     const ebisu_dns_server_t servers[] = { { "::1", server.port } };
     char detail[EBISU_DNS_PROBE_DETAIL_SIZE];
@@ -1075,8 +1072,7 @@ TEST_CASE("A probe asks a link-local server on its interface") {
     sockaddr_in6 link_local;
     std::string name;
     if (!a_link_local(&link_local, &name)) {
-        WARN("No link-local IPv6 address here.");
-        return;
+        SKIP("No link-local IPv6 address here.");
     }
     FakeServer server(FakeServer::ANSWER, link_local);
     REQUIRE(server.listening);

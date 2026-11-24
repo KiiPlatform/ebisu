@@ -1,6 +1,4 @@
-#define CATCH_CONFIG_MAIN
-
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "kii.h"
 #include "kii_mqtt_task.h"
 #include "http_script.h"

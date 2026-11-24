@@ -1,7 +1,7 @@
 // kii built with EBISU_NO_SESSION, as -DEBISU_SESSION=OFF builds it: no
 // session can be attached, and a token the server refuses fails the request
 // as it does without one. The rest of kii's tests run against the same build.
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "kii.h"
 #include "http_script.h"
 

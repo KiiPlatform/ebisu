@@ -9,7 +9,7 @@
 #include <kii.h>
 #include <jkii.h>
 #include "secure_socket_impl.h"
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "large_test.h"
 #include "picojson.h"
 

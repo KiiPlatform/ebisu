@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include <khc.h>
 #include "http_script.h"
 #include <string>

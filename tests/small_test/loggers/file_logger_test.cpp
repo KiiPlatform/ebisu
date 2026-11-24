@@ -1,7 +1,7 @@
 // platform's logger to a file it keeps under a size, which writes in the
 // working directory, the build tree, and is read back through streams of the
 // test's own.
-#include <catch.hpp>
+#include "catch_amalgamated.hpp"
 #include <ebisu_loggers.h>
 #include <ebisu_object.h>
 

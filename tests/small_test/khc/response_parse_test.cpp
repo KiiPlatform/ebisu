@@ -1,6 +1,6 @@
 // How khc reads a response's status line, headers and body, byte by byte:
 // what it takes and what it refuses, wherever the reads end.
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include <khc.h>
 #include "test_callbacks.h"
 #include <stdlib.h>
