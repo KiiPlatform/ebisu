@@ -333,13 +333,11 @@ Set-up buffers</h3>
 <p>Note that buffer for HTTP and MQTT must be isolated. Passing overlapping memory causes undefined behavior.</p>
 <div class="fragment"><div class="line">tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);</div>
 <div class="line">tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);</div>
-</div><!-- fragment --><p>Each HTTP request also takes from the heap, unless they are set, a buffer for what it sends and receives, of 1024 bytes, and one for a response header, of 256, and its headers one at a time. The <a href="freertos-sample/main.c">FreeRTOS</a> and <a href="esp32-sample/main/app_main.c">ESP32</a> samples set both buffers, and take the headers from a pool of their own, <a href="freertos-sample/header_pool.c">header_pool.c</a>, so that ebisu takes nothing from the heap:</p>
+</div><!-- fragment --><p>Each HTTP request also takes from the heap, unless they are set, a buffer for what it sends and receives, of 1024 bytes, one for a response header, of 256, and one for its headers, of <span class="tt"><a class="elRef" href="../../kii/html/kii_8h.html#a429f0e066de7ce5fda5fc3ecb7ed7c76">KII_REQ_HEADER_BUFF_SIZE</a></span>. The <a href="freertos-sample/main.c">FreeRTOS</a> and <a href="esp32-sample/main/app_main.c">ESP32</a> samples set all three, so that ebisu takes nothing from the heap:</p>
 <div class="fragment"><div class="line">tio_handler_set_stream_buff(handler, stream_buff, <span class="keyword">sizeof</span>(stream_buff));</div>
 <div class="line">tio_handler_set_resp_header_buff(handler, resp_header_buff, <span class="keyword">sizeof</span>(resp_header_buff));</div>
-<div class="line">header_pool_init(&amp;headers);</div>
-<div class="line">tio_handler_set_cb_slist_resource(handler, header_pool_alloc, header_pool_free,</div>
-<div class="line">        &amp;headers, &amp;headers);</div>
-</div><!-- fragment --><p>The updater has the same setters, and needs buffers and a pool of its own.</p>
+<div class="line">tio_handler_set_req_header_buff(handler, req_header_buff, <span class="keyword">sizeof</span>(req_header_buff));</div>
+</div><!-- fragment --><p>1024 bytes are enough for the headers, a renewal's of the token included. The updater has the same setters, and needs buffers of its own.</p>
 <h3 class="doxsection"><a class="anchor" id="autotoc_md14"></a>
 Set-up MQTT socket timeout.</h3>
 <p><span class="tt"><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></span> needs socket timeout in seconds to send MQTT <span class="tt">PINGREQ</span> periodically.</p>

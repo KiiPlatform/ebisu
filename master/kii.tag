@@ -118,6 +118,13 @@
     </member>
     <member kind="define">
       <type>#define</type>
+      <name>KII_REQ_HEADER_BUFF_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a429f0e066de7ce5fda5fc3ecb7ed7c76</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
       <name>KII_FIRMWARE_VERSION_MAX_SIZE</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a6be477b443a31b4ddc07540b762bbda3</anchor>
@@ -1238,10 +1245,10 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>kii_set_cb_slist_resource</name>
+      <name>kii_set_req_header_buff</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>af8d81eaeba5dfa0aceff7347e8f7419a</anchor>
-      <arglist>(kii_t *kii, KHC_CB_SLIST_ALLOC cb_alloc, KHC_CB_SLIST_FREE cb_free, void *cb_alloc_data, void *cb_free_data)</arglist>
+      <anchor>a54a2266199db354e6e3fb4798f09d735</anchor>
+      <arglist>(kii_t *kii, char *buff, size_t buff_size)</arglist>
     </member>
     <member kind="function">
       <type>const char *</type>

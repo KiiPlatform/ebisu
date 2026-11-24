@@ -4,7 +4,6 @@
     <name>khc.h</name>
     <path>include/</path>
     <filename>khc_8h.html</filename>
-    <class kind="struct">khc_slist_t</class>
     <class kind="struct">khc_t</class>
     <member kind="define">
       <type>#define</type>
@@ -68,27 +67,6 @@
       <anchorfile>khc_8h.html</anchorfile>
       <anchor>a43421b59d8e43f1a9688a3a34fae6c96</anchor>
       <arglist>)(void *userdata)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>struct khc_slist_t</type>
-      <name>khc_slist_t</name>
-      <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a04a6f64e53531c4df7297f4f34388ff9</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="typedef">
-      <type>khc_slist_t *(*</type>
-      <name>KHC_CB_SLIST_ALLOC</name>
-      <anchorfile>khc_8h.html</anchorfile>
-      <anchor>aea187d1c7ac23b27a0e544c3da8e0032</anchor>
-      <arglist>)(const char *str, size_t str_length, void *data)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>void(*</type>
-      <name>KHC_CB_SLIST_FREE</name>
-      <anchorfile>khc_8h.html</anchorfile>
-      <anchor>aa3292ea4fbe63e8c4eb3af988047e92f</anchor>
-      <arglist>)(khc_slist_t *node, void *data)</arglist>
     </member>
     <member kind="typedef">
       <type>enum khc_state_t</type>
@@ -198,48 +176,6 @@
       <arglist></arglist>
     </member>
     <member kind="function">
-      <type>khc_slist_t *</type>
-      <name>khc_cb_slist_alloc</name>
-      <anchorfile>khc_8h.html</anchorfile>
-      <anchor>aff4d7afad2f6353d40ac401eaacd3639</anchor>
-      <arglist>(const char *str, size_t str_len, void *data)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>khc_cb_slist_free</name>
-      <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a5ceae058fc513f31a438f6d0b9154195</anchor>
-      <arglist>(khc_slist_t *slist, void *data)</arglist>
-    </member>
-    <member kind="function">
-      <type>khc_slist_t *</type>
-      <name>khc_slist_append</name>
-      <anchorfile>khc_8h.html</anchorfile>
-      <anchor>aab0dfa2fc0966fb7e519c22fd36d343a</anchor>
-      <arglist>(khc_slist_t *slist, const char *string, size_t length)</arglist>
-    </member>
-    <member kind="function">
-      <type>khc_slist_t *</type>
-      <name>khc_slist_append_using_cb_alloc</name>
-      <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a32418761fc33eebc4e33c7cb4dd8091b</anchor>
-      <arglist>(khc_slist_t *slist, const char *string, size_t length, KHC_CB_SLIST_ALLOC cb_alloc, void *cb_alloc_data)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>khc_slist_free_all</name>
-      <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a4ecbf81dc3efbf5bce87b9ff6d93af60</anchor>
-      <arglist>(khc_slist_t *slist)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>khc_slist_free_all_using_cb_free</name>
-      <anchorfile>khc_8h.html</anchorfile>
-      <anchor>ab7fb273b59942252a5d1481a8956be2f</anchor>
-      <arglist>(khc_slist_t *slist, KHC_CB_SLIST_FREE cb_free, void *cb_free_data)</arglist>
-    </member>
-    <member kind="function">
       <type>void</type>
       <name>khc_init</name>
       <anchorfile>khc_8h.html</anchorfile>
@@ -320,8 +256,8 @@
       <type>khc_code_t</type>
       <name>khc_set_req_headers</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>ad6eedc0d182c954d697ae41da281ea46</anchor>
-      <arglist>(khc_t *khc, khc_slist_t *headers)</arglist>
+      <anchor>a8ac193aa04c1942996c6f4a2b01b8dfd</anchor>
+      <arglist>(khc_t *khc, const char *headers, size_t length)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -427,24 +363,6 @@
       <anchorfile>khc_8h.html</anchorfile>
       <anchor>a3230aadba14f21f809647a56149ed01a</anchor>
       <arglist>(khc_t *khc)</arglist>
-    </member>
-  </compound>
-  <compound kind="struct">
-    <name>khc_slist_t</name>
-    <filename>structkhc__slist__t.html</filename>
-    <member kind="variable">
-      <type>char *</type>
-      <name>data</name>
-      <anchorfile>structkhc__slist__t.html</anchorfile>
-      <anchor>ac5e667224606d7e7cdc4b15fb0590a8a</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="variable">
-      <type>struct khc_slist_t *</type>
-      <name>next</name>
-      <anchorfile>structkhc__slist__t.html</anchorfile>
-      <anchor>a1d850830ee78e1250746fc36504020eb</anchor>
-      <arglist></arglist>
     </member>
   </compound>
   <compound kind="struct">

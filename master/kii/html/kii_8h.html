@@ -165,6 +165,8 @@ Macros</h2></td></tr>
 <tr class="memitem:a30bea1e5165e136c0dabfe2d6c37e9a6" id="r_a30bea1e5165e136c0dabfe2d6c37e9a6"><td class="memItemLeft" align="right" valign="top"><a id="a30bea1e5165e136c0dabfe2d6c37e9a6" name="a30bea1e5165e136c0dabfe2d6c37e9a6"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>KII_ETAG_MAX_SIZE</b>&#160;&#160;&#160;64</td></tr>
 <tr class="memdesc:a30bea1e5165e136c0dabfe2d6c37e9a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size of the buffer holding the ETag of the last response. <br /></td></tr>
+<tr class="memitem:a429f0e066de7ce5fda5fc3ecb7ed7c76" id="r_a429f0e066de7ce5fda5fc3ecb7ed7c76"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a429f0e066de7ce5fda5fc3ecb7ed7c76">KII_REQ_HEADER_BUFF_SIZE</a>&#160;&#160;&#160;(1024 + <a class="el" href="#a430b4f23746528cf8103295f17ca33d6">KII_TOKEN_MAX_SIZE</a>)</td></tr>
+<tr class="memdesc:a429f0e066de7ce5fda5fc3ecb7ed7c76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size of the request header buffer kii allocates for a request, when <a class="el" href="#a54a2266199db354e6e3fb4798f09d735" title="Set request header buffer.">kii_set_req_header_buff()</a> gave none: enough for kii's headers and a renewal's at their longest, with room for some of the application's.  <br /></td></tr>
 <tr class="memitem:a6be477b443a31b4ddc07540b762bbda3" id="r_a6be477b443a31b4ddc07540b762bbda3"><td class="memItemLeft" align="right" valign="top"><a id="a6be477b443a31b4ddc07540b762bbda3" name="a6be477b443a31b4ddc07540b762bbda3"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>KII_FIRMWARE_VERSION_MAX_SIZE</b>&#160;&#160;&#160;128</td></tr>
 <tr class="memdesc:a6be477b443a31b4ddc07540b762bbda3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size of <a class="el" href="structkii__ti__firmware__version__t.html#a12e3389e2ec3c812ebd79e37e222bad4" title="Firmware version string.">kii_ti_firmware_version_t::firmware_version</a>. <br /></td></tr>
@@ -486,8 +488,8 @@ Functions</h2></td></tr>
 <tr class="memdesc:a853c3e530701ed2821591d8e04572606"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the callback the MQTT task tells why it reconnects, waits or drops a message.  <br /></td></tr>
 <tr class="memitem:a22bcc2607fdb5daa6ed0794f130f6228" id="r_a22bcc2607fdb5daa6ed0794f130f6228"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a22bcc2607fdb5daa6ed0794f130f6228">kii_set_logger</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a> *logger)</td></tr>
 <tr class="memdesc:a22bcc2607fdb5daa6ed0794f130f6228"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set where kii logs what it does.  <br /></td></tr>
-<tr class="memitem:af8d81eaeba5dfa0aceff7347e8f7419a" id="r_af8d81eaeba5dfa0aceff7347e8f7419a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af8d81eaeba5dfa0aceff7347e8f7419a">kii_set_cb_slist_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc_8h.html#aea187d1c7ac23b27a0e544c3da8e0032">KHC_CB_SLIST_ALLOC</a> cb_alloc, <a class="elRef" href="../../khc/html/khc_8h.html#aa3292ea4fbe63e8c4eb3af988047e92f">KHC_CB_SLIST_FREE</a> cb_free, void *cb_alloc_data, void *cb_free_data)</td></tr>
-<tr class="memdesc:af8d81eaeba5dfa0aceff7347e8f7419a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set <a class="elRef" href="../../khc/html/structkhc__slist__t.html">khc_slist_t</a> (linked list) resource allocators.  <br /></td></tr>
+<tr class="memitem:a54a2266199db354e6e3fb4798f09d735" id="r_a54a2266199db354e6e3fb4798f09d735"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a54a2266199db354e6e3fb4798f09d735">kii_set_req_header_buff</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, char *buff, size_t buff_size)</td></tr>
+<tr class="memdesc:a54a2266199db354e6e3fb4798f09d735"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set request header buffer.  <br /></td></tr>
 <tr class="memitem:a51c376c5e496e52aec2375a3ff70a885" id="r_a51c376c5e496e52aec2375a3ff70a885"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a51c376c5e496e52aec2375a3ff70a885">kii_get_etag</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii)</td></tr>
 <tr class="memdesc:a51c376c5e496e52aec2375a3ff70a885"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the ETag of the last response.  <br /></td></tr>
 <tr class="memitem:ae61dfefd97935dd1d068dd640ec30af1" id="r_ae61dfefd97935dd1d068dd640ec30af1"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae61dfefd97935dd1d068dd640ec30af1">kii_get_resp_status</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii)</td></tr>
@@ -554,6 +556,23 @@ Functions</h2></td></tr>
 
 <p>How long, in milliseconds, the MQTT task waits for a packet at a time while <a class="el" href="#acb549044e84222521934c23cc95ab84d" title="Publish a message through the MQTT task, and wait until it is done.">kii_mqtt_publish()</a> may give it a message, with a socket that has recv_wait. </p>
 <p>The task sends a message given during a turn when the turn ends, so a shorter one has it sent sooner, and wakes the task more often. It can be defined otherwise when kii is built, as 1 or more. </p>
+
+</div>
+</div>
+<a id="a429f0e066de7ce5fda5fc3ecb7ed7c76" name="a429f0e066de7ce5fda5fc3ecb7ed7c76"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a429f0e066de7ce5fda5fc3ecb7ed7c76">&#9670;&#160;</a></span>KII_REQ_HEADER_BUFF_SIZE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define KII_REQ_HEADER_BUFF_SIZE&#160;&#160;&#160;(1024 + <a class="el" href="#a430b4f23746528cf8103295f17ca33d6">KII_TOKEN_MAX_SIZE</a>)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Size of the request header buffer kii allocates for a request, when <a class="el" href="#a54a2266199db354e6e3fb4798f09d735" title="Set request header buffer.">kii_set_req_header_buff()</a> gave none: enough for kii's headers and a renewal's at their longest, with room for some of the application's. </p>
+<p>It can be defined otherwise when kii is built, as 1 or more. It changes no type's layout, so what is built against kii needn't define it alike. </p>
 
 </div>
 </div>
@@ -1138,7 +1157,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a>. KII_ERR_TOO_LARGE_DATA if the header is longer than the buffer set by <a class="el" href="#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a>. It is put together on the stack of the task calling this, which has to have room for it. KII_ERR_FAIL if the key or the value has a CR or an LF in it, which would make it two headers. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a>. KII_ERR_TOO_LARGE_DATA if the header doesn't fit in what the request's other headers leave of the buffer set by <a class="el" href="#a54a2266199db354e6e3fb4798f09d735" title="Set request header buffer.">kii_set_req_header_buff()</a>, or of the one kii allocates without it, which KII_ERR_ALLOCATION says it couldn't. KII_ERR_FAIL if the key or the value has a CR or an LF in it, which would make it two headers. On any error the request's headers are cleared, and it has to be started again. </dd></dl>
 
 </div>
 </div>
@@ -2865,55 +2884,6 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 
 </div>
 </div>
-<a id="af8d81eaeba5dfa0aceff7347e8f7419a" name="af8d81eaeba5dfa0aceff7347e8f7419a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af8d81eaeba5dfa0aceff7347e8f7419a">&#9670;&#160;</a></span>kii_set_cb_slist_resource()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_set_cb_slist_resource </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *</td>          <td class="paramname"><span class="paramname"><em>kii</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../khc/html/khc_8h.html#aea187d1c7ac23b27a0e544c3da8e0032">KHC_CB_SLIST_ALLOC</a></td>          <td class="paramname"><span class="paramname"><em>cb_alloc</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../khc/html/khc_8h.html#aa3292ea4fbe63e8c4eb3af988047e92f">KHC_CB_SLIST_FREE</a></td>          <td class="paramname"><span class="paramname"><em>cb_free</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>cb_alloc_data</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>cb_free_data</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set <a class="elRef" href="../../khc/html/structkhc__slist__t.html">khc_slist_t</a> (linked list) resource allocators. </p>
-<p>If this method is not called, default allocators implemented with malloc/free is used to allocate linked list used to construct HTTP request headers.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_alloc</td><td>Callback allocates memory. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_free</td><td>Callback free memory. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_alloc_data</td><td>Context object pointer passed to cb_alloc. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_free_data</td><td>Context object pointer passed to cb_free. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <a id="a308bbd95790fad608a661d8e5823c1d8" name="a308bbd95790fad608a661d8e5823c1d8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a308bbd95790fad608a661d8e5823c1d8">&#9670;&#160;</a></span>kii_set_cb_task_continue()</h2>
 
@@ -3443,6 +3413,45 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>KII_ERR_TOO_LARGE_DATA for a topic or message longer than 65535 bytes, KII_ERR_FAIL for one without a topic, with a NULL message of some length, or with a QoS that isn't one; changing nothing. </dd></dl>
+
+</div>
+</div>
+<a id="a54a2266199db354e6e3fb4798f09d735" name="a54a2266199db354e6e3fb4798f09d735"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a54a2266199db354e6e3fb4798f09d735">&#9670;&#160;</a></span>kii_set_req_header_buff()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_set_req_header_buff </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *</td>          <td class="paramname"><span class="paramname"><em>kii</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>buff</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>buff_size</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set request header buffer. </p>
+<p>A request's headers are written in it, one after the other, as the request is prepared, and cleared when it has been sent: kii's own, such as the app ID and the access token, and those given to <a class="el" href="#aa9a202d325f0d5021d4d47ee6e78125c" title="Append request header.">kii_api_call_append_header()</a>. If this method is not called or set NULL to the buffer, kii allocates a buffer of KII_REQ_HEADER_BUFF_SIZE bytes for each request and frees it when the request ends, and a request fails with KII_ERR_ALLOCATION if it can't.</p>
+<p>A request whose headers don't fit fails with KII_ERR_TOO_LARGE_DATA, and the header is logged at EBISU_LOG_WARNING, by name. With a session, a renewal of the token during a request writes its headers in the room after the request's: one that doesn't fit leaves the caller the request's 403. With an app ID of 8 characters and a token of 43, kii's own headers and a renewal's take under 500 bytes in all; with the longest app ID, token and ETag kii keeps, under 900. The application's own headers add their length.</p>
+<p>If you set the buffer by the method, it is used by every HTTP session initiated afterwards by methods such as <a class="el" href="#a128f23578c2e848e6d20e05faae9b29d" title="Authorize thing with vendor thing id and password. After the authentication, access token is stored i...">kii_auth_thing()</a>, <a class="el" href="#ac3ecf806fb18b0063b50291b8131dcfc" title="Post Kii object.">kii_post_object()</a>, etc., until the method is called again. Memory used by the buffer must therefore stay valid, and must not be used for anything else, as long as the <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance is in use. To release it earlier, call the method with NULL first.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">buff</td><td>Pointer to the buffer, or NULL for one allocated for each request. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">buff_size</td><td>Size of the buffer. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
