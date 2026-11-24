@@ -107,8 +107,9 @@ TEST_CASE( "MQTT state test" ) {
     http_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         if (call_send == 0) {
             const char req_line[] = "POST /api/apps/dummyAppID/installations HTTP/1.1\r\n";
-            REQUIRE( length == strlen(req_line) );
-            REQUIRE( strncmp(buffer, req_line, length) == 0 );
+            // The request line starts the head, sent whole.
+            REQUIRE( length > strlen(req_line) );
+            REQUIRE( strncmp(buffer, req_line, strlen(req_line)) == 0 );
         }
         ++call_send;
         *out_sent_length = length;
@@ -153,7 +154,8 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( state.info.error == KII_MQTT_ERR_OK );
     REQUIRE( strcmp(state.ins_id.id, "dummyInstallationID") == 0 );
     REQUIRE( call_connect == 1 );
-    REQUIRE( call_send > 1 );
+    // The head and the body, in one send.
+    REQUIRE( call_send == 1 );
     REQUIRE( call_recv >= 1 );
     REQUIRE( call_close == 1 );
 
@@ -170,8 +172,9 @@ TEST_CASE( "MQTT state test" ) {
     http_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         if (call_send == 0) {
             const char req_line[] = "GET /api/apps/dummyAppID/installations/dummyInstallationID/mqtt-endpoint HTTP/1.1\r\n";
-            REQUIRE( length == strlen(req_line) );
-            REQUIRE( strncmp(buffer, req_line, length) == 0 );
+            // The request line starts the head, sent whole.
+            REQUIRE( length > strlen(req_line) );
+            REQUIRE( strncmp(buffer, req_line, strlen(req_line)) == 0 );
         }
         ++call_send;
         *out_sent_length = length;
@@ -230,7 +233,8 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( state.endpoint.port_ssl == 8883 );
     REQUIRE( state.endpoint.ttl == 2147483647 );
     REQUIRE( call_connect == 1 );
-    REQUIRE( call_send > 1 );
+    // The head and the body, in one send.
+    REQUIRE( call_send == 1 );
     REQUIRE( call_recv >= 1 );
     REQUIRE( call_close == 1 );
 
@@ -592,8 +596,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         http_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             if (call_send == 0) {
                 const char req_line[] = "POST /api/apps/dummyAppID/installations HTTP/1.1\r\n";
-                REQUIRE( length == strlen(req_line) );
-                REQUIRE( strncmp(buffer, req_line, length) == 0 );
+                // The request line starts the head, sent whole.
+                REQUIRE( length > strlen(req_line) );
+                REQUIRE( strncmp(buffer, req_line, strlen(req_line)) == 0 );
             }
             ++call_send;
             *out_sent_length = length;
@@ -621,7 +626,8 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( state.info.task_state == KII_MQTT_ST_INSTALL_PUSH );
         REQUIRE( state.info.error == KII_MQTT_ERR_OK );
         REQUIRE( call_connect == 1 );
-        REQUIRE( call_send > 1 );
+        // The head and the body, in one send.
+        REQUIRE( call_send == 1 );
         REQUIRE( call_recv == 2 );
         REQUIRE( call_close == 1 );
     }
@@ -640,8 +646,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         http_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             if (call_send == 0) {
                 const char req_line[] = "POST /api/apps/dummyAppID/installations HTTP/1.1\r\n";
-                REQUIRE( length == strlen(req_line) );
-                REQUIRE( strncmp(buffer, req_line, length) == 0 );
+                // The request line starts the head, sent whole.
+                REQUIRE( length > strlen(req_line) );
+                REQUIRE( strncmp(buffer, req_line, strlen(req_line)) == 0 );
             }
             ++call_send;
             *out_sent_length = length;
@@ -669,7 +676,8 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( state.info.task_state == KII_MQTT_ST_ERR_EXIT );
         REQUIRE( state.info.error == KII_MQTT_ERR_INSTALLATION );
         REQUIRE( call_connect == 1 );
-        REQUIRE( call_send > 1 );
+        // The head and the body, in one send.
+        REQUIRE( call_send == 1 );
         REQUIRE( call_recv == 2 );
         REQUIRE( call_close == 1 );
     }
@@ -688,8 +696,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         http_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             if (call_send == 0) {
                 const char req_line[] = "GET /api/apps/dummyAppID/installations/dummyInstallationID/mqtt-endpoint HTTP/1.1\r\n";
-                REQUIRE( length == strlen(req_line) );
-                REQUIRE( strncmp(buffer, req_line, length) == 0 );
+                // The request line starts the head, sent whole.
+                REQUIRE( length > strlen(req_line) );
+                REQUIRE( strncmp(buffer, req_line, strlen(req_line)) == 0 );
             }
             ++call_send;
             *out_sent_length = length;
@@ -719,7 +728,8 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );
         REQUIRE( state.info.error == KII_MQTT_ERR_OK );
         REQUIRE( call_connect == 1 );
-        REQUIRE( call_send > 1 );
+        // The head and the body, in one send.
+        REQUIRE( call_send == 1 );
         REQUIRE( call_recv == 2 );
         REQUIRE( call_close == 1 );
     }
@@ -738,8 +748,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         http_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             if (call_send == 0) {
                 const char req_line[] = "GET /api/apps/dummyAppID/installations/dummyInstallationID/mqtt-endpoint HTTP/1.1\r\n";
-                REQUIRE( length == strlen(req_line) );
-                REQUIRE( strncmp(buffer, req_line, length) == 0 );
+                // The request line starts the head, sent whole.
+                REQUIRE( length > strlen(req_line) );
+                REQUIRE( strncmp(buffer, req_line, strlen(req_line)) == 0 );
             }
             ++call_send;
             *out_sent_length = length;
@@ -769,7 +780,8 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( state.info.task_state == KII_MQTT_ST_ERR_EXIT );
         REQUIRE( state.info.error == KII_MQTT_ERR_GET_ENDPOINT );
         REQUIRE( call_connect == 1 );
-        REQUIRE( call_send > 1 );
+        // The head and the body, in one send.
+        REQUIRE( call_send == 1 );
         REQUIRE( call_recv == 2 );
         REQUIRE( call_close == 1 );
     }
@@ -2669,8 +2681,9 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     http_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         if (call_send == 0) {
             const char req_line[] = "POST /api/apps/dummyAppID/installations HTTP/1.1\r\n";
-            REQUIRE( length == strlen(req_line) );
-            REQUIRE( strncmp(buffer, req_line, length) == 0 );
+            // The request line starts the head, sent whole.
+            REQUIRE( length > strlen(req_line) );
+            REQUIRE( strncmp(buffer, req_line, strlen(req_line)) == 0 );
         }
         ++call_send;
         *out_sent_length = length;
@@ -2715,7 +2728,8 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     REQUIRE( state.info.error == KII_MQTT_ERR_OK );
     REQUIRE( strcmp(state.ins_id.id, "dummyInstallationID") == 0 );
     REQUIRE( call_connect == 1 );
-    REQUIRE( call_send > 1 );
+    // The head and the body, in one send.
+    REQUIRE( call_send == 1 );
     REQUIRE( call_recv >= 1 );
     REQUIRE( call_close == 1 );
 
@@ -2732,8 +2746,9 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     http_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         if (call_send == 0) {
             const char req_line[] = "GET /api/apps/dummyAppID/installations/dummyInstallationID/mqtt-endpoint HTTP/1.1\r\n";
-            CHECK( length == strlen(req_line) );
-            CHECK( strncmp(buffer, req_line, length) == 0 );
+            // The request line starts the head, sent whole.
+            CHECK( length > strlen(req_line) );
+            CHECK( strncmp(buffer, req_line, strlen(req_line)) == 0 );
         }
         ++call_send;
         *out_sent_length = length;
@@ -2792,7 +2807,8 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     CHECK( state.endpoint.port_ssl == 8883 );
     CHECK( state.endpoint.ttl == 2147483647 );
     CHECK( call_connect == 1 );
-    CHECK( call_send > 1 );
+    // The head, in one send.
+    CHECK( call_send == 1 );
     CHECK( call_recv >= 1 );
     CHECK( call_close == 1 );
 

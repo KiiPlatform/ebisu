@@ -7,6 +7,7 @@
 #include "http_test.h"
 #include "test_callbacks.h"
 #include <sstream>
+#include <vector>
 
 TEST_CASE( "HTTP minimal" ) {
     khc_t http;
@@ -53,51 +54,19 @@ TEST_CASE( "HTTP minimal" ) {
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
 
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char req_line[] = "GET /api/apps HTTP/1.1\r\n";
-        REQUIRE( length == strlen(req_line) );
-        REQUIRE( strncmp(buffer, req_line, length) == 0 );
-        *out_sent_length = length;
-        return EBISU_SOCK_OK;
-    };
-
+    // The head goes in the stream buffer, and out in one send.
     khc_state_req_line(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HOST_HEADER );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char host_hdr[] = "HOST: api.kii.com\r\n";
-        REQUIRE( length == strlen(host_hdr) );
-        REQUIRE( strncmp(buffer, host_hdr, length) == 0 );
-        *out_sent_length = length;
-        return EBISU_SOCK_OK;
-    };
-    khc_state_req_host_header(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HEADER );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    khc_state_req_header(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HEADER_END );
+    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
     REQUIRE( http._result == KHC_ERR_OK );
 
     called = false;
     s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         called = true;
-        char h[] = "Connection: Close\r\n\r\n";
-        size_t len = strlen(h);
-        REQUIRE( length == len );
-        REQUIRE( strncmp(buffer, h, len) == 0 );
+        REQUIRE( std::string(buffer, length) == "GET /api/apps HTTP/1.1\r\nHOST: api.kii.com\r\nConnection: Close\r\n\r\n" );
         *out_sent_length = length;
         return EBISU_SOCK_OK;
     };
-
-    khc_state_req_header_end(&http);
+    khc_state_req_body_send(&http);
     REQUIRE( http._state == KHC_STATE_RESP_STATUS_READ );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
@@ -224,53 +193,21 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
 
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char req_line[] = "GET /api/apps HTTP/1.1\r\n";
-        REQUIRE( length == strlen(req_line) );
-        REQUIRE( strncmp(buffer, req_line, length) == 0 );
-        *out_sent_length = length;
-        return EBISU_SOCK_OK;
-    };
-
-    khc_state_req_line(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HOST_HEADER );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char host_hdr[] = "HOST: api.kii.com\r\n";
-        REQUIRE( length == strlen(host_hdr) );
-        REQUIRE( strncmp(buffer, host_hdr, length) == 0 );
-        *out_sent_length = length;
-        return EBISU_SOCK_OK;
-    };
-    khc_state_req_host_header(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HEADER );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    khc_state_req_header(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HEADER_END );
-    REQUIRE( http._result == KHC_ERR_OK );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        char h[] = "Connection: Close\r\n\r\n";
-        int len = strlen(h);
-        REQUIRE( length == strlen(h) );
-        REQUIRE( strncmp(buffer, h, len) == 0 );
-        *out_sent_length = length;
-        return EBISU_SOCK_OK;
-    };
-
     // A GET has no body, so none follows the headers, not even the chunk
     // that would end an empty one, though a read callback is set.
-    khc_state_req_header_end(&http);
+    // The head goes in the stream buffer, and out in one send.
+    khc_state_req_line(&http);
+    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
+    REQUIRE( http._result == KHC_ERR_OK );
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        called = true;
+        REQUIRE( std::string(buffer, length) == "GET /api/apps HTTP/1.1\r\nHOST: api.kii.com\r\nConnection: Close\r\n\r\n" );
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    khc_state_req_body_send(&http);
     REQUIRE( http._state == KHC_STATE_RESP_STATUS_READ );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
@@ -448,256 +385,61 @@ TEST_CASE( "Socket send partial" ) {
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
 
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char req_line[] = "POST /ap";
-        size_t req_len = strlen(req_line);
-        REQUIRE( length > req_len );
-        REQUIRE( strncmp(buffer, req_line, req_len) == 0 );
-        *out_sent_length = req_len;
-        return EBISU_SOCK_OK;
-    };
-
+    // The head goes in the stream buffer, and the body after it, until the
+    // body ends: the chunk of size 0 that ends it fits too.
+    const std::string head =
+        "POST /api/apps HTTP/1.1\r\n"
+        "HOST: api.kii.com\r\n"
+        "X-KII-dummy-Header: test partial.\r\n"
+        "Transfer-Encoding: chunked\r\n"
+        "Connection: Close\r\n\r\n";
     khc_state_req_line(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_LINE );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char req_line[] = "i/apps H";
-        size_t req_len = strlen(req_line);
-        REQUIRE( length > req_len );
-        REQUIRE( strncmp(buffer, req_line, req_len) == 0 );
-        *out_sent_length = req_len;
-        return EBISU_SOCK_OK;
-    };
-
-    khc_state_req_line(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_LINE );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char req_line[] = "TTP/1.1\r\n";
-        size_t req_len = strlen(req_line);
-        REQUIRE( length == req_len );
-        REQUIRE( strncmp(buffer, req_line, req_len) == 0 );
-        *out_sent_length = req_len;
-        return EBISU_SOCK_OK;
-    };
-
-    khc_state_req_line(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HOST_HEADER );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char host_hdr[] = "HOST: api.";
-        size_t host_len = strlen(host_hdr);
-        REQUIRE( length > host_len );
-        REQUIRE( strncmp(buffer, host_hdr, host_len) == 0 );
-        *out_sent_length = host_len;
-        return EBISU_SOCK_OK;
-    };
-    khc_state_req_host_header(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HOST_HEADER );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char host_hdr[] = "kii.com\r\n";
-        size_t host_len = strlen(host_hdr);
-        REQUIRE( length == host_len );
-        REQUIRE( strncmp(buffer, host_hdr, host_len) == 0 );
-        *out_sent_length = host_len;
-        return EBISU_SOCK_OK;
-    };
-    khc_state_req_host_header(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HEADER );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    khc_state_req_header(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HEADER_SEND );
-    REQUIRE( http._result == KHC_ERR_OK );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char hdr[] = "X-KII-dummy-";
-        size_t len = strlen(hdr);
-        REQUIRE( length > len );
-        REQUIRE( strncmp(buffer, hdr, len) == 0 );
-        *out_sent_length = len;
-        return EBISU_SOCK_OK;
-    };
-    khc_state_req_header_send(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HEADER_SEND );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char hdr[] = "Header: test p";
-        size_t len = strlen(hdr);
-        REQUIRE( length > len );
-        REQUIRE( strncmp(buffer, hdr, len) == 0 );
-        *out_sent_length = len;
-        return EBISU_SOCK_OK;
-    };
-    khc_state_req_header_send(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HEADER_SEND );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char hdr[] = "artial.";
-        size_t len = strlen(hdr);
-        REQUIRE( length == len );
-        REQUIRE( strncmp(buffer, hdr, len) == 0 );
-        *out_sent_length = len;
-        return EBISU_SOCK_OK;
-    };
-    khc_state_req_header_send(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HEADER_SEND_CRLF );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char hdr[] = "\r\n";
-        size_t len = strlen(hdr);
-        REQUIRE( length == len );
-        REQUIRE( strncmp(buffer, hdr, len) == 0 );
-        *out_sent_length = len;
-        return EBISU_SOCK_OK;
-    };
-    khc_state_req_header_send_crlf(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HEADER );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    khc_state_req_header(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HEADER_END );
-    REQUIRE( http._result == KHC_ERR_OK );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char hdr[] = "Transfer-Encoding: chunked\r\n";
-        size_t len = strlen(hdr);
-        REQUIRE( length > len );
-        REQUIRE( strncmp(buffer, hdr, len) == 0 );
-        *out_sent_length = len;
-        return EBISU_SOCK_OK;
-    };
-
-    khc_state_req_header_end(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HEADER_END );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char hdr[] = "Connection: Close\r\n\r\n";
-        size_t len = strlen(hdr);
-        REQUIRE( length == len );
-        REQUIRE( strncmp(buffer, hdr, len) == 0 );
-        *out_sent_length = len;
-        return EBISU_SOCK_OK;
-    };
-
-    khc_state_req_header_end(&http);
     REQUIRE( http._state == KHC_STATE_REQ_BODY_READ );
     REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
+    REQUIRE( http._req_frame_size == head.size() );
 
-    // The read callback is given the stream buffer less room for the size line
-    // of the longest chunk that fits, "3f9\r\n", and the CRLF after it.
-    const size_t chunk_capacity = buff_size - 5 - 2;
-    called = false;
-    io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
-        called = true;
-        REQUIRE( size == chunk_capacity );
+    // Each read is given what is left of the buffer, less room for the size
+    // line of the longest chunk that fits, of 3 hex digits here, with its
+    // CRLF, and for the CRLF after the data.
+    const size_t room = buff_size - head.size();
+    REQUIRE( 0x100 <= room );
+    REQUIRE( room <= 0xfff );
+    std::vector<size_t> asked;
+    io_ctx.on_read = [=, &asked](char *buffer, size_t size, void *userdata) {
+        asked.push_back(size);
+        if (asked.size() > 1) {
+            return (size_t)0;
+        }
         const char body[] = "http body";
-        strncpy(buffer, body, strlen(body));
+        memcpy(buffer, body, strlen(body));
         return strlen(body);
     };
     khc_state_req_body_read(&http);
     REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
     REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( http._read_req_end == false );
-    REQUIRE( called );
+    REQUIRE( http._read_req_end == true );
+    REQUIRE( asked == std::vector<size_t>{ room - 5 - 2,
+            room - strlen("9\r\nhttp body\r\n") - 5 - 2 } );
 
-    // The size line, the data and the CRLF go out in one send. Of what this
-    // one doesn't take, the next send gets the rest.
+    // Of what a send doesn't take, the next gets the rest.
+    const std::string request = head + "9\r\nhttp body\r\n" + "0\r\n\r\n";
     std::string sent;
-    called = false;
-    s_ctx.on_send = [=, &called, &sent](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        REQUIRE( length == strlen("9\r\nhttp body\r\n") );
-        *out_sent_length = 4;
+    std::vector<size_t> offered;
+    s_ctx.on_send = [=, &sent, &offered](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        offered.push_back(length);
+        *out_sent_length = length < 8 ? length : 8;
         sent.append(buffer, *out_sent_length);
         return EBISU_SOCK_OK;
     };
-    khc_state_req_body_send(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called, &sent](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        *out_sent_length = length;
-        sent.append(buffer, length);
-        return EBISU_SOCK_OK;
-    };
-    khc_state_req_body_send(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_READ );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-    REQUIRE( sent == "9\r\nhttp body\r\n" );
-
-    called = false;
-    io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
-        called = true;
-        REQUIRE( size == chunk_capacity );
-        return 0;
-    };
-    khc_state_req_body_read(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( http._read_req_end == true );
-    REQUIRE( called );
-
-    // The chunk of size 0 ends the body, with the CRLF ending the trailers.
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char body[] = "0\r\n\r\n";
-        REQUIRE( length == strlen(body) );
-        REQUIRE( strncmp(buffer, body, length) == 0 );
-        *out_sent_length = length;
-        return EBISU_SOCK_OK;
-    };
-    khc_state_req_body_send(&http);
+    while (http._state == KHC_STATE_REQ_BODY_SEND) {
+        khc_state_req_body_send(&http);
+        REQUIRE( http._result == KHC_ERR_OK );
+    }
     REQUIRE( http._state == KHC_STATE_RESP_STATUS_READ );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
+    REQUIRE( sent == request );
+    REQUIRE( offered.size() == (request.size() + 7) / 8 );
+    REQUIRE( offered[0] == request.size() );
+    REQUIRE( offered[1] == request.size() - 8 );
 
     called = false;
     auto is = resp.to_istringstream();
@@ -827,22 +569,7 @@ TEST_CASE( "state abnormal tests." ) {
         REQUIRE( called );
     }
 
-    SECTION("state req line retry.") {
-        http._state = KHC_STATE_REQ_LINE;
-
-        called = false;
-        s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-            called = true;
-            return EBISU_SOCK_AGAIN;
-        };
-
-        khc_state_req_line(&http);
-        REQUIRE( http._state == KHC_STATE_REQ_LINE );
-        REQUIRE( http._result == KHC_ERR_OK );
-        REQUIRE( called );
-    }
-
-    SECTION("state req line failed.") {
+    SECTION("state req line puts the head in the buffer, and sends nothing.") {
         http._state = KHC_STATE_REQ_LINE;
 
         called = false;
@@ -852,13 +579,16 @@ TEST_CASE( "state abnormal tests." ) {
         };
 
         khc_state_req_line(&http);
-        REQUIRE( http._state == KHC_STATE_CLOSE );
-        REQUIRE( http._result == KHC_ERR_SOCK_SEND );
-        REQUIRE( called );
+        REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
+        REQUIRE( http._result == KHC_ERR_OK );
+        REQUIRE( http._req_frame_size ==
+                strlen("GET /api/apps HTTP/1.1\r\nHOST: api.kii.com\r\nConnection: Close\r\n\r\n") );
+        REQUIRE_FALSE( called );
     }
 
-    SECTION("state req host header retry.") {
-        http._state = KHC_STATE_REQ_HOST_HEADER;
+    SECTION("state req head send retry.") {
+        http._state = KHC_STATE_REQ_LINE;
+        khc_state_req_line(&http);
 
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
@@ -866,14 +596,16 @@ TEST_CASE( "state abnormal tests." ) {
             return EBISU_SOCK_AGAIN;
         };
 
-        khc_state_req_host_header(&http);
-        REQUIRE( http._state == KHC_STATE_REQ_HOST_HEADER );
+        khc_state_req_body_send(&http);
+        REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
         REQUIRE( http._result == KHC_ERR_OK );
+        REQUIRE( http._again );
         REQUIRE( called );
     }
 
-    SECTION("state req host header failed.") {
-        http._state = KHC_STATE_REQ_HOST_HEADER;
+    SECTION("state req head send failed.") {
+        http._state = KHC_STATE_REQ_LINE;
+        khc_state_req_line(&http);
 
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
@@ -881,110 +613,37 @@ TEST_CASE( "state abnormal tests." ) {
             return EBISU_SOCK_FAIL;
         };
 
-        khc_state_req_host_header(&http);
+        khc_state_req_body_send(&http);
         REQUIRE( http._state == KHC_STATE_CLOSE );
         REQUIRE( http._result == KHC_ERR_SOCK_SEND );
         REQUIRE( called );
     }
 
-    SECTION("state req header send retry.") {
-        http._state = KHC_STATE_REQ_HEADER_SEND;
-        http._sent_length = 0;
-        khc_slist_t header;
-        header.data = (char*)"dummy";
-        header.next = NULL;
-        http._current_req_header = &header;
+    SECTION("a head larger than the stream buffer goes a buffer at a time.") {
+        const size_t small = 16;
+        khc_set_stream_buff(&http, stream_buff, small);
+        http._state = KHC_STATE_REQ_LINE;
 
-        called = false;
-        s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-            called = true;
-            return EBISU_SOCK_AGAIN;
+        std::string sent;
+        std::vector<size_t> offered;
+        s_ctx.on_send = [=, &sent, &offered](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+            offered.push_back(length);
+            sent.append(buffer, length);
+            *out_sent_length = length;
+            return EBISU_SOCK_OK;
         };
 
-        khc_state_req_header_send(&http);
-        REQUIRE( http._state == KHC_STATE_REQ_HEADER_SEND );
-        REQUIRE( http._result == KHC_ERR_OK );
-        REQUIRE( called );
-    }
-
-    SECTION("state req header send failed.") {
-        http._state = KHC_STATE_REQ_HEADER_SEND;
-        http._sent_length = 0;
-        khc_slist_t header;
-        header.data = (char*)"dummy";
-        header.next = NULL;
-        http._current_req_header = &header;
-
-        called = false;
-        s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-            called = true;
-            return EBISU_SOCK_FAIL;
-        };
-
-        khc_state_req_header_send(&http);
-        REQUIRE( http._state == KHC_STATE_CLOSE );
-        REQUIRE( http._result == KHC_ERR_SOCK_SEND );
-        REQUIRE( called );
-    }
-
-    SECTION("state req header send crlf retry.") {
-        http._state = KHC_STATE_REQ_HEADER_SEND_CRLF;
-
-        called = false;
-        s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-            called = true;
-            return EBISU_SOCK_AGAIN;
-        };
-
-        khc_state_req_header_send_crlf(&http);
-        REQUIRE( http._state == KHC_STATE_REQ_HEADER_SEND_CRLF );
-        REQUIRE( http._result == KHC_ERR_OK );
-        REQUIRE( called );
-    }
-
-    SECTION("state req header send crlf failed.") {
-        http._state = KHC_STATE_REQ_HEADER_SEND_CRLF;
-
-        called = false;
-        s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-            called = true;
-            return EBISU_SOCK_FAIL;
-        };
-
-        khc_state_req_header_send_crlf(&http);
-        REQUIRE( http._state == KHC_STATE_CLOSE );
-        REQUIRE( http._result == KHC_ERR_SOCK_SEND );
-        REQUIRE( called );
-    }
-
-    SECTION("state req header end retry.") {
-        http._state = KHC_STATE_REQ_HEADER_END;
-
-        called = false;
-        s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-            called = true;
-            return EBISU_SOCK_AGAIN;
-        };
-
-        khc_state_req_header_end(&http);
-        REQUIRE( http._state == KHC_STATE_REQ_HEADER_END );
-        REQUIRE( http._result == KHC_ERR_OK );
-        REQUIRE( called );
-    }
-
-    SECTION("state req header end failed.") {
-        http._state = KHC_STATE_REQ_HEADER_END;
-
-        called = false;
-        s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-            called = true;
-            return EBISU_SOCK_FAIL;
-        };
-
-        khc_state_req_header_end(&http);
-        REQUIRE( http._state == KHC_STATE_CLOSE );
-        REQUIRE( http._result == KHC_ERR_SOCK_SEND );
-        REQUIRE( called );
+        while (http._state == KHC_STATE_REQ_LINE || http._state == KHC_STATE_REQ_BODY_SEND) {
+            state_handlers[http._state](&http);
+            REQUIRE( http._result == KHC_ERR_OK );
+        }
+        const std::string head = "GET /api/apps HTTP/1.1\r\nHOST: api.kii.com\r\nConnection: Close\r\n\r\n";
+        REQUIRE( http._state == KHC_STATE_RESP_STATUS_READ );
+        REQUIRE( sent == head );
+        REQUIRE( offered.size() == (head.size() + small - 1) / small );
+        for (size_t i = 0; i + 1 < offered.size(); ++i) {
+            REQUIRE( offered[i] == small );
+        }
     }
 
     SECTION("state req body send retry.") {
@@ -1624,6 +1283,8 @@ TEST_CASE( "state abnormal tests." ) {
 TEST_CASE( "Enable insecure" ) {
     khc_t http;
     khc_init(&http);
+    char stream_buff[DEFAULT_STREAM_BUFF_SIZE];
+    khc_set_stream_buff(&http, stream_buff, sizeof(stream_buff));
 
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
@@ -1655,43 +1316,31 @@ TEST_CASE( "Enable insecure" ) {
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
 
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char req_line[] = "GET /api/apps HTTP/1.1\r\n";
-        REQUIRE( length == strlen(req_line) );
-        REQUIRE( strncmp(buffer, req_line, length) == 0 );
-        *out_sent_length = length;
-        return EBISU_SOCK_OK;
-    };
-
     khc_state_req_line(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_HOST_HEADER );
+    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
     REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
+    // In the buffer the head is put in: insecure or not, the request line
+    // carries the path alone.
+    REQUIRE( std::string(http._stream_buff, strlen("GET /api/apps HTTP/1.1\r\n")) ==
+            "GET /api/apps HTTP/1.1\r\n" );
 }
 
-// What the request line state sends.
+// What the request line state puts first in the stream buffer: the request
+// line.
 static std::string sent_request_line(const char* path, bool absolute, bool insecure) {
     khc_t http;
     khc_init(&http);
+    char stream_buff[DEFAULT_STREAM_BUFF_SIZE];
+    khc_set_stream_buff(&http, stream_buff, sizeof(stream_buff));
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, path);
     khc_enable_absolute_target(&http, absolute);
     khc_enable_insecure(&http, insecure);
 
-    std::string sent;
-    khct::cb::SockCtx s_ctx;
-    s_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
-        sent.append(buffer, length);
-        *out_sent_length = length;
-        return EBISU_SOCK_OK;
-    };
-    khc_set_socket(&http, s_ctx.socket());
-
     khc_state_req_line(&http);
-    return sent;
+    std::string head(stream_buff, http._req_frame_size);
+    return head.substr(0, head.find("\r\n") + 2);
 }
 
 TEST_CASE( "The request line carries the path, for a server" ) {

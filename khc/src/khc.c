@@ -167,10 +167,14 @@ khc_code_t khc_perform(khc_t* khc) {
         }
     }
 
-    // free the allocated resource, cleared first: a request's body and its
-    // response pass through them, a password or a token among them.
-    if (khc->_stream_buff_allocated) {
+    // The stream buffer is cleared, given or allocated: the request's head
+    // goes through it, its credentials among them, and its body, and the
+    // response's. The allocated resources are freed, cleared first: a
+    // response's headers pass through the header buffer.
+    if (khc->_stream_buff != NULL) {
         ebisu_secure_zero(khc->_stream_buff, khc->_stream_buff_size);
+    }
+    if (khc->_stream_buff_allocated) {
         free(khc->_stream_buff);
         khc->_stream_buff = NULL;
         khc->_stream_buff_size = 0;
@@ -252,7 +256,8 @@ void khc_reset_except_request(khc_t* khc) {
     // Internal states.
     khc->_state = KHC_STATE_IDLE;
     khc->_current_req_header = NULL;
-    khc->_read_size = 0;
+    khc->_req_head_part = 0;
+    khc->_req_head_offset = 0;
     khc->_read_req_end = false;
     khc->_req_body_cut = false;
     khc->_req_body_left = 0;

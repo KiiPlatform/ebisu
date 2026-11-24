@@ -106,7 +106,8 @@ TEST_CASE( "HTTP response test" ) {
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
-    REQUIRE( on_send_called == 3 );
+    // The request line, the Host header and the end of the head, in one send.
+    REQUIRE( on_send_called == 1 );
     REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called == 3 );
     REQUIRE( on_header_called == 12 );
@@ -200,7 +201,8 @@ TEST_CASE( "Ignore HTTP status 100" ) {
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
-    REQUIRE( on_send_called == 3 );
+    // The request line, the Host header and the end of the head, in one send.
+    REQUIRE( on_send_called == 1 );
     REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called == 4 );
     REQUIRE( on_header_called == 14 );
@@ -302,7 +304,8 @@ TEST_CASE( "Small resp header skip test" ) {
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
-    REQUIRE( on_send_called == 3 );
+    // The request line, the Host header and the end of the head, in one send.
+    REQUIRE( on_send_called == 1 );
     REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called == 6 );
     REQUIRE( on_header_called == 11 );
@@ -394,7 +397,8 @@ TEST_CASE( "HTTP response 400 test" ) {
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 400 );
     REQUIRE( on_connect_called == 1 );
-    REQUIRE( on_send_called == 3 );
+    // The request line, the Host header and the end of the head, in one send.
+    REQUIRE( on_send_called == 1 );
     REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called == 1 );
     REQUIRE( on_header_called == 2 );

@@ -184,6 +184,43 @@ TEST_CASE( "khc goes on sending the body after an interim response" ) {
     CHECK( server.request.size() == server.request_length );
 }
 
+// A send that failed, with an interim response waiting, left part of the
+// stream buffer unsent: after the 1xx, sending goes on from there, so that
+// the server gets the request once, whole.
+TEST_CASE( "khc goes on from where a failed send stopped, after an interim response" ) {
+    Server server;
+    server.answer = "HTTP/1.1 100 Continue\r\n\r\n";
+    server.after_body = "HTTP/1.1 201 Created\r\nContent-Length: 2\r\n\r\nok";
+    server.closes = false;
+    server.answer_after = SIZE_MAX;
+    Request req(server, 1000);
+    const std::string head = "POST /upload HTTP/1.1\r\nHOST: api.kii.com\r\n"
+        "Content-Length: 1000\r\nConnection: Close\r\n\r\n";
+    server.request_length = head.size() + req.body.size();
+    // The first send takes 100 bytes of the buffer, the second fails with the
+    // 1xx there to read.
+    size_t sends = 0;
+    auto send = server.sock.on_send;
+    server.sock.on_send = [&](void* ctx, const char* buffer, size_t length, size_t* out_sent) {
+        ++sends;
+        if (sends == 1) {
+            ebisu_sock_code_t res = send(ctx, buffer, 100, out_sent);
+            return res;
+        }
+        if (sends == 2) {
+            server.answer_after = 0;
+            *out_sent = 0;
+            return EBISU_SOCK_FAIL;
+        }
+        return send(ctx, buffer, length, out_sent);
+    };
+
+    CHECK( khc_perform(&req.http) == KHC_ERR_OK );
+    CHECK( khc_get_status_code(&req.http) == 201 );
+    CHECK( req.received == "ok" );
+    CHECK( server.request == head + req.body );
+}
+
 TEST_CASE( "khc without recv_wait, or with nothing waiting, sends as it did" ) {
     SECTION("without recv_wait, a send that fails fails the request") {
         Server server(false);

@@ -210,7 +210,8 @@ TEST_CASE( "khc_reset_except_request leaves khc as if the request were new" ) {
             // it points to, and these point into buffers that need not hold one.
             CHECK( used._state == fresh._state );
             CHECK( used._current_req_header == fresh._current_req_header );
-            CHECK( used._read_size == fresh._read_size );
+            CHECK( used._req_head_part == fresh._req_head_part );
+            CHECK( used._req_head_offset == fresh._req_head_offset );
             CHECK( used._read_req_end == fresh._read_req_end );
             CHECK( used._req_body_length == fresh._req_body_length );
             CHECK( used._req_body_left == fresh._req_body_left );

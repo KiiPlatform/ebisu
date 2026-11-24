@@ -58,9 +58,11 @@ typedef size_t (*KHC_CB_WRITE)(char *buffer, size_t size, void *userdata);
  * \brief Callback reads data.
  *
  * \param [out] buffer callback must writes data to this buffer.
- * \param [in] size requested read size. For a chunked body, it is the stream
- * buffer less a few bytes: each chunk is sent in one write, with its size line
- * before it and CRLF after it in the same buffer.
+ * \param [in] size requested read size: what is left of the stream buffer,
+ * after the request's head the first time, less, for a chunked body, a few
+ * bytes for each chunk's size line before it and CRLF after it. khc asks
+ * again until the buffer is full or the body ends, and sends the buffer then:
+ * what the callback gives waits until then.
  * \param [in, out] userdata context data passed to khc_set_cb_read(khc_t*, KHC_CB_READ, void*)
  * \returns Size of the bytes read, at most size, or khc_perform(khc_t*)
  * returns KHC_ERR_READ_CALLBACK.
@@ -215,16 +217,22 @@ void khc_slist_free_all_using_cb_free(
 typedef enum khc_state_t {
     KHC_STATE_IDLE,
     KHC_STATE_CONNECT,
+    /* Puts the request's head in the stream buffer, as much as fits. */
     KHC_STATE_REQ_LINE,
+    /* No longer entered: the head goes out from the stream buffer, from
+     * KHC_STATE_REQ_BODY_SEND. */
     KHC_STATE_REQ_HOST_HEADER,
     KHC_STATE_REQ_HEADER,
     KHC_STATE_REQ_HEADER_SEND,
     KHC_STATE_REQ_HEADER_SEND_CRLF,
     KHC_STATE_REQ_HEADER_END,
+    /* Reads what fits of the body into the stream buffer, after what of the
+     * head waits there. */
     KHC_STATE_REQ_BODY_READ,
     /* No longer entered: a chunk's size line is sent with it, from
      * KHC_STATE_REQ_BODY_SEND. */
     KHC_STATE_REQ_BODY_SEND_SIZE,
+    /* Sends what the stream buffer holds: the head, the body, or both. */
     KHC_STATE_REQ_BODY_SEND,
     /* No longer entered: the CRLF ending a chunk is sent with it. */
     KHC_STATE_REQ_BODY_SEND_CRLF,
@@ -343,12 +351,13 @@ typedef struct khc_t {
     ebisu_socket_t* _socket; /**< \private **/
 
     khc_slist_t* _current_req_header; /**< \private **/
+    int _req_head_part; /**< \private **/
+    size_t _req_head_offset; /**< \private **/
 
     char* _stream_buff; /**< \private **/
     size_t _stream_buff_size; /**< \private **/
     bool _stream_buff_allocated; /**< \private **/
 
-    size_t _read_size; /**< \private **/
     bool _read_req_end; /**< \private **/
     /** \private Whether the server answered before the request's body was
      * sent whole, and the rest isn't sent: RFC 9112, section 9.5. An interim
@@ -636,14 +645,18 @@ void khc_set_resp_header_buff(khc_t* khc, char* buffer, size_t buff_size);
  * and free when the HTTP session ends.
  * The buffer allocated by khc is 1024 bytes.
  *
- * The request body is sent a buffer at a time, in one write each: over TLS,
- * at least one record each. 1024 bytes suit bodies of a few KB. For larger
+ * The request is sent a buffer at a time, in one write each: over TLS, at
+ * least one record each. Its head goes first, and as much of the body as fits
+ * after it, so that a small request is one write. 1024 bytes suit bodies of a
+ * few KB. For larger
  * ones, on a slow or metered link, 4096 bytes or more send fewer, larger
  * records, and responses are read in larger pieces too. A chunked body needs
  * room for a chunk's size line and CRLF besides its data, a few bytes: with
  * no room for data, khc_perform(khc_t*) returns KHC_ERR_TOO_LARGE_DATA.
  * If you set the buffer by the method, the method must be called befor khc_perform(khc_t*)
  * and memory used by the buffer can be safely freed after khc_perform(khc_t*) returned.
+ * khc_perform(khc_t*) clears it before it returns: the request's head goes
+ * through it, its credentials among them, as do its body and the response's.
  *
  * \param [out] khc instance.
  * \param [in] buffer pointer to the buffer.
@@ -655,9 +668,9 @@ void khc_set_stream_buff(khc_t* khc, char* buffer, size_t buff_size);
 /**
  * \brief Set the socket requests are sent on.
  *
- * Its send operation is called several times during the HTTP session,
- * depending on the size of the request, and its recv operation until the
- * length of data it reads is 0. Each request is sent with
+ * Its send operation is given the stream buffer: once for a request that fits
+ * in it, head and body, and more times for a larger one. Its recv operation is
+ * called until the length of data it reads is 0. Each request is sent with
  * "Connection: Close", so once connected, its close operation is called at the
  * end of every request. It is also called for a connect that returned
  * EBISU_SOCK_AGAIN, should the request time out or be cancelled before the

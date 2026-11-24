@@ -566,12 +566,24 @@ khc, which kii and tio report in their own codes:
   sending the body. The read callback isn't asked for the rest of the body.
   Without `recv_wait`, khc sends the whole request first, as 1.x did.
 - GET, HEAD and DELETE send no body, and don't call the read callback.
-- Each chunk of a request body is sent in one send, with its size line and CRLF,
-  from the stream buffer. 1.x sent the three separately. The read callback is
-  offered the stream buffer less room for those, a few bytes, rather than all
-  of it, and a stream buffer with no room left for data, of 5 bytes or fewer,
-  is `KHC_ERR_TOO_LARGE_DATA`. A read callback that returns more than it was
+- Each chunk of a request body is sent with its size line and CRLF, from the
+  stream buffer. 1.x sent the three separately. The read callback is offered
+  what is left of the stream buffer less room for those, a few bytes, rather
+  than all of it, and a stream buffer with no room for data, of 5 bytes or
+  fewer, is `KHC_ERR_TOO_LARGE_DATA`. A read callback that returns more than it was
   asked for is `KHC_ERR_READ_CALLBACK`, a new code, and `KII_ERR_FAIL` in kii.
+- A request goes out from the stream buffer, a buffer at a time: its head, the
+  request line and the headers, and as much of the body as fits after it, so
+  that a small request is one send, over TLS one record. 1.x sent each line,
+  and each header's CRLF, in a send of its own, and a socket without
+  `TCP_NODELAY` held each back until the server acknowledged the one before,
+  which a server may delay, by 40 ms on Linux. The read callback is asked
+  again until the buffer is full or the body ends, before what it gave is
+  sent, rather than once for each send, and a request whose read callback
+  fails before the first send sends nothing. `khc_perform()` clears a stream
+  buffer set with `khc_set_stream_buff()`, `kii_set_stream_buff()` or tio's
+  setters before it returns, as the head's credentials go through it, as it
+  cleared one it allocated.
 - Request lines carry the path, as in `POST /path HTTP/1.1`, with the host in the
   `Host` header, which is what a server expects. 1.x sent the whole URL, as in
   `POST https://host/path HTTP/1.1`. A forward proxy that requests go through in
