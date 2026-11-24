@@ -138,10 +138,48 @@ static void _record_sock_error(khc_t* khc) {
         EBISU_SOCK_ERROR_NONE;
 }
 
+// Ends the request with result: what is left is closing the connection.
+static void _fail(khc_t* khc, khc_code_t result) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = result;
+}
+
 // The connection closed before the response ended.
 static void _closed_early(khc_t* khc) {
+    _fail(khc, KHC_ERR_SOCK_RECV);
     khc->_sock_error = EBISU_SOCK_ERROR_CLOSED;
     khc->_sock_error_detail = 0;
+}
+
+// Receives up to size bytes into buffer: true with what came, none at the end
+// of the stream; false with nothing to go on with, the socket not ready, which
+// the request waits for, or failed, which ends it.
+static bool _recv(khc_t* khc, char* buffer, size_t size, size_t* out_size) {
+    *out_size = 0;
+    ebisu_sock_code_t res = khc->_socket->ops->recv(khc->_socket, buffer, size, out_size);
+    if (res == EBISU_SOCK_OK) {
+        return true;
+    }
+    if (res == EBISU_SOCK_AGAIN) {
+        khc->_again = true;
+        return false;
+    }
+    _record_sock_error(khc);
+    _fail(khc, KHC_ERR_SOCK_RECV);
+    return false;
+}
+
+// Receives into the response header buffer, after what it holds, which stays
+// NUL-terminated, as _recv() does.
+static bool _recv_into_header_buff(khc_t* khc, size_t* out_size) {
+    size_t held = khc->_resp_header_read_size;
+    if (!_recv(khc, &khc->_resp_header_buff[held], khc->_resp_header_buff_size - held - 1,
+            out_size)) {
+        return false;
+    }
+    khc->_resp_header_read_size += *out_size;
+    khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
+    return true;
 }
 
 void khc_state_connect(khc_t* khc) {
@@ -200,8 +238,7 @@ static void _send_failed(khc_t* khc) {
         khc->_state = KHC_STATE_RESP_STATUS_READ;
         return;
     }
-    khc->_state = KHC_STATE_CLOSE;
-    khc->_result = KHC_ERR_SOCK_SEND;
+    _fail(khc, KHC_ERR_SOCK_SEND);
 }
 
 // Whether the request has a body to read from the read callback.
@@ -395,11 +432,6 @@ void khc_state_req_line(khc_t* khc) {
     }
 }
 
-static void _fail_req_body(khc_t* khc, khc_code_t result) {
-    khc->_state = KHC_STATE_CLOSE;
-    khc->_result = result;
-}
-
 // The number of hex digits of size.
 static size_t _hex_digits(size_t size) {
     size_t digits = 1;
@@ -437,7 +469,7 @@ void khc_state_req_body_read(khc_t* khc) {
                 khc->_req_body_left : size - used;
             size_t got = khc->_cb_read(&buff[used], want, khc->_read_data);
             if (got == 0 || got > want) {
-                _fail_req_body(khc, KHC_ERR_READ_CALLBACK);
+                _fail(khc, KHC_ERR_READ_CALLBACK);
                 return;
             }
             khc->_req_body_left -= got;
@@ -453,7 +485,7 @@ void khc_state_req_body_read(khc_t* khc) {
             size_t line_room = _hex_digits(room) + 2;
             if (room <= line_room + 2) {
                 if (used == 0) {
-                    _fail_req_body(khc, KHC_ERR_TOO_LARGE_DATA);
+                    _fail(khc, KHC_ERR_TOO_LARGE_DATA);
                     return;
                 }
                 // The next chunk goes in the next send.
@@ -463,7 +495,7 @@ void khc_state_req_body_read(khc_t* khc) {
             char* data = &buff[used + line_room];
             size_t got = khc->_cb_read(data, capacity, khc->_read_data);
             if (got > capacity) {
-                _fail_req_body(khc, KHC_ERR_READ_CALLBACK);
+                _fail(khc, KHC_ERR_READ_CALLBACK);
                 return;
             }
             // The size line right after what is there, then the data.
@@ -557,41 +589,23 @@ static const char* _find_crlf(const char* buff, size_t len) {
 
 void khc_state_resp_status_read(khc_t* khc) {
     size_t read_size = 0;
-    size_t read_req_size = khc->_resp_header_buff_size - khc->_resp_header_read_size - 1;
-    ebisu_sock_code_t read_res =
-        khc->_socket->ops->recv(khc->_socket, &khc->_resp_header_buff[khc->_resp_header_read_size], read_req_size, &read_size);
-    if (read_res == EBISU_SOCK_OK) {
-        khc->_resp_header_read_size += read_size;
-        khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
-        if (read_size == 0) {
-            khc->_read_end = true;
-        }
-        if (_find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size) != NULL) {
-            khc->_state = KHC_STATE_RESP_STATUS_PARSE;
-            return;
-        }
-        if (khc->_resp_header_read_size + 1 == khc->_resp_header_buff_size) {
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_TOO_LARGE_DATA;
-        } else if (read_size == 0) {
-            // Closed before the status line ended.
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_SOCK_RECV;
-            _closed_early(khc);
-        }
-        // Otherwise a read can end anywhere: read the rest of the line.
+    if (!_recv_into_header_buff(khc, &read_size)) {
         return;
     }
-    if (read_res == EBISU_SOCK_AGAIN) {
-        khc->_again = true;
+    if (read_size == 0) {
+        khc->_read_end = true;
+    }
+    if (_find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size) != NULL) {
+        khc->_state = KHC_STATE_RESP_STATUS_PARSE;
         return;
     }
-    if (read_res == EBISU_SOCK_FAIL) {
-        _record_sock_error(khc);
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_RECV;
-        return;
+    if (khc->_resp_header_read_size + 1 == khc->_resp_header_buff_size) {
+        _fail(khc, KHC_ERR_TOO_LARGE_DATA);
+    } else if (read_size == 0) {
+        // Closed before the status line ended.
+        _closed_early(khc);
     }
+    // Otherwise a read can end anywhere: read the rest of the line.
 }
 
 void khc_state_resp_status_parse(khc_t* khc) {
@@ -600,8 +614,7 @@ void khc_state_resp_status_parse(khc_t* khc) {
     // response left there.
     if (line_end == NULL ||
             !_is_status_line(khc->_resp_header_buff, (size_t)(line_end - khc->_resp_header_buff))) {
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_INVALID_RESPONSE;
+        _fail(khc, KHC_ERR_INVALID_RESPONSE);
         return;
     }
     // The three digits after "HTTP/1.1 ", so at most 999.
@@ -626,8 +639,7 @@ void khc_state_resp_header_callback(khc_t* khc) {
             // no space in _resp_header_buff. What there is of the header is
             // checked now, as what comes after it is while it is skipped.
             if (!_is_header_start(khc->_resp_header_buff, khc->_resp_header_read_size)) {
-                khc->_state = KHC_STATE_CLOSE;
-                khc->_result = KHC_ERR_INVALID_RESPONSE;
+                _fail(khc, KHC_ERR_INVALID_RESPONSE);
                 return;
             }
             khc->_resp_header_skipped = true;
@@ -643,8 +655,7 @@ void khc_state_resp_header_callback(khc_t* khc) {
     // before in the obsolete line folding, isn't one.
     if (header_size > 0 && khc->_resp_status_line_given &&
             !_is_header_line(khc->_resp_header_buff, header_size)) {
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_INVALID_RESPONSE;
+        _fail(khc, KHC_ERR_INVALID_RESPONSE);
         return;
     }
     if (header_size > 0) {
@@ -652,8 +663,7 @@ void khc_state_resp_header_callback(khc_t* khc) {
         size_t header_written = khc->_cb_header(khc->_resp_header_buff,
                 header_size, khc->_header_data);
         if (header_written != header_size) { // Error in callback function.
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_HEADER_CALLBACK;
+            _fail(khc, KHC_ERR_HEADER_CALLBACK);
             return;
         }
         khc->_resp_status_line_given = true;
@@ -664,23 +674,20 @@ void khc_state_resp_header_callback(khc_t* khc) {
         if (chunked == 1) {
             khc->_chunked_resp = true;
         } else if (chunked == -1) { // Transfer coding khc cannot remove.
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_INVALID_RESPONSE;
+            _fail(khc, KHC_ERR_INVALID_RESPONSE);
             return;
         } else {
             int extracted = _extract_content_length(khc->_resp_header_buff, header_size, &content_length);
             if (extracted == 1 && khc->_resp_has_content_length &&
                     content_length != khc->_resp_content_length) {
                 // Lengths that disagree: body length unknown.
-                khc->_state = KHC_STATE_CLOSE;
-                khc->_result = KHC_ERR_INVALID_RESPONSE;
+                _fail(khc, KHC_ERR_INVALID_RESPONSE);
                 return;
             } else if (extracted == 1) {
                 khc->_resp_content_length = content_length;
                 khc->_resp_has_content_length = true;
             } else if (extracted == -1) { // Invalid Content-Length: body length unknown.
-                khc->_state = KHC_STATE_CLOSE;
-                khc->_result = KHC_ERR_INVALID_RESPONSE;
+                _fail(khc, KHC_ERR_INVALID_RESPONSE);
                 return;
             }
         }
@@ -720,8 +727,7 @@ void khc_state_resp_header_callback(khc_t* khc) {
                 // Chunks with a Content-Length too, or in an HTTP/1.0 response,
                 // which has none: framing that something else on the way may
                 // have read another way (RFC 9112, sections 6.1 and 6.3).
-                khc->_state = KHC_STATE_CLOSE;
-                khc->_result = KHC_ERR_INVALID_RESPONSE;
+                _fail(khc, KHC_ERR_INVALID_RESPONSE);
             } else if (khc->_chunked_resp) {
                 khc->_body_read_size = 0;
                 khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
@@ -735,40 +741,22 @@ void khc_state_resp_header_callback(khc_t* khc) {
 
 void khc_state_resp_header_read(khc_t* khc) {
     size_t read_size = 0;
-    size_t read_req_size = khc->_resp_header_buff_size - khc->_resp_header_read_size - 1;
-    ebisu_sock_code_t read_res =
-        khc->_socket->ops->recv(khc->_socket, &khc->_resp_header_buff[khc->_resp_header_read_size], read_req_size, &read_size);
-    if (read_res == EBISU_SOCK_OK) {
-        khc->_resp_header_read_size += read_size;
-        khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
-        if (read_size == 0) {
-            // Closed before the headers ended: nothing more will come.
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_SOCK_RECV;
-            _closed_early(khc);
-            return;
-        }
-        khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
+    if (!_recv_into_header_buff(khc, &read_size)) {
         return;
     }
-    if (read_res == EBISU_SOCK_AGAIN) {
-        khc->_again = true;
+    if (read_size == 0) {
+        // Closed before the headers ended: nothing more will come.
+        _closed_early(khc);
         return;
     }
-    if (read_res == EBISU_SOCK_FAIL) {
-        _record_sock_error(khc);
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_RECV;
-        return;
-    }
+    khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
 }
 
 void khc_state_resp_header_skip(khc_t* khc) {
     // check required http headers.
     if (_is_header_present("Content-Length", khc->_resp_header_buff, khc->_resp_header_read_size) == 1 ||
             _is_header_present("Transfer-Encoding", khc->_resp_header_buff, khc->_resp_header_read_size) == 1) {
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_TOO_LARGE_DATA;
+        _fail(khc, KHC_ERR_TOO_LARGE_DATA);
         return;
     }
 
@@ -783,59 +771,51 @@ void khc_state_resp_header_skip(khc_t* khc) {
     }
 
     size_t read_size = 0;
-    size_t read_req_size = khc->_resp_header_buff_size - khc->_resp_header_read_size - 1;
-    ebisu_sock_code_t read_res = khc->_socket->ops->recv(
-            khc->_socket,
-            &khc->_resp_header_buff[khc->_resp_header_read_size],
-            read_req_size,
-            &read_size);
-    if (read_res == EBISU_SOCK_OK) {
-        khc->_resp_header_read_size += read_size;
-        khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
-        if (read_size == 0) {
-            // Closed before the headers ended: nothing more will come.
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_SOCK_RECV;
-            _closed_early(khc);
-            return;
-        }
-        // check header boundary.
-        const char* header_boundary = _find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size);
-        // The rest of the value, up to its CRLF, or a CR that may start it.
-        size_t value_size = header_boundary != NULL ?
-            (size_t)(header_boundary - khc->_resp_header_buff) :
-            khc->_resp_header_read_size;
-        if (header_boundary == NULL && khc->_resp_header_buff[value_size - 1] == '\r') {
-            --value_size;
-        }
-        if (!_is_field_text(khc->_resp_header_buff, value_size)) {
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_INVALID_RESPONSE;
-            return;
-        }
-        if (header_boundary == NULL) {
-            // re-skip.
-            return;
-        }
-        // discard skip target.
-        size_t header_size = header_boundary - khc->_resp_header_buff;
-        memmove(khc->_resp_header_buff, header_boundary + 2,
-                khc->_resp_header_read_size - (header_size + 2) + 1); // +1 is '\0' include.
-        khc->_resp_header_read_size -= (header_size + 2);
+    if (!_recv_into_header_buff(khc, &read_size)) {
+        return;
+    }
+    if (read_size == 0) {
+        // Closed before the headers ended: nothing more will come.
+        _closed_early(khc);
+        return;
+    }
+    // check header boundary.
+    const char* header_boundary = _find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size);
+    // The rest of the value, up to its CRLF, or a CR that may start it.
+    size_t value_size = header_boundary != NULL ?
+        (size_t)(header_boundary - khc->_resp_header_buff) :
+        khc->_resp_header_read_size;
+    if (header_boundary == NULL && khc->_resp_header_buff[value_size - 1] == '\r') {
+        --value_size;
+    }
+    if (!_is_field_text(khc->_resp_header_buff, value_size)) {
+        _fail(khc, KHC_ERR_INVALID_RESPONSE);
+        return;
+    }
+    if (header_boundary == NULL) {
+        // re-skip.
+        return;
+    }
+    // discard skip target.
+    size_t header_size = header_boundary - khc->_resp_header_buff;
+    memmove(khc->_resp_header_buff, header_boundary + 2,
+            khc->_resp_header_read_size - (header_size + 2) + 1); // +1 is '\0' include.
+    khc->_resp_header_read_size -= (header_size + 2);
 
-        khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
-        return;
+    khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
+}
+
+/* Gives the write callback size bytes of the body, counted as received: true
+ * if it took them all. Neither less nor more than it was given, as
+ * KHC_CB_WRITE says: taken, more counted as received, and ended a
+ * Content-Length body before it had arrived whole, with KHC_ERR_OK. */
+static bool _write_body(khc_t* khc, char* data, size_t size) {
+    if (khc->_cb_write(data, size, khc->_write_data) != size) {
+        _fail(khc, KHC_ERR_WRITE_CALLBACK);
+        return false;
     }
-    if (read_res == EBISU_SOCK_AGAIN) {
-        khc->_again = true;
-        return;
-    }
-    if (read_res == EBISU_SOCK_FAIL) {
-        _record_sock_error(khc);
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_RECV;
-        return;
-    }
+    khc->_resp_body_received += size;
+    return true;
 }
 
 /* A body that isn't chunked ends at the response's Content-Length, or without
@@ -844,7 +824,6 @@ void khc_state_resp_header_skip(khc_t* khc) {
 static void _end_resp_body(khc_t* khc) {
     khc->_state = KHC_STATE_CLOSE;
     if (khc->_resp_body_received < khc->_resp_content_length) {
-        khc->_result = KHC_ERR_SOCK_RECV;
         _closed_early(khc);
     }
 }
@@ -869,14 +848,8 @@ static size_t _resp_body_part(const khc_t* khc, size_t size) {
 
 void khc_state_resp_body_fragment(khc_t* khc) {
     size_t size = _resp_body_part(khc, khc->_resp_header_read_size);
-    if (size > 0) {
-        size_t written = khc->_cb_write(khc->_resp_header_buff, size, khc->_write_data);
-        if (written != size) { // Error in write callback.
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_WRITE_CALLBACK;
-            return;
-        }
-        khc->_resp_body_received += written;
+    if (size > 0 && !_write_body(khc, khc->_resp_header_buff, size)) {
+        return;
     }
 
     if (khc->_read_end || _resp_body_complete(khc)) {
@@ -911,8 +884,7 @@ void khc_state_read_chunk_size_from_header_buff(khc_t* khc) {
     if (_move_resp_header_to_stream(khc) == 0) {
         khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
     } else {
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_TOO_LARGE_DATA;
+        _fail(khc, KHC_ERR_TOO_LARGE_DATA);
     }
 }
 
@@ -920,49 +892,29 @@ void khc_state_read_chunk_body_from_header_buff(khc_t* khc) {
     if (_move_resp_header_to_stream(khc) == 0) {
         khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
     } else {
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_TOO_LARGE_DATA;
+        _fail(khc, KHC_ERR_TOO_LARGE_DATA);
     }
 }
 
 void khc_state_resp_body_read(khc_t* khc) {
     size_t read_size = 0;
-    ebisu_sock_code_t read_res =
-        khc->_socket->ops->recv(khc->_socket, khc->_stream_buff, khc->_stream_buff_size, &read_size);
-    if (read_res == EBISU_SOCK_OK) {
-        khc->_body_read_size = read_size;
-        if (read_size == 0) {
-            khc->_read_end = true;
-            _end_resp_body(khc);
-            return;
-        }
-        khc->_state = KHC_STATE_RESP_BODY_CALLBACK;
+    if (!_recv(khc, khc->_stream_buff, khc->_stream_buff_size, &read_size)) {
         return;
     }
-    if (read_res == EBISU_SOCK_AGAIN) {
-        khc->_again = true;
+    khc->_body_read_size = read_size;
+    if (read_size == 0) {
+        khc->_read_end = true;
+        _end_resp_body(khc);
         return;
     }
-    if (read_res == EBISU_SOCK_FAIL) {
-        _record_sock_error(khc);
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_RECV;
-        return;
-    }
+    khc->_state = KHC_STATE_RESP_BODY_CALLBACK;
 }
 
 void khc_state_resp_body_callback(khc_t* khc) {
     size_t size = _resp_body_part(khc, khc->_body_read_size);
-    size_t written = khc->_cb_write(khc->_stream_buff, size, khc->_write_data);
-    // Neither less nor more than it was given, as KHC_CB_WRITE says. Taken,
-    // more counted as received, and ended a Content-Length body before it had
-    // arrived whole, with KHC_ERR_OK.
-    if (written != size) { // Error in write callback.
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_WRITE_CALLBACK;
+    if (!_write_body(khc, khc->_stream_buff, size)) {
         return;
     }
-    khc->_resp_body_received += size;
     if (khc->_read_end || _resp_body_complete(khc)) {
         _end_resp_body(khc);
     } else {
@@ -993,8 +945,7 @@ void khc_state_resp_body_parse_chunk_size(khc_t* khc) {
         }
     } else if (has_chunk_size < 0) {
         // Without a valid size the rest of the body can't be framed.
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_INVALID_RESPONSE;
+        _fail(khc, KHC_ERR_INVALID_RESPONSE);
     } else {
         if (khc->_resp_header_read_size > 0) {
             khc->_state = KHC_STATE_READ_CHUNK_SIZE_FROM_HEADER_BUFF;
@@ -1005,39 +956,22 @@ void khc_state_resp_body_parse_chunk_size(khc_t* khc) {
 }
 
 void khc_state_resp_body_read_chunk_size(khc_t* khc) {
+    // A size line that fills the buffer is too long to read.
+    if (khc->_body_read_size >= khc->_stream_buff_size) {
+        _fail(khc, KHC_ERR_TOO_LARGE_DATA);
+        return;
+    }
     size_t read_size = 0;
-    long remain = khc->_stream_buff_size - khc->_body_read_size;
-    if (remain <= 0) {
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_TOO_LARGE_DATA;
+    if (!_recv(khc, &khc->_stream_buff[khc->_body_read_size],
+            khc->_stream_buff_size - khc->_body_read_size, &read_size)) {
         return;
     }
-    ebisu_sock_code_t read_res = khc->_socket->ops->recv(
-            khc->_socket,
-            &khc->_stream_buff[khc->_body_read_size],
-            remain,
-            &read_size);
-    if (read_res == EBISU_SOCK_OK) {
-        khc->_body_read_size += read_size;
-        if (read_size == 0) {
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_SOCK_RECV;
-            _closed_early(khc);
-            return;
-        }
-        khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
+    khc->_body_read_size += read_size;
+    if (read_size == 0) {
+        _closed_early(khc);
         return;
     }
-    if (read_res == EBISU_SOCK_AGAIN) {
-        khc->_again = true;
-        return;
-    }
-    if (read_res == EBISU_SOCK_FAIL) {
-        _record_sock_error(khc);
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_RECV;
-        return;
-    }
+    khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
 }
 
 void khc_state_resp_body_parse_chunk_body(khc_t* khc) {
@@ -1046,15 +980,10 @@ void khc_state_resp_body_parse_chunk_body(khc_t* khc) {
         chunk_remain > khc->_body_read_size ?
         khc->_body_read_size :
         chunk_remain;
-    size_t written = khc->_cb_write(khc->_stream_buff, target_size, khc->_write_data);
-    // As for a body that isn't chunked.
-    if (written != target_size) { // Error in write callback.
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_WRITE_CALLBACK;
+    if (!_write_body(khc, khc->_stream_buff, target_size)) {
         return;
     }
     khc->_chunk_size_written += target_size;
-    khc->_resp_body_received += target_size;
     if (khc->_chunk_size > khc->_chunk_size_written) {
         if (khc->_resp_header_read_size > 0) {
             khc->_body_read_size = 0;
@@ -1074,32 +1003,15 @@ void khc_state_resp_body_parse_chunk_body(khc_t* khc) {
 
 void khc_state_resp_body_read_chunk_body(khc_t* khc) {
     size_t read_size = 0;
-    ebisu_sock_code_t read_res = khc->_socket->ops->recv(
-            khc->_socket,
-            khc->_stream_buff,
-            khc->_stream_buff_size,
-            &read_size);
-    if (read_res == EBISU_SOCK_OK) {
-        if (read_size == 0) {
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_SOCK_RECV;
-            _closed_early(khc);
-            return;
-        }
-        khc->_body_read_size = read_size;
-        khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
+    if (!_recv(khc, khc->_stream_buff, khc->_stream_buff_size, &read_size)) {
         return;
     }
-    if (read_res == EBISU_SOCK_AGAIN) {
-        khc->_again = true;
+    if (read_size == 0) {
+        _closed_early(khc);
         return;
     }
-    if (read_res == EBISU_SOCK_FAIL) {
-        _record_sock_error(khc);
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_RECV;
-        return;
-    }
+    khc->_body_read_size = read_size;
+    khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
 }
 
 // The CRLF that ends a chunk's data, of which the first size bytes of data
@@ -1112,8 +1024,7 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc_t* khc) {
     if (!_is_chunk_data_end(khc->_stream_buff, khc->_body_read_size < 2 ? khc->_body_read_size : 2)) {
         // Something else after the data: the chunk's size didn't say where
         // it ended.
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_INVALID_RESPONSE;
+        _fail(khc, KHC_ERR_INVALID_RESPONSE);
         return;
     }
     if (khc->_body_read_size < 2) {
@@ -1125,45 +1036,27 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc_t* khc) {
         size_t tmp_size = 2 - khc->_body_read_size;
         char tmp[2];
         size_t read_size = 0;
-        ebisu_sock_code_t read_res = khc->_socket->ops->recv(
-                khc->_socket,
-                tmp,
-                tmp_size,
-                &read_size);
-        if (read_res == EBISU_SOCK_OK) {
-            if (read_size == 0) {
-                khc->_state = KHC_STATE_CLOSE;
-                khc->_result = KHC_ERR_SOCK_RECV;
-                _closed_early(khc);
-                return;
-            }
-            // What came has to be what was left of the CRLF.
-            if (memcmp(tmp, &"\r\n"[khc->_body_read_size], read_size) != 0) {
-                khc->_state = KHC_STATE_CLOSE;
-                khc->_result = KHC_ERR_INVALID_RESPONSE;
-                return;
-            }
-            khc->_body_read_size += read_size;
-            if (khc->_body_read_size < 2) {
-                // Only the CR has come: it is kept, for the check above, and
-                // the LF read next.
-                khc->_stream_buff[0] = '\r';
-                return;
-            }
-            khc->_body_read_size = 0;
-            khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
+        if (!_recv(khc, tmp, tmp_size, &read_size)) {
             return;
         }
-        if (read_res == EBISU_SOCK_AGAIN) {
-            khc->_again = true;
+        if (read_size == 0) {
+            _closed_early(khc);
             return;
         }
-        if (read_res == EBISU_SOCK_FAIL) {
-            _record_sock_error(khc);
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_SOCK_RECV;
+        // What came has to be what was left of the CRLF.
+        if (memcmp(tmp, &"\r\n"[khc->_body_read_size], read_size) != 0) {
+            _fail(khc, KHC_ERR_INVALID_RESPONSE);
             return;
         }
+        khc->_body_read_size += read_size;
+        if (khc->_body_read_size < 2) {
+            // Only the CR has come: it is kept, for the check above, and
+            // the LF read next.
+            khc->_stream_buff[0] = '\r';
+            return;
+        }
+        khc->_body_read_size = 0;
+        khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
     } else {
         size_t remain = khc->_body_read_size - 2;
         memmove(khc->_stream_buff, &khc->_stream_buff[2], remain);
@@ -1199,29 +1092,14 @@ void khc_state_resp_body_skip_trailers(khc_t* khc) {
     khc->_resp_header_read_size = 0;
 
     size_t read_size = 0;
-    ebisu_sock_code_t read_res = khc->_socket->ops->recv(
-            khc->_socket,
-            khc->_stream_buff,
-            khc->_stream_buff_size,
-            &read_size);
-    if (read_res == EBISU_SOCK_OK) {
-        if (read_size == 0) {
-            khc->_state = KHC_STATE_CLOSE;
-            return;
-        }
-        khc->_body_read_size = read_size;
+    if (!_recv(khc, khc->_stream_buff, khc->_stream_buff_size, &read_size)) {
         return;
     }
-    if (read_res == EBISU_SOCK_AGAIN) {
-        khc->_again = true;
-        return;
-    }
-    if (read_res == EBISU_SOCK_FAIL) {
-        _record_sock_error(khc);
+    if (read_size == 0) {
         khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_RECV;
         return;
     }
+    khc->_body_read_size = read_size;
 }
 
 void khc_state_close(khc_t* khc) {
