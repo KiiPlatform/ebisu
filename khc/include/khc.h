@@ -93,7 +93,7 @@ typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, void *userdata);
  * \param [in, out] userdata context data passed to
  * khc_set_cb_continue(khc_t*, KHC_CB_CONTINUE, void*).
  * \returns true to go on, false to cancel the request: khc_perform(khc_t*) closes
- * the connection, if one is open, and returns KHC_ERR_CANCELLED.
+ * the connection, if one is open or on the way, and returns KHC_ERR_CANCELLED.
  */
 typedef bool (*KHC_CB_CONTINUE)(void *userdata);
 
@@ -525,8 +525,8 @@ void khc_set_logger(khc_t* khc, ebisu_logger_t* logger);
  * \brief Set how long a request may take.
  *
  * From the start of khc_perform(khc_t*) to the end of the response. Once it has
- * passed, khc_perform(khc_t*) closes the connection, if one is open, and returns
- * KHC_ERR_TIMEOUT. It is checked between steps, so a socket operation that
+ * passed, khc_perform(khc_t*) closes the connection, if one is open or on the
+ * way, and returns KHC_ERR_TIMEOUT. It is checked between steps, so a socket operation that
  * blocks runs to its own timeout first: it bounds a response that trickles in
  * through receives that each end in time, or a slow handshake made of many.
  *
@@ -659,7 +659,9 @@ void khc_set_stream_buff(khc_t* khc, char* buffer, size_t buff_size);
  * depending on the size of the request, and its recv operation until the
  * length of data it reads is 0. Each request is sent with
  * "Connection: Close", so once connected, its close operation is called at the
- * end of every request.
+ * end of every request. It is also called for a connect that returned
+ * EBISU_SOCK_AGAIN, should the request time out or be cancelled before the
+ * connect ends; not for one that returned EBISU_SOCK_FAIL.
  * \param [out] khc instance.
  * \param [in] socket The socket. It has to outlive khc, or be replaced first.
  */

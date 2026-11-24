@@ -140,13 +140,40 @@ TEST_CASE( "A request that takes longer than its timeout" ) {
         CHECK_FALSE( khc_get_close_failed(&f.http) );
     }
 
-    SECTION("before connecting, and nothing is closed") {
+    // The connect that wasn't ready was given up on with nothing closed: the
+    // socket was left with its connection on the way.
+    SECTION("while connecting, and the connect is closed") {
         f.s_ctx.on_connect = [&f](void*, const char*, uint16_t) {
             ++f.connects;
             return EBISU_SOCK_AGAIN;
         };
         CHECK( khc_perform(&f.http) == KHC_ERR_TIMEOUT );
         CHECK( f.connects == 1000 / KHC_AGAIN_WAIT_MS );
+        CHECK( f.closes == 1 );
+        CHECK_FALSE( khc_get_close_failed(&f.http) );
+    }
+
+    SECTION("while connecting, with a close that isn't ready, gives the close up") {
+        f.s_ctx.on_connect = [&f](void*, const char*, uint16_t) {
+            ++f.connects;
+            return EBISU_SOCK_AGAIN;
+        };
+        f.s_ctx.on_close = [&f](void*) {
+            ++f.closes;
+            return EBISU_SOCK_AGAIN;
+        };
+        CHECK( khc_perform(&f.http) == KHC_ERR_TIMEOUT );
+        CHECK( f.closes == 1 );
+        CHECK( khc_get_close_failed(&f.http) );
+    }
+
+    SECTION("with a connect that failed, and nothing is closed") {
+        f.s_ctx.on_connect = [&f](void*, const char*, uint16_t) {
+            ++f.connects;
+            return EBISU_SOCK_FAIL;
+        };
+        CHECK( khc_perform(&f.http) == KHC_ERR_SOCK_CONNECT );
+        CHECK( f.connects == 1 );
         CHECK( f.closes == 0 );
     }
 
@@ -203,6 +230,27 @@ TEST_CASE( "A request the continue callback cancels" ) {
         CHECK( khc_perform(&f.http) == KHC_ERR_CANCELLED );
         CHECK( f.connects == 0 );
         CHECK( f.closes == 0 );
+    }
+
+    SECTION("after its first step, before connecting, closes nothing") {
+        // Idle, then cancelled before the first connect.
+        steps_left = 1;
+        CHECK( khc_perform(&f.http) == KHC_ERR_CANCELLED );
+        CHECK( f.connects == 0 );
+        CHECK( f.closes == 0 );
+    }
+
+    SECTION("while connecting is closed") {
+        f.s_ctx.on_connect = [&f](void*, const char*, uint16_t) {
+            ++f.connects;
+            return EBISU_SOCK_AGAIN;
+        };
+        // Idle, then two connects that aren't ready.
+        steps_left = 3;
+        CHECK( khc_perform(&f.http) == KHC_ERR_CANCELLED );
+        CHECK( f.connects == 2 );
+        CHECK( f.closes == 1 );
+        CHECK_FALSE( khc_get_close_failed(&f.http) );
     }
 
     SECTION("once connected is closed") {

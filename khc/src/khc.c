@@ -52,10 +52,17 @@ static khc_code_t _stop_reason(khc_t* khc) {
 static void _stop(khc_t* khc, khc_code_t reason) {
     switch (khc->_state) {
         case KHC_STATE_IDLE:
-        case KHC_STATE_CONNECT:
             // Not connected yet.
             khc->_result = reason;
             khc->_state = KHC_STATE_FINISHED;
+            break;
+        case KHC_STATE_CONNECT:
+            // A connect that returned EBISU_SOCK_AGAIN in the step before has
+            // a connection on the way, which the socket keeps until it is
+            // called again or closed: it is closed, as an open one is. Before
+            // the first connect there is none.
+            khc->_result = reason;
+            khc->_state = khc->_again ? KHC_STATE_CLOSE : KHC_STATE_FINISHED;
             break;
         case KHC_STATE_CLOSE:
             // Closing, after the response or a failure, or after stopping.
