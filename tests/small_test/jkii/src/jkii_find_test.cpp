@@ -210,6 +210,26 @@ TEST_CASE("A member's number is read as an integer within a range, from its digi
     CHECK( w == 7 );
 }
 
+// jkii_find_member() found nothing at an empty path, which the grammar of
+// jkii_field_t#path has none of, but jkii_parse() took one to its assert that
+// a path isn't empty, which ended the program in a build that keeps asserts.
+TEST_CASE("An empty path finds nothing, through jkii_parse() too") {
+    const char json[] = "{\"a\":1}";
+    jkii_member_t m;
+    CHECK( jkii_find_member(json, strlen(json), "", &m) == JKII_ERR_NOT_FOUND );
+
+    jkii_field_t fields[3];
+    memset(fields, 0, sizeof(fields));
+    fields[0].path = "";
+    fields[0].type = JKII_FIELD_TYPE_INTEGER;
+    fields[1].path = "/a";
+    fields[1].type = JKII_FIELD_TYPE_INTEGER;
+    CHECK( jkii_parse(json, strlen(json), fields) == JKII_ERR_PARTIAL );
+    CHECK( fields[0].result == JKII_FIELD_ERR_NOT_FOUND );
+    CHECK( fields[1].result == JKII_FIELD_ERR_OK );
+    CHECK( fields[1].field_copy.int_value == 1 );
+}
+
 TEST_CASE("A member found by its path is read as it is written") {
     const std::vector<char> d = doc(
             "{\"config\" : {\"timeout\" : 30.0, \"name\" : \"d\\u00e9v\", \"n\" : [1, 2.5]}}");
