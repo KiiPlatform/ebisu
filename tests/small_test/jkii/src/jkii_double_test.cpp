@@ -135,6 +135,37 @@ TEST_CASE("jkii says a double too large or too small for one is so") {
     CHECK(read_double("0.5e+", &d) == JKII_PRIMITIVE_ERR_INVALID);
 }
 
+// jkii refuses as longer than it reads only a number "with a fraction or an
+// exponent" of more than 310 characters. The strtod() build refused an
+// integer that long too, read as a double, failing the whole of jkii_parse(),
+// where the other build said, as it is, that it is past any double.
+TEST_CASE("An integer too long to read as a double overflows, in either build") {
+    for (const std::string sign : { "", "-" }) {
+        const std::string number = sign + "1" + std::string(320, '0');
+        INFO("number " << sign << "1 and 320 zeros");
+        const std::string json = "{\"a\":1,\"d\":" + number + "}";
+        jkii_field_t fields[3];
+        memset(fields, 0, sizeof(fields));
+        fields[0].name = "a";
+        fields[0].type = JKII_FIELD_TYPE_INTEGER;
+        fields[1].name = "d";
+        fields[1].type = JKII_FIELD_TYPE_DOUBLE;
+        CHECK(jkii_parse(json.data(), json.size(), fields) == JKII_ERR_PARTIAL);
+        CHECK(fields[0].result == JKII_FIELD_ERR_OK);
+        CHECK(fields[1].result == JKII_FIELD_ERR_NUM_OVERFLOW);
+
+        jkii_member_t m;
+        REQUIRE(jkii_find_member(json.data(), json.size(), "/d", &m) == JKII_ERR_OK);
+        double d = 0;
+        CHECK(jkii_member_double(&m, &d) == JKII_FIELD_ERR_NUM_OVERFLOW);
+    }
+
+    // A number of 310 characters with a fraction is still read.
+    double d = 0;
+    CHECK(read_double("1" + std::string(307, '0') + ".0", &d) == JKII_PRIMITIVE_ERR_OK);
+    CHECK(d == 1e307);
+}
+
 TEST_CASE("jkii reads random doubles as strtod() does, or within a few units") {
     std::mt19937_64 rng(20261108);
     char buff[64];
