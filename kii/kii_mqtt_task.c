@@ -516,7 +516,9 @@ ebisu_sock_code_t _mqtt_recv_remaining(kii_t* kii, unsigned long remaining_lengt
 {
     size_t received = 0;
     size_t total_received = 0;
-    ebisu_sock_code_t res = EBISU_SOCK_FAIL;
+    // Nothing to read is read: a PUBLISH with nothing after its fixed header
+    // is then refused as malformed, rather than taken for a failed receive.
+    ebisu_sock_code_t res = EBISU_SOCK_OK;
     while (total_received < remaining_length) {
         res = kii->_mqtt_socket->ops->recv(
                 kii->_mqtt_socket,

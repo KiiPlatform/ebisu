@@ -5000,6 +5000,18 @@ TEST_CASE( "The MQTT task tells the event callback why" ) {
         CHECK( told(KII_MQTT_EVENT_MESSAGE_MALFORMED, 4) );
     }
 
+    // Nothing to read was taken for a failed receive: KII_MQTT_EVENT_RECV_FAILED,
+    // with a socket whose last error meant nothing.
+    SECTION("a message too short to hold its topic's length, with its length") {
+        const std::string packet = GENERATE(std::string("\x30\x00", 2), std::string("\x30\x01\x00", 3));
+        serve_stream(mqtt_ctx, packet, served);
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        _mqtt_state_recv_msg(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        CHECK( told(KII_MQTT_EVENT_MESSAGE_MALFORMED, (uint32_t)packet.size() - 2) );
+    }
+
     SECTION("a message handed over is no event") {
         serve_stream(mqtt_ctx, publish_packet("dummyTopic", "{}"), served);
         _mqtt_state_recv_ready(&state);
