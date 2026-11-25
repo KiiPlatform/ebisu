@@ -253,15 +253,18 @@ TEST_CASE( "A request not sent again after the renewal keeps its 403's date" ) {
     init_session(&session, &platform);
     kii_author_t author = make_author("th.1", "at1", "rt1");
     kii_session_set_author(&session, &author);
-    // The renewal needs about 640 bytes after a 300 byte body.
-    Client c(800);
+    Client c;
     // These responses are dated 1994.
     c.kii._khc._resp_date_floor = 0;
     REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+    // As in "A 403 with no room after the request's body": a refusal too long
+    // to read after the body has it given up.
     const std::string body = "{\"k\":\"" + std::string(290, 'v') + "\"}";
+    const std::string refused = http_response(403,
+            "{\"errorCode\":\"WRONG_TOKEN\",\"message\":\"" + std::string(3800, 'm') + "\"}");
 
     c.http.responses = {
-        dated(REFUSED, "Sun, 06 Nov 1994 08:49:37 GMT"),
+        dated(refused, "Sun, 06 Nov 1994 08:49:37 GMT"),
         dated(refreshed("at2", "rt2", 3600), "Sun, 06 Nov 1994 08:49:38 GMT"),
     };
     REQUIRE( c.put(body) == KII_ERR_OK );
@@ -901,28 +904,57 @@ TEST_CASE( "A download gives its callback the object's body alone" ) {
     }
 }
 
-TEST_CASE( "A body leaving no room to renew is not sent again" ) {
+// The renewal needs about 640 bytes after a 300 byte body, which a buffer of
+// 800 doesn't have: it renews in room of its own, and the body is sent again.
+TEST_CASE( "A body leaving too little room to renew after it is sent again" ) {
     Platform platform;
     kii_session_t session;
     init_session(&session, &platform);
     kii_author_t author = make_author("th.1", "at1", "rt1");
     kii_session_set_author(&session, &author);
-    // The renewal needs about 640 bytes after a 300 byte body.
     Client c(800);
     REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
     const std::string body = "{\"k\":\"" + std::string(290, 'v') + "\"}";
 
-    c.http.responses = { REFUSED, refreshed("at2", "rt2", 3600) };
+    c.http.responses = { REFUSED, refreshed("at2", "rt2", 3600), DONE };
     REQUIRE( c.put(body) == KII_ERR_OK );
-    REQUIRE( kii_get_resp_status(&c.kii) == 403 );
-    REQUIRE( c.http.requests.size() == 2 );
-    REQUIRE( std::string(held(&session).access_token) == "at2" );
+    CHECK( kii_get_resp_status(&c.kii) == 200 );
+    CHECK( c.resp_body() == "{\"done\":true}" );
+    REQUIRE( c.http.requests.size() == 3 );
+    CHECK( contains(c.http.requests[1], TOKEN_LINE) );
+    CHECK( contains(c.http.requests[2], REQ_LINE) );
+    CHECK( contains(c.http.requests[2], "Authorization: Bearer at2\r\n") );
+    CHECK( contains(c.http.requests[2], body) );
+    CHECK( std::string(held(&session).access_token) == "at2" );
+    CHECK( platform.updates.size() == 1 );
+    CHECK( platform.depth == 0 );
+}
 
-    c.http.responses.push_back(DONE);
+// Ahead of expiry, a renewal the body left too little room for wasn't made,
+// and the token was used until the server refused it.
+TEST_CASE( "A renewal ahead of expiry is made whatever room the body leaves" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    Client c(800);
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+    const std::string body = "{\"k\":\"" + std::string(290, 'v') + "\"}";
+
+    // A 1000 second token, now due.
+    platform.now_ms = 1000;
+    c.http.responses = { refreshed("at1", "rt1", 1000) };
+    REQUIRE( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_OK );
+    platform.now_ms = 1000 + renew_after_ms(1000);
+
+    c.http.requests.clear();
+    c.http.responses = { refreshed("at2", "rt2", 1000), DONE };
     REQUIRE( c.put(body) == KII_ERR_OK );
-    REQUIRE( kii_get_resp_status(&c.kii) == 200 );
-    REQUIRE( contains(c.http.requests[2], "Authorization: Bearer at2\r\n") );
-    REQUIRE( contains(c.http.requests[2], body) );
+    CHECK( kii_get_resp_status(&c.kii) == 200 );
+    REQUIRE( c.http.requests.size() == 2 );
+    CHECK( contains(c.http.requests[0], TOKEN_LINE) );
+    CHECK( contains(c.http.requests[1], "Authorization: Bearer at2\r\n") );
+    CHECK( contains(c.http.requests[1], body) );
+    CHECK( std::string(held(&session).access_token) == "at2" );
 }
 
 // Taking a token another kii_t of the session renewed asks nothing of the
@@ -935,7 +967,7 @@ TEST_CASE( "A token another kii_t renewed is taken, whatever room the body leave
     init_session(&session, &platform);
     kii_author_t author = make_author("th.1", "at1", "rt1");
     kii_session_set_author(&session, &author);
-    // As in "A body leaving no room to renew is not sent again".
+    // As in "A body leaving too little room to renew after it is sent again".
     Client c(800);
     Client other;
     REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );

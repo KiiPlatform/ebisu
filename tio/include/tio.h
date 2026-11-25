@@ -287,6 +287,12 @@ void tio_handler_set_http_socket(tio_handler_t* handler, ebisu_socket_t* socket)
  * You can change the size of buffer depending on the request/ response size.
  * Typically, 1024 bytes is enough. However it varies depending on your data schema used to define
  * thing properties/ command. Avoid defining large thing properties/ command if you need to reduce memory usage.
+ *
+ * With a session, a command's results are sent again after the token they
+ * were refused for is renewed. The renewal takes the room they leave in this
+ * buffer, or, where that is less than it needs, KII_SESSION_RENEW_BUFF_SIZE at
+ * most, the buffer set by kii_session_set_renew_buff(), or one kii allocates:
+ * results whose renewal can have none of them fail with TIO_ERR_ALLOCATION.
 
  * Memory used by the buffer can be safely freed after you've terminated tio_handler task.
 

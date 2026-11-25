@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 
 #include "kii.h"
@@ -52,6 +53,20 @@
 #define _RENEW_RETRY_MIN_MS ((uint32_t)30 * 1000)
 #define _RENEW_RETRY_MAX_MS ((uint32_t)5 * 60 * 1000)
 
+/* What kii.h tells applications a renewal takes, either way. */
+#if KII_SESSION_RENEW_BUFF_SIZE < _KII_SESSION_RENEW_BUFF_SIZE || \
+    KII_SESSION_RENEW_BUFF_SIZE < _KII_SESSION_ONBOARD_BUFF_SIZE
+#error "KII_SESSION_RENEW_BUFF_SIZE must hold either renewal"
+#endif
+
+/* What a renewal allocates its room with: malloc(), unless the tests build kii
+ * with an allocator of their own, which can fail. */
+#ifdef _KII_RENEW_MALLOC
+void* _KII_RENEW_MALLOC(size_t size);
+#else
+#define _KII_RENEW_MALLOC malloc
+#endif
+
 static const char _AUTH_HEADER_PREFIX[] = "Authorization: Bearer ";
 
 /* The errorCode of the 403 Kii answers for a token that is not valid: one that
@@ -73,6 +88,12 @@ void kii_session_set_lock(kii_session_t* session, ebisu_lock_t* lock)
 void kii_session_set_system(kii_session_t* session, ebisu_system_t* system)
 {
     session->_system = system;
+}
+
+void kii_session_set_renew_buff(kii_session_t* session, char* buff, size_t buff_size)
+{
+    session->_renew_buff = buff;
+    session->_renew_buff_size = (buff != NULL) ? buff_size : 0;
 }
 
 void kii_session_set_cb_author_updated(
@@ -643,11 +664,15 @@ static kii_code_t _replace_auth_header(kii_t* kii)
  * back as the request under way left them, its Authorization header carrying
  * the token now held.
  *
- * A body built in the buffer survives when the renewal fits in the space after
- * it; *out_resendable tells whether it did. A streamed body never does: its
- * reader belongs to the caller. When not forced, a renewal that would cost the
- * body is not attempted. A token another kii_t of the session renewed is only
- * taken, which asks nothing of the server and needs no room. */
+ * A body built in the buffer is kept: the renewal takes the room after it, or,
+ * where that is too little, the session's buffer, or one allocated for it and
+ * freed. Without any, the body would be lost: KII_ERR_ALLOCATION, nothing
+ * renewed, or, when not forced, KII_ERR_OK, nothing attempted. A streamed body,
+ * whose reader belongs to the caller, and an empty one have nothing to keep:
+ * without room of its own, the renewal takes what the buffer has, or, when not
+ * forced, isn't attempted. *out_resendable tells whether the request can be
+ * sent again. A token another kii_t of the session renewed is only taken,
+ * which asks nothing of the server and needs no room. */
 static kii_code_t _renew_and_restore(
         kii_t* kii,
         bool force,
@@ -658,20 +683,38 @@ static kii_code_t _renew_and_restore(
     size_t buff_size = kii->_rw_buff_size;
     size_t req_size = kii->_rw_buff_req_size;
     bool streamed = kii->_req_streamed;
-    size_t keep = (streamed) ? 0 : req_size + 1;
+    /* The body, and the byte after it, which kii_api_call_append_body() always
+     * leaves. */
+    size_t keep = (streamed || req_size == 0) ? 0 : req_size + 1;
     _lock(kii->_session);
     const bool renewed_elsewhere =
         kii->_session->_generation != kii->_session_generation;
     size_t renewal_size = (kii->_session->_renew_mode == KII_RENEW_BY_ONBOARDING) ?
         _KII_SESSION_ONBOARD_BUFF_SIZE : _KII_SESSION_RENEW_BUFF_SIZE;
+    char* session_room = kii->_session->_renew_buff;
+    size_t session_room_size = kii->_session->_renew_buff_size;
     _unlock(kii->_session);
+
+    char* room = buff + keep;
+    size_t room_size = buff_size - keep;
+    char* allocated = NULL;
     /* Once renewed elsewhere, the generation never comes back to this kii_t's
      * until it takes it, so _renew_locked() takes it below. */
-    if (!renewed_elsewhere && buff_size < keep + renewal_size) {
-        if (!force) {
-            return KII_ERR_OK;
+    if (!renewed_elsewhere && room_size < renewal_size) {
+        if (session_room != NULL) {
+            room = session_room;
+            room_size = session_room_size;
+        } else {
+            allocated = (char*)_KII_RENEW_MALLOC(renewal_size);
+            if (allocated != NULL) {
+                room = allocated;
+                room_size = renewal_size;
+            } else if (keep > 0) {
+                return (force) ? KII_ERR_ALLOCATION : KII_ERR_OK;
+            } else if (!force) {
+                return KII_ERR_OK;
+            }
         }
-        keep = 0;
     }
 
     /* The renewal is a request of its own through the same khc, which is
@@ -694,14 +737,18 @@ static kii_code_t _renew_and_restore(
     kii->_req_headers_len = 0;
     kii->_req_headers_allocated = false;
     kii->_req_streamed = false;
-    kii->_rw_buff = buff + keep;
-    kii->_rw_buff_size = buff_size - keep;
+    kii->_rw_buff = room;
+    kii->_rw_buff_size = room_size;
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
 
     _lock(kii->_session);
+    /* The renewal clears what it leaves of the tokens and credentials in the
+     * room it took, as it does in kii's own buffer, before another kii_t can
+     * take the session's. */
     kii_code_t res = _renew_locked(kii, force);
     _unlock(kii->_session);
+    free(allocated);
 
     _req_headers_free_all(kii);
     kii->_khc = request;
@@ -714,7 +761,7 @@ static kii_code_t _renew_and_restore(
     kii->_req_streamed = streamed;
     kii->_rw_buff = buff;
     kii->_rw_buff_size = buff_size;
-    kii->_rw_buff_req_size = (keep > 0) ? req_size : 0;
+    kii->_rw_buff_req_size = (streamed) ? 0 : req_size;
     kii->_rw_buff_read = 0;
     kii->_rw_buff_written = 0;
     kii->_resp_offset = 0;
@@ -724,7 +771,7 @@ static kii_code_t _renew_and_restore(
     if (res == KII_ERR_OK) {
         res = header_res;
     }
-    if (res == KII_ERR_OK && !streamed && keep > 0) {
+    if (res == KII_ERR_OK && !streamed) {
         *out_resendable = true;
     }
     return res;
@@ -812,6 +859,12 @@ khc_code_t _kii_perform(kii_t* kii)
      * for it there. */
     bool body_kept = (kii->_resp_offset > 0);
     kii_code_t res = _renew_and_restore(kii, true, &resendable);
+    if (res == KII_ERR_ALLOCATION) {
+        /* No room for the renewal without losing the body: the request fails,
+         * the token not renewed, and the refusal stays the response. */
+        _kii_resp_to_start(kii);
+        return KHC_ERR_ALLOCATION;
+    }
     if (res != KII_ERR_OK) {
         return code;
     }

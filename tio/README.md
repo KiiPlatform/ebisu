@@ -435,6 +435,17 @@ MQTT broker.
 The `tio_handler_t` and the `tio_updater_t` of a device share one session, so
 that a token refused to either is renewed once, for both.
 
+A command's results refused for the token are sent again once it is renewed.
+The renewal takes the room the results leave in the handler's HTTP buffer, or,
+where that is less than `KII_SESSION_RENEW_BUFF_SIZE`, 1152 bytes, one from the
+heap for as long as it lasts, unless the session has one of its own. A device
+that keeps ebisu off the heap gives it one:
+
+```c
+    static char renew_buff[KII_SESSION_RENEW_BUFF_SIZE];
+    kii_session_set_renew_buff(&session, renew_buff, sizeof(renew_buff));
+```
+
 Here's the set-up code extracted from [example.c](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/example.c).
 
 ```c
