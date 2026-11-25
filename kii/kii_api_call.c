@@ -190,6 +190,13 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
 
 kii_code_t _req_send(kii_t* kii)
 {
+    /* The application ID is a segment of every path of kii's own, and goes
+     * in a header. Refused before anything else, a request leaves the last
+     * response as it was. */
+    if (!_kii_is_app_id(kii->_app_id)) {
+        _req_headers_free_all(kii);
+        return KII_ERR_FAIL;
+    }
     /* Here, with the request made, rather than as the call starts: the ETag
      * of the last response is what the application gives this one for its
      * If-Match, straight from kii_get_etag(). */

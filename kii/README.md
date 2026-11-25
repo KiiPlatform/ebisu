@@ -27,7 +27,7 @@ creates.
 
     kii_init(&kii);
     kii_set_site(&kii, "api-jp.kii.com");
-    kii_set_app_id(&kii, "your-app-id");
+    kii_set_app_id(&kii, "yourAppID");
 
     kii_set_buff(&kii, buff, sizeof(buff));
 

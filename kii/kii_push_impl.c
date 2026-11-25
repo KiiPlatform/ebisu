@@ -72,6 +72,9 @@ kii_code_t _get_mqtt_endpoint(
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "GET");
 
+    if (!_kii_is_path_segment(installation_id)) {
+        return KII_ERR_FAIL;
+    }
     ebisu_strbuf_t path;
     ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     ebisu_strbuf_appendf(&path, "/api/apps/%s/installations/%s/mqtt-endpoint", kii->_app_id, installation_id);

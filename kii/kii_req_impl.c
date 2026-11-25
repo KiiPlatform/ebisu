@@ -5,6 +5,53 @@
 #include <ebisu_str.h>
 #include <string.h>
 
+static bool _is_letter_or_digit(char c)
+{
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
+}
+
+bool _kii_is_path_segment(const char* s)
+{
+    if (s == NULL || s[0] == '\0' || strcmp(s, ".") == 0 || strcmp(s, "..") == 0) {
+        return false;
+    }
+    for (const char* p = s; *p != '\0'; ++p) {
+        if (!_is_letter_or_digit(*p) && *p != '.' && *p != '_' && *p != '-' && *p != '$') {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool _kii_is_app_id(const char* s)
+{
+    if (s == NULL || s[0] == '\0') {
+        return false;
+    }
+    for (const char* p = s; *p != '\0'; ++p) {
+        if (!_is_letter_or_digit(*p)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/* Whether the scope of a bucket or a topic is one, with an ID that can be a
+ * segment of a path, unless it is the application's, which has none. */
+static bool _is_scope(kii_scope_type_t scope, const char* scope_id)
+{
+    switch (scope) {
+        case KII_SCOPE_APP:
+            return true;
+        case KII_SCOPE_USER:
+        case KII_SCOPE_GROUP:
+        case KII_SCOPE_THING:
+            return _kii_is_path_segment(scope_id);
+        default:
+            return false;
+    }
+}
+
 kii_code_t _set_bucket_path(
         kii_t* kii,
         const kii_bucket_t* bucket,
@@ -13,6 +60,11 @@ kii_code_t _set_bucket_path(
         const char* body)
 {
     char *scope_strs[] = { "", "users", "groups", "things" };
+    if (!_kii_is_path_segment(bucket->bucket_name) ||
+            !_is_scope(bucket->scope, bucket->scope_id) ||
+            (object_id[0] != '\0' && !_kii_is_path_segment(object_id))) {
+        return KII_ERR_FAIL;
+    }
     ebisu_strbuf_t path;
     ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     switch(bucket->scope) {
@@ -57,6 +109,11 @@ kii_code_t _set_bucket_path(
 
 kii_code_t _set_bucket_subscription_path(kii_t* kii, const kii_bucket_t* bucket) {
     const char* scope_strs[] = { "", "users", "groups", "things" };
+    if (!_kii_is_path_segment(bucket->bucket_name) ||
+            !_is_scope(bucket->scope, bucket->scope_id) ||
+            !_kii_is_path_segment(_kii_thing_id(kii))) {
+        return KII_ERR_FAIL;
+    }
     ebisu_strbuf_t path;
     ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     switch (bucket->scope) {
@@ -91,6 +148,9 @@ kii_code_t _set_topic_path(
         const kii_topic_t* topic)
 {
     const char* scope_strs[] = { "", "users", "groups", "things" };
+    if (!_kii_is_path_segment(topic->topic_name) || !_is_scope(topic->scope, topic->scope_id)) {
+        return KII_ERR_FAIL;
+    }
     ebisu_strbuf_t path;
     ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     switch (topic->scope) {
@@ -121,6 +181,10 @@ kii_code_t _set_topic_path(
 
 kii_code_t _set_topic_subscription_path(kii_t* kii, const kii_topic_t* topic) {
     const char* scope_strs[] = { "", "users", "groups", "things" };
+    if (!_kii_is_path_segment(topic->topic_name) || !_is_scope(topic->scope, topic->scope_id) ||
+            !_kii_is_path_segment(_kii_thing_id(kii))) {
+        return KII_ERR_FAIL;
+    }
     ebisu_strbuf_t path;
     ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     switch (topic->scope) {
@@ -152,6 +216,9 @@ kii_code_t _set_topic_subscription_path(kii_t* kii, const kii_topic_t* topic) {
 
 kii_code_t _set_topic_push_message_path(kii_t* kii, const kii_topic_t* topic) {
     const char* scope_strs[] = { "", "users", "groups", "things" };
+    if (!_kii_is_path_segment(topic->topic_name) || !_is_scope(topic->scope, topic->scope_id)) {
+        return KII_ERR_FAIL;
+    }
     ebisu_strbuf_t path;
     ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     switch (topic->scope) {
@@ -181,6 +248,9 @@ kii_code_t _set_topic_push_message_path(kii_t* kii, const kii_topic_t* topic) {
 }
 
 kii_code_t _set_thing_push_message_path(kii_t* kii, const char* thing_id) {
+    if (!_kii_is_path_segment(thing_id)) {
+        return KII_ERR_FAIL;
+    }
     ebisu_strbuf_t path;
     ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     ebisu_strbuf_appendf(&path, "/api/apps/%s/things/%s/push/messages", kii->_app_id, thing_id);

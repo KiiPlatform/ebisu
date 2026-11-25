@@ -186,6 +186,7 @@ TEST_CASE( "kii_ti_put_firmware_version escapes the version" ) {
     kii_set_site(&kii, "api.kii.com");
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    strcpy(kii._author.author_id, "th.1");
 
     std::string request;
     khct::cb::SockCtx http_ctx;
@@ -872,6 +873,104 @@ TEST_CASE( "An API call's body read through a callback" ) {
         REQUIRE( script.requests.size() == 1 );
         CHECK( reader.calls == 0 );
         CHECK( body_of(script.requests[0]) == "{\"a\":1}" );
+    }
+}
+
+// An ID or a name the application gives, and the application's ID, went
+// into a request's path as they were: a '/', '?', '#' or '%' in one, or a
+// segment of "..", sent the request to another path than its own. Kii's are
+// letters, digits, '.', '_' and '-', and '$' in a server code endpoint's name,
+// and its application IDs letters and digits.
+TEST_CASE( "An ID that would change a request's path is refused before it is sent" ) {
+    char kii_buff[1024];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    strcpy(kii._author.author_id, "th.1");
+    strcpy(kii._author.access_token, "tok");
+    khct::HttpScript script;
+    script.attach(&kii);
+
+    kii_bucket_t bucket;
+    memset(&bucket, 0, sizeof(bucket));
+    bucket.scope = KII_SCOPE_APP;
+    bucket.bucket_name = "b";
+    kii_topic_t topic;
+    memset(&topic, 0, sizeof(topic));
+    topic.scope = KII_SCOPE_APP;
+    topic.topic_name = "t";
+    kii_object_id_t id;
+    kii_mqtt_endpoint_t endpoint;
+
+    const char* const not_segments[] = {
+        "a/b", "a?b", "a#b", "a%2Fb", "a b", "a\\b", ".", "..", "", "caf\xc3\xa9",
+    };
+    for (const char* s : not_segments) {
+        INFO( "segment \"" << s << "\"" );
+        if (s[0] != '\0') {
+            bucket.bucket_name = s;
+            CHECK( kii_post_object(&kii, &bucket, "{}", NULL, &id) == KII_ERR_FAIL );
+            bucket.bucket_name = "b";
+            CHECK( kii_get_object(&kii, &bucket, s) == KII_ERR_FAIL );
+            CHECK( kii_put_object(&kii, &bucket, s, "{}", NULL, NULL) == KII_ERR_FAIL );
+            CHECK( kii_delete_object(&kii, &bucket, s) == KII_ERR_FAIL );
+        }
+        bucket.scope = KII_SCOPE_USER;
+        bucket.scope_id = s;
+        CHECK( kii_post_object(&kii, &bucket, "{}", NULL, &id) == KII_ERR_FAIL );
+        CHECK( kii_subscribe_bucket(&kii, &bucket) == KII_ERR_FAIL );
+        bucket.scope = KII_SCOPE_APP;
+        bucket.scope_id = NULL;
+        topic.topic_name = s;
+        CHECK( kii_put_topic(&kii, &topic) == KII_ERR_FAIL );
+        CHECK( kii_subscribe_topic(&kii, &topic) == KII_ERR_FAIL );
+        CHECK( kii_send_push_message(&kii, &topic, "{}") == KII_ERR_FAIL );
+        topic.topic_name = "t";
+        CHECK( kii_send_push_message_to_thing(&kii, s, "{}") == KII_ERR_FAIL );
+        CHECK( kii_get_mqtt_endpoint(&kii, s, &endpoint) == KII_ERR_FAIL );
+        CHECK( kii_execute_server_code_version(&kii, s, "e", "{}") == KII_ERR_FAIL );
+        CHECK( kii_execute_server_code_version(&kii, "current", s, "{}") == KII_ERR_FAIL );
+    }
+    CHECK( script.requests.empty() );
+
+    SECTION("the thing's own ID, in its paths, too") {
+        strcpy(kii._author.author_id, "th.1/..");
+        CHECK( kii_ti_put_firmware_version(&kii, "1.0") == KII_ERR_FAIL );
+        CHECK( kii_subscribe_topic(&kii, &topic) == KII_ERR_FAIL );
+        CHECK( script.requests.empty() );
+    }
+
+    SECTION("an application ID of anything but letters and digits, for every request") {
+        for (const char* app_id : { "dummy-app", "dummy_app", "a/b", "" }) {
+            INFO( "application ID \"" << app_id << "\"" );
+            kii_set_app_id(&kii, app_id);
+            CHECK( kii_auth_thing(&kii, "vid", "pw") == KII_ERR_FAIL );
+            CHECK( kii_get_object(&kii, &bucket, "o") == KII_ERR_FAIL );
+            REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, false) == KII_ERR_OK );
+            CHECK( kii_api_call_run(&kii) == KII_ERR_FAIL );
+        }
+        CHECK( script.requests.empty() );
+    }
+
+    SECTION("what Kii's IDs are made of goes, and so does a '$' in an endpoint's name") {
+        script.responses = {
+            khct::http_response(200, "{}"),
+            khct::http_response(200, "{}"),
+            khct::http_response(200, "{}"),
+        };
+        bucket.bucket_name = "my_bucket-2";
+        CHECK( kii_get_object(&kii, &bucket, "o.1_a-B") == KII_ERR_OK );
+        CHECK( kii_execute_server_code_version(&kii, "current", "my$end_point", "{}") == KII_ERR_OK );
+        bucket.scope = KII_SCOPE_THING;
+        bucket.scope_id = "th.1";
+        CHECK( kii_get_object(&kii, &bucket, "o") == KII_ERR_OK );
+        REQUIRE( script.requests.size() == 3 );
+        CHECK( khct::contains(script.requests[0], "GET /api/apps/dummyAppID/buckets/my_bucket-2/objects/o.1_a-B HTTP/1.1\r\n") );
+        CHECK( khct::contains(script.requests[1], "/server-code/versions/current/my$end_point HTTP/1.1\r\n") );
+        CHECK( script.requests[2].substr(0, script.requests[2].find("\r\n")) ==
+                "GET /api/apps/dummyAppID/things/th.1/buckets/my_bucket-2/objects/o HTTP/1.1" );
     }
 }
 
