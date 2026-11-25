@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #ifndef EBISU_NO_STRTOD
 #include <locale.h>
+#include <math.h>
 #endif
 
 /* If your environment does not have assert, you must set JKII_NOASSERT define. */
@@ -478,6 +479,15 @@ static jkii_primitive_err_t _jkii_to_double(
     memset(buf, 0, sizeof(buf) / sizeof(buf[0]));
 
     if (buf_len <= target_size) {
+        /* An integer this long, whose first digit JSON has be other than 0,
+         * is 10^309 or more: past a double's range, as strtod() would find,
+         * and the build without it does. One with a fraction or an exponent
+         * is longer than jkii reads. */
+        const size_t sign = (target[0] == '-') ? 1 : 0;
+        if (_jkii_is_all_digit(target + sign, target_size - sign)) {
+            *out_double = sign ? -HUGE_VAL : HUGE_VAL;
+            return JKII_PRIMITIVE_ERR_OVERFLOW;
+        }
         return JKII_PRIMITIVE_ERR_INVALID;
     }
     memcpy(buf, target, target_size);
