@@ -56,6 +56,11 @@ typedef struct {
      */
     bool pingresp_received;
     /** \private
+     * Whether the task received once more for that PINGRESP, with the next
+     * PINGREQ due, on a socket that can't tell whether something has come.
+     */
+    bool pingresp_sought;
+    /** \private
      * Whether the MQTT socket is connected: from a successful connect until
      * the close callback is called, so that the task closes it on its way
      * out, and only then.
