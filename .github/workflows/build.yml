@@ -52,7 +52,7 @@ jobs:
       - name: configure
         run: cmake --preset debug -DEBISU_TEST_JUNIT=ON
       - name: build
-        run: cmake --build --preset debug
+        run: cmake --build --preset debug --parallel "$(nproc)"
       # --test-dir is redundant with --preset for a plain run, but -T memcheck
       # resolves DartConfiguration.tcl relative to the current directory rather
       # than the preset's binaryDir. Without it ctest reads no configuration,
@@ -70,7 +70,7 @@ jobs:
         # The Doxyfiles write straight into the publish layout, so there is no
         # longer a copy step reassembling it from per-component html/ output in
         # the source tree.
-        run: cmake --build --preset debug --target docs
+        run: cmake --build --preset debug --target docs --parallel "$(nproc)"
       # The site keeps one set of docs per major version, each from its
       # release/<major>.<minor> branch, so that users of an older version
       # still find its API: release/1.3's under v1/, release/3.0's under v3/.
@@ -258,7 +258,7 @@ jobs:
       - name: configure
         run: cmake --preset ${{ matrix.preset }} ${{ matrix.configure }}
       - name: build
-        run: cmake --build --preset ${{ matrix.preset }}
+        run: cmake --build --preset ${{ matrix.preset }} --parallel "$(nproc)"
       - name: test (small)
         # The sanitizer presets compile with -fno-sanitize-recover=all, so a
         # UBSan finding aborts instead of printing a "runtime error" line and
@@ -361,7 +361,7 @@ jobs:
       - name: configure
         run: cmake --preset fuzz
       - name: build
-        run: cmake --build --preset fuzz
+        run: cmake --build --preset fuzz --parallel "$(nproc)"
       - name: fuzz
         run: tests/fuzz/run.sh 60
 
@@ -413,7 +413,7 @@ jobs:
       - name: configure
         run: cmake --preset debug -DEBISU_TEST_JUNIT=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/mbedtls" -DEBISU_TLS_RESUME=ON
       - name: build
-        run: cmake --build --preset debug --target small_test_mbedtls
+        run: cmake --build --preset debug --target small_test_mbedtls --parallel "$(nproc)"
       # As the build job's small tests: see there for --test-dir.
       - name: test (valgrind)
         run: ctest --preset small --test-dir build/debug -R '^small_test_mbedtls$' -T memcheck
@@ -469,7 +469,7 @@ jobs:
       - name: configure
         run: cmake --preset debug -DEBISU_TEST_JUNIT=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/polarssl" -DEBISU_TLS_RESUME=ON
       - name: build
-        run: cmake --build --preset debug --target small_test_polarssl
+        run: cmake --build --preset debug --target small_test_polarssl --parallel "$(nproc)"
       # As the build job's small tests: see there for --test-dir.
       - name: test (valgrind)
         run: ctest --preset small --test-dir build/debug -R '^small_test_polarssl$' -T memcheck
@@ -512,13 +512,18 @@ jobs:
       - name: configure
         run: cmake --preset ${{ matrix.preset }}
       - name: build
-        run: cmake --build --preset ${{ matrix.preset }}
+        run: cmake --build --preset ${{ matrix.preset }} --parallel "$(nproc)"
 
   # What the small tests and the OpenSSL port's own run of the libraries' code,
   # as gcovr.cfg says: the totals and each file's in the job's summary, and
   # each line in the coverage-report artifact. It reports and fails on no
   # figure. The large tests, which need the application and its secrets, are
   # left out, and so is what only they run.
+  # Each preset build is given the runner's cores as its parallel level, as
+  # the other builds here are: the presets' "jobs": 0 has make run with -j and
+  # no number, every compile at once, and the coverage build, the large tests'
+  # among it, took the runner's memory, which then stopped answering until the
+  # job's timeout, its log never uploaded.
   coverage:
     name: coverage (small, openssl port)
     runs-on: ubuntu-latest
@@ -537,7 +542,7 @@ jobs:
       - name: configure
         run: cmake --preset coverage
       - name: build
-        run: cmake --build --preset coverage
+        run: cmake --build --preset coverage --parallel "$(nproc)"
       - name: test (small)
         run: ctest --preset coverage
       - name: test (OpenSSL port)
@@ -703,7 +708,7 @@ jobs:
           DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
         run: cmake --preset debug -DEBISU_TEST_JUNIT=ON
       - name: build
-        run: cmake --build --preset debug
+        run: cmake --build --preset debug --parallel "$(nproc)"
       # Dependabot's runs and forks' get no secrets, so no large test is
       # configured and ctest fails for want of any. On master it still does:
       # losing the secrets must not look like passing.
@@ -757,7 +762,7 @@ jobs:
       - name: configure
         run: cmake --preset debug -DEBISU_TEST_BROKER=ON -DEBISU_TEST_JUNIT=ON
       - name: build
-        run: cmake --build --preset debug --target broker_test_kii
+        run: cmake --build --preset debug --target broker_test_kii --parallel "$(nproc)"
       - name: test (broker)
         # -T memcheck needs --test-dir; see the build job.
         run: tests/broker_test/with_broker.py ctest --preset broker --test-dir build/debug -T memcheck
