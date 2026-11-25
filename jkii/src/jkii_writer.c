@@ -181,6 +181,55 @@ jkii_write_err_t jkii_write_array_end(jkii_writer_t* w)
     return _end(w, 0, "]");
 }
 
+/* The length of the well-formed UTF-8 sequence at s, of the n bytes there, as
+   the Unicode Standard's table 3-7 has it, or 0 if it isn't one: a byte that
+   starts none, an overlong form, a surrogate, past U+10FFFF, or cut short. */
+static size_t _utf8_length(const unsigned char* s, size_t n)
+{
+    const unsigned char c = s[0];
+    size_t length = 0;
+    unsigned char second_min = 0x80;
+    unsigned char second_max = 0xbf;
+    if (c < 0x80) {
+        return 1;
+    } else if (c >= 0xc2 && c <= 0xdf) {
+        length = 2;
+    } else if (c >= 0xe0 && c <= 0xef) {
+        length = 3;
+        second_min = (c == 0xe0) ? 0xa0 : 0x80;
+        second_max = (c == 0xed) ? 0x9f : 0xbf;
+    } else if (c >= 0xf0 && c <= 0xf4) {
+        length = 4;
+        second_min = (c == 0xf0) ? 0x90 : 0x80;
+        second_max = (c == 0xf4) ? 0x8f : 0xbf;
+    } else {
+        return 0;
+    }
+    if (n < length || s[1] < second_min || s[1] > second_max) {
+        return 0;
+    }
+    for (size_t i = 2; i < length; ++i) {
+        if (s[i] < 0x80 || s[i] > 0xbf) {
+            return 0;
+        }
+    }
+    return length;
+}
+
+/* Whether s's n bytes are UTF-8, which JSON text is, as RFC 8259 has it. */
+static int _is_utf8(const char* s, size_t n)
+{
+    size_t i = 0;
+    while (i < n) {
+        const size_t length = _utf8_length((const unsigned char*)&s[i], n - i);
+        if (length == 0) {
+            return 0;
+        }
+        i += length;
+    }
+    return 1;
+}
+
 /* s's n bytes as a JSON string, escaped as jkii_escape_str() escapes. */
 static void _put_escaped(jkii_writer_t* w, const char* s, size_t n)
 {
@@ -255,7 +304,7 @@ jkii_write_err_t jkii_write_key_n(jkii_writer_t* w, const char* key, size_t n)
     if (_stopped(w)) {
         return w->_err;
     }
-    if (key == NULL && n > 0) {
+    if ((key == NULL && n > 0) || (key != NULL && !_is_utf8(key, n))) {
         return _fail(w, JKII_WRITE_ERR_VALUE);
     }
     if (_begin_key(w) != JKII_WRITE_OK && _stopped(w)) {
@@ -276,7 +325,7 @@ jkii_write_err_t jkii_write_key(jkii_writer_t* w, const char* key)
 
 jkii_write_err_t jkii_write_string_n(jkii_writer_t* w, const char* s, size_t n)
 {
-    if (s == NULL && n > 0) {
+    if ((s == NULL && n > 0) || (s != NULL && !_is_utf8(s, n))) {
         return _fail(w, JKII_WRITE_ERR_VALUE);
     }
     if (_begin_value(w) != JKII_WRITE_OK && _stopped(w)) {

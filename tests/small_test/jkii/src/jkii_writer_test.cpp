@@ -486,6 +486,60 @@ TEST_CASE( "The JSON writer refuses what wouldn't be JSON" ) {
     CHECK( into_buffer([](jkii_writer_t* w) { jkii_write_raw(w, "", 0); }).err == JKII_WRITE_ERR_VALUE );
 }
 
+// JSON text is UTF-8, as RFC 8259 has it for text exchanged, and jkii reads
+// none that isn't. The writer passed any other byte through, and said
+// JKII_WRITE_OK: Latin-1, or a name cut in the middle of a character.
+TEST_CASE( "The JSON writer refuses a string or key that isn't UTF-8" ) {
+    const char* const not_utf8[] = {
+        "caf\xe9",          // Latin-1
+        "caf\xc3",          // cut before its last byte
+        "\x80",             // a continuation byte alone
+        "\xc0\xaf",         // overlong
+        "\xe0\x80\xaf",     // overlong
+        "\xed\xa0\x80",     // a surrogate, U+D800
+        "\xf4\x90\x80\x80", // past U+10FFFF
+        "\xf5\x80\x80\x80", // no such lead byte
+        "\xe2\x82",         // cut
+    };
+    for (const char* s : not_utf8) {
+        INFO( "string " << (const void*)s );
+        CHECK( into_buffer([s](jkii_writer_t* w) { jkii_write_string(w, s); }).err
+                == JKII_WRITE_ERR_VALUE );
+        CHECK( into_buffer([s](jkii_writer_t* w) { jkii_write_string_n(w, s, strlen(s)); }).err
+                == JKII_WRITE_ERR_VALUE );
+        CHECK( into_buffer([s](jkii_writer_t* w) {
+            jkii_write_object_start(w);
+            jkii_write_key(w, s);
+            jkii_write_int(w, 1);
+            jkii_write_object_end(w);
+        }).err == JKII_WRITE_ERR_VALUE );
+        CHECK( into_buffer([s](jkii_writer_t* w) {
+            jkii_write_object_start(w);
+            jkii_write_key_n(w, s, strlen(s));
+            jkii_write_int(w, 1);
+            jkii_write_object_end(w);
+        }).err == JKII_WRITE_ERR_VALUE );
+    }
+
+    // Each kind of sequence, at its limits, is written, and read back.
+    const char* const utf8[] = {
+        "\x7f", "\xc2\x80", "\xdf\xbf", "\xe0\xa0\x80", "\xed\x9f\xbf",
+        "\xee\x80\x80", "\xef\xbf\xbf", "\xf0\x90\x80\x80", "\xf4\x8f\xbf\xbf",
+        "caf\xc3\xa9 \xe2\x82\xac \xf0\x9f\x98\x80",
+    };
+    for (const char* s : utf8) {
+        INFO( "string " << (const void*)s );
+        Written written = into_buffer([s](jkii_writer_t* w) {
+            jkii_write_array_start(w);
+            jkii_write_string(w, s);
+            jkii_write_array_end(w);
+        });
+        CHECK( written.err == JKII_WRITE_OK );
+        jkii_member_t read;
+        CHECK( jkii_root_value(written.json.c_str(), written.json.size(), &read) == JKII_ERR_OK );
+    }
+}
+
 TEST_CASE( "A JSON writer's error sticks" ) {
     std::vector<char> buff(64);
     jkii_writer_t w;
