@@ -503,7 +503,7 @@ Functions</h2></td></tr>
 <tr class="memitem:a5a67677ff2904593cbd93e5da52084c3" id="r_a5a67677ff2904593cbd93e5da52084c3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5a67677ff2904593cbd93e5da52084c3">kii_set_use_m_0_header_flag</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, bool flag)</td></tr>
 <tr class="memdesc:a5a67677ff2904593cbd93e5da52084c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send the "kii-m: 0" header with subsequent requests.  <br /></td></tr>
 <tr class="memitem:a0709f4778e23ff51645274ec79fa7efa" id="r_a0709f4778e23ff51645274ec79fa7efa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0709f4778e23ff51645274ec79fa7efa">kii_cancel_request_being_prepared</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii)</td></tr>
-<tr class="memdesc:a0709f4778e23ff51645274ec79fa7efa"><td class="mdescLeft">&#160;</td><td class="mdescRight">reset state of request currently under preparation.  <br /></td></tr>
+<tr class="memdesc:a0709f4778e23ff51645274ec79fa7efa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cancel the request being prepared with <a class="el" href="#a0cc7c157807c5eac4598deeb6b1fe2be" title="Start making REST API call.">kii_api_call_start()</a>.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Provides REST API access. </p>
@@ -1341,7 +1341,8 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
       </table>
 </div><div class="memdoc">
 
-<p>reset state of request currently under preparation. </p>
+<p>Cancel the request being prepared with <a class="el" href="#a0cc7c157807c5eac4598deeb6b1fe2be" title="Start making REST API call.">kii_api_call_start()</a>. </p>
+<p>Its headers are cleared, and a reader given to <a class="el" href="#a34c1c55c0581e0170e57a10090424c27" title="Have the request body read through a callback as it is sent.">kii_api_call_set_body_reader()</a> is forgotten. A call started and never run or cancelled is forgotten as well by the next request, whatever API makes it.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
