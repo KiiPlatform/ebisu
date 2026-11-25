@@ -99,8 +99,9 @@ typedef enum ebisu_logger_init_error_t {
  * flushed and counted under it, as the file is renamed, so that it may be
  * called from more than one task at once, which wait only for each other's
  * writes. Nothing is lost but for the system failing to write: a file that
- * can't be renamed is written past its size, and one that can't be opened is
- * tried again with the next line.
+ * can't be renamed, as one something holds open on Windows, is written past
+ * its size, and renamed once another size's worth has come, the backup kept
+ * meanwhile; and one that can't be opened is tried again with the next line.
  *
  * Initialize with ebisu_file_logger_init(), and close with
  * ebisu_file_logger_close().

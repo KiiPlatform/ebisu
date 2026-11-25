@@ -6,6 +6,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
+
 /* The file at the logger's path, to add to, and how much it has. Binary, so
    that what is counted is what is written, a newline too, on Windows. */
 static void open_file(ebisu_file_logger_t* logger, const char* mode)
@@ -21,19 +28,32 @@ static void open_file(ebisu_file_logger_t* logger, const char* mode)
     }
 }
 
+/* Renames the file at path to backup, replacing it: on Windows, whose
+   rename() replaces nothing, with MoveFileEx(), rather than with the backup
+   removed first and lost if the file then can't be renamed, as when something
+   holds it open without FILE_SHARE_DELETE. */
+static int rename_replacing(const char* path, const char* backup)
+{
+#ifdef _WIN32
+    return MoveFileExA(path, backup, MOVEFILE_REPLACE_EXISTING) ? 0 : -1;
+#else
+    return rename(path, backup);
+#endif
+}
+
 /* The file renamed to its backup, which it replaces, and a new one started.
    One that can't be renamed is added to again, past its size, rather than
-   lose what comes. */
+   lose what comes, and counted from there: the next attempt comes once
+   another size's worth has been written, rather than with every line. */
 static void rotate(ebisu_file_logger_t* logger)
 {
     char backup[EBISU_FILE_LOGGER_PATH_MAX + 2];
     snprintf(backup, sizeof(backup), "%s.1", logger->_path);
     fclose(logger->_file);
     logger->_file = NULL;
-    /* Windows' rename() doesn't replace a file. */
-    remove(backup);
-    if (rename(logger->_path, backup) != 0) {
+    if (rename_replacing(logger->_path, backup) != 0) {
         open_file(logger, "ab");
+        logger->_size = 0;
         return;
     }
     open_file(logger, "wb");

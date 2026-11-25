@@ -124,6 +124,47 @@ TEST_CASE("The file logger keeps its file under its size, and what came before i
     CHECK(contents(PATH) == expected[2]);
 }
 
+#ifdef _WIN32
+// Windows' rename() doesn't replace a file, and the logger removed the backup
+// before it: a file it then couldn't rename, as one a tail holds open without
+// FILE_SHARE_DELETE, lost the backup, and the logger tried again with every
+// line, closing and opening the file each time.
+TEST_CASE("The file logger keeps its backup when its file can't be renamed") {
+    Files files;
+    write_file(BACKUP, "kept\n");
+    ebisu_file_logger_t logger;
+    REQUIRE(ebisu_file_logger_init(&logger, PATH, 100, EBISU_LOG_DEBUG, nullptr, nullptr));
+    std::string lines;
+    for (int i = 1; i <= 7; ++i) {
+        ebisu_log(&logger.base, EBISU_LOG_INFO, "line %02d", i);
+        lines += numbered(i);
+    }
+    HANDLE held = CreateFileA(PATH, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+            nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    REQUIRE(held != INVALID_HANDLE_VALUE);
+    // Past its size, the file can't be renamed, and is added to.
+    for (int i = 8; i <= 10; ++i) {
+        ebisu_log(&logger.base, EBISU_LOG_INFO, "line %02d", i);
+        lines += numbered(i);
+    }
+    CloseHandle(held);
+    CHECK(contents(BACKUP) == "kept\n");
+    CHECK(contents(PATH) == lines);
+
+    // Tried again once another size's worth has come, rather than with the
+    // next line: 4 more lines, then the one that would go past it again.
+    for (int i = 11; i <= 15; ++i) {
+        ebisu_log(&logger.base, EBISU_LOG_INFO, "line %02d", i);
+        if (i <= 14) {
+            lines += numbered(i);
+        }
+    }
+    ebisu_file_logger_close(&logger);
+    CHECK(contents(BACKUP) == lines);
+    CHECK(contents(PATH) == numbered(15));
+}
+#endif
+
 TEST_CASE("The file logger adds to a file there is, counting what it has") {
     Files files;
     const std::string before(90, 'x');
