@@ -679,3 +679,12 @@ With one:
   called, as the updater uploads again after a token is renewed.
 - A renewal keeps a copy of `khc_t` on the stack of the task making the request,
   about 700 bytes on x86-64. Allow for it in that task's stack.
+- A renewal for a request whose body was built in the buffer set by
+  `kii_set_buff()` takes the room after the body, so that the request can be
+  sent again: `KII_SESSION_RENEW_BUFF_SIZE` at most, 1152 bytes as kii is built
+  by default. Where the body leaves less, as a 1024-byte buffer always does for
+  tio, it takes the buffer set by `kii_session_set_renew_buff()`, or allocates
+  one with `malloc()` for as long as it lasts. An application that keeps ebisu
+  off the heap sets that buffer too. A renewal that can have neither fails the
+  request with `KII_ERR_ALLOCATION`, or `TIO_ERR_ALLOCATION` from tio, the
+  token not renewed.

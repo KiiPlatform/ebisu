@@ -150,9 +150,13 @@ TEST_CASE( "A command's results are sent again after the token is renewed" ) {
 
     tio_handler_t handler;
     tio_handler_init(&handler);
+    // 1024 bytes, as tio.h has "typically" enough, leave the renewal by
+    // onboarding, about 1150 bytes, too little room after the results.
+    const size_t size = GENERATE(as<size_t>(), 2048, 1024);
+    INFO( "buffer of " << size );
     char buff[2048];
     tio_handler_set_app(&handler, "app", "api.kii.com");
-    tio_handler_set_http_buff(&handler, buff, sizeof(buff));
+    tio_handler_set_http_buff(&handler, buff, size);
     tio_handler_set_system(&handler, khct::cb::delay_only_system());
     khct::HttpScript http;
     http.attach(&handler._kii);

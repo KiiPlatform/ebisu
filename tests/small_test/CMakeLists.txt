@@ -76,6 +76,22 @@ ebisu_add_test_suite(small_test_kii
     LINK ${EBISU_KII_OBJS} Threads::Threads
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/kii ${PROJECT_SOURCE_DIR}/kii)
 
+# kii again, its renewals allocating their room with an allocator of the tests'
+# own, which can fail.
+if(EBISU_SESSION)
+    ebisu_objs_defining(ebisu_kii_objs ebisu_kii_renew_alloc_objs
+        _KII_RENEW_MALLOC=khct_renew_malloc)
+    target_link_libraries(ebisu_kii_renew_alloc_objs
+        PRIVATE ebisu_khc_objs ebisu_core_objs ebisu_jkii_objs)
+
+    ebisu_add_test_suite(small_test_kii_renew_alloc
+        LABEL small
+        WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/kii
+        SOURCES kii/renew_alloc_test.cpp
+        LINK ebisu_kii_renew_alloc_objs ${EBISU_KHC_OBJS} ${EBISU_JKII_OBJS}
+        INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/kii ${PROJECT_SOURCE_DIR}/kii)
+endif()
+
 # kii again, without sessions, as -DEBISU_SESSION=OFF builds it: its tests but
 # the sessions', and that no session can be attached.
 ebisu_objs_defining(ebisu_kii_objs ebisu_kii_no_session_objs EBISU_NO_SESSION)

@@ -50,7 +50,7 @@ extern "C" {
  * defined otherwise, for a server that issues longer tokens or a broker that
  * gives longer fields: alike for kii and everything using it, as they change
  * the layout of kii_author_t, kii_mqtt_endpoint_t and kii_t. A session's
- * renewal needs as much more room in the buffer set by kii_set_buff(), as its
+ * renewal needs as much more room, KII_SESSION_RENEW_BUFF_SIZE, as its
  * response carries the tokens, and, by onboarding again, the endpoint. A token
  * longer than its size fails the login, onboarding or renewal that got it
  * with KII_ERR_TOO_LARGE_DATA. With CMake, each is set as a CMake variable of
@@ -111,6 +111,26 @@ extern "C" {
 #ifndef KII_REQ_HEADER_BUFF_SIZE
 #define KII_REQ_HEADER_BUFF_SIZE (1024 + KII_TOKEN_MAX_SIZE)
 #endif
+
+/**
+ * \brief Room a session's renewal needs for its request and response, at their
+ * longest: by onboarding again, whose response carries the MQTT endpoint, or
+ * through the token endpoint, whichever needs more.
+ *
+ * A renewal takes what it needs, this at most, after the body of the request it
+ * renews for, in the buffer set by kii_set_buff(), or else in the buffer set by
+ * kii_session_set_renew_buff(), or else in one kii allocates. With the sizes
+ * above as they are, it is 1152 bytes.
+ */
+#define KII_SESSION_RENEW_BUFF_SIZE \
+    ((KII_AUTHOR_ID_MAX_SIZE + KII_TOKEN_MAX_SIZE + KII_INSTALLATION_ID_MAX_SIZE + \
+      KII_USERNAME_MAX_SIZE + KII_PASSWORD_MAX_SIZE + KII_TOPIC_MAX_SIZE + \
+      KII_HOST_MAX_SIZE + 512) > \
+     (KII_AUTHOR_ID_MAX_SIZE + KII_TOKEN_MAX_SIZE + KII_REFRESH_TOKEN_MAX_SIZE + 256) ? \
+     (KII_AUTHOR_ID_MAX_SIZE + KII_TOKEN_MAX_SIZE + KII_INSTALLATION_ID_MAX_SIZE + \
+      KII_USERNAME_MAX_SIZE + KII_PASSWORD_MAX_SIZE + KII_TOPIC_MAX_SIZE + \
+      KII_HOST_MAX_SIZE + 512) : \
+     (KII_AUTHOR_ID_MAX_SIZE + KII_TOKEN_MAX_SIZE + KII_REFRESH_TOKEN_MAX_SIZE + 256))
 
 /** \brief Size of kii_ti_firmware_version_t::firmware_version. */
 #define KII_FIRMWARE_VERSION_MAX_SIZE 128
@@ -305,6 +325,10 @@ typedef struct kii_session_t {
     void* _author_updated_data; /**< \private */
     ebisu_lock_t* _lock; /**< \private */
     ebisu_system_t* _system; /**< \private */
+    /** \private The room renewals take when a request's body leaves too
+     * little, as kii_session_set_renew_buff() set it, or NULL. */
+    char* _renew_buff;
+    size_t _renew_buff_size; /**< \private */
 } kii_session_t;
 
 /** \brief Represents MQTT endpoint. */
@@ -914,6 +938,33 @@ void kii_session_set_author(kii_session_t* session, const kii_author_t* author);
 void kii_session_set_renew_mode(kii_session_t* session, kii_renew_mode_t mode);
 
 /**
+ * \brief Set the buffer renewals take when a request's body leaves them too
+ * little room.
+ *
+ * A renewal for a request whose body was built in the buffer set by
+ * kii_set_buff() takes the room after the body, so that the request can be
+ * sent again. Where the body leaves less than the renewal needs,
+ * KII_SESSION_RENEW_BUFF_SIZE at most, it takes this buffer instead, or,
+ * without one, one kii allocates for it and frees once it is done. A renewal
+ * that can have neither fails the request with KII_ERR_ALLOCATION, and renews
+ * nothing; see kii_set_session().
+ *
+ * Every kii_t attached to the session uses it, one at a time, holding the
+ * session's lock. KII_SESSION_RENEW_BUFF_SIZE bytes are enough: a renewal
+ * whose response doesn't fit in a smaller one fails, as one would in the
+ * buffer set by kii_set_buff(), its request not sent again. What renewals
+ * write to it, the tokens among them, is cleared before the lock is released.
+ *
+ * Set it before attaching the session, and keep it until the session is no
+ * longer used.
+ *
+ * \param [out] session kii_session_t instance.
+ * \param [in] buff The buffer, or NULL for kii to allocate one when needed.
+ * \param [in] buff_size Its size.
+ */
+void kii_session_set_renew_buff(kii_session_t* session, char* buff, size_t buff_size);
+
+/**
  * \brief Copy the author held by the session.
  *
  * \param [in] session kii_session_t instance.
@@ -933,12 +984,16 @@ void kii_session_get_author(kii_session_t* session, kii_author_t* out_author);
  *   server refuses a request authorized with it: 403 with the errorCode
  *   WRONG_TOKEN, as Kii answers for a token that has expired or been
  *   replaced. Such a request is then sent again, provided its body was built
- *   in the buffer set by kii_set_buff(), and both the refusal and the renewal
- *   fit in that buffer after the body; the renewal takes about 640 bytes,
- *   or 1150 by onboarding, whose response carries the MQTT endpoint.
- *   Otherwise the API reports the 403 as it would without a session --
+ *   in the buffer set by kii_set_buff() and the refusal fits in that buffer
+ *   after the body. The renewal takes the room after the body, or, where
+ *   that is less than it needs, the buffer set by
+ *   kii_session_set_renew_buff(), or one kii allocates and frees: a request
+ *   whose renewal can have none of them fails with KII_ERR_ALLOCATION, the
+ *   token not renewed, and is not sent again. A request whose body was
+ *   streamed, or whose refusal didn't fit after it, has the token renewed,
+ *   and the API reports the 403 as it would without a session --
  *   KII_ERR_RESP_STATUS, or for kii_api_call_run() the status from
- *   kii_get_resp_status() -- without its body, and calling it again uses the
+ *   kii_get_resp_status() -- without its body: calling it again uses the
  *   renewed token. Other responses, other 403s included, reach the caller as
  *   they would without a session.
  * - Shortly before it expires means from 5 minutes before, or a fifth of its
@@ -949,7 +1004,9 @@ void kii_session_get_author(kii_session_t* session, kii_author_t* out_author);
  *   isn't tried before every request: it is tried again after 15 to 30
  *   seconds, twice as long after each further failure, and at most 2.5 to 5
  *   minutes later, each thing its own share of the wait, from its ID. A token
- *   the server refuses is renewed at once all the same.
+ *   the server refuses is renewed at once all the same. One that can have no
+ *   room without losing the body isn't made: the request goes with the token
+ *   it has.
  * - A token issued without a lifetime, or with one that is not positive or
  *   exceeds UINT32_MAX seconds, is renewed only when refused. Onboarding
  *   issues neither a lifetime nor a refresh token, so its token is renewed

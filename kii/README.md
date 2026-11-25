@@ -127,10 +127,21 @@ renewal that got it with `KII_ERR_TOO_LARGE_DATA`, and the log says which.
 
 The server refuses a token with `403` and the errorCode `WRONG_TOKEN`. The
 refused request is then sent again with the new token, provided its body was
-built in the buffer set by `kii_set_buff()`, and the buffer has room after the
-body for the renewal: about 640 bytes, or 1150 to onboard again. Bodies
-streamed through callbacks, such as object bodies and Thing-IF states, can't
-be read again: the API reports the `403`, the token already renewed, and
+built in the buffer set by `kii_set_buff()`. The renewal takes the room after
+the body, about 640 bytes, or 1150 to onboard again,
+`KII_SESSION_RENEW_BUFF_SIZE` at most. Where the body leaves less, it takes a
+buffer of the session's, or, without one, one kii allocates for it and frees:
+a renewal that can have neither fails the request with `KII_ERR_ALLOCATION`,
+the token not renewed, rather than lose the body. An application that keeps
+kii off the heap gives the session one:
+
+```c
+    static char renew_buff[KII_SESSION_RENEW_BUFF_SIZE];
+    kii_session_set_renew_buff(&session, renew_buff, sizeof(renew_buff));
+```
+
+Bodies streamed through callbacks, such as object bodies and Thing-IF states,
+can't be read again: the API reports the `403`, the token already renewed, and
 calling it again uses the new token.
 
 ```c
