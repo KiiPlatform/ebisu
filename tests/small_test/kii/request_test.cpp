@@ -839,6 +839,64 @@ TEST_CASE( "An API call's body read through a callback" ) {
         start();
         CHECK( kii_api_call_set_body_reader(&kii, NULL, NULL, 2) == KII_ERR_FAIL );
     }
+
+    // kii's own APIs left the reader set, and sent what it gave in place of
+    // their body.
+    SECTION("is the call's alone, though it's cancelled") {
+        script.responses = {
+            khct::http_response(200, "{\"id\":\"th.1\",\"access_token\":\"at\"}"),
+        };
+        start();
+        REQUIRE( kii_api_call_set_body_reader(&kii, read_body, &reader, KHC_REQ_BODY_LENGTH_UNKNOWN) == KII_ERR_OK );
+        kii_cancel_request_being_prepared(&kii);
+        CHECK( kii_auth_thing(&kii, "vid", "pw") == KII_ERR_OK );
+        REQUIRE( script.requests.size() == 1 );
+        CHECK( reader.calls == 0 );
+        CHECK( khct::contains(body_of(script.requests[0]), "vid") );
+        CHECK_FALSE( khct::contains(script.requests[0], "Transfer-Encoding") );
+    }
+
+    SECTION("is the call's alone, though a header refused it") {
+        script.responses = {
+            khct::http_response(201, "{\"objectID\":\"o1\"}"),
+        };
+        start();
+        REQUIRE( kii_api_call_set_body_reader(&kii, read_body, &reader, KHC_REQ_BODY_LENGTH_UNKNOWN) == KII_ERR_OK );
+        REQUIRE( kii_api_call_append_header(&kii, "X-Bad", "a\r\nb") == KII_ERR_FAIL );
+        kii_bucket_t bucket;
+        memset(&bucket, 0, sizeof(bucket));
+        bucket.scope = KII_SCOPE_APP;
+        bucket.bucket_name = "b";
+        kii_object_id_t id;
+        CHECK( kii_post_object(&kii, &bucket, "{\"a\":1}", NULL, &id) == KII_ERR_OK );
+        REQUIRE( script.requests.size() == 1 );
+        CHECK( reader.calls == 0 );
+        CHECK( body_of(script.requests[0]) == "{\"a\":1}" );
+    }
+}
+
+// A call started and neither run nor cancelled kept its headers, which kii's
+// next request, whatever it was, sent with its own.
+TEST_CASE( "A call started and not run leaves its headers to no other request" ) {
+    char kii_buff[1024];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    khct::HttpScript script;
+    script.attach(&kii);
+    script.responses = {
+        khct::http_response(200, "{\"id\":\"th.1\",\"access_token\":\"at\"}"),
+    };
+    REQUIRE( kii_api_call_start(&kii, "PUT", "/api/apps/dummyAppID/x", "application/json", false) == KII_ERR_OK );
+    REQUIRE( kii_api_call_append_header(&kii, "X-Left", "1") == KII_ERR_OK );
+
+    CHECK( kii_auth_thing(&kii, "vid", "pw") == KII_ERR_OK );
+    REQUIRE( script.requests.size() == 1 );
+    CHECK_FALSE( khct::contains(script.requests[0], "X-Left: 1\r\n") );
+    CHECK( count(script.requests[0], "X-Kii-Appid: dummyAppID\r\n") == 1 );
+    CHECK( count(script.requests[0], "Content-Type: ") == 1 );
 }
 
 // It was KII_ERR_FAIL for a status line, and KII_ERR_HEADER_CALLBACK for

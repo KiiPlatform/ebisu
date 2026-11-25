@@ -395,6 +395,12 @@ void kii_set_use_m_0_header_flag(kii_t* kii, bool flag) {
 
 void kii_cancel_request_being_prepared(kii_t* kii) {
     _req_headers_free_all(kii);
+    _body_from_buff(kii);
+}
+
+void _body_from_buff(kii_t* kii) {
+    kii->_req_streamed = false;
+    khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
 }
 
 
@@ -490,6 +496,11 @@ void _reset_khc(kii_t* kii) {
     khc_reset_except_cb(&kii->_khc);
     khc_set_stream_buff(&kii->_khc, kii->_stream_buff, kii->_stream_buff_size);
     khc_set_resp_header_buff(&kii->_khc, kii->_resp_header_buff, kii->_resp_header_buff_size);
+    /* Nothing of a call before goes with the request: the headers of one
+     * started with kii_api_call_start() and never run, nor the reader of one
+     * cancelled or refused after kii_api_call_set_body_reader(). */
+    _req_headers_free_all(kii);
+    _body_from_buff(kii);
 }
 
 void _kii_clear_buffers(kii_t* kii) {
