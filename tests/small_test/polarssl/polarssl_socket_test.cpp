@@ -421,6 +421,14 @@ struct Client {
         sock = &tls.base;
     }
 
+    // The handshake to a deadline of its own, as an application can set,
+    // rather than each of its receives to the socket's receive timeout: a
+    // test that keeps that short, for what it tests after, had its handshake
+    // fail under valgrind on a busy machine.
+    void handshake_within(unsigned int seconds) {
+        ebisu_polarssl_socket_set_handshake_timeout(&tls, ebisu_posix_system(), seconds);
+    }
+
     ~Client() {
         sock->ops->close(sock);
 #if defined(EBISU_TLS_RESUME)
@@ -817,6 +825,7 @@ TEST_CASE( "The PolarSSL socket's receive times out, and the connection goes on"
         SSL_read(ssl, buffer, sizeof(buffer));
     });
     Client client(&config.tls, 1);
+    client.handshake_within(30);
     REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
     ebisu_sock_code_t code;
     client.recv(64, &code);
@@ -870,6 +879,7 @@ TEST_CASE( "The PolarSSL socket's recv_wait waits for something for recv to retu
     });
     // A receive that times out soon, for the tickets below.
     Client client(&config.tls, 1);
+    client.handshake_within(30);
     REQUIRE( client.sock->ops->recv_wait != nullptr );
     REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
     // Whatever of the handshake is still to come, as TLS 1.3's tickets.
@@ -914,6 +924,7 @@ TEST_CASE( "The PolarSSL socket's recv_wait doesn't take a record without data f
         SSL_read(ssl, ignored, sizeof(ignored));
     }, 1, TLS1_2_VERSION);
     Client client(&config.tls, 1);
+    client.handshake_within(30);
     REQUIRE( client.sock->ops->recv_wait != nullptr );
     REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
     REQUIRE( wait_for(asked) );
@@ -971,6 +982,7 @@ TEST_CASE( "The PolarSSL socket's recv returns what its recv_wait came to first"
             SSL_read(ssl, ignored, sizeof(ignored));
         });
         Client client(&config.tls, 1);
+        client.handshake_within(30);
         REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
         go = true;
         CHECK( client.sock->ops->recv_wait(client.sock, 5000) );
@@ -990,6 +1002,7 @@ TEST_CASE( "The PolarSSL socket's recv returns what its recv_wait came to first"
             SSL_read(ssl, ignored, sizeof(ignored));
         });
         Client client(&config.tls, 1);
+        client.handshake_within(30);
         REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
         go = true;
         CHECK( client.sock->ops->recv_wait(client.sock, 5000) );
@@ -1012,6 +1025,7 @@ TEST_CASE( "The PolarSSL socket's recv returns what its recv_wait came to first"
             tried = true;
         });
         Client client(&config.tls, 1);
+        client.handshake_within(30);
         REQUIRE( client.connect(server.port) == EBISU_SOCK_OK );
         go = true;
         wait_for(tried);
