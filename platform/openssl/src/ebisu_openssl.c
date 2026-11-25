@@ -1073,6 +1073,40 @@ fail:
     return fail_with(ctx, error, detail);
 }
 
+/* When the socket's timeout option, SO_RCVTIMEO or SO_SNDTIMEO, started now
+   runs out, as wait_for() takes it: 0 for none. -1 if it can't be told. */
+static int64_t deadline_of(int sock, int option)
+{
+    struct timeval tv;
+    socklen_t length = sizeof(tv);
+    if (getsockopt(sock, SOL_SOCKET, option, &tv, &length) != 0) {
+        return -1;
+    }
+    if (tv.tv_sec == 0 && tv.tv_usec == 0) {
+        return 0;
+    }
+    return monotonic_ms() + (int64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
+
+/* After SSL_read() or SSL_write() wanted to read or write again on this
+   blocking socket, for its timeout having run out, or for a signal: a socket
+   with a timeout fails with EINTR on one even with SA_RESTART, and OpenSSL
+   takes it for a call to try again. Before the deadline, whether the socket
+   is ready by then for the call to be made again. Without one known, it
+   is taken for the timeout, as before. */
+static bool ready_before_deadline(int sock, int ssl_error, int64_t deadline_ms)
+{
+    if ((ssl_error != SSL_ERROR_WANT_READ && ssl_error != SSL_ERROR_WANT_WRITE) ||
+            deadline_ms < 0) {
+        return false;
+    }
+    if (deadline_ms != 0 && monotonic_ms() >= deadline_ms) {
+        return false;
+    }
+    return wait_for(sock, ssl_error == SSL_ERROR_WANT_READ ? POLLIN : POLLOUT,
+            deadline_ms) == 1;
+}
+
 static ebisu_sock_code_t
     openssl_send(ebisu_socket_t* self,
             const char* buffer,
@@ -1080,18 +1114,29 @@ static ebisu_sock_code_t
             size_t* out_sent_length)
 {
     ebisu_openssl_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_openssl_socket_t, base);
-    clear_errors();
-    sigpipe_guard_t guard;
-    sigpipe_block(&guard);
-    int ret = SSL_write(ctx->ssl, buffer, length);
-    sigpipe_restore(&guard);
-    if (ret > 0) {
-        *out_sent_length = ret;
-        return EBISU_SOCK_OK;
+    const int64_t deadline_ms = deadline_of(ctx->socket, SO_SNDTIMEO);
+    int ret;
+    int saved_errno;
+    int ssl_error;
+    for (;;) {
+        clear_errors();
+        sigpipe_guard_t guard;
+        sigpipe_block(&guard);
+        /* Made again, after a signal, with what it was made with, as
+           OpenSSL has it. */
+        ret = SSL_write(ctx->ssl, buffer, length);
+        sigpipe_restore(&guard);
+        if (ret > 0) {
+            *out_sent_length = ret;
+            return EBISU_SOCK_OK;
+        }
+        /* errno first, before anything else can change it. */
+        saved_errno = errno;
+        ssl_error = SSL_get_error(ctx->ssl, ret);
+        if (!ready_before_deadline(ctx->socket, ssl_error, deadline_ms)) {
+            break;
+        }
     }
-    /* errno first, before anything else can change it. */
-    int saved_errno = errno;
-    int ssl_error = SSL_get_error(ctx->ssl, ret);
     if (ssl_error == SSL_ERROR_SYSCALL || ssl_error == SSL_ERROR_SSL) {
         ctx->ssl_failed = true;
     }
@@ -1118,19 +1163,26 @@ static ebisu_sock_code_t
         }
         return fail_with(ctx, ctx->kept_error, ctx->kept_detail);
     }
-    clear_errors();
-    /* A read can write too: an alert, or a handshake the peer asked for. */
-    sigpipe_guard_t guard;
-    sigpipe_block(&guard);
-    int ret = SSL_read(ctx->ssl, buffer, length_to_read);
-    sigpipe_restore(&guard);
-    if (ret > 0) {
-        *out_actual_length = ret;
-        return EBISU_SOCK_OK;
+    const int64_t deadline_ms = deadline_of(ctx->socket, SO_RCVTIMEO);
+    int ret;
+    for (;;) {
+        clear_errors();
+        /* A read can write too: an alert, or a handshake the peer asked for. */
+        sigpipe_guard_t guard;
+        sigpipe_block(&guard);
+        ret = SSL_read(ctx->ssl, buffer, length_to_read);
+        sigpipe_restore(&guard);
+        if (ret > 0) {
+            *out_actual_length = ret;
+            return EBISU_SOCK_OK;
+        }
+        /* errno first, before anything else can change it. */
+        ctx->recv_errno = errno;
+        ctx->recv_ssl_error = SSL_get_error(ctx->ssl, ret);
+        if (!ready_before_deadline(ctx->socket, ctx->recv_ssl_error, deadline_ms)) {
+            break;
+        }
     }
-    /* errno first, before anything else can change it. */
-    ctx->recv_errno = errno;
-    ctx->recv_ssl_error = SSL_get_error(ctx->ssl, ret);
     switch (ctx->recv_ssl_error) {
     case SSL_ERROR_ZERO_RETURN:
         return EBISU_SOCK_OK;

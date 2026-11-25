@@ -246,6 +246,120 @@ TEST_CASE( "The OpenSSL socket's recv reads what the peer sent" ) {
     CHECK( std::string(buffer, received) == "hello" );
 }
 
+namespace {
+
+void on_test_signal(int) {}
+
+// Signals the thread that makes it every period_ms, with a handler that has
+// SA_RESTART, as a timer, or SIGCHLD from children, would: until it goes, or
+// for 10 seconds.
+struct Signaller {
+    pthread_t target;
+    std::atomic<bool> stop;
+    std::thread thread;
+    struct sigaction before;
+
+    explicit Signaller(int period_ms) : target(pthread_self()), stop(false) {
+        struct sigaction sa;
+        memset(&sa, 0, sizeof(sa));
+        sa.sa_handler = on_test_signal;
+        sa.sa_flags = SA_RESTART;
+        sigaction(SIGUSR1, &sa, &before);
+        thread = std::thread([this, period_ms]() {
+            for (int t = 0; t < 10000 && !stop; t += period_ms) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(period_ms));
+                if (!stop) {
+                    pthread_kill(target, SIGUSR1);
+                }
+            }
+        });
+    }
+
+    ~Signaller() {
+        stop = true;
+        thread.join();
+        sigaction(SIGUSR1, &before, nullptr);
+    }
+};
+
+long elapsed_ms(std::chrono::steady_clock::time_point start)
+{
+    return (long)std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - start).count();
+}
+
+}
+
+// A socket with a timeout set fails with EINTR on a signal, SA_RESTART or not,
+// which OpenSSL takes for a read or write to try again, SSL_ERROR_WANT_READ or
+// SSL_ERROR_WANT_WRITE: the socket took it for its timeout, and a request
+// failed as timed out at the first signal.
+TEST_CASE( "The OpenSSL socket's timeouts run out though signals come meanwhile" ) {
+    Connection c;
+    // As the socket's connect would have them, for 1 second.
+    struct timeval timeout = { 1, 0 };
+    REQUIRE( setsockopt(c.client.socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == 0 );
+    REQUIRE( setsockopt(c.client.socket, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) == 0 );
+    // The socket reads them back. Where the system can't tell them, as under
+    // qemu-user, it takes a signal for its timeout, as before.
+    struct timeval found;
+    socklen_t found_length = sizeof(found);
+    if (getsockopt(c.client.socket, SOL_SOCKET, SO_RCVTIMEO, &found, &found_length) != 0 ||
+            getsockopt(c.client.socket, SOL_SOCKET, SO_SNDTIMEO, &found, &found_length) != 0) {
+        SKIP( "the system can't tell a socket's timeouts" );
+    }
+    char buffer[16];
+    size_t received = 0;
+
+    SECTION("receiving") {
+        ebisu_sock_code_t code = EBISU_SOCK_OK;
+        long ms = 0;
+        {
+            Signaller signaller(200);
+            auto start = std::chrono::steady_clock::now();
+            code = c.client.base.ops->recv(&c.client.base, buffer, sizeof(buffer), &received);
+            ms = elapsed_ms(start);
+        }
+        CHECK( code == EBISU_SOCK_FAIL );
+        CHECK( c.client.base.ops->recv_timed_out(&c.client.base) );
+        CHECK( ms >= 900 );
+        CHECK( ms < 2500 );
+    }
+
+    SECTION("receiving what comes in time") {
+        ebisu_sock_code_t code = EBISU_SOCK_FAIL;
+        {
+            Signaller signaller(100);
+            std::thread sender([&c]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(450));
+                SSL_write(c.server, "late", 4);
+            });
+            code = c.client.base.ops->recv(&c.client.base, buffer, sizeof(buffer), &received);
+            sender.join();
+        }
+        CHECK( code == EBISU_SOCK_OK );
+        CHECK( std::string(buffer, received) == "late" );
+    }
+
+    SECTION("sending, with the peer reading nothing") {
+        const std::vector<char> data(64 * 1024, 'x');
+        ebisu_sock_code_t code = EBISU_SOCK_OK;
+        long ms = 0;
+        {
+            Signaller signaller(200);
+            for (int i = 0; i < 1000 && code == EBISU_SOCK_OK; ++i) {
+                size_t sent = 0;
+                auto start = std::chrono::steady_clock::now();
+                code = c.client.base.ops->send(&c.client.base, data.data(), data.size(), &sent);
+                ms = elapsed_ms(start);
+            }
+        }
+        CHECK( code == EBISU_SOCK_FAIL );
+        CHECK( ms >= 900 );
+        CHECK( ms < 2500 );
+    }
+}
+
 // The push task waits for a message with this timeout, over and over: a
 // timeout taken for a failure has it drop a connection nothing is wrong with.
 TEST_CASE( "The OpenSSL socket's recv times out whatever an earlier failure left behind" ) {
