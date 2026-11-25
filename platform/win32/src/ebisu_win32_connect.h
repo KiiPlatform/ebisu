@@ -278,6 +278,11 @@ static SOCKET connect_to_address(const ADDRINFOEXW* addr, unsigned int timeout_s
         *out_error = WSAGetLastError();
         return INVALID_SOCKET;
     }
+    /* Not inherited by a process the application creates while the
+       connection is open, as system() and _popen() have theirs inherit, which
+       would hold it open past closesocket(). A socket a layered provider gives
+       may not be a handle, and is left as it is. */
+    SetHandleInformation((HANDLE)sock, HANDLE_FLAG_INHERIT, 0);
     *out_error = connect_within(sock, addr->ai_addr, (int)addr->ai_addrlen, timeout_s);
     if (*out_error == 0) {
         return sock;

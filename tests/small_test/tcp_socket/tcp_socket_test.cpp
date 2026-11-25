@@ -329,6 +329,22 @@ TEST_CASE( "The plain TCP socket sends and receives over the connection it makes
     }
 }
 
+// A socket a program the application ran had inherited stayed open in it
+// after the socket was closed, and the peer saw no close until the program
+// ended.
+TEST_CASE( "The plain TCP socket's connection isn't inherited by a program run meanwhile" ) {
+    Connected c;
+#ifdef _WIN32
+    DWORD flags = 0;
+    REQUIRE( GetHandleInformation((HANDLE)fd_of(&c.sock), &flags) );
+    CHECK( (flags & HANDLE_FLAG_INHERIT) == 0 );
+#else
+    const int flags = fcntl(fd_of(&c.sock), F_GETFD);
+    REQUIRE( flags != -1 );
+    CHECK( (flags & FD_CLOEXEC) != 0 );
+#endif
+}
+
 // The MQTT task's socket times out on every idle stretch, and goes on with the
 // connection: the timeout says so, and loses nothing.
 TEST_CASE( "The plain TCP socket's receive times out, says so, and leaves the connection as it was" ) {
