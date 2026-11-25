@@ -79,8 +79,8 @@ typedef enum jkii_write_err_t {
      * JKII_WRITER_MAX_DEPTH. */
     JKII_WRITE_ERR_TOO_DEEP,
     /** \brief A value JSON can't hold, or a NULL one: NaN, an infinity, a
-     * double too large for its decimals, more than 9 decimals, or raw JSON
-     * of no length. */
+     * double too large for its decimals, more than 9 decimals, raw JSON of
+     * no length, or a string or key that isn't well-formed UTF-8. */
     JKII_WRITE_ERR_VALUE,
     /** \brief The write callback took less than it was given. */
     JKII_WRITE_ERR_CALLBACK

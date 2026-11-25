@@ -6,6 +6,7 @@
 // that was needed.
 #include <jkii.h>
 #include <jkii_writer.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
@@ -63,6 +64,7 @@ struct Validator {
             unsigned char c = (unsigned char)s[pos++];
             if (c == '"') return true;
             if (c < 0x20) return false;
+            if (c >= 0x80 && !utf8_rest(c)) return false;
             if (c == '\\') {
                 if (pos >= s.size()) return false;
                 char e = s[pos++];
@@ -76,6 +78,22 @@ struct Validator {
             }
         }
         return false;
+    }
+    // The rest of a UTF-8 sequence that starts with c, by the code point it
+    // decodes to: written shortest, not a surrogate, and at most U+10FFFF.
+    bool utf8_rest(unsigned char c) {
+        size_t more;
+        uint32_t cp;
+        if ((c & 0xe0) == 0xc0) { more = 1; cp = c & 0x1f; }
+        else if ((c & 0xf0) == 0xe0) { more = 2; cp = c & 0x0f; }
+        else if ((c & 0xf8) == 0xf0) { more = 3; cp = c & 0x07; }
+        else return false;
+        for (size_t i = 0; i < more; ++i) {
+            if (pos >= s.size() || ((unsigned char)s[pos] & 0xc0) != 0x80) return false;
+            cp = (cp << 6) | ((unsigned char)s[pos++] & 0x3f);
+        }
+        const uint32_t shortest[] = { 0, 0x80, 0x800, 0x10000 };
+        return cp >= shortest[more] && cp <= 0x10ffff && (cp < 0xd800 || cp > 0xdfff);
     }
     bool digits() {
         size_t start = pos;
