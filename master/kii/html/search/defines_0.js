@@ -12,8 +12,9 @@ var searchData=
   ['kii_5fpassword_5fmax_5fsize_9',['KII_PASSWORD_MAX_SIZE',['../kii_8h.html#ad3f4dc3391175bb19d8a21309932701b',1,'kii.h']]],
   ['kii_5frefresh_5ftoken_5fmax_5fsize_10',['KII_REFRESH_TOKEN_MAX_SIZE',['../kii_8h.html#ae090f4164ca0286465f7837280c3275f',1,'kii.h']]],
   ['kii_5freq_5fheader_5fbuff_5fsize_11',['KII_REQ_HEADER_BUFF_SIZE',['../kii_8h.html#a429f0e066de7ce5fda5fc3ecb7ed7c76',1,'kii.h']]],
-  ['kii_5ftask_5fname_5fmqtt_12',['KII_TASK_NAME_MQTT',['../kii_8h.html#a48f058506a462a68bdf8fbd4c661accf',1,'kii.h']]],
-  ['kii_5ftoken_5fmax_5fsize_13',['KII_TOKEN_MAX_SIZE',['../kii_8h.html#a430b4f23746528cf8103295f17ca33d6',1,'kii.h']]],
-  ['kii_5ftopic_5fmax_5fsize_14',['KII_TOPIC_MAX_SIZE',['../kii_8h.html#af24947bd7dc3c4d02fa145b3bd251718',1,'kii.h']]],
-  ['kii_5fusername_5fmax_5fsize_15',['KII_USERNAME_MAX_SIZE',['../kii_8h.html#aeb98949f480088c69d54de582576d7d6',1,'kii.h']]]
+  ['kii_5fsession_5frenew_5fbuff_5fsize_12',['KII_SESSION_RENEW_BUFF_SIZE',['../kii_8h.html#aa1edeb2e3b6e9d02f24c96e90bf4107d',1,'kii.h']]],
+  ['kii_5ftask_5fname_5fmqtt_13',['KII_TASK_NAME_MQTT',['../kii_8h.html#a48f058506a462a68bdf8fbd4c661accf',1,'kii.h']]],
+  ['kii_5ftoken_5fmax_5fsize_14',['KII_TOKEN_MAX_SIZE',['../kii_8h.html#a430b4f23746528cf8103295f17ca33d6',1,'kii.h']]],
+  ['kii_5ftopic_5fmax_5fsize_15',['KII_TOPIC_MAX_SIZE',['../kii_8h.html#af24947bd7dc3c4d02fa145b3bd251718',1,'kii.h']]],
+  ['kii_5fusername_5fmax_5fsize_16',['KII_USERNAME_MAX_SIZE',['../kii_8h.html#aeb98949f480088c69d54de582576d7d6',1,'kii.h']]]
 ];

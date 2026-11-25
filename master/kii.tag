@@ -125,6 +125,13 @@
     </member>
     <member kind="define">
       <type>#define</type>
+      <name>KII_SESSION_RENEW_BUFF_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>aa1edeb2e3b6e9d02f24c96e90bf4107d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
       <name>KII_FIRMWARE_VERSION_MAX_SIZE</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a6be477b443a31b4ddc07540b762bbda3</anchor>
@@ -808,6 +815,13 @@
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a48c59467000bc3c2fe182ca3749c2fdc</anchor>
       <arglist>(kii_session_t *session, kii_renew_mode_t mode)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_session_set_renew_buff</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a0e9ec1516309811327ccfc18afa680c9</anchor>
+      <arglist>(kii_session_t *session, char *buff, size_t buff_size)</arglist>
     </member>
     <member kind="function">
       <type>void</type>

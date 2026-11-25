@@ -167,6 +167,8 @@ Macros</h2></td></tr>
 <tr class="memdesc:a30bea1e5165e136c0dabfe2d6c37e9a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size of the buffer holding the ETag of the last response. <br /></td></tr>
 <tr class="memitem:a429f0e066de7ce5fda5fc3ecb7ed7c76" id="r_a429f0e066de7ce5fda5fc3ecb7ed7c76"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a429f0e066de7ce5fda5fc3ecb7ed7c76">KII_REQ_HEADER_BUFF_SIZE</a>&#160;&#160;&#160;(1024 + <a class="el" href="#a430b4f23746528cf8103295f17ca33d6">KII_TOKEN_MAX_SIZE</a>)</td></tr>
 <tr class="memdesc:a429f0e066de7ce5fda5fc3ecb7ed7c76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size of the request header buffer kii allocates for a request, when <a class="el" href="#a54a2266199db354e6e3fb4798f09d735" title="Set request header buffer.">kii_set_req_header_buff()</a> gave none: enough for kii's headers and a renewal's at their longest, with room for some of the application's.  <br /></td></tr>
+<tr class="memitem:aa1edeb2e3b6e9d02f24c96e90bf4107d" id="r_aa1edeb2e3b6e9d02f24c96e90bf4107d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa1edeb2e3b6e9d02f24c96e90bf4107d">KII_SESSION_RENEW_BUFF_SIZE</a></td></tr>
+<tr class="memdesc:aa1edeb2e3b6e9d02f24c96e90bf4107d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Room a session's renewal needs for its request and response, at their longest: by onboarding again, whose response carries the MQTT endpoint, or through the token endpoint, whichever needs more.  <br /></td></tr>
 <tr class="memitem:a6be477b443a31b4ddc07540b762bbda3" id="r_a6be477b443a31b4ddc07540b762bbda3"><td class="memItemLeft" align="right" valign="top"><a id="a6be477b443a31b4ddc07540b762bbda3" name="a6be477b443a31b4ddc07540b762bbda3"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>KII_FIRMWARE_VERSION_MAX_SIZE</b>&#160;&#160;&#160;128</td></tr>
 <tr class="memdesc:a6be477b443a31b4ddc07540b762bbda3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size of <a class="el" href="structkii__ti__firmware__version__t.html#a12e3389e2ec3c812ebd79e37e222bad4" title="Firmware version string.">kii_ti_firmware_version_t::firmware_version</a>. <br /></td></tr>
@@ -364,6 +366,8 @@ Functions</h2></td></tr>
 <tr class="memdesc:a72459c7ed527d9feb934be7287570402"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the author held by the session, typically one saved earlier.  <br /></td></tr>
 <tr class="memitem:a48c59467000bc3c2fe182ca3749c2fdc" id="r_a48c59467000bc3c2fe182ca3749c2fdc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a48c59467000bc3c2fe182ca3749c2fdc">kii_session_set_renew_mode</a> (<a class="el" href="structkii__session__t.html">kii_session_t</a> *session, <a class="el" href="#a1ba4dacec1982de428fbe76b1aa35cca">kii_renew_mode_t</a> mode)</td></tr>
 <tr class="memdesc:a48c59467000bc3c2fe182ca3749c2fdc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set how the session renews the token it holds.  <br /></td></tr>
+<tr class="memitem:a0e9ec1516309811327ccfc18afa680c9" id="r_a0e9ec1516309811327ccfc18afa680c9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0e9ec1516309811327ccfc18afa680c9">kii_session_set_renew_buff</a> (<a class="el" href="structkii__session__t.html">kii_session_t</a> *session, char *buff, size_t buff_size)</td></tr>
+<tr class="memdesc:a0e9ec1516309811327ccfc18afa680c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the buffer renewals take when a request's body leaves them too little room.  <br /></td></tr>
 <tr class="memitem:ac375f90a4796877f0365d14f6dc73e45" id="r_ac375f90a4796877f0365d14f6dc73e45"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac375f90a4796877f0365d14f6dc73e45">kii_session_get_author</a> (<a class="el" href="structkii__session__t.html">kii_session_t</a> *session, <a class="el" href="structkii__author__t.html">kii_author_t</a> *out_author)</td></tr>
 <tr class="memdesc:ac375f90a4796877f0365d14f6dc73e45"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy the author held by the session.  <br /></td></tr>
 <tr class="memitem:ae33b3be622e96687b213d0fbfd6edf0f" id="r_ae33b3be622e96687b213d0fbfd6edf0f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae33b3be622e96687b213d0fbfd6edf0f">kii_set_session</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="structkii__session__t.html">kii_session_t</a> *session)</td></tr>
@@ -573,6 +577,39 @@ Functions</h2></td></tr>
 
 <p>Size of the request header buffer kii allocates for a request, when <a class="el" href="#a54a2266199db354e6e3fb4798f09d735" title="Set request header buffer.">kii_set_req_header_buff()</a> gave none: enough for kii's headers and a renewal's at their longest, with room for some of the application's. </p>
 <p>It can be defined otherwise when kii is built, as 1 or more. It changes no type's layout, so what is built against kii needn't define it alike. </p>
+
+</div>
+</div>
+<a id="aa1edeb2e3b6e9d02f24c96e90bf4107d" name="aa1edeb2e3b6e9d02f24c96e90bf4107d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa1edeb2e3b6e9d02f24c96e90bf4107d">&#9670;&#160;</a></span>KII_SESSION_RENEW_BUFF_SIZE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define KII_SESSION_RENEW_BUFF_SIZE</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line">    ((<a class="code hl_define" href="#a954de624a9c08e935ab8ded034ee0b95">KII_AUTHOR_ID_MAX_SIZE</a> + <a class="code hl_define" href="#a430b4f23746528cf8103295f17ca33d6">KII_TOKEN_MAX_SIZE</a> + <a class="code hl_define" href="#a12590c5a89c0cd57281327c7ac92c38f">KII_INSTALLATION_ID_MAX_SIZE</a> + \</div>
+<div class="line">      <a class="code hl_define" href="#aeb98949f480088c69d54de582576d7d6">KII_USERNAME_MAX_SIZE</a> + <a class="code hl_define" href="#ad3f4dc3391175bb19d8a21309932701b">KII_PASSWORD_MAX_SIZE</a> + <a class="code hl_define" href="#af24947bd7dc3c4d02fa145b3bd251718">KII_TOPIC_MAX_SIZE</a> + \</div>
+<div class="line">      <a class="code hl_define" href="#ab298051f7ad14c1004b7ab4ca39887b5">KII_HOST_MAX_SIZE</a> + 512) &gt; \</div>
+<div class="line">     (<a class="code hl_define" href="#a954de624a9c08e935ab8ded034ee0b95">KII_AUTHOR_ID_MAX_SIZE</a> + <a class="code hl_define" href="#a430b4f23746528cf8103295f17ca33d6">KII_TOKEN_MAX_SIZE</a> + <a class="code hl_define" href="#ae090f4164ca0286465f7837280c3275f">KII_REFRESH_TOKEN_MAX_SIZE</a> + 256) ? \</div>
+<div class="line">     (<a class="code hl_define" href="#a954de624a9c08e935ab8ded034ee0b95">KII_AUTHOR_ID_MAX_SIZE</a> + <a class="code hl_define" href="#a430b4f23746528cf8103295f17ca33d6">KII_TOKEN_MAX_SIZE</a> + <a class="code hl_define" href="#a12590c5a89c0cd57281327c7ac92c38f">KII_INSTALLATION_ID_MAX_SIZE</a> + \</div>
+<div class="line">      <a class="code hl_define" href="#aeb98949f480088c69d54de582576d7d6">KII_USERNAME_MAX_SIZE</a> + <a class="code hl_define" href="#ad3f4dc3391175bb19d8a21309932701b">KII_PASSWORD_MAX_SIZE</a> + <a class="code hl_define" href="#af24947bd7dc3c4d02fa145b3bd251718">KII_TOPIC_MAX_SIZE</a> + \</div>
+<div class="line">      <a class="code hl_define" href="#ab298051f7ad14c1004b7ab4ca39887b5">KII_HOST_MAX_SIZE</a> + 512) : \</div>
+<div class="line">     (<a class="code hl_define" href="#a954de624a9c08e935ab8ded034ee0b95">KII_AUTHOR_ID_MAX_SIZE</a> + <a class="code hl_define" href="#a430b4f23746528cf8103295f17ca33d6">KII_TOKEN_MAX_SIZE</a> + <a class="code hl_define" href="#ae090f4164ca0286465f7837280c3275f">KII_REFRESH_TOKEN_MAX_SIZE</a> + 256))</div>
+<div class="ttc" id="akii_8h_html_a12590c5a89c0cd57281327c7ac92c38f"><div class="ttname"><a href="#a12590c5a89c0cd57281327c7ac92c38f">KII_INSTALLATION_ID_MAX_SIZE</a></div><div class="ttdeci">#define KII_INSTALLATION_ID_MAX_SIZE</div><div class="ttdoc">Size of kii_installation_id_t::id.</div><div class="ttdef"><b>Definition</b> kii.h:86</div></div>
+<div class="ttc" id="akii_8h_html_a430b4f23746528cf8103295f17ca33d6"><div class="ttname"><a href="#a430b4f23746528cf8103295f17ca33d6">KII_TOKEN_MAX_SIZE</a></div><div class="ttdeci">#define KII_TOKEN_MAX_SIZE</div><div class="ttdoc">Size of kii_author_t::access_token.</div><div class="ttdef"><b>Definition</b> kii.h:61</div></div>
+<div class="ttc" id="akii_8h_html_a954de624a9c08e935ab8ded034ee0b95"><div class="ttname"><a href="#a954de624a9c08e935ab8ded034ee0b95">KII_AUTHOR_ID_MAX_SIZE</a></div><div class="ttdeci">#define KII_AUTHOR_ID_MAX_SIZE</div><div class="ttdoc">Size of kii_author_t::author_id.</div><div class="ttdef"><b>Definition</b> kii.h:48</div></div>
+<div class="ttc" id="akii_8h_html_ab298051f7ad14c1004b7ab4ca39887b5"><div class="ttname"><a href="#ab298051f7ad14c1004b7ab4ca39887b5">KII_HOST_MAX_SIZE</a></div><div class="ttdeci">#define KII_HOST_MAX_SIZE</div><div class="ttdoc">Size of kii_mqtt_endpoint_t::host.</div><div class="ttdef"><b>Definition</b> kii.h:81</div></div>
+<div class="ttc" id="akii_8h_html_ad3f4dc3391175bb19d8a21309932701b"><div class="ttname"><a href="#ad3f4dc3391175bb19d8a21309932701b">KII_PASSWORD_MAX_SIZE</a></div><div class="ttdeci">#define KII_PASSWORD_MAX_SIZE</div><div class="ttdoc">Size of kii_mqtt_endpoint_t::password.</div><div class="ttdef"><b>Definition</b> kii.h:73</div></div>
+<div class="ttc" id="akii_8h_html_ae090f4164ca0286465f7837280c3275f"><div class="ttname"><a href="#ae090f4164ca0286465f7837280c3275f">KII_REFRESH_TOKEN_MAX_SIZE</a></div><div class="ttdeci">#define KII_REFRESH_TOKEN_MAX_SIZE</div><div class="ttdoc">Size of kii_author_t::refresh_token.</div><div class="ttdef"><b>Definition</b> kii.h:65</div></div>
+<div class="ttc" id="akii_8h_html_aeb98949f480088c69d54de582576d7d6"><div class="ttname"><a href="#aeb98949f480088c69d54de582576d7d6">KII_USERNAME_MAX_SIZE</a></div><div class="ttdeci">#define KII_USERNAME_MAX_SIZE</div><div class="ttdoc">Size of kii_mqtt_endpoint_t::username.</div><div class="ttdef"><b>Definition</b> kii.h:69</div></div>
+<div class="ttc" id="akii_8h_html_af24947bd7dc3c4d02fa145b3bd251718"><div class="ttname"><a href="#af24947bd7dc3c4d02fa145b3bd251718">KII_TOPIC_MAX_SIZE</a></div><div class="ttdeci">#define KII_TOPIC_MAX_SIZE</div><div class="ttdoc">Size of kii_mqtt_endpoint_t::topic.</div><div class="ttdef"><b>Definition</b> kii.h:77</div></div>
+</div><!-- fragment -->
+<p>Room a session's renewal needs for its request and response, at their longest: by onboarding again, whose response carries the MQTT endpoint, or through the token endpoint, whichever needs more. </p>
+<p>A renewal takes what it needs, this at most, after the body of the request it renews for, in the buffer set by <a class="el" href="#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a>, or else in the buffer set by <a class="el" href="#a0e9ec1516309811327ccfc18afa680c9" title="Set the buffer renewals take when a request&#39;s body leaves them too little room.">kii_session_set_renew_buff()</a>, or else in one kii allocates. With the sizes above as they are, it is 1152 bytes. </p>
 
 </div>
 </div>
@@ -2639,6 +2676,45 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 
 </div>
 </div>
+<a id="a0e9ec1516309811327ccfc18afa680c9" name="a0e9ec1516309811327ccfc18afa680c9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0e9ec1516309811327ccfc18afa680c9">&#9670;&#160;</a></span>kii_session_set_renew_buff()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_session_set_renew_buff </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__session__t.html">kii_session_t</a> *</td>          <td class="paramname"><span class="paramname"><em>session</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>buff</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>buff_size</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the buffer renewals take when a request's body leaves them too little room. </p>
+<p>A renewal for a request whose body was built in the buffer set by <a class="el" href="#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a> takes the room after the body, so that the request can be sent again. Where the body leaves less than the renewal needs, KII_SESSION_RENEW_BUFF_SIZE at most, it takes this buffer instead, or, without one, one kii allocates for it and frees once it is done. A renewal that can have neither fails the request with KII_ERR_ALLOCATION, and renews nothing; see <a class="el" href="#ae33b3be622e96687b213d0fbfd6edf0f" title="Attach a session, or detach it with NULL.">kii_set_session()</a>.</p>
+<p>Every <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> attached to the session uses it, one at a time, holding the session's lock. KII_SESSION_RENEW_BUFF_SIZE bytes are enough: a renewal whose response doesn't fit in a smaller one fails, as one would in the buffer set by <a class="el" href="#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a>, its request not sent again. What renewals write to it, the tokens among them, is cleared before the lock is released.</p>
+<p>Set it before attaching the session, and keep it until the session is no longer used.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">session</td><td><a class="el" href="structkii__session__t.html" title="Tokens shared by the kii_t instances acting as the same thing.">kii_session_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">buff</td><td>The buffer, or NULL for kii to allocate one when needed. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">buff_size</td><td>Its size. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a48c59467000bc3c2fe182ca3749c2fdc" name="a48c59467000bc3c2fe182ca3749c2fdc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a48c59467000bc3c2fe182ca3749c2fdc">&#9670;&#160;</a></span>kii_session_set_renew_mode()</h2>
 
@@ -3551,9 +3627,9 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 <p>With a session attached:</p><ul>
 <li>Requests are authorized with the session's access token rather than one set on the <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a>.</li>
 <li><a class="el" href="#a128f23578c2e848e6d20e05faae9b29d" title="Authorize thing with vendor thing id and password. After the authentication, access token is stored i...">kii_auth_thing()</a>, <a class="el" href="#a113672afcdae61484731c80a3b7bc17e" title="Register a new thing. After the registration, access token is stored in kii instance and used to auth...">kii_register_thing()</a> and <a class="el" href="#adaf6e5b9a952127cacd4cbf2e911039c" title="Execute onboarding.">kii_ti_onboard()</a> store the tokens they obtain in the session.</li>
-<li>The access token is renewed shortly before it expires, and whenever the server refuses a request authorized with it: 403 with the errorCode WRONG_TOKEN, as Kii answers for a token that has expired or been replaced. Such a request is then sent again, provided its body was built in the buffer set by <a class="el" href="#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a>, and both the refusal and the renewal fit in that buffer after the body; the renewal takes about 640 bytes, or 1150 by onboarding, whose response carries the MQTT endpoint. Otherwise the API reports the 403 as it would without a session &ndash; KII_ERR_RESP_STATUS, or for <a class="el" href="#aa6640658ca65a4a54319b8ff474450c6" title="Send request and retrieve response. Assume HTTP request is built by following APIs:">kii_api_call_run()</a> the status from <a class="el" href="#ae61dfefd97935dd1d068dd640ec30af1" title="Get HTTP status code.">kii_get_resp_status()</a> &ndash; without its body, and calling it again uses the renewed token. Other responses, other 403s included, reach the caller as they would without a session.</li>
+<li>The access token is renewed shortly before it expires, and whenever the server refuses a request authorized with it: 403 with the errorCode WRONG_TOKEN, as Kii answers for a token that has expired or been replaced. Such a request is then sent again, provided its body was built in the buffer set by <a class="el" href="#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a> and the refusal fits in that buffer after the body. The renewal takes the room after the body, or, where that is less than it needs, the buffer set by <a class="el" href="#a0e9ec1516309811327ccfc18afa680c9" title="Set the buffer renewals take when a request&#39;s body leaves them too little room.">kii_session_set_renew_buff()</a>, or one kii allocates and frees: a request whose renewal can have none of them fails with KII_ERR_ALLOCATION, the token not renewed, and is not sent again. A request whose body was streamed, or whose refusal didn't fit after it, has the token renewed, and the API reports the 403 as it would without a session &ndash; KII_ERR_RESP_STATUS, or for <a class="el" href="#aa6640658ca65a4a54319b8ff474450c6" title="Send request and retrieve response. Assume HTTP request is built by following APIs:">kii_api_call_run()</a> the status from <a class="el" href="#ae61dfefd97935dd1d068dd640ec30af1" title="Get HTTP status code.">kii_get_resp_status()</a> &ndash; without its body: calling it again uses the renewed token. Other responses, other 403s included, reach the caller as they would without a session.</li>
 <li>Shortly before it expires means from 5 minutes before, or a fifth of its lifetime if that is less, down to half of that, each thing its own share, from its ID, so that things whose tokens were issued together don't all renew them together.</li>
-<li>A renewal ahead of expiry that fails, as when the server can't be reached, isn't tried before every request: it is tried again after 15 to 30 seconds, twice as long after each further failure, and at most 2.5 to 5 minutes later, each thing its own share of the wait, from its ID. A token the server refuses is renewed at once all the same.</li>
+<li>A renewal ahead of expiry that fails, as when the server can't be reached, isn't tried before every request: it is tried again after 15 to 30 seconds, twice as long after each further failure, and at most 2.5 to 5 minutes later, each thing its own share of the wait, from its ID. A token the server refuses is renewed at once all the same. One that can have no room without losing the body isn't made: the request goes with the token it has.</li>
 <li>A token issued without a lifetime, or with one that is not positive or exceeds UINT32_MAX seconds, is renewed only when refused. Onboarding issues neither a lifetime nor a refresh token, so its token is renewed when refused, by onboarding again with the credentials set by <a class="el" href="#ae1036e32aa7dc6c1afa027dfd728ebbf" title="Set the thing&#39;s credentials the session renews tokens with.">kii_session_set_password()</a>.</li>
 <li>A renewal runs inside the request that needed it and takes about 1.5 KB more stack than a request does.</li>
 </ul>
