@@ -137,6 +137,28 @@ static ebisu_sock_code_t tcp_connect(ebisu_socket_t* self, const char* host, uin
     return EBISU_SOCK_OK;
 }
 
+/* When a timeout of timeout_s, 0 for none, started now runs out, as
+   wait_for() takes it: 0 for never. */
+static int64_t deadline_after(unsigned int timeout_s)
+{
+    return timeout_s > 0 ? monotonic_ms() + (int64_t)timeout_s * 1000 : 0;
+}
+
+/* After send() or recv() failed with EINTR: a socket with a timeout set fails
+   so on a signal even with SA_RESTART, and the next call would start the
+   timeout again, so that signals coming more often than it kept it from
+   running out. Waits instead for what is left of it, and whether the socket
+   is ready for events by then: false with errno EAGAIN if it isn't, as when
+   the timeout runs out in the call. */
+static bool ready_after_signal(int sock, short events, int64_t deadline_ms)
+{
+    int ready = wait_for(sock, events, deadline_ms);
+    if (ready == 0) {
+        errno = EAGAIN;
+    }
+    return ready == 1;
+}
+
 static ebisu_sock_code_t tcp_send(ebisu_socket_t* self, const char* buffer, size_t length,
         size_t* out_sent_length)
 {
@@ -148,10 +170,12 @@ static ebisu_sock_code_t tcp_send(ebisu_socket_t* self, const char* buffer, size
        program. */
     flags = MSG_NOSIGNAL;
 #endif
+    const int64_t deadline_ms = deadline_after(ctx->to_send);
     ssize_t sent;
     do {
         sent = send(ctx->socket, buffer, length, flags);
-    } while (sent < 0 && errno == EINTR);
+    } while (sent < 0 && errno == EINTR &&
+            ready_after_signal(ctx->socket, POLLOUT, deadline_ms));
     if (sent >= 0) {
         *out_sent_length = (size_t)sent;
         return EBISU_SOCK_OK;
@@ -167,10 +191,12 @@ static ebisu_sock_code_t tcp_recv(ebisu_socket_t* self, char* buffer, size_t len
 {
     ebisu_posix_tcp_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_posix_tcp_socket_t, base);
     *out_actual_length = 0;
+    const int64_t deadline_ms = deadline_after(ctx->to_recv);
     ssize_t received;
     do {
         received = recv(ctx->socket, buffer, length_to_read, 0);
-    } while (received < 0 && errno == EINTR);
+    } while (received < 0 && errno == EINTR &&
+            ready_after_signal(ctx->socket, POLLIN, deadline_ms));
     if (received >= 0) {
         /* 0 is the end of the stream. */
         ctx->recv_errno = 0;
@@ -206,20 +232,29 @@ static ebisu_sock_error_t tcp_last_error(ebisu_socket_t* self, long* out_detail)
 }
 
 /* Data, the end of the stream and a failure all make the socket readable, and
-   recv() then returns without waiting. A failure of poll(), but for a signal,
-   is for tcp_recv() to report. */
+   recv() then returns without waiting. A failure of poll() is for tcp_recv()
+   to report. A signal has it wait for what is left of the timeout: false,
+   before it ran out, had the MQTT task count a whole turn for a wait cut
+   short. */
 static bool tcp_recv_wait(ebisu_socket_t* self, uint32_t timeout_ms)
 {
     ebisu_posix_tcp_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_posix_tcp_socket_t, base);
-    struct pollfd p;
-    p.fd = ctx->socket;
-    p.events = POLLIN;
-    p.revents = 0;
-    int ret = poll(&p, 1, timeout_ms > INT_MAX ? INT_MAX : (int)timeout_ms);
-    if (ret < 0 && errno == EINTR) {
-        return false;
+    const int64_t deadline_ms = monotonic_ms() + (int64_t)timeout_ms;
+    int64_t left_ms = timeout_ms;
+    for (;;) {
+        struct pollfd p;
+        p.fd = ctx->socket;
+        p.events = POLLIN;
+        p.revents = 0;
+        int ret = poll(&p, 1, left_ms > INT_MAX ? INT_MAX : (int)left_ms);
+        if (ret >= 0 || errno != EINTR) {
+            return ret != 0;
+        }
+        left_ms = deadline_ms - monotonic_ms();
+        if (left_ms <= 0) {
+            return false;
+        }
     }
-    return ret != 0;
 }
 
 static ebisu_sock_code_t tcp_close(ebisu_socket_t* self)

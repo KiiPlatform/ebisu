@@ -21,15 +21,19 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <pthread.h>
+#include <signal.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>
 #endif
 
+#include <atomic>
 #include <chrono>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace {
@@ -270,8 +274,8 @@ struct Connected {
     tcp_socket_t sock;
     const ebisu_socket_ops_t* ops;
 
-    explicit Connected(unsigned int to_recv = 1) {
-        tcp_socket_init(&sock, to_recv, 5);
+    explicit Connected(unsigned int to_recv = 1, unsigned int to_send = 5) {
+        tcp_socket_init(&sock, to_recv, to_send);
         ops = sock.base.ops;
         REQUIRE( ops->connect(&sock.base, "127.0.0.1", server.port) == EBISU_SOCK_OK );
         server.accept_one();
@@ -421,6 +425,121 @@ TEST_CASE( "The plain TCP socket's recv_wait waits for something for recv to ret
         CHECK( code == EBISU_SOCK_OK );
     }
 }
+
+#ifndef _WIN32
+namespace {
+
+void on_test_signal(int) {}
+
+// Signals the thread that makes it every period_ms, with a handler that has
+// SA_RESTART, as a timer, or SIGCHLD from children, would: until it goes, or
+// for 10 seconds, so that a timeout signals keep from running out fails the
+// test rather than hang it.
+struct Signaller {
+    pthread_t target;
+    std::atomic<bool> stop;
+    std::thread thread;
+    struct sigaction before;
+
+    explicit Signaller(int period_ms) : target(pthread_self()), stop(false) {
+        struct sigaction sa;
+        memset(&sa, 0, sizeof(sa));
+        sa.sa_handler = on_test_signal;
+        sa.sa_flags = SA_RESTART;
+        sigaction(SIGUSR1, &sa, &before);
+        thread = std::thread([this, period_ms]() {
+            for (int t = 0; t < 10000 && !stop; t += period_ms) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(period_ms));
+                if (!stop) {
+                    pthread_kill(target, SIGUSR1);
+                }
+            }
+        });
+    }
+
+    ~Signaller() {
+        stop = true;
+        thread.join();
+        sigaction(SIGUSR1, &before, nullptr);
+    }
+};
+
+}
+
+// A socket with a timeout set fails with EINTR on a signal, SA_RESTART or not,
+// and the socket called again, which started the timeout over: signals more
+// often than it kept it from ever running out.
+TEST_CASE( "The plain TCP socket's timeouts run out though signals come meanwhile" ) {
+    Connected c(1, 1);
+
+    SECTION("receiving") {
+        ebisu_sock_code_t code = EBISU_SOCK_OK;
+        long ms = 0;
+        {
+            Signaller signaller(200);
+            auto start = std::chrono::steady_clock::now();
+            CHECK( c.receive(16, &code).empty() );
+            ms = elapsed_ms(start);
+        }
+        CHECK( code == EBISU_SOCK_FAIL );
+        long detail = -1;
+        CHECK( c.last_error(&detail) == EBISU_SOCK_ERROR_TIMEOUT );
+        CHECK( ms >= 900 );
+        CHECK( ms < 2500 );
+    }
+
+    SECTION("receiving what comes in time") {
+        std::string received;
+        ebisu_sock_code_t code = EBISU_SOCK_FAIL;
+        {
+            Signaller signaller(100);
+            std::thread sender([&c]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(450));
+                c.server.send_text("late");
+            });
+            received = c.receive(16, &code);
+            sender.join();
+        }
+        CHECK( received == "late" );
+        CHECK( code == EBISU_SOCK_OK );
+    }
+
+    SECTION("sending, with the peer reading nothing") {
+        const std::vector<char> data(1 << 20, 'x');
+        ebisu_sock_code_t code = EBISU_SOCK_OK;
+        long ms = 0;
+        {
+            Signaller signaller(200);
+            // Each send that doesn't fail sends something, until the
+            // buffers are full; the one that then fails is the one timed.
+            for (int i = 0; i < 1000 && code == EBISU_SOCK_OK; ++i) {
+                size_t sent = 0;
+                auto start = std::chrono::steady_clock::now();
+                code = c.ops->send(&c.sock.base, data.data(), data.size(), &sent);
+                ms = elapsed_ms(start);
+            }
+        }
+        CHECK( code == EBISU_SOCK_FAIL );
+        long detail = -1;
+        CHECK( c.last_error(&detail) == EBISU_SOCK_ERROR_TIMEOUT );
+        CHECK( ms < 2500 );
+    }
+
+    SECTION("waiting with recv_wait, for the whole of its timeout") {
+        long ms = 0;
+        bool ready = true;
+        {
+            Signaller signaller(200);
+            auto start = std::chrono::steady_clock::now();
+            ready = c.ops->recv_wait(&c.sock.base, 1000);
+            ms = elapsed_ms(start);
+        }
+        CHECK_FALSE( ready );
+        CHECK( ms >= 950 );
+        CHECK( ms < 2500 );
+    }
+}
+#endif
 
 TEST_CASE( "The plain TCP socket says why it failed to connect" ) {
     start_network();
