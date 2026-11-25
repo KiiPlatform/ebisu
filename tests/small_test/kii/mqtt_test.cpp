@@ -5956,6 +5956,10 @@ TEST_CASE( "kii_mqtt_publish() has the task publish, one message at a time" ) {
     int skipped_states = 0;
     uint64_t now_ms = 0;
     int task_waits_of_a_second = 0;
+    // Set, a call still waiting after this many waits of its own with no task
+    // running is let go, with a result no path gives, rather than wait for
+    // good.
+    int waits_before_letting_go = 0;
     khct::cb::SystemCtx sys;
     sys.on_task_create = [](const char*, EBISU_TASK_ENTRY, void*) { return EBISU_TASK_OK; };
     sys.on_monotonic_ms = [&now_ms]() { return now_ms; };
@@ -5966,6 +5970,10 @@ TEST_CASE( "kii_mqtt_publish() has the task publish, one message at a time" ) {
             return;
         }
         if (!task_runs || state.info.task_state >= KII_MQTT_ST_ERR_EXIT) {
+            if (waits_before_letting_go > 0 && --waits_before_letting_go == 0) {
+                kii._mqtt_pub_result = KII_ERR_PARSE_JSON;
+                kii._mqtt_pub_state = KII_MQTT_PUB_DONE;
+            }
             return;
         }
         if (skipped_states > 0) {
@@ -6384,6 +6392,28 @@ TEST_CASE( "kii_mqtt_publish() has the task publish, one message at a time" ) {
         CHECK( kii._mqtt_pub_state == KII_MQTT_PUB_FREE );
         CHECK( kii._push_task_running == false );
         CHECK( kii_mqtt_publish(&kii, "t", "x", 1, KII_MQTT_QOS_0, false, 1000) == KII_ERR_FAIL );
+        CHECK( now_ms < 50 );
+        CHECK( sent.empty() );
+    }
+
+    // Taken, the message waited past the timeout to be sent, as a send under
+    // way reads it. The task ending left it so, and the call waited for good.
+    SECTION("a message taken when the task ends, before it is sent, fails too") {
+        waits_before_letting_go = 100000;
+        instead_of_state = [&]() {
+            // Takes it, to send it next.
+            _mqtt_state_recv_ready(&state);
+            REQUIRE( state.info.task_state == KII_MQTT_ST_SEND_PUBLISH );
+            REQUIRE( kii._mqtt_pub_state == KII_MQTT_PUB_SENDING );
+            instead_of_state = [&]() {
+                kii_set_cb_task_continue(&kii, [](void*, void*) { return false; }, NULL);
+                mqtt_start_task(&kii);
+                task_runs = false;
+            };
+        };
+        CHECK( kii_mqtt_publish(&kii, "t", "x", 1, KII_MQTT_QOS_0, false, 1000) == KII_ERR_FAIL );
+        CHECK( kii._mqtt_pub_state == KII_MQTT_PUB_FREE );
+        CHECK( kii._push_task_running == false );
         CHECK( now_ms < 50 );
         CHECK( sent.empty() );
     }
