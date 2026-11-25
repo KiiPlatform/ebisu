@@ -925,6 +925,57 @@ TEST_CASE( "A body leaving no room to renew is not sent again" ) {
     REQUIRE( contains(c.http.requests[2], body) );
 }
 
+// Taking a token another kii_t of the session renewed asks nothing of the
+// server, but the room a renewal needs was asked for all the same: without it,
+// the token wasn't taken ahead of the request, and, once it was refused, the
+// body was let go and the 403 left to the caller.
+TEST_CASE( "A token another kii_t renewed is taken, whatever room the body leaves" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_author_t author = make_author("th.1", "at1", "rt1");
+    kii_session_set_author(&session, &author);
+    // As in "A body leaving no room to renew is not sent again".
+    Client c(800);
+    Client other;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+    REQUIRE( kii_set_session(&other.kii, &session) == KII_ERR_OK );
+    const std::string body = "{\"k\":\"" + std::string(290, 'v') + "\"}";
+
+    SECTION("renewed while the request was being built") {
+        REQUIRE( c.start(body) == KII_ERR_OK );
+        other.http.responses = { REFUSED, refreshed("at2", "rt2", 3600), DONE };
+        REQUIRE( other.put(BODY) == KII_ERR_OK );
+
+        c.http.responses = { DONE };
+        REQUIRE( kii_api_call_run(&c.kii) == KII_ERR_OK );
+        CHECK( kii_get_resp_status(&c.kii) == 200 );
+        REQUIRE( c.http.requests.size() == 1 );
+        CHECK( contains(c.http.requests[0], "Authorization: Bearer at2\r\n") );
+        CHECK( contains(c.http.requests[0], body) );
+    }
+
+    SECTION("renewed while the request was refused") {
+        kii_author_t renewed = make_author("th.1", "at2", "rt2");
+        c.http.on_connect = [&](size_t i) {
+            if (i == 0) {
+                kii_session_set_author(&session, &renewed);
+            }
+        };
+        c.http.responses = { REFUSED, DONE };
+        REQUIRE( c.put(body) == KII_ERR_OK );
+        CHECK( kii_get_resp_status(&c.kii) == 200 );
+        REQUIRE( c.http.requests.size() == 2 );
+        CHECK( contains(c.http.requests[0], "Authorization: Bearer at1\r\n") );
+        CHECK( contains(c.http.requests[1], "Authorization: Bearer at2\r\n") );
+        CHECK( contains(c.http.requests[1], body) );
+    }
+
+    // The one renewal, other's, if any: c asked the server for none.
+    CHECK( platform.updates.size() <= 1 );
+    CHECK( platform.depth == 0 );
+}
+
 TEST_CASE( "Only requests carrying the session's token are renewed" ) {
     Client c;
 

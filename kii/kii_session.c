@@ -646,7 +646,8 @@ static kii_code_t _replace_auth_header(kii_t* kii)
  * A body built in the buffer survives when the renewal fits in the space after
  * it; *out_resendable tells whether it did. A streamed body never does: its
  * reader belongs to the caller. When not forced, a renewal that would cost the
- * body is not attempted. */
+ * body is not attempted. A token another kii_t of the session renewed is only
+ * taken, which asks nothing of the server and needs no room. */
 static kii_code_t _renew_and_restore(
         kii_t* kii,
         bool force,
@@ -659,10 +660,14 @@ static kii_code_t _renew_and_restore(
     bool streamed = kii->_req_streamed;
     size_t keep = (streamed) ? 0 : req_size + 1;
     _lock(kii->_session);
+    const bool renewed_elsewhere =
+        kii->_session->_generation != kii->_session_generation;
     size_t renewal_size = (kii->_session->_renew_mode == KII_RENEW_BY_ONBOARDING) ?
         _KII_SESSION_ONBOARD_BUFF_SIZE : _KII_SESSION_RENEW_BUFF_SIZE;
     _unlock(kii->_session);
-    if (buff_size < keep + renewal_size) {
+    /* Once renewed elsewhere, the generation never comes back to this kii_t's
+     * until it takes it, so _renew_locked() takes it below. */
+    if (!renewed_elsewhere && buff_size < keep + renewal_size) {
         if (!force) {
             return KII_ERR_OK;
         }
