@@ -33,7 +33,8 @@ of the application's own, as the
 
 - **POSIX** (`ebisu_posix.h`, library `ebisu_posix`): `ebisu_posix_system()`,
   whose tasks are detached threads, whose delays are `nanosleep()` and whose
-  monotonic clock is `CLOCK_MONOTONIC`, `ebisu_posix_lock_t`, a pthread
+  monotonic clock is `CLOCK_BOOTTIME`, which keeps counting while Linux is
+  suspended, or `CLOCK_MONOTONIC` where there is none, `ebisu_posix_lock_t`, a pthread
   mutex, and `ebisu_posix_tcp_socket_t`, plain TCP over a blocking BSD socket,
   for a server without TLS, as an MQTT broker's port is with
   `kii_enable_insecure_mqtt()`. Nothing it sends is encrypted. It looks the

@@ -10,6 +10,8 @@
 #define port_system ebisu_posix_system
 #endif
 
+#include <time.h>
+
 #include <atomic>
 #include <chrono>
 #include <future>
@@ -102,6 +104,21 @@ TEST_CASE( "The port's system delays and keeps time through the inline calls" ) 
     // GetTickCount64() counts in steps of 10 to 16 ms.
     CHECK( ebisu_system_monotonic_ms(sys) - before >= 80 );
 }
+
+#if !defined(_WIN32) && defined(CLOCK_BOOTTIME)
+// The monotonic clock has to keep counting while the device sleeps. Linux's
+// CLOCK_MONOTONIC stops while the system is suspended, and its CLOCK_BOOTTIME
+// doesn't. On a system that was never suspended the two agree, so this tells
+// them apart only after a suspend.
+TEST_CASE( "The POSIX system's monotonic clock counts the time the system was suspended" ) {
+    struct timespec ts;
+    REQUIRE( clock_gettime(CLOCK_BOOTTIME, &ts) == 0 );
+    const uint64_t boot_ms = (uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000;
+    const uint64_t ms = ebisu_system_monotonic_ms(port_system());
+    CHECK( ms >= boot_ms );
+    CHECK( ms - boot_ms < 1000 );
+}
+#endif
 
 TEST_CASE( "The port's system delays at least as long as asked, short delays too" ) {
     ebisu_system_t* sys = port_system();

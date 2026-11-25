@@ -28,7 +28,9 @@ extern "C" {
  *
  * Each task is a detached thread, which goes by itself when it ends. A delay is
  * nanosleep(), resumed through signals until the whole time has passed. The
- * monotonic clock is CLOCK_MONOTONIC. Its locks, from
+ * monotonic clock is CLOCK_BOOTTIME where there is one, as on Linux, whose
+ * CLOCK_MONOTONIC stops while the system is suspended, and CLOCK_MONOTONIC
+ * elsewhere. Its locks, from
  * ebisu_system_lock_create(), are ebisu_posix_lock_t's from the heap. Its
  * clock, from ebisu_system_clock(), is the time of day, CLOCK_REALTIME, as
  * ebisu_clock_from_system_time() takes it: earlier than the library's source,

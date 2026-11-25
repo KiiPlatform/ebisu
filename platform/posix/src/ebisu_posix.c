@@ -30,10 +30,21 @@ static void delay_ms(ebisu_system_t* self, uint32_t msec)
     }
 }
 
+/* CLOCK_BOOTTIME where the system has it, as Linux since 2.6.39 does:
+   CLOCK_MONOTONIC there stops while the system is suspended, which
+   ebisu_system_ops_t::monotonic_ms mustn't. Where it doesn't, or the kernel
+   refuses it, CLOCK_MONOTONIC, which elsewhere counts through a suspend or
+   is all there is. */
 static uint64_t monotonic_ms(ebisu_system_t* self)
 {
     struct timespec ts;
+#ifdef CLOCK_BOOTTIME
+    if (clock_gettime(CLOCK_BOOTTIME, &ts) != 0) {
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+    }
+#else
     clock_gettime(CLOCK_MONOTONIC, &ts);
+#endif
     return (uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000;
 }
 
