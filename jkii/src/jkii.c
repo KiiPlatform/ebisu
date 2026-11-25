@@ -1062,7 +1062,10 @@ static jkii_parse_err_t _jkii_parse_fields(
         _jkii_value_t value;
 
         if (field->path != NULL) {
-            result = _jkii_find_by_path(root, field->path, &value);
+            /* An empty path, which the grammar has none of, finds nothing, as
+             * jkii_find_member() has it. */
+            result = (field->path[0] != '\0') ?
+                _jkii_find_by_path(root, field->path, &value) : -1;
         } else if (root->type == JSONObject) {
             result = _jkii_find_member_by_name(root, field->name, &value);
         }
