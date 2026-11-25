@@ -55,6 +55,15 @@ kii_code_t _set_auth_header(kii_t* kii);
 /* The thing's ID for a path: the session's, if kii has one. */
 const char* _kii_thing_id(kii_t* kii);
 
+/* Whether s can be a segment of a request's path as it is: one or more
+ * letters, digits, '.', '_', '-' and '$', which Kii's IDs and names are made
+ * of, and not "." or "..". Anything else, '/', '?', '#' or '%' among it, could
+ * have the request go to another path than its own. */
+bool _kii_is_path_segment(const char* s);
+
+/* Whether s is an application ID as Kii issues them: letters and digits. */
+bool _kii_is_app_id(const char* s);
+
 kii_code_t _set_auth_bearer_token(kii_t* kii, const char* token);
 
 kii_code_t _set_auth_basic_app(kii_t* kii);

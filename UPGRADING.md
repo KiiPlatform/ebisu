@@ -468,6 +468,15 @@ kii:
   negative or above `UINT32_MAX`.
 - `kii_ti_put_firmware_version()` escapes the version, as onboarding always has.
   A caller that escaped it first should stop.
+- A request whose path would hold an ID or a name the application gave, or the
+  thing's own ID, of anything but letters, digits, `.`, `_`, `-` and `$`, or
+  one that is empty, `.` or `..`, fails with `KII_ERR_FAIL`, sending nothing:
+  bucket, object and topic names and IDs, scope IDs, a thing ID given to
+  `kii_send_push_message_to_thing()`, an installation ID, and a server code
+  version or endpoint name. Every request also fails so, sending nothing, with
+  an application ID of anything but letters and digits, or none. Kii's IDs and
+  names are made of those characters; 1.x put whatever it was given into the
+  path, and a `/`, `?` or `#` in one sent the request to another path.
 - `kii_api_call_append_header()` returns `KII_ERR_TOO_LARGE_DATA` for a header
   that doesn't fit in what is left of the request header buffer, and logs its
   name at `EBISU_LOG_WARNING`. 1.x took any length, on the stack of the task

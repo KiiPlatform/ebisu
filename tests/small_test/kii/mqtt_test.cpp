@@ -4745,8 +4745,11 @@ TEST_CASE( "A broker that cannot be reached" ) {
 TEST_CASE( "The task can be stopped during a wait" ) {
     kii_t kii;
     kii_init(&kii);
+    kii_set_app_id(&kii, "app");
     strcpy(kii._author.author_id, "th.1");
     strcpy(kii._onboarded_thing_id, "th.1");
+    // As onboarding gives it, for the endpoint to be asked for again.
+    strcpy(kii._onboarded_installation_id.id, "ins.1");
     strcpy(kii._mqtt_endpoint.host, "mqtt.example.com");
 
     char kii_buff[512];

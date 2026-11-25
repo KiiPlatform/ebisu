@@ -220,6 +220,9 @@ kii_code_t _put_firmware_version(
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "PUT");
 
+    if (!_kii_is_path_segment(_kii_thing_id(kii))) {
+        return KII_ERR_FAIL;
+    }
     ebisu_strbuf_t path;
     ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/things/%s/firmware-version", kii->_app_id, _kii_thing_id(kii));
@@ -278,6 +281,9 @@ kii_code_t _get_firmware_version(
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "GET");
 
+    if (!_kii_is_path_segment(_kii_thing_id(kii))) {
+        return KII_ERR_FAIL;
+    }
     ebisu_strbuf_t path;
     ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/things/%s/firmware-version", kii->_app_id, _kii_thing_id(kii));
@@ -355,6 +361,9 @@ kii_code_t _upload_state(
     }
     khc_set_method(&kii->_khc, method);
 
+    if (!_kii_is_path_segment(_kii_thing_id(kii))) {
+        return KII_ERR_FAIL;
+    }
     ebisu_strbuf_t path;
     ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/targets/thing:%s/%s", kii->_app_id, _kii_thing_id(kii), last_path_segment);
