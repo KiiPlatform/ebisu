@@ -5035,6 +5035,136 @@ TEST_CASE( "The MQTT task tells the event callback why" ) {
 // receive timeouts, so time spent elsewhere, such as in the push callback, went
 // uncounted, and a receive that returned at once counted for its whole timeout.
 // With a monotonic clock in the system, the keep-alive is timed by it.
+// The task sent the next PINGREQ when it was due, unless the last one's
+// PINGRESP hadn't been read, and then took the connection for lost: even with
+// the PINGRESP there to read, come behind a message. A message whose callback
+// ran long made it so with a clock; without one, any message, as it counts for
+// the whole receive timeout.
+TEST_CASE( "A PINGRESP behind other packets is read before the connection is taken for lost" ) {
+    char mqtt_buff[256];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    strcpy(kii._author.author_id, "th.1");
+    uint64_t now_ms = 0;
+    khct::cb::SystemCtx sys;
+    sys.on_monotonic_ms = [&now_ms]() { return now_ms; };
+    sys.on_delay_ms = [&now_ms](uint32_t ms) { now_ms += ms; };
+    kii_set_system(&kii, sys.system());
+    khct::cb::PushCtx push_ctx;
+    int pushed = 0;
+    push_ctx.on_push = [&pushed](const kii_mqtt_message_t*) { ++pushed; };
+    kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, &push_ctx);
+    std::vector<kii_mqtt_event_t> events;
+    kii_set_cb_mqtt_event(&kii, [](kii_mqtt_event_t event, uint32_t, void* userdata) {
+        ((std::vector<kii_mqtt_event_t>*)userdata)->push_back(event);
+    }, &events);
+
+    khct::cb::SockCtx mqtt_ctx;
+    std::string sent;
+    mqtt_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    std::deque<std::string> to_task;
+    mqtt_ctx.on_recv = [&to_task](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        if (to_task.empty()) {
+            return EBISU_SOCK_FAIL;
+        }
+        std::string& next = to_task.front();
+        *out_actual_length = next.copy(buffer, length_to_read);
+        next.erase(0, *out_actual_length);
+        if (next.empty()) {
+            to_task.pop_front();
+        }
+        return EBISU_SOCK_OK;
+    };
+    mqtt_ctx.on_recv_timed_out = [](void*) { return true; };
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+
+    const std::string pingreq("\xc0\x00", 2);
+    const std::string pingresp("\xd0\x00", 2);
+    const std::string message = publish_packet("devices/1/in", "x");
+    mqtt_state_t state;
+    // Connected, subscribed, and the first PINGREQ just sent, as the task does
+    // once the keep-alive less the receive timeout is over.
+    auto pinged = [&](uint16_t keep_alive, uint32_t to_recv) {
+        kii_set_mqtt_to_sock_recv(&kii, to_recv);
+        kii._keep_alive_interval = keep_alive;
+        _init_mqtt_state(&kii, &state);
+        state.sock_connected = true;
+        state.mqtt_connected = true;
+        state.info.task_state = KII_MQTT_ST_SEND_PINGREQ;
+        _mqtt_state_send_pingreq(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        REQUIRE( sent == pingreq );
+        sent.clear();
+    };
+    // Runs states until the connection is given up, a PINGREQ is sent, or n
+    // states have run.
+    auto run = [&](int n) {
+        for (int i = 0; i < n && state.info.task_state != KII_MQTT_ST_RECONNECT &&
+                sent.empty(); ++i) {
+            mqtt_state_handlers[state.info.task_state](&state);
+        }
+    };
+
+    SECTION("behind a message whose callback ran long") {
+        pinged(30, 5);
+        push_ctx.on_push = [&](const kii_mqtt_message_t*) { ++pushed; now_ms += 30000; };
+        to_task.push_back(message + pingresp);
+        run(6);
+        CHECK( pushed == 1 );
+        CHECK( to_task.empty() );
+        CHECK( events.empty() );
+        // Its PINGRESP read, the next PINGREQ, overdue, goes at once.
+        CHECK( sent == pingreq );
+    }
+
+    SECTION("behind a message, without a clock") {
+        sys.ops.monotonic_ms = nullptr;
+        pinged(30, 20);
+        to_task.push_back(message + pingresp);
+        run(6);
+        CHECK( pushed == 1 );
+        CHECK( to_task.empty() );
+        CHECK( events.empty() );
+        CHECK( now_ms < 2000 );
+    }
+
+    SECTION("with a socket that can wait, whatever has come is read first") {
+        mqtt_ctx.ops.recv_wait = khct::cb::mock_recv_wait;
+        mqtt_ctx.on_recv_wait = [&to_task](uint32_t) { return !to_task.empty(); };
+        pinged(30, 5);
+        push_ctx.on_push = [&](const kii_mqtt_message_t*) { ++pushed; now_ms += 30000; };
+        to_task.push_back(message + message + pingresp);
+        run(10);
+        CHECK( pushed == 2 );
+        CHECK( to_task.empty() );
+        CHECK( events.empty() );
+        CHECK( sent == pingreq );
+    }
+
+    SECTION("none coming, the connection is still taken for lost") {
+        SECTION("once a receive has found nothing") {
+            pinged(30, 5);
+            now_ms += 30000;
+            run(6);
+        }
+        SECTION("at once, with a socket that can wait and has nothing") {
+            mqtt_ctx.ops.recv_wait = khct::cb::mock_recv_wait;
+            mqtt_ctx.on_recv_wait = [](uint32_t) { return false; };
+            pinged(30, 5);
+            now_ms += 30000;
+            run(2);
+        }
+        CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        CHECK( events == std::vector<kii_mqtt_event_t>({ KII_MQTT_EVENT_PING_TIMEOUT }) );
+        CHECK( sent.empty() );
+    }
+}
+
 TEST_CASE( "The MQTT keep-alive is timed by the system's monotonic clock" ) {
     char mqtt_buff[1024];
     kii_t kii;
