@@ -46,21 +46,10 @@ int _kii_body_append(
     return _body_copy(kii, len + escaped, after);
 }
 
-/* Takes the body from the buffer again, after one set by
- * kii_api_call_set_body_reader(). */
-static void _body_from_buff(kii_t* kii)
-{
-    kii->_req_streamed = false;
-    khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
-}
-
 static void _resource_cleanup(kii_t* kii)
 {
     _reset_buff(kii);
-    _req_headers_free_all(kii);
-
     _reset_khc(kii);
-    _body_from_buff(kii);
 }
 
 kii_code_t kii_api_call_start(

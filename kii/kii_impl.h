@@ -30,8 +30,13 @@ bool _kii_field_fits(kii_t* kii, const jkii_field_t* field, size_t size, const c
 
 /* Resets khc for a new request, keeping the buffers set by
  * kii_set_stream_buff() and kii_set_resp_header_buff(). Use it rather than
- * khc_reset_except_cb(), which drops them. */
+ * khc_reset_except_cb(), which drops them. The headers of a call before are
+ * freed, and the body is read from kii's buffer again. */
 void _reset_khc(kii_t* kii);
+
+/* Has the request's body read from kii's buffer, as it is unless
+ * kii_api_call_set_body_reader() gave a reader. */
+void _body_from_buff(kii_t* kii);
 
 /* Readies the request's header buffer for its first header: the one
  * kii_set_req_header_buff() gave, or one of KII_REQ_HEADER_BUFF_SIZE bytes

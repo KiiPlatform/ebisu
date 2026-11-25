@@ -2385,9 +2385,15 @@ size_t kii_get_resp_body_length(kii_t* kii);
 void kii_set_use_m_0_header_flag(kii_t* kii, bool flag);
 
 /**
- * \brief reset state of request currently under preparation.
+ * \brief Cancel the request being prepared with kii_api_call_start().
+ *
+ * Its headers are cleared, and a reader given to
+ * kii_api_call_set_body_reader() is forgotten. A call started and never run
+ * or cancelled is forgotten as well by the next request, whatever API makes
+ * it.
+ *
  * \param [in] kii kii_t instance.
-*/
+ */
 void kii_cancel_request_being_prepared(kii_t* kii);
 
 /**
