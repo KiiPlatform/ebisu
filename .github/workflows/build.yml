@@ -594,8 +594,11 @@ jobs:
   # 32-bit ARM Linux, armv7-a with hardware floating point, cross-compiled in
   # Debian stretch against each OpenSSL the job above builds: the libraries,
   # the ports and the Linux sample. The small tests and the OpenSSL port's run
-  # under qemu-arm. Stretch's glibc, 2.24, is older than the oldest the targets
-  # have, so the job fails if anything needs a symbol newer than GLIBC_2.26.
+  # under qemu-arm: the runner's, which Ubuntu builds static, so that it runs
+  # in stretch, rather than stretch's own, qemu 2.8, which can't read a
+  # socket's timeouts back. Stretch's glibc, 2.24, is older than the oldest the
+  # targets have, so the job fails if anything needs a symbol newer than
+  # GLIBC_2.26.
   armhf:
     name: armhf (OpenSSL ${{ matrix.version }}, qemu-arm)
     runs-on: ubuntu-latest
@@ -609,7 +612,14 @@ jobs:
         uses: actions/checkout@v7
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
+      - name: Setup build env
+        uses: ./.github/actions/apt-install
+        with:
+          packages: qemu-user
+          options: --no-install-recommends
       - name: build and test
+        env:
+          QEMU_ARM: /usr/bin/qemu-arm
         run: tests/samples/armhf.sh ${{ matrix.version }}
 
   # 32-bit x86 Linux on musl, with Alpine's own OpenSSL, on both sides of musl

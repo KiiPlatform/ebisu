@@ -10,6 +10,9 @@
 #   1.0.2p or 1.1.1i, the oldest of each series the targets have.
 # DOCKER names the container tool, docker by default; DOCKER_OPTS adds options
 # to its run, such as --security-opt label=disable for podman with SELinux.
+# QEMU_ARM names a statically linked qemu-arm to run the tests with, in place
+# of stretch's, qemu 2.8, whose getsockopt() can't read SO_RCVTIMEO or
+# SO_SNDTIMEO back, as qemu can since 5.0.
 set -euo pipefail
 version=$1
 root=$(cd "$(dirname "$0")/../.." && pwd)
@@ -35,6 +38,9 @@ if [ "${ARMHF_INSIDE:-}" != 1 ]; then
         "https://github.com/Kitware/CMake/releases/download/v$cmake_version/cmake-$cmake_version-linux-x86_64.tar.gz"
     (cd "$dl" && printf '%s  %s\n%s  %s\n' \
         "$openssl_sha256" "openssl-$version.tar.gz" "$cmake_sha256" cmake.tar.gz | sha256sum -c -)
+    if [ -n "${QEMU_ARM:-}" ]; then
+        cp "$QEMU_ARM" "$dl/qemu-arm"
+    fi
     # shellcheck disable=SC2086
     "${DOCKER:-docker}" run --rm ${DOCKER_OPTS:-} -e ARMHF_INSIDE=1 \
         -v "$root:/src:ro" -v "$dl:/dl:ro" docker.io/library/debian:stretch \
@@ -66,6 +72,10 @@ for attempt in 1 2 3 4 5; do
 done
 arm-linux-gnueabihf-gcc --version | sed -n 1p
 ldd --version | sed -n 1p
+if [ -x /dl/qemu-arm ]; then
+    install -m 755 /dl/qemu-arm /usr/local/bin/qemu-arm
+fi
+qemu-arm --version | sed -n 1p
 
 tar xzf /dl/cmake.tar.gz -C /opt
 export PATH="/opt/cmake-$cmake_version-linux-x86_64/bin:$PATH"
