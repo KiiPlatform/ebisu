@@ -301,7 +301,7 @@ TEST_CASE( "The OpenSSL socket's timeouts run out though signals come meanwhile"
     REQUIRE( setsockopt(c.client.socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == 0 );
     REQUIRE( setsockopt(c.client.socket, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) == 0 );
     // The socket reads them back. Where the system can't tell them, as under
-    // qemu-user, it takes a signal for its timeout, as before.
+    // qemu-user before 5.0, it takes a signal for its timeout, as before.
     struct timeval found;
     socklen_t found_length = sizeof(found);
     if (getsockopt(c.client.socket, SOL_SOCKET, SO_RCVTIMEO, &found, &found_length) != 0 ||
