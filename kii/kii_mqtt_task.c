@@ -766,7 +766,9 @@ static void _publish_reconnected(kii_t* kii)
 }
 
 // As the task ends: a message not yet done fails, and no call can give
-// another until the task is started again.
+// another until the task is started again. One taken and not yet sent, as the
+// task was stopped between the two, fails too: its caller waits for it however
+// long, as for a send under way.
 static void _publish_close(kii_t* kii)
 {
     if (kii->_mqtt_lock == NULL) {
@@ -776,7 +778,8 @@ static void _publish_close(kii_t* kii)
     _pub_lock(kii);
     kii->_mqtt_pub_open = false;
     const uint8_t pub_state = kii->_mqtt_pub_state;
-    if (pub_state == KII_MQTT_PUB_QUEUED || pub_state == KII_MQTT_PUB_AWAITING_PUBACK) {
+    if (pub_state == KII_MQTT_PUB_QUEUED || pub_state == KII_MQTT_PUB_SENDING ||
+            pub_state == KII_MQTT_PUB_AWAITING_PUBACK) {
         kii->_mqtt_pub_result = KII_ERR_FAIL;
         kii->_mqtt_pub_state = KII_MQTT_PUB_DONE;
     }
