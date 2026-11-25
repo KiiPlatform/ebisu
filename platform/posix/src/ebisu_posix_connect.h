@@ -335,7 +335,20 @@ typedef char last_address_fits[sizeof(struct sockaddr_in6) <= LAST_ADDRESS_MAX ?
 static int connect_to_address(const struct addrinfo* ai, int64_t timeout_ms,
         ebisu_sock_error_t* out_error, long* out_detail)
 {
+    /* Not inherited by a program another task executes while the connection
+       is open, which would hold it open past close(): at once where socket()
+       can, so that no fork() in another thread comes between. */
+#ifdef SOCK_CLOEXEC
+    int sock = socket(ai->ai_family, ai->ai_socktype | SOCK_CLOEXEC, ai->ai_protocol);
+#else
     int sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+    if (sock >= 0 && fcntl(sock, F_SETFD, FD_CLOEXEC) == -1) {
+        int saved_errno = errno;
+        close(sock);
+        errno = saved_errno;
+        sock = -1;
+    }
+#endif
     if (sock < 0) {
         *out_error = EBISU_SOCK_ERROR_OTHER;
         *out_detail = errno;

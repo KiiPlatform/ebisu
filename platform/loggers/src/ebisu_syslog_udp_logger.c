@@ -45,12 +45,15 @@ static void close_socket(socket_t sock)
 #endif
 }
 
-/* Non-blocking, so that a send never waits, and on POSIX not inherited by a
-   program the application executes. */
+/* Non-blocking, so that a send never waits, and not inherited by a program
+   the application executes. */
 static bool configure_socket(socket_t sock)
 {
 #ifdef _WIN32
     u_long non_blocking = 1;
+    /* A socket a layered provider gives may not be a handle, and is left as
+       it is. */
+    SetHandleInformation((HANDLE)sock, HANDLE_FLAG_INHERIT, 0);
     return ioctlsocket(sock, FIONBIO, &non_blocking) == 0;
 #else
     int flags = fcntl(sock, F_GETFL);

@@ -164,6 +164,8 @@ static ebisu_dns_asked_t ask_once(const ebisu_dns_addr_t* server, const unsigned
         *out_errno = WSAGetLastError();
         return EBISU_DNS_ASKED_FAILED;
     }
+    /* Not inherited by a process created meanwhile, as on POSIX. */
+    SetHandleInformation((HANDLE)sock, HANDLE_FLAG_INHERIT, 0);
     /* Connected, so that only the server's datagrams are received, and its
        port unreachable is told. Not waiting but in select(). */
     if (ioctlsocket(sock, FIONBIO, &nonblocking) != 0 ||
