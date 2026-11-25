@@ -245,21 +245,22 @@ Data Fields</h2></td></tr>
 <div class="line">identifier ::= field | index</div>
 <div class="line">index ::= <span class="charliteral">&#39;[&#39;</span> 0 <span class="charliteral">&#39;]&#39;</span> | <span class="charliteral">&#39;[&#39;</span> [1-9][0-9]+ <span class="charliteral">&#39;]&#39;</span></div>
 <div class="line">field ::= [<span class="keywordtype">char</span> | escaped]+</div>
-<div class="line">char ::= any ascii characters expect <span class="charliteral">&#39;/&#39;</span>, <span class="charliteral">&#39;[&#39;</span>, <span class="charliteral">&#39;]&#39;</span> and <span class="charliteral">&#39;\&#39;</span></div>
-<div class="line">escaped = <span class="stringliteral">&quot;\\/&quot;</span> | <span class="stringliteral">&quot;\\[&quot;</span> | <span class="stringliteral">&quot;\\]&quot;</span> | <span class="stringliteral">&quot;\\&quot;</span></div>
-<div class="ttc" id="astructjkii__field__t_html_ade8bf5f5ddad91aedd67bb0a0ae40533"><div class="ttname"><a href="#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a></div><div class="ttdeci">const char * path</div><div class="ttdef"><b>Definition</b> jkii.h:204</div></div>
-</div><!-- fragment --><p>If you want to get first element of color array in following json example:</p>
+<div class="line">char ::= any character but <span class="charliteral">&#39;/&#39;</span>, <span class="charliteral">&#39;[&#39;</span>, <span class="charliteral">&#39;]&#39;</span> and <span class="charliteral">&#39;\&#39;</span></div>
+<div class="line">escaped ::= <span class="charliteral">&#39;\&#39;</span> <span class="charliteral">&#39;/&#39;</span> | <span class="charliteral">&#39;\&#39;</span> <span class="charliteral">&#39;[&#39;</span> | <span class="charliteral">&#39;\&#39;</span> <span class="charliteral">&#39;]&#39;</span> | <span class="charliteral">&#39;\&#39;</span> <span class="charliteral">&#39;\&#39;</span></div>
+<div class="ttc" id="astructjkii__field__t_html_ade8bf5f5ddad91aedd67bb0a0ae40533"><div class="ttname"><a href="#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a></div><div class="ttdeci">const char * path</div><div class="ttdef"><b>Definition</b> jkii.h:209</div></div>
+</div><!-- fragment --><p>A field is compared with the name as the document writes it, escapes and all: <span class="tt">\/</span>, <span class="tt">\[</span> and <span class="tt">\]</span> stand for those characters, and <span class="tt">\\</span> for a backslash in the name, which the document writes as those two characters.</p>
+<p>If you want to get first element of color array in following json example:</p>
 <div class="fragment"><div class="line">{</div>
 <div class="line">    <span class="stringliteral">&quot;light&quot;</span> : {</div>
 <div class="line">        <span class="stringliteral">&quot;color&quot;</span> : [ 0, 128, 255]</div>
 <div class="line">     }</div>
 <div class="line">}</div>
 </div><!-- fragment --><div class="fragment"><div class="line"><a class="code hl_variable" href="#ade8bf5f5ddad91aedd67bb0a0ae40533">path</a> =<span class="stringliteral">&quot;/light/color/[0]&quot;</span>;</div>
-</div><!-- fragment --><p>In rare cases, like following: </p><div class="fragment"><div class="line">{</div>
+</div><!-- fragment --><p>In rare cases, like following, the name "[]/" and a backslash: </p><div class="fragment"><div class="line">{</div>
 <div class="line">    <span class="stringliteral">&quot;[]/\\&quot;</span> : <span class="stringliteral">&quot;rare&quot;</span></div>
 <div class="line">}</div>
-</div><!-- fragment --><p>You can specify that key as following:</p>
-<div class="fragment"><div class="line"><a class="code hl_variable" href="#ade8bf5f5ddad91aedd67bb0a0ae40533">path</a> =<span class="stringliteral">&quot;/\\[\\]\\/\\&quot;</span>;</div>
+</div><!-- fragment --><p>You can specify that key as following, as a C string:</p>
+<div class="fragment"><div class="line"><a class="code hl_variable" href="#ade8bf5f5ddad91aedd67bb0a0ae40533">path</a> =<span class="stringliteral">&quot;/\\[\\]\\/\\\\&quot;</span>;</div>
 </div><!-- fragment --> 
 </div>
 </div>
