@@ -1731,6 +1731,32 @@ TEST_CASE("KiiJson, PathEscapesOneCharacterEach") {
     CHECK(std::string(copy) == "{\"b\" : 1}");
 }
 
+// A '\\' that ended a segment was taken, with the '/' after it, the next
+// segment's, for an escaped '/': the segment x\\ matched the key written x\/.
+TEST_CASE("KiiJson, PathEscapeEndsWithItsSegment") {
+    const char json[] = "{\"x\\/\" : {\"y\" : 1}}";
+    jkii_member_t m;
+    CHECK(jkii_find_member(json, strlen(json), "/x\\\\/y", &m) == JKII_ERR_NOT_FOUND);
+    CHECK(jkii_find_member(json, strlen(json), "/x\\\\", &m) == JKII_ERR_NOT_FOUND);
+    // The key it is: x\/ is the name x/, which the path writes x\/.
+    CHECK(jkii_find_member(json, strlen(json), "/x\\//y", &m) == JKII_ERR_OK);
+}
+
+// The key of the example in jkii_field_t#path's documentation, which a
+// backslash ends, as the document writes it: escaped, two of them.
+TEST_CASE("KiiJson, PathOfTheDocumentedKey") {
+    const char json[] = "{ \"[]/\\\\\" : \"rare\" }";
+    char copy[8] = "";
+    jkii_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].path = "/\\[\\]\\/\\\\";
+    fields[0].type = JKII_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = copy;
+    fields[0].field_copy_buff_size = sizeof(copy);
+    CHECK(jkii_parse(json, strlen(json), fields) == JKII_ERR_OK);
+    CHECK(std::string(copy) == "rare");
+}
+
 TEST_CASE("KiiJson, PushRetrieveEndpoint") {
     const char json_string[] =
         "{"

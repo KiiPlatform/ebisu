@@ -782,12 +782,14 @@ static int _jkii_is_same_key(
             key_i < key_len && target_i < target->len; ++key_i) {
         char key_c = key[key_i];
         char target_c1 = target->field.name[target_i];
-        char target_c2 = target->field.name[target_i + 1];
+        /* Within the segment: the character after it is the next one's '/',
+         * which a '\\' ending this one doesn't escape. */
+        char target_c2 = (target_i + 1 < target->len) ?
+            target->field.name[target_i + 1] : '\0';
+        /* A backslash, as the document writes one, matches itself here. */
         if (key_c == target_c1) {
             ++target_i;
         } else if (key_c == '/' && (target_c1 == '\\' && target_c2 == '/')) {
-            target_i += 2;
-        } else if (key_c == '\\' && (target_c1 == '\\' && target_c2 == '\\')) {
             target_i += 2;
         } else if (key_c == '[' && (target_c1 == '\\' && target_c2 == '[')) {
             target_i += 2;

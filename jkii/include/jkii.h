@@ -169,9 +169,14 @@ typedef struct jkii_field_t {
      * identifier ::= field | index
      * index ::= '[' 0 ']' | '[' [1-9][0-9]+ ']'
      * field ::= [char | escaped]+
-     * char ::= any ascii characters expect '/', '[', ']' and '\'
-     * escaped = "\\/" | "\\[" | "\\]" | "\\"
+     * char ::= any character but '/', '[', ']' and '\'
+     * escaped ::= '\' '/' | '\' '[' | '\' ']' | '\' '\'
      * \endcode
+     *
+     * A field is compared with the name as the document writes it, escapes
+     * and all: `\/`, `\[` and `\]` stand for those characters, and `\\` for
+     * a backslash in the name, which the document writes as those two
+     * characters.
      *
      * If you want to get first element of color array in following
      * json example:
@@ -188,17 +193,17 @@ typedef struct jkii_field_t {
      * path ="/light/color/[0]";
      * \endcode
      *
-     * In rare cases, like following:
+     * In rare cases, like following, the name "[]/" and a backslash:
      * \code
      * {
      *     "[]/\\" : "rare"
      * }
      * \endcode
      *
-     * You can specify that key as following:
+     * You can specify that key as following, as a C string:
      *
      * \code
-     * path ="/\\[\\]\\/\\";
+     * path ="/\\[\\]\\/\\\\";
      * \endcode
      */
     const char* path;
