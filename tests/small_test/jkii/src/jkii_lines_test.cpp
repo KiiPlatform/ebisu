@@ -113,6 +113,23 @@ TEST_CASE( "A JSON Lines record longer than the buffer is skipped, and the next 
     CHECK( read_all("1\n", 0) == Records({ "LONG" }) );
 }
 
+// A record can be one byte shorter than the buffer, and a '\r' before its
+// '\n' is taken off: the '\r' was stored first, and took the byte the record
+// needed, so that the same record fitted with \n and not with \r\n.
+TEST_CASE( "A JSON Lines record fits its buffer whichever way its line ends" ) {
+    const std::string data = "1234567\r\n12345678\r\n9\r\n1234567\r";
+    const Records expected = { "R:1234567", "LONG", "R:9", "T:1234567" };
+    CHECK( read_all(data, 8) == expected );
+    // Its '\r' and its '\n' fed apart, and the rest in pieces of any size.
+    for (size_t piece = 1; piece <= data.size(); ++piece) {
+        INFO( "pieces of " << piece );
+        CHECK( read_all(data, 8, piece) == expected );
+    }
+    // A '\r' with more after it is part of the record, which no longer fits.
+    CHECK( read_all("1234567\rx\n9\n", 8) == Records({ "LONG", "R:9" }) );
+    CHECK( read_all("12345\rx\n", 8) == Records({ "R:12345\rx" }) );
+}
+
 TEST_CASE( "A JSON Lines record cut short by the end of the data comes back as such" ) {
     CHECK( read_all("{\"a\":1}\n{\"b\"", 32) == Records({ "R:{\"a\":1}", "T:{\"b\"" }) );
     CHECK( read_all("{\"a\":1}\n  ", 32) == Records({ "R:{\"a\":1}" }) );

@@ -61,8 +61,16 @@ jkii_lines_err_t jkii_lines_feed(jkii_lines_t* r, const char* data, size_t len,
         size_t end = newline != NULL ? (size_t)(newline - data) : len;
         size_t part = end - i;
         if (!r->_skipping && part > 0) {
-            /* Room for the terminator too. */
-            size_t room = r->_buff_size > 0 ? r->_buff_size - 1 - r->_len : 0;
+            /* Room for the terminator too. A '\r' that ends what has come may
+             * take its place: one before the '\n' is taken off with it, and
+             * with more of the record after it, the record doesn't fit. */
+            size_t room = 0;
+            if (r->_len < r->_buff_size) {
+                room = r->_buff_size - 1 - r->_len;
+                if (data[end - 1] == '\r') {
+                    ++room;
+                }
+            }
             if (part > room) {
                 r->_skipping = 1;
                 r->_len = 0;
