@@ -695,3 +695,9 @@ With one:
   off the heap sets that buffer too. A renewal that can have neither fails the
   request with `KII_ERR_ALLOCATION`, or `TIO_ERR_ALLOCATION` from tio, the
   token not renewed.
+- A push task whose `kii_t` didn't onboard, such as one given a saved author
+  with `kii_session_set_author()`, gets its MQTT endpoint by onboarding again
+  when the session renews tokens so and has the thing's password, which tio's
+  sessions do once `kii_session_set_password()` is called. The token is renewed
+  too, and `KII_CB_AUTHOR_UPDATED` called. Without the password, the task
+  installs push and fetches the endpoint, as without a session.

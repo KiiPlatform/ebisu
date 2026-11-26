@@ -467,8 +467,10 @@ Here's the set-up code extracted from [example.c](https://github.com/KiiPlatform
 Set the session before [onboarding](#execute-onboarding), which then stores the
 token it obtains in the session. The samples onboard at each start. To use a
 token saved before a restart instead, give it to the session with
-`kii_session_set_author()`; the handler then gets its MQTT endpoint from Kii
-Cloud's API, as without onboarding, until the broker refuses the credentials.
+`kii_session_set_author()`. The handler then gets its MQTT endpoint by
+onboarding again with the session's password, which renews the token too, and
+without the password from Kii Cloud's API, installing push first, as without
+onboarding.
 
 Once the server refuses the password, the session doesn't try it again for 5
 minutes, then twice as long after each further refusal, up to an hour:
@@ -745,7 +747,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
     The task creation is requested once when the `tio_handler_start()` method is invoked.
 
-    This task is responsible for connecting to MQTT with the endpoint onboarding returned, receiving messages from MQTT and propagating them to the app by the `TIO_CB_ACTION` callback, and sending MQTT `PINGREQ` periodically. If the handler was started without onboarding, or the broker refuses the credentials, it gets the MQTT endpoint through the REST API instead.
+    This task is responsible for connecting to MQTT with the endpoint onboarding returned, receiving messages from MQTT and propagating them to the app by the `TIO_CB_ACTION` callback, and sending MQTT `PINGREQ` periodically. If the handler was started without onboarding, or the broker refuses the credentials, it gets the MQTT endpoint by onboarding again with the [session](#session)'s password, or without one through the REST API.
 
     This task calls the operations of the objects, and the callbacks, set by following APIs.
 

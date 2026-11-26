@@ -1366,11 +1366,13 @@ void kii_set_cb_mqtt_message(kii_t* kii, KII_CB_MQTT_MESSAGE cb, void* userdata)
  *
  * After kii_ti_onboard() returned an MQTT endpoint for the thing kii acts as,
  * the task connects with that endpoint, unless a task started by
- * kii_start_mqtt_task_with_endpoint() has replaced it since. Otherwise it
- * installs push and fetches the endpoint first. If the broker refuses the
- * credentials, it fetches new ones for the same installation; or, when kii's
- * session renews its token by onboarding again, it onboards again for new
- * ones, which renews the token too.
+ * kii_start_mqtt_task_with_endpoint() has replaced it since. Otherwise, when
+ * kii's session renews its token by onboarding again and has the thing's
+ * password, set by kii_session_set_password(), the task onboards again for the
+ * endpoint, which renews the token too, and installs nothing itself. Failing
+ * that, it installs push and fetches the endpoint from Kii Cloud's API. If the
+ * broker refuses the credentials, it gets new ones the same way: by onboarding
+ * again, or for the same installation.
 
  * \param [in,out] kii kii_t instance.
  * \param [in] keep_alive_interval_sec MQTT Keep-Alive interval in seconds.

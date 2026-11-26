@@ -504,16 +504,17 @@ static kii_code_t _onboard_again(kii_t* kii, kii_author_t* author)
     return KII_ERR_OK;
 }
 
-bool _kii_session_renews_by_onboarding(kii_t* kii)
+bool _kii_session_onboards_for_endpoint(kii_t* kii)
 {
     kii_session_t* session = kii->_session;
     if (session == NULL) {
         return false;
     }
     _lock(session);
-    bool by_onboarding = (session->_renew_mode == KII_RENEW_BY_ONBOARDING);
+    bool onboards = (session->_renew_mode == KII_RENEW_BY_ONBOARDING &&
+            session->_password != NULL);
     _unlock(session);
-    return by_onboarding;
+    return onboards;
 }
 
 kii_code_t _kii_session_onboard_again(kii_t* kii)
@@ -919,7 +920,7 @@ void _kii_session_publish(kii_t* kii, int64_t expires_in_sec, kii_renew_mode_t m
     (void)mode;
 }
 
-bool _kii_session_renews_by_onboarding(kii_t* kii)
+bool _kii_session_onboards_for_endpoint(kii_t* kii)
 {
     (void)kii;
     return false;
