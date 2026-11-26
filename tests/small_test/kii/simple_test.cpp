@@ -723,3 +723,50 @@ TEST_CASE( "What would break a request's line or a header fails the call, sendin
     CHECK( khct::contains(http.requests[0],
                 "PUT https://api.kii.com/thing-if/apps/app/things/th.1/firmware-version HTTP/1.1\r\n") );
 }
+
+// A call started and neither run nor cancelled kept its headers, which kii's
+// next request, whatever it was, sent with its own.
+TEST_CASE( "A call started and not run leaves its headers to no other request" ) {
+    char kii_buff[1024];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&kii, &resource);
+    strcpy(kii._author.author_id, "th.1");
+    strcpy(kii._author.access_token, "at1");
+    khct::HttpScript http;
+    http.attach(&kii);
+    auto count = [](const std::string& s, const std::string& what) {
+        size_t n = 0;
+        for (size_t at = s.find(what); at != std::string::npos; at = s.find(what, at + what.size())) {
+            ++n;
+        }
+        return n;
+    };
+
+    REQUIRE( kii_api_call_start(&kii, "PUT", "/api/apps/dummyAppID/x", "application/json", KII_TRUE) ==
+            KII_ERR_OK );
+    REQUIRE( kii_api_call_append_header(&kii, "X-Left", "1") == KII_ERR_OK );
+
+    SECTION("kii_auth_thing()") {
+        http.responses = { khct::http_response(200, "{\"id\":\"th.2\",\"access_token\":\"at2\"}") };
+        CHECK( kii_auth_thing(&kii, "vid", "pw") == KII_ERR_OK );
+        REQUIRE( http.requests.size() == 1 );
+        CHECK_FALSE( khct::contains(http.requests[0], "X-Left: 1\r\n") );
+        CHECK_FALSE( khct::contains(http.requests[0], "Authorization: ") );
+        CHECK( count(http.requests[0], "X-Kii-Appid: dummyAppID\r\n") == 1 );
+        CHECK( count(http.requests[0], "Content-Type: ") == 1 );
+    }
+    SECTION("kii_ti_put_firmware_version()") {
+        http.responses = { khct::http_response(204, "") };
+        CHECK( kii_ti_put_firmware_version(&kii, "1.0") == KII_ERR_OK );
+        REQUIRE( http.requests.size() == 1 );
+        CHECK_FALSE( khct::contains(http.requests[0], "X-Left: 1\r\n") );
+        CHECK( count(http.requests[0], "Authorization: Bearer at1\r\n") == 1 );
+        CHECK( count(http.requests[0], "Content-Type: ") == 1 );
+    }
+}

@@ -23,6 +23,11 @@ khc_code _kii_perform(kii_t* kii);
 
 void _req_headers_free_all(kii_t* kii);
 
+/* Resets khc for a new request, as khc_reset_except_cb() does, and frees the
+ * headers a call before left: those of one started with kii_api_call_start()
+ * and neither run nor cancelled. Every request of kii's starts with it. */
+void _reset_khc(kii_t* kii);
+
 int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len);
 
 /* Appends to the request body being built in the buffer, of length len so far:

@@ -381,6 +381,11 @@ void _req_headers_free_all(kii_t* kii) {
     kii->_req_headers = NULL;
 }
 
+void _reset_khc(kii_t* kii) {
+    _req_headers_free_all(kii);
+    khc_reset_except_cb(&kii->_khc);
+}
+
 int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len) {
     const char etag_lower[] = "etag";
     const char etag_upper[] = "ETAG";
