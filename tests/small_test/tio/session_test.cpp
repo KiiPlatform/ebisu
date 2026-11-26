@@ -183,6 +183,80 @@ TEST_CASE( "A command's results are sent again after the token is renewed" ) {
     REQUIRE( kii_get_resp_status(&handler._kii) == 204 );
 }
 
+// The path of a command's results took the thing's ID from the handler's own
+// copy of the author, as of its last request, where its Authorization header
+// took the session's: a thing onboarded through the updater since sent its
+// results with its new token to the thing the handler had before.
+TEST_CASE( "A command's results go to the session's thing" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    char buff[2048];
+    tio_handler_set_app(&handler, "app", "api.kii.com");
+    tio_handler_set_http_buff(&handler, buff, sizeof(buff));
+    tio_handler_set_system(&handler, khct::cb::delay_only_system());
+    khct::HttpScript http;
+    http.attach(&handler._kii);
+    REQUIRE( tio_handler_set_session(&handler, &session) == TIO_ERR_OK );
+
+    tio_updater_t updater;
+    tio_updater_init(&updater);
+    char ubuff[2048];
+    tio_updater_set_app(&updater, "app", "api.kii.com");
+    tio_updater_set_http_buff(&updater, ubuff, sizeof(ubuff));
+    tio_updater_set_system(&updater, khct::cb::delay_only_system());
+    khct::HttpScript uhttp;
+    uhttp.attach(&updater._kii);
+    REQUIRE( tio_updater_set_session(&updater, &session) == TIO_ERR_OK );
+    uhttp.responses = { http_response(200, "{\"accessToken\":\"at2\",\"thingID\":\"th.2\"}") };
+    REQUIRE( tio_updater_onboard(&updater, "vid", "pw", NULL, NULL, NULL, NULL) == TIO_ERR_OK );
+
+    http.responses = { NO_CONTENT };
+    int called = 0;
+    const std::string command =
+        "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+    REQUIRE( _handle_command(&handler, command.c_str(), command.length(), cb_action, &called) == TIO_ERR_OK );
+    REQUIRE( http.requests.size() == 1 );
+    CHECK( contains(http.requests[0],
+                "PUT /thing-if/apps/app/targets/thing:th.2/commands/cmd1/action-results HTTP/1.1") );
+    CHECK( contains(http.requests[0], "Authorization: Bearer at2\r\n") );
+}
+
+// As kii refuses one for its own paths, before any of the command's actions
+// runs: its results would have gone to another path than the thing's.
+TEST_CASE( "A command for a thing whose ID can't be a path segment is refused" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_author_t author;
+    memset(&author, 0, sizeof(author));
+    strcpy(author.author_id, "th.1/../th.2");
+    strcpy(author.access_token, "at1");
+    kii_session_set_author(&session, &author);
+
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    char buff[2048];
+    tio_handler_set_app(&handler, "app", "api.kii.com");
+    tio_handler_set_http_buff(&handler, buff, sizeof(buff));
+    tio_handler_set_system(&handler, khct::cb::delay_only_system());
+    khct::HttpScript http;
+    http.attach(&handler._kii);
+    REQUIRE( tio_handler_set_session(&handler, &session) == TIO_ERR_OK );
+
+    http.responses = { NO_CONTENT };
+    int called = 0;
+    const std::string command =
+        "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+    CHECK( _handle_command(&handler, command.c_str(), command.length(), cb_action, &called) ==
+            TIO_ERR_FAIL );
+    CHECK( called == 0 );
+    CHECK( http.requests.empty() );
+}
+
 TEST_CASE( "With a session, start takes the session's author" ) {
     Platform platform;
     kii_session_t session;

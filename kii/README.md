@@ -510,8 +510,9 @@ path, application ID included:
     }
 ```
 
-`true` authorizes the call with the thing's token. Headers can be added
-with `kii_api_call_append_header()`. `kii_api_call_run()` returns `KII_ERR_OK`
+`true` authorizes the call with the thing's token. A path for the thing takes
+its ID from `kii_get_thing_id()`, which with a session is the session's, as the
+token is. Headers can be added with `kii_api_call_append_header()`. `kii_api_call_run()` returns `KII_ERR_OK`
 whatever the status, which `kii_get_resp_status()` gives. The response body is
 in the buffer, `kii_get_resp_body_length()` bytes long.
 

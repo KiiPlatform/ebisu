@@ -1,5 +1,6 @@
 #include "kii.h"
 #include "kii_impl.h"
+#include "kii_req_impl.h"
 #include "kii_session_impl.h"
 #include <ebisu_mem.h>
 #include <ebisu_str.h>
@@ -394,6 +395,10 @@ void kii_get_author(kii_t* kii, kii_author_t* out_author) {
     } else {
         *out_author = kii->_author;
     }
+}
+
+const char* kii_get_thing_id(kii_t* kii) {
+    return _kii_thing_id(kii);
 }
 
 void kii_set_use_m_0_header_flag(kii_t* kii, bool flag) {

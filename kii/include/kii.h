@@ -833,6 +833,22 @@ kii_code_t kii_register_thing(
 void kii_get_author(kii_t* kii, kii_author_t* out_author);
 
 /**
+ * \brief Get the thing's ID, as kii's own paths have it.
+ *
+ * It is the author's ID, as kii_get_author() copies it, without the tokens:
+ * with a session attached, the session's, which another kii_t attached to it
+ * may have changed since this one's last request, by onboarding or logging in.
+ * A path given to kii_api_call_start() for the thing, such as one under
+ * /thing-if/apps/{appID}/targets/thing:{thingID}, takes the ID from here, so
+ * that it is the thing whose token the request's Authorization header carries.
+ *
+ * \param [in] kii kii_t instance.
+ * \return The thing's ID, or "" before any author was obtained or set. It is
+ * kii's copy, which stays as it is until the next call on kii.
+ */
+const char* kii_get_thing_id(kii_t* kii);
+
+/**
  * \brief Initializes kii_session_t instance.
  *
  * The session starts with an empty author. Set it with kii_session_set_author()
