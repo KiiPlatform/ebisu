@@ -254,12 +254,22 @@ static tio_code_t _start_result_request(
         tio_handler_t* handler,
         const char* command_id)
 {
+    // The thing's ID as kii's own paths have it: with a session, the
+    // session's, whose token the request carries, where the handler's copy of
+    // the author is as of its last request, before the updater may have
+    // onboarded. It comes from the server, or a saved author, and is checked
+    // as the command's ID is.
+    const char* thing_id = kii_get_thing_id(&handler->_kii);
+    if (!_is_path_segment(thing_id)) {
+        _log_step(handler, "_is_path_segment", 0);
+        return TIO_ERR_FAIL;
+    }
     // Start making command result request.
     char command_result_path[256];
     ebisu_strbuf_t path;
     ebisu_strbuf_init(&path, command_result_path, sizeof(command_result_path));
     ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/targets/thing:%s/commands/%s/action-results",
-            handler->_kii._app_id, handler->_kii._author.author_id, command_id);
+            handler->_kii._app_id, thing_id, command_id);
     if (!ebisu_strbuf_ok(&path)) {
         return TIO_ERR_TOO_LARGE_DATA;
     }

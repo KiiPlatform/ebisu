@@ -777,6 +777,27 @@ TEST_CASE( "kii_get_author gives the session's author, renewed through any kii_t
     REQUIRE( platform.depth == 0 );
 }
 
+TEST_CASE( "kii_get_thing_id gives the session's thing, whichever kii_t obtained it" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    Client a;
+    Client b;
+    CHECK( std::string(kii_get_thing_id(&b.kii)) == "" );
+    REQUIRE( kii_set_session(&a.kii, &session) == KII_ERR_OK );
+    REQUIRE( kii_set_session(&b.kii, &session) == KII_ERR_OK );
+
+    a.http.responses = { refreshed("at1", "rt1", 3600) };
+    a.http.responses[0].replace(a.http.responses[0].find("th.1"), 4, "th.2");
+    REQUIRE( kii_auth_thing(&a.kii, "vid", "pw") == KII_ERR_OK );
+
+    // b has made no request since, and so still holds no author itself.
+    REQUIRE( std::string(b.kii._author.author_id) == "" );
+    CHECK( std::string(kii_get_thing_id(&b.kii)) == "th.2" );
+    CHECK( std::string(kii_get_thing_id(&a.kii)) == "th.2" );
+    REQUIRE( platform.depth == 0 );
+}
+
 namespace {
 
 struct StateReader {
