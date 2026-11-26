@@ -197,10 +197,10 @@ kii_code_t _req_send(kii_t* kii)
         _req_headers_free_all(kii);
         return KII_ERR_FAIL;
     }
-    /* Here, with the request made, rather than as the call starts: the ETag
-     * of the last response is what the application gives this one for its
-     * If-Match, straight from kii_get_etag(). */
-    _kii_clear_resp_headers(kii);
+    /* The last response's ETag stays until another response comes: the
+     * application gives it to this request for its If-Match, straight from
+     * kii_get_etag(), and again to the same request if it gets none. */
+    _kii_clear_resp_headers_but_etag(kii);
     kii_code_t res = kii_api_call_append_header(kii, "X-Kii-SDK", _SDK_INFO);
     if (res == KII_ERR_OK && kii->_use_m_0_header) {
         res = _set_m_0_header(kii);

@@ -2373,10 +2373,16 @@ void kii_set_req_header_buff(kii_t* kii, char* buff, size_t buff_size);
  * KII_ERR_TOO_LARGE_DATA for a 2xx response whose ETag isn't kept, or that had
  * a header skipped and no ETag kept, though they read or wrote the object.
  *
- * It is kii_t's, and stays as it is until the next request is sent: it can be
+ * It is kii_t's, and stays as it is until the next response comes: it can be
  * given as it is to kii_put_object() or kii_patch_object(), or to
  * kii_api_call_append_header() after kii_api_call_start(), for the If-Match of
- * that request. Then it is that response's.
+ * that request. Then it is that response's. A request that gets no response,
+ * its connection, sending or receiving failing before the status line, leaves
+ * it, so that the request can be tried again with it. One whose response is
+ * cut short after its status line leaves what that response gave, which may
+ * be none. With a session, the response to a renewal of the token isn't the
+ * application's, nor a refusal of the token once the request is sent again:
+ * neither changes it.
  *
  * \param [in] kii kii_t instance.
  * \return The ETag, or "" if the response had none, or none kii kept.

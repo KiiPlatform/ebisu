@@ -64,6 +64,10 @@ int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len);
  * and its X-Environment-Version. */
 void _kii_clear_resp_headers(kii_t* kii);
 
+/* The same but for the ETag and whether one was lost, which stay until the
+ * next response's status line: see _cb_write_header(). */
+void _kii_clear_resp_headers_but_etag(kii_t* kii);
+
 /* Reads what kii keeps of one response header, given as khc gives it to
  * kii's header callback, without its CRLF. */
 void _kii_read_resp_header(kii_t* kii, const char* header, size_t header_len);

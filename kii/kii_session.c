@@ -673,6 +673,27 @@ static kii_code_t _replace_auth_header(kii_t* kii)
  * forced, isn't attempted. *out_resendable tells whether the request can be
  * sent again. A token another kii_t of the session renewed is only taken,
  * which asks nothing of the server and needs no room. */
+/* What kii_get_etag() gives, put back after a response that isn't the
+ * application's: a renewal's, or a refusal's once the request is sent again.
+ * The next response the application gets replaces it, and a request that
+ * gets none leaves it, as without a session. */
+typedef struct {
+    char etag[KII_ETAG_MAX_SIZE];
+    bool lost;
+} _etag_copy_t;
+
+static void _etag_copy(const kii_t* kii, _etag_copy_t* copy)
+{
+    memcpy(copy->etag, kii->_etag, sizeof(copy->etag));
+    copy->lost = kii->_etag_lost;
+}
+
+static void _etag_put_back(kii_t* kii, const _etag_copy_t* copy)
+{
+    memcpy(kii->_etag, copy->etag, sizeof(kii->_etag));
+    kii->_etag_lost = copy->lost;
+}
+
 static kii_code_t _renew_and_restore(
         kii_t* kii,
         bool force,
@@ -722,6 +743,8 @@ static kii_code_t _renew_and_restore(
      * request's, in the room left in the same buffer, or, without one yet, in
      * one of their own. */
     khc_t request = kii->_khc;
+    _etag_copy_t etag;
+    _etag_copy(kii, &etag);
     char* header_buff = kii->_req_header_buff;
     size_t header_buff_size = kii->_req_header_buff_size;
     char* headers = kii->_req_headers;
@@ -765,7 +788,8 @@ static kii_code_t _renew_and_restore(
     kii->_rw_buff_read = 0;
     kii->_rw_buff_written = 0;
     kii->_resp_offset = 0;
-    _kii_clear_resp_headers(kii);
+    _kii_clear_resp_headers_but_etag(kii);
+    _etag_put_back(kii, &etag);
     kii_code_t header_res = _replace_auth_header(kii);
     khc_set_req_headers(&kii->_khc, kii->_req_headers, kii->_req_headers_len);
     if (res == KII_ERR_OK) {
@@ -840,6 +864,9 @@ khc_code_t _kii_perform(kii_t* kii)
         return khc_perform(&kii->_khc);
     }
 
+    /* The last response's, for the request to be sent again with. */
+    _etag_copy_t etag;
+    _etag_copy(kii, &etag);
     bool resendable = false;
     if (_renewal_due(kii)) {
         /* Failing here is not fatal: the token may still be accepted, and a
@@ -874,6 +901,8 @@ khc_code_t _kii_perform(kii_t* kii)
         kii->_session_refused = true;
         return code;
     }
+    /* The refusal isn't the response the application gets. */
+    _etag_put_back(kii, &etag);
     khc_reset_except_request(&kii->_khc);
     return khc_perform(&kii->_khc);
 }
