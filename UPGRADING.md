@@ -515,6 +515,13 @@ kii:
   ETag, and nothing for a header it skipped. An empty ETag passed to
   `kii_put_object()` or `kii_patch_object()` sends no `If-Match`, so the update
   wasn't conditional, as its caller meant it to be.
+- `kii_get_etag()` gives the last response's ETag until another response comes,
+  and can be given as it is to `kii_put_object()` and `kii_patch_object()`. A
+  request that gets no response, failing to connect, send or receive, leaves
+  it, for the request to be tried again with it. 1.x emptied it as each call
+  started, before the call read its ETag: given straight from `kii_get_etag()`,
+  the update sent no `If-Match`, and a call that failed left none to try again
+  with.
 - `kii_download_object_body()` gives its write callback the body of a 2xx
   response alone. The body of any other response is read into the buffer set
   by `kii_set_buff()`, as for the calls without a callback, cut short if it

@@ -61,6 +61,14 @@ size_t _cb_read_buff(char *buffer, size_t size, void *userdata)
 size_t _cb_write_header(char *buffer, size_t size, void *userdata)
 {
     kii_t* kii = (kii_t*)userdata;
+    // A response's status line, which khc gives first and has checked: no
+    // header starts so, a name having no '/'. kii_get_etag() gives the last
+    // response's ETag until here, so that a request that got no response can
+    // be tried again with it.
+    if (size >= 7 && memcmp(buffer, "HTTP/1.", 7) == 0) {
+        kii->_etag[0] = '\0';
+        kii->_etag_lost = false;
+    }
     if (_parse_etag(buffer, size, kii->_etag, KII_ETAG_MAX_SIZE) == -3) {
         kii->_etag_lost = true;
     }
@@ -68,8 +76,7 @@ size_t _cb_write_header(char *buffer, size_t size, void *userdata)
     return size;
 }
 
-/* All but the ETag, which a call leaves as it starts: see _reset_buff(). */
-static void _clear_resp_headers_but_etag(kii_t* kii)
+void _kii_clear_resp_headers_but_etag(kii_t* kii)
 {
     kii->_resp_kii_error = false;
     kii->_resp_step_count = -1;
@@ -80,7 +87,7 @@ void _kii_clear_resp_headers(kii_t* kii)
 {
     kii->_etag[0] = '\0';
     kii->_etag_lost = false;
-    _clear_resp_headers_but_etag(kii);
+    _kii_clear_resp_headers_but_etag(kii);
 }
 
 /* A count, as X-Step-Count and X-Environment-Version give them: digits only,
@@ -480,10 +487,10 @@ void _reset_buff(kii_t* kii) {
     kii->_resp_offset = 0;
     kii->_rw_buff_req_size = 0;
     kii->_rw_buff[0] = '\0';
-    /* The last response's ETag stays until the request is sent, in
-     * _req_send(): the application gives it to this call, straight from
-     * kii_get_etag(), for its If-Match. */
-    _clear_resp_headers_but_etag(kii);
+    /* The last response's ETag stays until another response comes, in
+     * _cb_write_header(): the application gives it to this call, straight
+     * from kii_get_etag(), for its If-Match. */
+    _kii_clear_resp_headers_but_etag(kii);
 }
 
 /* khc treats its stream and response header buffers as per-request, so

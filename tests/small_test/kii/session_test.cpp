@@ -2307,3 +2307,97 @@ TEST_CASE( "An object read again after its token is renewed has that response's 
     CHECK( contains(c.http.requests[2], "Authorization: Bearer at2\r\n") );
     CHECK( std::string(kii_get_etag(&c.kii)) == "\"5\"" );
 }
+
+// A renewal's response isn't the application's, nor, once the request is sent
+// again, the refusal: a request that gets no response after either leaves the
+// ETag the last response gave, for the request to be tried again with. Each
+// response here has an ETag of its own, which none of them may leave.
+TEST_CASE( "A request that gets no response after a renewal leaves the ETag before it" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+
+    const std::string type = "Content-Type: application/json\r\n";
+    auto with_etag = [&type](std::string resp, const std::string& etag) {
+        resp.replace(resp.find(type), type.size(), type + "ETag: " + etag + "\r\n");
+        return resp;
+    };
+    kii_bucket_t bucket;
+    bucket.scope = KII_SCOPE_THING;
+    bucket.scope_id = "th.1";
+    bucket.bucket_name = "b";
+    const char object[] = "{\"a\":2}";
+    const char if_match[] = "\r\nIf-Match: \"5\"\r\n";
+
+    // A 1000 second token, and an object read with it.
+    platform.now_ms = 1000;
+    c.http.responses = {
+        refreshed("at1", "rt1", 1000),
+        with_etag(http_response(200, "{\"a\":1}"), "\"5\""),
+    };
+    REQUIRE( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_OK );
+    REQUIRE( kii_get_object(&c.kii, &bucket, "o.1") == KII_ERR_OK );
+    REQUIRE( std::string(kii_get_etag(&c.kii)) == "\"5\"" );
+    c.http.requests.clear();
+
+    SECTION("renewed ahead of its expiry") {
+        platform.now_ms = 1000 + renew_after_ms(1000);
+        // The request's connection fails.
+        c.http.responses = { with_etag(refreshed("at2", "rt2", 1000), "\"r\""), "" };
+        CHECK( kii_put_object(&c.kii, &bucket, "o.1", object, NULL, kii_get_etag(&c.kii)) ==
+                KII_ERR_SOCK_CONNECT );
+        REQUIRE( c.http.requests.size() == 2 );
+        CHECK( contains(c.http.requests[0], TOKEN_LINE) );
+        CHECK( std::string(kii_get_etag(&c.kii)) == "\"5\"" );
+    }
+    SECTION("renewed after a refusal") {
+        // The request sent again fails to connect.
+        c.http.responses = {
+            with_etag(REFUSED, "\"x\""),
+            with_etag(refreshed("at2", "rt2", 1000), "\"r\""),
+            "",
+        };
+        CHECK( kii_put_object(&c.kii, &bucket, "o.1", object, NULL, kii_get_etag(&c.kii)) ==
+                KII_ERR_SOCK_CONNECT );
+        REQUIRE( c.http.requests.size() == 3 );
+        CHECK( contains(c.http.requests[0], if_match) );
+        CHECK( contains(c.http.requests[1], TOKEN_LINE) );
+        CHECK( std::string(kii_get_etag(&c.kii)) == "\"5\"" );
+    }
+    // Tried again with it, the request goes with the same If-Match.
+    c.http.responses.push_back(with_etag(DONE, "\"6\""));
+    CHECK( kii_put_object(&c.kii, &bucket, "o.1", object, NULL, kii_get_etag(&c.kii)) ==
+            KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == c.http.responses.size() );
+    CHECK( contains(c.http.requests.back(), if_match) );
+    CHECK( std::string(kii_get_etag(&c.kii)) == "\"6\"" );
+}
+
+// Not sent again, the request leaves the refusal its response, and its ETag
+// the refusal's: not the renewal's.
+TEST_CASE( "A refused request not sent again has the refusal's ETag" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_author_t author = make_author("th.1", "at1", "rt1");
+    kii_session_set_author(&session, &author);
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+
+    const std::string type = "Content-Type: application/json\r\n";
+    auto with_etag = [&type](std::string resp, const std::string& etag) {
+        resp.replace(resp.find(type), type.size(), type + "ETag: " + etag + "\r\n");
+        return resp;
+    };
+    StateReader reader = { "{\"alias\":{\"power\":true}}", 0 };
+    c.http.responses = {
+        with_etag(REFUSED, "\"x\""),
+        with_etag(refreshed("at2", "rt2", 3600), "\"r\""),
+    };
+    REQUIRE( kii_ti_put_state(&c.kii, read_state, &reader, NULL, NULL, NULL) == KII_ERR_RESP_STATUS );
+    REQUIRE( kii_get_resp_status(&c.kii) == 403 );
+    REQUIRE( c.http.requests.size() == 2 );
+    CHECK( std::string(kii_get_etag(&c.kii)) == "\"x\"" );
+}
