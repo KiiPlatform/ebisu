@@ -27,8 +27,10 @@ void _kii_session_sync(kii_t* kii);
  * unknown, as 0 does. */
 void _kii_session_publish(kii_t* kii, int64_t expires_in_sec, kii_renew_mode_t mode);
 
-/* Whether kii's session renews its token by onboarding again. */
-bool _kii_session_renews_by_onboarding(kii_t* kii);
+/* Whether kii's session renews its token by onboarding again and has the
+ * thing's password to: then the push task gets its MQTT endpoint the same
+ * way, as onboarding returns it, rather than from Kii Cloud's API. */
+bool _kii_session_onboards_for_endpoint(kii_t* kii);
 
 /* Onboards again through kii's session, which stores the new token, for new
  * MQTT credentials as well: kii keeps the endpoint the response carries, as

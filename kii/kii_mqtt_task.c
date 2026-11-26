@@ -794,6 +794,7 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
     state->kii = kii;
     state->elapsed_since_ms = 0;
     memset(&state->endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
+    memset(&state->ins_id, 0x00, sizeof(state->ins_id));
     state->info.error = KII_MQTT_ERR_OK;
     state->info.task_state = KII_MQTT_ST_INSTALL_PUSH;
     if (kii->_mqtt_endpoint_given) {
@@ -806,6 +807,10 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
         state->ins_id = kii->_onboarded_installation_id;
         state->endpoint = kii->_mqtt_endpoint;
         state->info.task_state = KII_MQTT_ST_SOCK_CONNECT;
+    } else if (_kii_session_onboards_for_endpoint(kii)) {
+        // Onboarding again installs push and returns the endpoint: an
+        // installation made first would be replaced, and left behind.
+        state->info.task_state = KII_MQTT_ST_GET_ENDPOINT;
     }
     _reset_elapsed(state, 0);
     state->remaining_message_size = 0;
@@ -934,10 +939,18 @@ void _mqtt_state_get_endpoint(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii_mqtt_task_info_t* task_info = &state->info;
+    const bool onboards = _kii_session_onboards_for_endpoint(kii);
+    if (!onboards && state->ins_id.id[0] == '\0') {
+        // Without the password since the task skipped installing push for
+        // onboarding to do it: Kii Cloud's API gives the endpoint of an
+        // installation, which has to be made first.
+        task_info->task_state = KII_MQTT_ST_INSTALL_PUSH;
+        return;
+    }
     _delay_ms(kii, WAIT_MS);
     // As in _mqtt_state_install_push(), after the wait.
     ebisu_lock_acquire(kii->_http_lock);
-    kii_code_t res = (_kii_session_renews_by_onboarding(kii)) ?
+    kii_code_t res = onboards ?
         _onboard_for_endpoint(state) :
         kii_get_mqtt_endpoint(kii, state->ins_id.id, &state->endpoint);
     if (res != KII_ERR_OK) {

@@ -2179,6 +2179,106 @@ TEST_CASE( "Refused MQTT credentials are renewed by onboarding again" ) {
     }
 }
 
+// The endpoint of installation ins.n from Kii Cloud's API, its user and topic
+// named after n.
+std::string endpoint_of(const std::string& n) {
+    return http_response(200,
+            "{\"installationID\":\"ins." + n + "\",\"username\":\"user." + n +
+            "\",\"password\":\"pass." + n + "\",\"mqttTopic\":\"topic." + n +
+            "\",\"host\":\"mqtt.example.com\",\"portTCP\":1883,\"portSSL\":8883}");
+}
+
+const char INSTALL_LINE[] = "POST /api/apps/app/installations HTTP/1.1";
+
+// A push task whose kii_t didn't onboard, with a token saved before a restart,
+// gets its endpoint the way its session renews the token: by onboarding again,
+// which installs push as well, when it has the password. It installed push
+// first all the same, an installation onboarding then replaced, and without
+// the password it couldn't onboard and ended.
+TEST_CASE( "A push task with a restored author of an onboarding session" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_author_t author = make_author("th.1", "at1", "");
+    kii_session_set_author(&session, &author);
+    kii_session_set_renew_mode(&session, KII_RENEW_BY_ONBOARDING);
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+    mqtt_state_t state;
+
+    SECTION("with the password, onboards for the endpoint, installing nothing") {
+        kii_session_set_password(&session, "vid", "pw");
+        _init_mqtt_state(&c.kii, &state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );
+        c.http.responses = { onboarded_with_endpoint("at2", "2") };
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+        REQUIRE( c.http.requests.size() == 1 );
+        CHECK( onboarding_again(c.http.requests[0]) );
+        CHECK( std::string(state.ins_id.id) == "ins.2" );
+        CHECK( std::string(state.endpoint.username) == "user.2" );
+        CHECK( std::string(held(&session).access_token) == "at2" );
+    }
+
+    SECTION("without the password, installs push and gets the endpoint from Kii Cloud") {
+        _init_mqtt_state(&c.kii, &state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_INSTALL_PUSH );
+        c.http.responses = {
+            http_response(201, "{\"installationID\":\"ins.9\"}"),
+            endpoint_of("9"),
+        };
+        _mqtt_state_install_push(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+        CHECK( state.info.error == KII_MQTT_ERR_OK );
+        REQUIRE( c.http.requests.size() == 2 );
+        CHECK( contains(c.http.requests[0], INSTALL_LINE) );
+        CHECK( contains(c.http.requests[0], "Authorization: Bearer at1\r\n") );
+        CHECK( contains(c.http.requests[1], "/installations/ins.9/mqtt-endpoint") );
+        CHECK( std::string(state.ins_id.id) == "ins.9" );
+        CHECK( std::string(state.endpoint.username) == "user.9" );
+        CHECK( std::string(held(&session).access_token) == "at1" );
+    }
+
+    SECTION("whose password is let go, installs push before asking for an endpoint") {
+        kii_session_set_password(&session, "vid", "pw");
+        _init_mqtt_state(&c.kii, &state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );
+        kii_session_set_password(&session, NULL, NULL);
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_INSTALL_PUSH );
+        CHECK( state.info.error == KII_MQTT_ERR_OK );
+        CHECK( c.http.requests.empty() );
+    }
+}
+
+// Without the password, credentials the broker refused are fetched again for
+// the installation onboarding made, as without a session: onboarding again
+// can't be done, and the task ended.
+TEST_CASE( "Refused MQTT credentials of an onboarding session without the password" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+    c.http.responses = { onboarded_with_endpoint("at1", "1") };
+    REQUIRE( kii_ti_onboard(&c.kii, "vid", "pw", NULL, NULL, NULL, NULL) == KII_ERR_OK );
+
+    mqtt_state_t state;
+    _init_mqtt_state(&c.kii, &state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+    // Where a CONNACK refusing the credentials sends the task.
+    state.info.task_state = KII_MQTT_ST_GET_ENDPOINT;
+    c.http.responses.push_back(endpoint_of("1"));
+    _mqtt_state_get_endpoint(&state);
+    CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+    CHECK( state.info.error == KII_MQTT_ERR_OK );
+    REQUIRE( c.http.requests.size() == 2 );
+    CHECK( contains(c.http.requests[1], "/installations/ins.1/mqtt-endpoint") );
+    CHECK( contains(c.http.requests[1], "Authorization: Bearer at1\r\n") );
+}
+
 TEST_CASE( "The renewal mode is set by name, and an unknown one is ignored" ) {
     Platform platform;
     kii_session_t session;
