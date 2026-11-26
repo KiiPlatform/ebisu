@@ -768,6 +768,13 @@
       <arglist>(kii_t *kii, kii_author_t *out_author)</arglist>
     </member>
     <member kind="function">
+      <type>const char *</type>
+      <name>kii_get_thing_id</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>aca3e980c3e8400003a2d149637474197</anchor>
+      <arglist>(kii_t *kii)</arglist>
+    </member>
+    <member kind="function">
       <type>void</type>
       <name>kii_session_init</name>
       <anchorfile>kii_8h.html</anchorfile>
