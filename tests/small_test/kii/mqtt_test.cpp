@@ -3245,3 +3245,105 @@ TEST_CASE( "CONNACK, SUBACK and PINGRESP of another length are refused" ) {
         CHECK( served == 2 + publish.length() );
     }
 }
+
+// The task sent the next PINGREQ when it was due, unless the last one's
+// PINGRESP hadn't been read, and then took the connection for lost: even with
+// the PINGRESP there to read, come behind a message. A message counts for the
+// whole receive timeout, so with a timeout of more than about half the
+// keep-alive, one was enough.
+TEST_CASE( "A PINGRESP behind other packets is read before the connection is taken for lost" ) {
+    char mqtt_buff[256];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+    khct::cb::PushCtx push_ctx;
+    int pushed = 0;
+    push_ctx.on_push = [&pushed](const char*, size_t) { ++pushed; };
+    kii._cb_push_received = khct::cb::cb_push;
+    kii._push_data = &push_ctx;
+
+    khct::cb::SockCtx mqtt_ctx;
+    kii_set_cb_mqtt_sock_send(&kii, khct::cb::mock_send, &mqtt_ctx);
+    kii_set_cb_mqtt_sock_recv(&kii, khct::cb::mock_recv, &mqtt_ctx);
+    std::string sent;
+    mqtt_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    size_t served = 0;
+    int recvs = 0;
+    auto serve = [&](const std::string& data) {
+        mqtt_ctx.on_recv = [data, &served, &recvs](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            ++recvs;
+            if (served == data.length()) {
+                return KHC_SOCK_FAIL; // the receive timed out
+            }
+            *out_actual_length = data.copy(buffer, length_to_read, served);
+            served += *out_actual_length;
+            return KHC_SOCK_OK;
+        };
+    };
+
+    const std::string pingreq("\xc0\x00", 2);
+    const std::string pingresp("\xd0\x00", 2);
+    mqtt_state_t state;
+    // Connected, subscribed, and a PINGREQ just sent.
+    auto pinged = [&](unsigned int keep_alive, unsigned int to_recv) {
+        kii_set_mqtt_to_sock_recv(&kii, to_recv);
+        kii._keep_alive_interval = keep_alive;
+        _init_mqtt_state(&kii, &state);
+        state.sock_connected = KII_TRUE;
+        state.info.task_state = KII_MQTT_ST_SEND_PINGREQ;
+        _mqtt_state_send_pingreq(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        REQUIRE( sent == pingreq );
+        sent.clear();
+    };
+    // Runs states until the connection is given up, a PINGREQ is sent, or n
+    // states have run.
+    auto run = [&](int n) {
+        for (int i = 0; i < n && state.info.task_state != KII_MQTT_ST_RECONNECT &&
+                sent.empty(); ++i) {
+            switch (state.info.task_state) {
+                case KII_MQTT_ST_RECV_READY: _mqtt_state_recv_ready(&state); break;
+                case KII_MQTT_ST_RECV_MSG: _mqtt_state_recv_msg(&state); break;
+                case KII_MQTT_ST_SEND_PINGREQ: _mqtt_state_send_pingreq(&state); break;
+                default: FAIL( "state " << state.info.task_state ); return;
+            }
+        }
+    };
+
+    SECTION("behind a message") {
+        pinged(30, 20);
+        const std::string stream = publish_packet("devices/1/in", "x") + pingresp;
+        serve(stream);
+        run(6);
+        CHECK( pushed == 1 );
+        CHECK( served == stream.length() );
+        CHECK( state.info.task_state != KII_MQTT_ST_RECONNECT );
+        // Its PINGRESP read, the next PINGREQ, due, goes.
+        REQUIRE( sent == pingreq );
+
+        // And so after that one.
+        sent.clear();
+        served = 0;
+        serve(stream);
+        run(6);
+        CHECK( pushed == 2 );
+        CHECK( served == stream.length() );
+        CHECK( state.info.task_state != KII_MQTT_ST_RECONNECT );
+        CHECK( sent == pingreq );
+    }
+
+    SECTION("none coming, the connection is still taken for lost once a receive has found nothing") {
+        pinged(30, 5);
+        serve("");
+        state.elapsed_time_ms = 30000;
+        run(6);
+        CHECK( recvs == 1 );
+        CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        CHECK( sent.empty() );
+    }
+}
