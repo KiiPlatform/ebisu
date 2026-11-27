@@ -562,6 +562,14 @@ static jkii_primitive_err_t _jkii_to_double(
     memset(buf, 0, sizeof(buf) / sizeof(buf[0]));
 
     if (buf_len <= target_size) {
+        /* An integer this long, whose first digit JSON has be other than 0,
+         * is 10^309 or more: past a double's range, as strtod() would find.
+         * One with a fraction or an exponent is longer than jkii reads. */
+        const size_t sign = (target[0] == '-') ? 1 : 0;
+        if (_jkii_is_all_digit(target + sign, target_size - sign)) {
+            *out_double = sign ? -HUGE_VAL : HUGE_VAL;
+            return JKII_PRIMITIVE_ERR_OVERFLOW;
+        }
         char message[50];
         snprintf(message, sizeof(message) / sizeof(message[0]),
                 "double string too long: %lu.", (unsigned long)target_size);

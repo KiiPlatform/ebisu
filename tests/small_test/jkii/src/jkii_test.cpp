@@ -2482,6 +2482,28 @@ TEST_CASE("KiiJson, NumberLongerThanJkiiReads") {
     }
 }
 
+// jkii refuses as longer than it reads only a number with a fraction or an
+// exponent of more than 310 characters. It refused an integer that long too,
+// read as a double, failing the whole of jkii_parse(), though such an integer
+// is past any double.
+TEST_CASE("An integer too long to read as a double overflows") {
+    for (const std::string sign : { "", "-" }) {
+        const std::string number = sign + "1" + std::string(320, '0');
+        INFO("number " << sign << "1 and 320 zeros");
+        const std::string json = "{\"a\":1,\"d\":" + number + "}";
+        jkii_field_t fields[3];
+        memset(fields, 0, sizeof(fields));
+        fields[0].name = "a";
+        fields[0].type = JKII_FIELD_TYPE_INTEGER;
+        fields[1].name = "d";
+        fields[1].type = JKII_FIELD_TYPE_DOUBLE;
+        CHECK(jkii_parse3(json.data(), json.size(), fields) == JKII_ERR_PARTIAL);
+        CHECK(fields[0].result == JKII_FIELD_ERR_OK);
+        CHECK(fields[1].result == JKII_FIELD_ERR_NUM_OVERFLOW);
+        CHECK(fields[1].field_copy.double_value == (sign.empty() ? HUGE_VAL : -HUGE_VAL));
+    }
+}
+
 // A document's number must not become the address the next document's string
 // is copied to.
 TEST_CASE( "jkii_parse() never writes a number or a boolean over a field's buffer address" ) {
