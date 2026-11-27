@@ -33,6 +33,13 @@ command:
 # make DEBUG=1
 ```
 
+## Server certificates
+
+The sample verifies the server's certificate against the CA certificates the
+system trusts. Ubuntu keeps them in the `ca-certificates` package. To trust
+others in their place, name a PEM file of them with `SSL_CERT_FILE`, or a
+directory of them with `SSL_CERT_DIR`.
+
 ## How to use
 Go to https://developer.kii.com and create app for you.
 Replace `KII_APP_ID`, `EX_APP_KEY` and `KII_APP_HOST` in example.h with yours.
