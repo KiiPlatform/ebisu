@@ -67,6 +67,21 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(small_test_tio_linux_includes ${PROJECT_SOURCE_DIR}/tio/linux-sample/linux-env)
 endif()
 
+# The Linux sample's OpenSSL socket, against a TLS server of the test's own.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_package(OpenSSL)
+    if(OPENSSL_FOUND)
+        ebisu_add_test_suite(small_test_linux_sample
+            LABEL small
+            WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tio
+            SOURCES
+                tio/sock_cb_linux_test.cpp
+                ${PROJECT_SOURCE_DIR}/tio/linux-sample/sock_cb_linux.c
+            LINK ${EBISU_KHC_OBJS} OpenSSL::SSL OpenSSL::Crypto Threads::Threads
+            INCLUDES ${PROJECT_SOURCE_DIR}/tio/linux-sample)
+    endif()
+endif()
+
 ebisu_add_test_suite(small_test_tio
     LABEL small
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tio

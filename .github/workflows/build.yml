@@ -31,6 +31,7 @@ jobs:
       # The same presets developers use, so CI cannot drift from them. Only the
       # JUnit reporting is CI-specific.
       # The large tests are configured when APP_ID and DEFAULT_SITE are set.
+      # The Linux sample is built too, as applications start from it.
       #
       # Tracing is off, whatever the build's default: KHC_TRACE prints every
       # request and response, tokens and passwords included, and ctest prints
@@ -39,7 +40,7 @@ jobs:
         env:
           APP_ID: ${{ secrets.APP_ID }}
           DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
-        run: cmake --preset debug -DEBISU_TEST_JUNIT=ON -DKHC_TRACE=OFF -DTIO_TRACE=OFF -DEBISU_SOCKET_LOG=OFF
+        run: cmake --preset debug -DEBISU_TEST_JUNIT=ON -DKHC_TRACE=OFF -DTIO_TRACE=OFF -DEBISU_SOCKET_LOG=OFF -DEBISU_BUILD_SAMPLES=ON
       - name: build
         run: cmake --build --preset debug
       # --test-dir is redundant with --preset for a plain run, but -T memcheck

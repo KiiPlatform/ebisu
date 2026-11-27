@@ -306,6 +306,16 @@ For applications that started from it:
 - it locks OpenSSL 1.0.2 for its threads;
 - it reads OpenSSL's errors as OpenSSL asks to be;
 - it doesn't shut down a connection that failed;
-- it no longer prints the thing's password.
+- it no longer prints the thing's password;
+- it verifies the server's certificate, against the CA certificates the
+  system trusts, or those `SSL_CERT_FILE` or `SSL_CERT_DIR` names, and that
+  the certificate is for the host it connects to, which it tells the server;
+- it takes TLS 1.2 or later;
+- it looks hosts up with `getaddrinfo()`, safe in tasks that connect at the
+  same time, and connects to their IPv6 addresses too;
+- its sockets aren't inherited by programs the application runs;
+- its receives, sends and handshakes wait on through signals, until their
+  timeouts run out;
+- it closes the socket, and frees what it made, when a connect fails.
 
 An application with a copy of it may want the same changes.
