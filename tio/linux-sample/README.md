@@ -141,10 +141,13 @@ Step 6, setting vendorThingID and thingPassword like this.
 
 ### Startup sample application and connect to cloud
 
-Execute folloging command on a terminal.
+Execute following command on a terminal, in this directory, where the
+sample reads `state.json` from.
 ```sh
-# ./exampleapp onboard --vendor-thing-id={vendor-thing-id} --password={password}
+# ../../build/release/tio/linux-sample/exampleapp onboard --vendor-thing-id={vendor-thing-id} --password={password}
 ```
+
+It runs until Ctrl-C, or SIGTERM, ends it.
 
 ### Remote control by Command.
 
@@ -178,10 +181,10 @@ After send command, please check a terminal.
 Actions in command are shown on terminal like this.
 
 ```sh
-# ./exampleapp onboard --vendor-thing-id=test1 --password=1234
+# ../../build/release/tio/linux-sample/exampleapp onboard --vendor-thing-id=test1 --password=1234
 option vendor-thing-id : test1
-option password : 1234
-program successfully started!
+option password : (given)
+Onboarding succeeded!
 tio_action_handler called
 AirconAlias: power
 tio_action_handler called
