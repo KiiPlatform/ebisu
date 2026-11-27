@@ -1039,9 +1039,12 @@ static jkii_parse_err_t _jkii_parse_fields(
 
         /* get jsmntok_t pointing target value. */
         if (field->path != NULL) {
-            result = _kii_jsmn_get_value_by_path(json_string,
-                    json_string_len, resource->tokens, tokens_num,
-                    field->path, &value);
+            /* An empty path, which the grammar has none of, finds nothing. */
+            if (field->path[0] != '\0') {
+                result = _kii_jsmn_get_value_by_path(json_string,
+                        json_string_len, resource->tokens, tokens_num,
+                        field->path, &value);
+            }
         } else {
             result = _kii_jsmn_get_value(json_string, json_string_len,
                     resource->tokens, tokens_num, field->name, &value);

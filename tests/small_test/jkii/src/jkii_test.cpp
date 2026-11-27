@@ -2555,3 +2555,20 @@ TEST_CASE( "jkii_parse() never writes a number or a boolean over a field's buffe
         CHECK( fields[0].field_copy.long_value == INT64_C(4702111234474983745) );
     }
 }
+
+// The grammar of jkii_field_t#path has no empty path, but jkii_parse() took one
+// to its assert that a path isn't empty, which ended the program in a build
+// that keeps asserts.
+TEST_CASE( "An empty path finds nothing" ) {
+    const char json[] = "{\"a\":1}";
+    jkii_field_t fields[3];
+    memset(fields, 0, sizeof(fields));
+    fields[0].path = "";
+    fields[0].type = JKII_FIELD_TYPE_INTEGER;
+    fields[1].path = "/a";
+    fields[1].type = JKII_FIELD_TYPE_INTEGER;
+    CHECK( jkii_parse3(json, strlen(json), fields) == JKII_ERR_PARTIAL );
+    CHECK( fields[0].result == JKII_FIELD_ERR_NOT_FOUND );
+    CHECK( fields[1].result == JKII_FIELD_ERR_OK );
+    CHECK( fields[1].field_copy.int_value == 1 );
+}
