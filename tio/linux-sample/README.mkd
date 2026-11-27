@@ -6,9 +6,9 @@ We assumes readers already have knowledge about Linux operations.
 
 ## Requirement
 
- * cmake: version 3.5 or higher.
+ * cmake: version 3.21 or higher.
 ```sh
-# sudo apt-get install cmake3
+# sudo apt-get install cmake
 ```
 
  * libssl-dev:
@@ -18,20 +18,17 @@ We assumes readers already have knowledge about Linux operations.
 
 ## Build
 
-Execute following command:
+Execute following commands on the top directory of the repository:
 
 ```sh
-# make
+# cmake --preset release -DEBISU_BUILD_SAMPLES=ON
+# cmake --build --preset release --target exampleapp
 ```
 
-This makes exampleapp.
+This makes `build/release/tio/linux-sample/exampleapp`.
 
-If you want to build exampleapp with debug mode. Execute following
-command:
-
-```sh
-# make DEBUG=1
-```
+If you want to build exampleapp with debug mode, use the `debug` preset
+in place of `release`.
 
 ## Server certificates
 
@@ -42,7 +39,7 @@ directory of them with `SSL_CERT_DIR`.
 
 ## How to use
 Go to https://developer.kii.com and create app for you.
-Replace `KII_APP_ID`, `EX_APP_KEY` and `KII_APP_HOST` in example.h with yours.
+Replace `KII_APP_ID` and `KII_APP_HOST` in example.h with yours.
 If you want to test receiving commands, please create thing with owner.
 
 ### Prepare Thing type, Trait, Alias
@@ -151,10 +148,13 @@ Step 6, setting vendorThingID and thingPassword like this.
 
 ### Startup sample application and connect to cloud
 
-Execute folloging command on a terminal.
+Execute following command on a terminal, in this directory, where the
+sample reads `state.json` from.
 ```sh
-# ./exampleapp onboard --vendor-thing-id={vendor-thing-id} --password={password}
+# ../../build/release/tio/linux-sample/exampleapp onboard --vendor-thing-id={vendor-thing-id} --password={password}
 ```
+
+It runs until Ctrl-C, or SIGTERM, ends it.
 
 ### Remote control by Command.
 
@@ -188,10 +188,10 @@ After send command, please check a terminal.
 Actions in command are shown on terminal like this.
 
 ```sh
-# ./exampleapp onboard --vendor-thing-id=test1 --password=1234
+# ../../build/release/tio/linux-sample/exampleapp onboard --vendor-thing-id=test1 --password=1234
 option vendor-thing-id : test1
-option password : 1234
-program successfully started!
+option password : (given)
+Onboarding succeeded!
 tio_action_handler called
 AirconAlias: power
 tio_action_handler called

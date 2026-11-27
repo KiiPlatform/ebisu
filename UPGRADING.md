@@ -316,6 +316,8 @@ For applications that started from it:
 - its sockets aren't inherited by programs the application runs;
 - its receives, sends and handshakes wait on through signals, until their
   timeouts run out;
-- it closes the socket, and frees what it made, when a connect fails.
+- it closes the socket, and frees what it made, when a connect fails;
+- it ends on SIGTERM as on Ctrl-C, and exits when a task can't be started,
+  rather than waiting for it for ever.
 
 An application with a copy of it may want the same changes.
