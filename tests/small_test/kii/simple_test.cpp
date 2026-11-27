@@ -485,9 +485,39 @@ TEST_CASE( "The last response's ETag can be given as it is to the next request" 
         // A response without one leaves none of the one before.
         CHECK( std::string(kii_get_etag(&kii)) == "" );
     }
-    SECTION("a request that fails once made leaves none either") {
-        http_ctx.on_connect = [](void*, const char*, unsigned int) { return KHC_SOCK_FAIL; };
-        CHECK( kii_get_object(&kii, &bucket, "o.1") != KII_ERR_OK );
+    // It was emptied as the request was sent, so a request tried again after
+    // one that got no response, as when it couldn't connect, had no If-Match.
+    SECTION("a request that gets no response leaves it, to be tried again with it") {
+        const auto connect = http_ctx.on_connect;
+        const auto send = http_ctx.on_send;
+        const auto recv = http_ctx.on_recv;
+        const int failing = GENERATE(0, 1, 2);
+        if (failing == 0) {
+            http_ctx.on_connect = [](void*, const char*, unsigned int) { return KHC_SOCK_FAIL; };
+        } else if (failing == 1) {
+            http_ctx.on_send = [](void*, const char*, size_t, size_t*) { return KHC_SOCK_FAIL; };
+        } else {
+            http_ctx.on_recv = [](void*, char*, size_t, size_t*) { return KHC_SOCK_FAIL; };
+        }
+        INFO( "failing " << failing );
+        CHECK( kii_put_object(&kii, &bucket, "o.1", object.c_str(), NULL, kii_get_etag(&kii)) !=
+                KII_ERR_OK );
+        CHECK( std::string(kii_get_etag(&kii)) == "\"1\"" );
+        http_ctx.on_connect = connect;
+        http_ctx.on_send = send;
+        http_ctx.on_recv = recv;
+        respond(200, "ETag: \"2\"\r\n", "");
+        CHECK( kii_put_object(&kii, &bucket, "o.1", object.c_str(), NULL, kii_get_etag(&kii)) ==
+                KII_ERR_OK );
+        CHECK( sent.find(if_match) != std::string::npos );
+        CHECK( std::string(kii_get_etag(&kii)) == "\"2\"" );
+    }
+    SECTION("a response cut short leaves none of the one before") {
+        // Its status line came, and nothing of its headers after it.
+        resp = "HTTP/1.1 200 OK\r\nContent-";
+        CHECK( kii_put_object(&kii, &bucket, "o.1", object.c_str(), NULL, kii_get_etag(&kii)) !=
+                KII_ERR_OK );
+        CHECK( sent.find(if_match) != std::string::npos );
         CHECK( std::string(kii_get_etag(&kii)) == "" );
     }
     SECTION("a call that fails before its request is made leaves it, for the next") {

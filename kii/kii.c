@@ -47,9 +47,16 @@ size_t _cb_read_buff(char *buffer, size_t size, void *userdata)
 
 size_t _cb_write_header(char *buffer, size_t size, void *userdata)
 {
-    // TODO: implement it later for getting Etag, etc.
-    char* etag_buff = ((kii_t*)userdata)->_etag;
-    _parse_etag(buffer, size, etag_buff, KII_ETAG_MAX_SIZE);
+    kii_t* kii = (kii_t*)userdata;
+    /* khc gives a response's status line first, checked already, and a
+     * header's name can't hold a '/'. From the status line on, the ETag is
+     * this response's, or none: until then it is the last one's, so a request
+     * that gets no response, as when it can't connect, leaves it to be given
+     * to the request tried again. */
+    if (size >= 7 && memcmp(buffer, "HTTP/1.", 7) == 0) {
+        kii->_etag[0] = '\0';
+    }
+    _parse_etag(buffer, size, kii->_etag, KII_ETAG_MAX_SIZE);
     return size;
 }
 
@@ -357,9 +364,9 @@ void _reset_buff(kii_t* kii) {
     kii->_rw_buff_written = 0;
     kii->_rw_buff_req_size = 0;
     kii->_rw_buff[0] = '\0';
-    /* The last response's ETag stays until the request is sent, in
-     * _kii_perform(): the application gives it to this call, straight from
-     * kii_get_etag(), for its If-Match. */
+    /* The last response's ETag stays until another response comes, in
+     * _cb_write_header(): the application gives it to this call, straight
+     * from kii_get_etag(), for its If-Match. */
 }
 
 khc_code _kii_perform(kii_t* kii) {
@@ -369,9 +376,6 @@ khc_code _kii_perform(kii_t* kii) {
     if (_kii_is_app_id(kii->_app_id) != KII_TRUE) {
         return KHC_ERR_FAIL;
     }
-    /* The request's headers are made, an If-Match among them, so the last
-     * response's ETag can go: only this request's response may set it. */
-    kii->_etag[0] = '\0';
     khc_code code = khc_perform(&kii->_khc);
     // A response without a body wrote nothing over the request's, which is
     // done with. The same safety net as in _cb_write_buff(): whoever reads the
