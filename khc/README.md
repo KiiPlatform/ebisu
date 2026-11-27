@@ -244,8 +244,10 @@ Implementations to start from:
 
 ## Writing callbacks
 
-What `khc` leaves to the callbacks, which it can't check. `linux-sample` is the
-one to read for what socket callbacks have to do.
+What `khc` leaves to the callbacks, which it can't check. platform's POSIX and
+OpenSSL ports, `platform/posix/src/ebisu_posix_tcp.c` and
+`platform/openssl/src/ebisu_openssl.c`, are the ones to read for what socket
+callbacks have to do.
 
 - **Timeouts**: `khc` checks the request's timeout, if one is set, between
   socket operations, so a callback that blocks holds the request for as long as
@@ -263,11 +265,11 @@ one to read for what socket callbacks have to do.
   as an atomic flag. It is asked at every step, so it has to be quick.
 - **The end of the stream is `EBISU_SOCK_OK` with 0 bytes**: that goes for a TLS
   connection the server closes without a `close_notify` too, which servers
-  answering `Connection: Close` do. `linux-sample` shows how that looks to
+  answering `Connection: Close` do. The OpenSSL port shows how that looks to
   OpenSSL.
 - **`SIGPIPE`**: sending on a connection the peer has closed raises `SIGPIPE`,
-  which ends the process. Ignore it, as `linux-sample` does in `main()`, or use
-  `MSG_NOSIGNAL` or `SO_NOSIGPIPE`, as the POSIX port's plain TCP socket does.
+  which ends the process. Ignore it in `main()`, or use `MSG_NOSIGNAL` or
+  `SO_NOSIGPIPE`, as the POSIX port's plain TCP socket does.
   A TLS library sends on its own too, as OpenSSL does when closing, and with
   `write()`, which takes no such flag: the OpenSSL port's socket blocks the
   signal around its calls instead.
@@ -280,7 +282,7 @@ one to read for what socket callbacks have to do.
   own.
 - **Callbacks running at once**: those of different tasks do, so whatever they
   share needs locking. OpenSSL before 1.1.0 needs locking callbacks of its own,
-  which `linux-sample` sets up.
+  which the OpenSSL port sets up.
 - **Response size**: `khc` passes the body to the write callback as it arrives,
   whatever its length. A callback that stores it has to set its own limit, by
   handling fewer bytes than given, which ends the request with

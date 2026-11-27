@@ -18,20 +18,24 @@
 #include <ebisu_openssl.h>
 #include <ebisu_posix.h>
 
-static void print_help() {
-    printf("sub commands: [onboard|update]\n\n");
+static void print_help(void) {
+    printf("sub commands: [onboard]\n\n");
     printf("to see detail usage of sub command, execute ./exampleapp {subcommand} --help\n\n");
 
     printf("onboard with vendor-thing-id\n");
     printf("./exampleapp onboard --vendor-thing-id={vendor thing id} --password={password}\n\n");
 }
 
+static void print_onboard_usage(void) {
+    printf("usage: onboard --vendor-thing-id={ID of the thing} --password={password of the thing}\n");
+}
+
 // Using C11 atomic types.
-atomic_bool term_flag = false;
-atomic_bool handler_terminated = false;
-atomic_bool updater_terminated = false;
+static atomic_bool term_flag = false;
+static atomic_bool handler_terminated = false;
+static atomic_bool updater_terminated = false;
 
-bool _handler_continue(void* task_info, void* userdata) {
+static bool handler_continue(void* task_info, void* userdata) {
     if (term_flag) {
         return false;
     } else {
@@ -39,7 +43,7 @@ bool _handler_continue(void* task_info, void* userdata) {
     }
 }
 
-bool _updater_continue(void* task_info, void* userdata) {
+static bool updater_continue(void* task_info, void* userdata) {
     if (term_flag) {
         return false;
     } else {
@@ -47,30 +51,30 @@ bool _updater_continue(void* task_info, void* userdata) {
     }
 }
 
-void _handler_exit(void* task_info, void* userdata) {
-    printf("_handler_exit called\n");
+static void handler_exit(void* task_info, void* userdata) {
+    printf("handler_exit called\n");
     handler_terminated = true;
 }
 
-void _updater_exit(void* task_info, void* userdata) {
-    printf("_updater_exit called\n");
+static void updater_exit(void* task_info, void* userdata) {
+    printf("updater_exit called\n");
     updater_terminated = true;
 }
 
-void sig_handler(int sig, siginfo_t *info, void *ctx) {
-    term_flag = 1;
+static void sig_handler(int sig, siginfo_t *info, void *ctx) {
+    term_flag = true;
 }
 
 static ebisu_posix_lock_t session_lock;
 
-void author_updated_callback(const kii_author_t* author, void* userdata)
+static void author_updated_callback(const kii_author_t* author, void* userdata)
 {
     // A device that keeps its tokens across a restart saves the author here.
     // This sample onboards at each start instead.
     printf("author updated: %s\n", author->author_id);
 }
 
-void updater_init(
+static void updater_init(
         tio_updater_t* updater,
         char* buffer,
         int buffer_size,
@@ -88,18 +92,19 @@ void updater_init(
 
     tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
 
-    tio_updater_set_cb_task_continue(updater, _updater_continue, NULL);
-    tio_updater_set_cb_task_exit(updater, _updater_exit, NULL);
+    tio_updater_set_cb_task_continue(updater, updater_continue, NULL);
+    tio_updater_set_cb_task_exit(updater, updater_exit, NULL);
 }
 
-const char send_file[] = "state.json";
+// Read from the directory the sample runs in.
+static const char send_file[] = "state.json";
 
 typedef struct {
     size_t file_size;
     size_t file_read;
 } updater_file_context_t;
 
-size_t updater_cb_state_size(void* userdata)
+static size_t updater_cb_state_size(void* userdata)
 {
     struct stat st;
     updater_file_context_t* ctx = (updater_file_context_t*)userdata;
@@ -115,7 +120,7 @@ size_t updater_cb_state_size(void* userdata)
     return 0;
 }
 
-size_t updater_cb_read(char *buffer, size_t size, void *userdata)
+static size_t updater_cb_read(char *buffer, size_t size, void *userdata)
 {
     updater_file_context_t* ctx = (updater_file_context_t*)userdata;
     FILE* fp;
@@ -143,14 +148,14 @@ size_t updater_cb_read(char *buffer, size_t size, void *userdata)
     return read_size;
 }
 
-bool pushed_message_callback(const char* message, size_t message_length, void* userdata)
+static bool pushed_message_callback(const char* message, size_t message_length, void* userdata)
 {
     printf("pushed_message_callback called,\n");
     printf("%.*s\n", (int)message_length, message);
     return false;
 }
 
-void handler_init(
+static void handler_init(
         tio_handler_t* handler,
         char* http_buffer,
         int http_buffer_size,
@@ -177,11 +182,11 @@ void handler_init(
 
     tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
 
-    tio_handler_set_cb_task_continue(handler, _handler_continue, NULL);
-    tio_handler_set_cb_task_exit(handler, _handler_exit, NULL);
+    tio_handler_set_cb_task_continue(handler, handler_continue, NULL);
+    tio_handler_set_cb_task_exit(handler, handler_exit, NULL);
 }
 
-bool tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
+static bool tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
 {
     printf("tio_action_handler called\n");
     printf("%.*s: %.*s\n", (int)action->alias_length, action->alias,(int)action->action_name_length, action->action_name);
@@ -190,24 +195,22 @@ bool tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_
 
 int main(int argc, char** argv)
 {
-    char* subc = argv[1];
+    // Each line as it is printed, to a file or a service's log too, which
+    // would otherwise have them only as the buffer fills.
+    setvbuf(stdout, NULL, _IOLBF, 0);
 
-    // Setup Signal handler. (Ctrl-C)
-    struct sigaction sa_sigint;
-    memset(&sa_sigint, 0, sizeof(sa_sigint));
-    sa_sigint.sa_sigaction = sig_handler;
-    sa_sigint.sa_flags = SA_SIGINFO;
+    // Ctrl-C, or the service being stopped, ends the tasks, and then the
+    // program. SIGPIPE needn't be ignored: the sockets never raise it for a
+    // peer that has gone.
+    struct sigaction sa_term;
+    memset(&sa_term, 0, sizeof(sa_term));
+    sa_term.sa_sigaction = sig_handler;
+    sa_term.sa_flags = SA_SIGINFO;
 
-    if (sigaction(SIGINT, &sa_sigint, NULL) < 0) {
+    if (sigaction(SIGINT, &sa_term, NULL) < 0 || sigaction(SIGTERM, &sa_term, NULL) < 0) {
         printf("failed to register sigaction\n");
         exit(1);
     }
-
-    // A write to a connection the peer has reset raises SIGPIPE, which ends
-    // the process. SSL_write() can make one, and so can SSL_shutdown() in
-    // sock_cb_close(), which sends close_notify when a task reconnects. Have
-    // the write fail with EPIPE instead.
-    signal(SIGPIPE, SIG_IGN);
 
     // The time the server's certificate is checked at: the system's, which
     // keeps it. A device without a real-time clock takes it from the server
@@ -284,6 +287,7 @@ int main(int argc, char** argv)
     }
 
     /* Parse command. */
+    const char* subc = argv[1];
     if (strcmp(subc, "onboard") == 0) {
         char* vendorThingID = NULL;
         char* password = NULL;
@@ -294,12 +298,10 @@ int main(int argc, char** argv)
                 {"help", no_argument, 0, 2},
                 {0, 0, 0, 0}
             };
-            int optIndex = 0;
-            int c = getopt_long(argc, argv, "", longOptions, &optIndex);
-            const char* optName = longOptions[optIndex].name;
+            int c = getopt_long(argc, argv, "", longOptions, NULL);
             if (c == -1) {
                 if (vendorThingID == NULL) {
-                    printf("neither vendor-thing-id is specified.\n");
+                    printf("vendor-thing-id is not specified.\n");
                     exit(1);
                 }
                 if (password == NULL) {
@@ -324,41 +326,54 @@ int main(int argc, char** argv)
                 printf("Onboarding succeeded!\n");
                 break;
             }
-            // Not the password, which a terminal's scrollback and a service's
-            // log keep.
-            printf("option %s : %s\n", optName, c == 1 ? "(given)" : optarg);
             switch(c) {
                 case 0:
+                    printf("option vendor-thing-id : %s\n", optarg);
                     vendorThingID = optarg;
                     break;
                 case 1:
+                    // Not the password, which a terminal's scrollback and a
+                    // service's log keep.
+                    printf("option password : (given)\n");
                     password = optarg;
                     break;
                 case 2:
-                    printf("usage: \n");
-                    printf("onboard --vendor-thing-id={ID of the thing} --password={password of the thing}\n");
-                    break;
+                    print_onboard_usage();
+                    exit(0);
                 default:
-                    printf("unexpected usage.\n");
-            }
-            if (strcmp(optName, "help") == 0) {
-                exit(0);
+                    // An option it doesn't have, or one without its value,
+                    // which getopt_long() has said.
+                    print_onboard_usage();
+                    exit(1);
             }
         }
     } else {
+        printf("unknown sub command: %s\n", subc);
         print_help();
-        exit(0);
+        exit(1);
     }
 
-    // Both take the author from the session.
-    tio_handler_start(&handler, NULL, tio_action_handler, NULL);
-    tio_updater_start(
+    // Both take the author from the session. A task that doesn't start never
+    // ends either, for the loop below to wait for.
+    if (tio_handler_start(&handler, NULL, tio_action_handler, NULL) != TIO_ERR_OK) {
+        printf("failed to start the handler.\n");
+        exit(1);
+    }
+    if (tio_updater_start(
             &updater,
             NULL,
             updater_cb_state_size,
             &updater_file_ctx,
             updater_cb_read,
-            &updater_file_ctx);
+            &updater_file_ctx) != TIO_ERR_OK) {
+        printf("failed to start the updater.\n");
+        // The handler's task ends at its next turn.
+        term_flag = true;
+        while (!handler_terminated) {
+            sleep(1);
+        }
+        exit(1);
+    }
 
     bool end = false;
     bool disp_msg = false;
@@ -371,7 +386,7 @@ int main(int argc, char** argv)
         if (handler_terminated && updater_terminated) {
             end = true;
         }
-    };
+    }
 }
 
 /* vim: set ts=4 sts=4 sw=4 et fenc=utf-8 ff=unix: */
