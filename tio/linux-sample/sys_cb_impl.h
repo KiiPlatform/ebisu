@@ -1,11 +1,11 @@
 /**
- * @file tio_environment_dependent.h
- * @brief This is a file defining environment dependent functions.
- * this SDKrequires to implement these functions in each target
- * environment.
+ * @file sys_cb_impl.h
+ * @brief The sample's task and delay callbacks, which linux-env/task_impl.c
+ * implements with POSIX threads. An application on another system implements
+ * them with its own.
  */
-#ifndef _TIO_ENVIRONMENT_DEPENDENT_
-#define _TIO_ENVIRONMENT_DEPENDENT_
+#ifndef SYS_CB_IMPL_H
+#define SYS_CB_IMPL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,21 +13,15 @@ extern "C" {
 
 #include <kii_task_callback.h>
 
-/** Implementation of callback to create task.
- * this SDK requirest to implement this function in each
- * target environment.
+/** Creates a task, given to the handler and the updater with
+ * tio_handler_set_cb_task_create() and tio_updater_set_cb_task_create().
  *
- * This function is assigned to fields
- * kii_t#kii_core_t#kii_http_context_t#kii_http_context_t#task_create_cb
- * of command handler and state updater.
+ * @param [in] name name of the task.
+ * @param [in] entry what the task runs.
+ * @param [in] param what entry is given.
+ * @param [in] userdata what the setter was given.
  *
- * @param [in] name name of task.
- * @param [in] entry entry of task.
- * @param [in] stk_start start position of stack area.
- * @param [in] stk_size stack size of task
- * @param [in] priority priority of thisk
- *
- * @return KII_TASKC_OK if succeed to create task. otherwise KII_TASKC_FAIL.
+ * @return KII_TASKC_OK if the task was created, otherwise KII_TASKC_FAIL.
  */
 kii_task_code_t task_create_cb_impl(
         const char* name,
@@ -35,15 +29,12 @@ kii_task_code_t task_create_cb_impl(
         void* param,
         void* userdata);
 
-/** Implementation of callback to delay task.
- * this SDK requirest to implement this function in each
- * target environment.
+/** Delays the task that calls it for msec milliseconds, through signals,
+ * given to the handler and the updater with tio_handler_set_cb_delay_ms() and
+ * tio_updater_set_cb_delay_ms().
  *
- * This function is assigned to fields
- * kii_t#kii_core_t#kii_http_context_t#kii_http_context_t#delay_ms_cb
- * of command handler and state updater.
- *
- * @param[in] msec millisecond to delay.
+ * @param [in] msec milliseconds to delay.
+ * @param [in] userdata what the setter was given.
  */
 void delay_ms_cb_impl(unsigned int msec, void* userdata);
 
@@ -51,4 +42,4 @@ void delay_ms_cb_impl(unsigned int msec, void* userdata);
 }
 #endif
 
-#endif /* _TIO_ENVIRONMENT_DEPENDENT_ */
+#endif /* SYS_CB_IMPL_H */

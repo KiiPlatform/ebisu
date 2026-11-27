@@ -1,5 +1,5 @@
-#ifndef __example
-#define __example
+#ifndef EXAMPLE_H
+#define EXAMPLE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,4 +27,4 @@ const char KII_APP_HOST[] = "api-jp.kii.com";
 }
 #endif
 
-#endif
+#endif /* EXAMPLE_H */

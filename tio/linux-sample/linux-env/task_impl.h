@@ -1,5 +1,5 @@
-#ifndef _KII_TASK_IMPL
-#define _KII_TASK_IMPL
+#ifndef TASK_IMPL_H
+#define TASK_IMPL_H
 
 #include <kii_task_callback.h>
 
@@ -21,5 +21,5 @@ void delay_ms_cb
 }
 #endif
 
-#endif /* _KII_TASK_IMPL */
+#endif /* TASK_IMPL_H */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
