@@ -1,5 +1,6 @@
 #include "kii.h"
 #include "kii_impl.h"
+#include "kii_req_impl.h"
 #include "jkii_wrapper.h"
 #include <string.h>
 
@@ -362,6 +363,12 @@ void _reset_buff(kii_t* kii) {
 }
 
 khc_code _kii_perform(kii_t* kii) {
+    /* The application ID is a segment of every path of kii's own, and goes
+     * in a header. Refused before anything else, a request leaves the last
+     * response as it was. */
+    if (_kii_is_app_id(kii->_app_id) != KII_TRUE) {
+        return KHC_ERR_FAIL;
+    }
     /* The request's headers are made, an If-Match among them, so the last
      * response's ETag can go: only this request's response may set it. */
     kii->_etag[0] = '\0';

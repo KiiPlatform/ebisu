@@ -303,6 +303,11 @@ void kii_set_site(
 
 /**
  * \brief Set Application ID.
+ *
+ * Kii's application IDs are letters and digits. With one of anything else, or
+ * none, every request fails with KII_ERR_FAIL, sending nothing: the ID is a
+ * segment of its path.
+ *
  * \param [out] kii kii_t instance.
  * \param [in] app_id Application ID published by Kii.
  */

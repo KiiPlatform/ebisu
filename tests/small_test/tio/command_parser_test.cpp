@@ -906,6 +906,16 @@ TEST_CASE( "_handle_command refuses a command ID that can't be a path segment" )
         CHECK( handler._kii._req_headers == nullptr );
     }
 
+    // The thing's ID is a segment of that path too.
+    SECTION("for a thing whose ID can't be one, with no action run and nothing sent") {
+        strcpy(handler._kii._author.author_id, "thingid/../other");
+        int called = 0;
+        CHECK( handle("0af7a7e0-88d1-11e8-9a94-0af02ef8c0d5", &called) == TIO_ERR_FAIL );
+        CHECK( called == 0 );
+        CHECK( connects == 0 );
+        CHECK( handler._kii._req_headers == nullptr );
+    }
+
     SECTION("one that can, as the server gives them") {
         int called = 0;
         CHECK( handle("0af7a7e0-88d1-11e8-9a94-0af02ef8c0d5", &called) == TIO_ERR_OK );

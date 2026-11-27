@@ -151,6 +151,16 @@ headers, or send a request other than the one asked for:
   kii didn't check what khc returned. This
   applies to a path built from the application's bucket, object, topic or
   server code names. The call returns `KII_ERR_TOO_LARGE_DATA` or `KII_ERR_FAIL`.
+- A request whose path would hold an ID or a name the application gave, or the
+  thing's own ID, of anything but letters, digits, `.`, `_`, `-` and `$`, or
+  one that is empty, `.` or `..`, fails with `KII_ERR_FAIL`, sending nothing.
+  That is bucket, object and topic names, scope IDs, an installation ID, and a
+  server code version or endpoint name. Every request also fails so with an
+  application ID of anything but letters and digits, or none. Kii's IDs and
+  names are made of those characters. 1.3 put whatever it was given into the
+  path, and a `/`, `?` or `#` in one sent the request to another path.
+- tio refuses a command with `TIO_ERR_FAIL`, running none of its actions, when
+  the thing's ID can't be a segment of its results' path.
 - GET, HEAD and DELETE requests send no body. A body set for one with
   `kii_api_call_append_body()` is no longer sent.
 

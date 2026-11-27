@@ -53,6 +53,15 @@ kii_code_t _set_auth_header(kii_t* kii);
 
 kii_code_t _set_auth_bearer_token(kii_t* kii, const char* token);
 
+/* Whether s can be a segment of a request's path as it is: one or more
+ * letters, digits, '.', '_', '-' and '$', which Kii's IDs and names are made
+ * of, and not "." or "..". Anything else, '/', '?', '#' or '%' among it, could
+ * have the request go to another path than its own. */
+kii_bool_t _kii_is_path_segment(const char* s);
+
+/* Whether s is an application ID as Kii issues them: letters and digits. */
+kii_bool_t _kii_is_app_id(const char* s);
+
 kii_code_t _set_if_match(kii_t* kii, const char* etag);
 
 kii_code_t _set_req_body(kii_t* kii, const char* body_contents);

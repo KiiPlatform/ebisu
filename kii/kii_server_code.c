@@ -15,6 +15,10 @@ static kii_code_t _execute_server_code(
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "POST");
 
+    if (_kii_is_path_segment(version) != KII_TRUE ||
+            _kii_is_path_segment(endpoint_name) != KII_TRUE) {
+        return KII_ERR_FAIL;
+    }
     int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size,
             "/api/apps/%s/server-code/versions/%s/%s",
             kii->_app_id, version, endpoint_name);
