@@ -117,6 +117,8 @@ TEST_CASE( "Thing requests send the values they are given" ) {
         CHECK( kii_auth_thing(&kii, too_long.c_str(), password) == KII_ERR_TOO_LARGE_DATA );
         CHECK( kii_auth_thing(&kii, vendor_thing_id, too_long.c_str()) == KII_ERR_TOO_LARGE_DATA );
         CHECK( kii_register_thing(&kii, vendor_thing_id, too_long.c_str(), password) == KII_ERR_TOO_LARGE_DATA );
+        // A thing's, whose ID is in the path.
+        strcpy(kii._author.author_id, "th.1");
         CHECK( kii_ti_put_firmware_version(&kii, too_long.c_str()) == KII_ERR_TOO_LARGE_DATA );
         CHECK( sent.empty() );
         // 2.x onboards with an anonymous token, which it asks for first: only

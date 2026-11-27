@@ -307,6 +307,11 @@ static tio_code_t _start_result_request(
         tio_handler_t* handler,
         const char* command_id)
 {
+    // The thing's ID is a segment of the path, as the command's is.
+    if (!_is_path_segment(handler->_kii._author.author_id)) {
+        _trace_op("_is_path_segment", 0);
+        return TIO_ERR_FAIL;
+    }
     // Start making command result request.
     char command_result_path[256];
     int path_len = snprintf(

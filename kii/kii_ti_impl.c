@@ -221,6 +221,9 @@ kii_code_t _put_firmware_version(
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "PUT");
 
+    if (_kii_is_path_segment(kii->_author.author_id) != KII_TRUE) {
+        return KII_ERR_FAIL;
+    }
     int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/thing-if/apps/%s/things/%s/firmware-version", kii->_app_id, kii->_author.author_id);
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
@@ -288,6 +291,9 @@ kii_code_t _get_firmware_version(
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "GET");
 
+    if (_kii_is_path_segment(kii->_author.author_id) != KII_TRUE) {
+        return KII_ERR_FAIL;
+    }
     int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/thing-if/apps/%s/things/%s/firmware-version", kii->_app_id, kii->_author.author_id);
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
@@ -374,6 +380,9 @@ kii_code_t _upload_state(
     }
     khc_set_method(&kii->_khc, method);
 
+    if (_kii_is_path_segment(kii->_author.author_id) != KII_TRUE) {
+        return KII_ERR_FAIL;
+    }
     int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/thing-if/apps/%s/targets/thing:%s/%s", kii->_app_id, kii->_author.author_id, last_path_segment);
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
