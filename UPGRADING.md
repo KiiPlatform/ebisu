@@ -190,9 +190,12 @@ headers, or send a request other than the one asked for:
   with `KHC_ERR_WRITE_CALLBACK`, as `KHC_CB_WRITE` says, wherever khc calls
   it. 1.3 failed it only for a body's first part, read with the headers, and
   took it for the rest. kii's own callback returns what it was given.
-- **ETags.** `kii_get_etag()` gives the last response's ETag until the next
-  request is sent, and is empty when that response had none. It can be passed
-  straight to `kii_put_object()` or `kii_patch_object()`.
+- **ETags.** `kii_get_etag()` gives the last response's ETag until another
+  response comes, and is empty when that response had none. It can be passed
+  straight to `kii_put_object()` or `kii_patch_object()`. A request that gets
+  no response, as when it can't connect, leaves it, so the request tried again
+  sends the same `If-Match`. 1.3 emptied it as each call started, so a call
+  tried again went without one.
 - **Downloads.** `kii_download_object_body()`'s callback gets the object's body
   alone. The body of a response other than 2xx goes into kii's buffer instead,
   as for calls without a callback. 1.3 wrote an error's JSON into the

@@ -1196,10 +1196,13 @@ void kii_set_cb_slist_resource(
 /**
  * \brief Get Etag value.
  *
- * It is kii_t's, and stays as it is until the next request is sent: it can be
+ * It is kii_t's, and stays as it is until another response comes: it can be
  * given as it is to kii_put_object() or kii_patch_object(), or to
  * kii_api_call_append_header() after kii_api_call_start(), for the If-Match of
- * that request. Then it is that response's.
+ * that request. A request that gets no response, as when it can't connect,
+ * leaves it, to be given again to the request tried again. From a response's
+ * status line on, it is that response's, empty if the response has none, even
+ * when the response is cut short after it.
  *
  * \param [in] kii kii_t instance.
  * \return Etag value in Etag response header.
