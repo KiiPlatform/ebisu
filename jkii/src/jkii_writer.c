@@ -234,7 +234,7 @@ static int _is_utf8(const char* s, size_t n)
    latin1, a byte that starts no well-formed UTF-8 sequence where it is goes
    out as the UTF-8 of the Latin-1 character of its value, U+0080 to U+00FF;
    without it, s is UTF-8 already. */
-static void _put_escaped(jkii_writer_t* w, const char* s, size_t n, int latin1)
+static void _put_escaped(jkii_writer_t* w, const char* s, size_t n, bool latin1)
 {
     static const char hex_digits[] = "0123456789abcdef";
     _put(w, "\"", 1);
@@ -319,7 +319,7 @@ static jkii_write_err_t _begin_key(jkii_writer_t* w)
 }
 
 static jkii_write_err_t _write_key(jkii_writer_t* w, const char* key, size_t n,
-        int latin1)
+        bool latin1)
 {
     if (_stopped(w)) {
         return w->_err;
@@ -337,12 +337,12 @@ static jkii_write_err_t _write_key(jkii_writer_t* w, const char* key, size_t n,
 
 jkii_write_err_t jkii_write_key_n(jkii_writer_t* w, const char* key, size_t n)
 {
-    return _write_key(w, key, n, 0);
+    return _write_key(w, key, n, false);
 }
 
 jkii_write_err_t jkii_write_key_latin1_n(jkii_writer_t* w, const char* key, size_t n)
 {
-    return _write_key(w, key, n, 1);
+    return _write_key(w, key, n, true);
 }
 
 jkii_write_err_t jkii_write_key(jkii_writer_t* w, const char* key)
@@ -354,7 +354,7 @@ jkii_write_err_t jkii_write_key(jkii_writer_t* w, const char* key)
 }
 
 static jkii_write_err_t _write_string(jkii_writer_t* w, const char* s, size_t n,
-        int latin1)
+        bool latin1)
 {
     if ((s == NULL && n > 0) || (s != NULL && !latin1 && !_is_utf8(s, n))) {
         return _fail(w, JKII_WRITE_ERR_VALUE);
@@ -368,12 +368,12 @@ static jkii_write_err_t _write_string(jkii_writer_t* w, const char* s, size_t n,
 
 jkii_write_err_t jkii_write_string_n(jkii_writer_t* w, const char* s, size_t n)
 {
-    return _write_string(w, s, n, 0);
+    return _write_string(w, s, n, false);
 }
 
 jkii_write_err_t jkii_write_string_latin1_n(jkii_writer_t* w, const char* s, size_t n)
 {
-    return _write_string(w, s, n, 1);
+    return _write_string(w, s, n, true);
 }
 
 jkii_write_err_t jkii_write_string(jkii_writer_t* w, const char* s)
