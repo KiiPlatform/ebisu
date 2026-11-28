@@ -55,6 +55,36 @@ TEST_CASE("KiiJson, GetObjectStringByNameIntoABufferJustLargeEnoughOrNot") {
     CHECK(std::string(buf) == "xxxxxxx");
 }
 
+// A name the object doesn't have is not found, whatever the type asked for,
+// and the names it has are found all the same.
+TEST_CASE("KiiJson, ByNameNotInTheObject") {
+    const char json_string[] = "{\"key1\" : 1, \"key2\" : \"two\"}";
+    const jkii_field_type_t types[] = {
+        JKII_FIELD_TYPE_INTEGER, JKII_FIELD_TYPE_STRING, JKII_FIELD_TYPE_ANY
+    };
+    for (jkii_field_type_t type : types) {
+        INFO("type " << type);
+        char buf[8] = "";
+        jkii_field_t fields[4];
+        memset(fields, 0x00, sizeof(fields));
+        fields[0].name = "key1";
+        fields[0].type = JKII_FIELD_TYPE_INTEGER;
+        fields[1].name = "key3";
+        fields[1].type = type;
+        fields[1].field_copy.string = (type == JKII_FIELD_TYPE_STRING) ? buf : NULL;
+        fields[1].field_copy_buff_size = (type == JKII_FIELD_TYPE_STRING) ? sizeof(buf) : 0;
+        fields[2].name = "key2";
+        fields[2].type = JKII_FIELD_TYPE_STRING;
+        fields[3].name = NULL;
+
+        CHECK(JKII_ERR_PARTIAL == jkii_parse(json_string, strlen(json_string), fields));
+        CHECK(JKII_FIELD_ERR_OK == fields[0].result);
+        CHECK(1 == fields[0].field_copy.int_value);
+        CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[1].result);
+        CHECK(JKII_FIELD_ERR_OK == fields[2].result);
+    }
+}
+
 // Only an object has names: the elements of an array were taken for pairs of a
 // name and a value.
 TEST_CASE("KiiJson, ByNameInArrayRoot") {

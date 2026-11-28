@@ -109,6 +109,10 @@ jkii_lines_err_t jkii_lines_feed(jkii_lines_t* r, const char* data, size_t len,
 /**
  * \brief Ends the data, and gives what is left of it.
  *
+ * After it, the reader is ready for new data, as jkii_lines_init() left it.
+ * A truncated record it gives stays in the buffer until the next call, as a
+ * record jkii_lines_feed() gives does.
+ *
  * \param [in, out] r The reader.
  * \param [out] out_line With JKII_LINES_TRUNCATED, what there is of the last
  * record, terminated.
