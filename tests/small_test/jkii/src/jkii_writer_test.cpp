@@ -77,7 +77,7 @@ void state(jkii_writer_t* w)
 {
     jkii_write_object_start(w);
     jkii_write_key(w, "power");
-    jkii_write_bool(w, 1);
+    jkii_write_bool(w, true);
     jkii_write_key(w, "presetTemperature");
     jkii_write_int(w, -5);
     jkii_write_key(w, "humidity");

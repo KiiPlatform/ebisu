@@ -130,6 +130,36 @@ TEST_CASE( "A JSON Lines record fits its buffer whichever way its line ends" ) {
     CHECK( read_all("12345\rx\n", 8) == Records({ "R:12345\rx" }) );
 }
 
+// Finished, however the data ended, the reader takes new data as it took the
+// first: a record too long doesn't go on being skipped, and what is left of a
+// truncated one isn't put before the next.
+TEST_CASE( "A JSON Lines reader takes new data after it is finished" ) {
+    std::vector<char> buff(8);
+    jkii_lines_t r;
+    jkii_lines_init(&r, buff.data(), buff.size());
+    const char* line = nullptr;
+    size_t line_len = 0;
+    size_t used = 0;
+    auto feed = [&](const char* data) {
+        return jkii_lines_feed(&r, data, strlen(data), &used, &line, &line_len);
+    };
+
+    CHECK( feed("12345678") == JKII_LINES_NEED_MORE );
+    CHECK( jkii_lines_finish(&r, &line, &line_len) == JKII_LINES_TOO_LONG );
+    REQUIRE( feed("a\n") == JKII_LINES_RECORD );
+    CHECK( std::string(line, line_len) == "a" );
+
+    CHECK( feed("xy") == JKII_LINES_NEED_MORE );
+    REQUIRE( jkii_lines_finish(&r, &line, &line_len) == JKII_LINES_TRUNCATED );
+    CHECK( std::string(line, line_len) == "xy" );
+    REQUIRE( feed("b\n") == JKII_LINES_RECORD );
+    CHECK( std::string(line, line_len) == "b" );
+
+    CHECK( jkii_lines_finish(&r, &line, &line_len) == JKII_LINES_END );
+    REQUIRE( feed("c\n") == JKII_LINES_RECORD );
+    CHECK( std::string(line, line_len) == "c" );
+}
+
 TEST_CASE( "A JSON Lines record cut short by the end of the data comes back as such" ) {
     CHECK( read_all("{\"a\":1}\n{\"b\"", 32) == Records({ "R:{\"a\":1}", "T:{\"b\"" }) );
     CHECK( read_all("{\"a\":1}\n  ", 32) == Records({ "R:{\"a\":1}" }) );

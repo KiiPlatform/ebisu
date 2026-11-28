@@ -33,6 +33,7 @@
 #ifndef JKII_LINES_H
 #define JKII_LINES_H
 
+#include <stdbool.h>
 #include <stddef.h>
 
 /* The library is compiled with hidden visibility, so what this header declares
@@ -69,9 +70,9 @@ typedef struct jkii_lines_t {
     size_t _buff_size; /**< \private */
     size_t _len; /**< \private */
     /* Skipping the rest of a record that didn't fit. */
-    int _skipping; /**< \private */
+    bool _skipping; /**< \private */
     /* The buffer holds a record already returned, to drop at the next feed. */
-    int _returned; /**< \private */
+    bool _returned; /**< \private */
 } jkii_lines_t;
 
 /**
@@ -107,6 +108,10 @@ jkii_lines_err_t jkii_lines_feed(jkii_lines_t* r, const char* data, size_t len,
 
 /**
  * \brief Ends the data, and gives what is left of it.
+ *
+ * After it, the reader is ready for new data, as jkii_lines_init() left it.
+ * A truncated record it gives stays in the buffer until the next call, as a
+ * record jkii_lines_feed() gives does.
  *
  * \param [in, out] r The reader.
  * \param [out] out_line With JKII_LINES_TRUNCATED, what there is of the last
