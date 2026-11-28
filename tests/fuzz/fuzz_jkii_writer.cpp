@@ -159,7 +159,7 @@ const std::vector<jkii_member_t>& members() {
 void calls(jkii_writer_t* w, FuzzInput in) {
     static const char* raws[] = { "1", "{}", "[]", "\"r\"", "{\"a\":[true,null]}" };
     while (in.size > 0) {
-        switch (in.take() % 17) {
+        switch (in.take() % 19) {
             case 0: jkii_write_object_start(w); break;
             case 1: jkii_write_object_end(w); break;
             case 2: jkii_write_array_start(w); break;
@@ -213,6 +213,20 @@ void calls(jkii_writer_t* w, FuzzInput in) {
             }
             case 15: jkii_write_member_key(w, &members()[in.take() % members().size()]); break;
             case 16: jkii_write_member_value(w, &members()[in.take() % members().size()]); break;
+            case 17:
+            case 18: {
+                // Any bytes, so that what is written of those that aren't
+                // UTF-8 is checked as UTF-8 too.
+                size_t n = in.take() % 16;
+                std::string bytes;
+                for (size_t i = 0; i < n && in.size > 0; ++i) bytes += (char)in.take();
+                if (n % 2 == 0) {
+                    jkii_write_string_latin1_n(w, bytes.data(), bytes.size());
+                } else {
+                    jkii_write_key_latin1_n(w, bytes.data(), bytes.size());
+                }
+                break;
+            }
         }
     }
 }

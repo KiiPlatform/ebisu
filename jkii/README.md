@@ -193,7 +193,11 @@ only where a character ends, and says whether it cut it.
 A `jkii_writer_t` writes JSON into a buffer, or out through a callback a buffer
 at a time. It puts in the commas, colons and quotes itself, escapes strings as
 `jkii_escape_str()` does, and refuses what wouldn't be JSON: a value where a key
-is expected, the wrong end of a container, or NaN. It never truncates: a buffer
+is expected, the wrong end of a container, NaN, or a string that isn't UTF-8.
+For text that may not be, from a device or a file in a single-byte character
+set, `jkii_write_string_latin1_n()` and `jkii_write_key_latin1_n()` take each
+byte that isn't part of a UTF-8 sequence as a Latin-1 character, and refuse
+none. It never truncates: a buffer
 too small is `JKII_WRITE_ERR_TOO_LARGE`, and `jkii_writer_finish()` says how
 much was needed. Each call returns the first error so far, so the result of
 `jkii_writer_finish()` is the one to check.

@@ -186,6 +186,17 @@ jkii_write_err_t jkii_write_key(jkii_writer_t* w, const char* key);
 jkii_write_err_t jkii_write_key_n(jkii_writer_t* w, const char* key, size_t n);
 
 /**
+ * \brief Writes the key of the next member from bytes that may not all be
+ * UTF-8, as jkii_write_string_latin1_n() writes a string.
+ *
+ * \param [in, out] w The writer.
+ * \param [in] key The key. May be NULL when n is 0.
+ * \param [in] n Its length.
+ * \return JKII_WRITE_OK or the first error so far.
+ */
+jkii_write_err_t jkii_write_key_latin1_n(jkii_writer_t* w, const char* key, size_t n);
+
+/**
  * \brief Writes a string, escaped as jkii_escape_str() does.
  *
  * \param [in, out] w The writer.
@@ -203,6 +214,26 @@ jkii_write_err_t jkii_write_string(jkii_writer_t* w, const char* s);
  * \return JKII_WRITE_OK or the first error so far.
  */
 jkii_write_err_t jkii_write_string_n(jkii_writer_t* w, const char* s, size_t n);
+
+/**
+ * \brief Writes a string from bytes that may not all be UTF-8, such as text
+ * from a device or a file in a single-byte character set.
+ *
+ * As jkii_write_string_n(), except that a byte that starts no well-formed
+ * UTF-8 sequence where it is, which jkii_write_string_n() refuses, is taken as
+ * the Latin-1 character of its value, U+0080 to U+00FF, and written in UTF-8:
+ * `caf\xe9` becomes `café`. Well-formed sequences are written as they are, so
+ * text that is UTF-8 already comes out unchanged, and so does a Latin-1 pair
+ * that happens to form one: `\xc3\xa9` is é, not Ã©. Nothing is refused for
+ * what the bytes are, and each byte that isn't UTF-8 can be had back from its
+ * character.
+ *
+ * \param [in, out] w The writer.
+ * \param [in] s The bytes. May be NULL when n is 0.
+ * \param [in] n How many.
+ * \return JKII_WRITE_OK or the first error so far.
+ */
+jkii_write_err_t jkii_write_string_latin1_n(jkii_writer_t* w, const char* s, size_t n);
 
 /** \brief Writes a signed integer. \param [in, out] w The writer.
  * \param [in] v The value. \return JKII_WRITE_OK or the first error so far. */
