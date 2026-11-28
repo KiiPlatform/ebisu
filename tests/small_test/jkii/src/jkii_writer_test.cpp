@@ -612,6 +612,28 @@ TEST_CASE( "The JSON writer takes bytes that aren't UTF-8 as Latin-1 when asked"
     }).err == JKII_WRITE_ERR_STRUCTURE );
 }
 
+TEST_CASE( "A sequence cut by the length is cut, though it goes on past it" ) {
+    // The bytes after the length make the sequence whole: only a writer that
+    // stops at the length sees it cut. A literal's NUL would cut it anyway.
+    const char bytes[] = "caf\xc3\xa9";
+    CHECK( json_of([&bytes](jkii_writer_t* w) { jkii_write_string_latin1_n(w, bytes, 4); })
+            == "\"caf\xc3\x83\"" );
+    CHECK( json_of([&bytes](jkii_writer_t* w) {
+        jkii_write_object_start(w);
+        jkii_write_key_latin1_n(w, bytes, 4);
+        jkii_write_int(w, 1);
+        jkii_write_object_end(w);
+    }) == "{\"caf\xc3\x83\":1}" );
+    CHECK( into_buffer([&bytes](jkii_writer_t* w) { jkii_write_string_n(w, bytes, 4); }).err
+            == JKII_WRITE_ERR_VALUE );
+    CHECK( into_buffer([&bytes](jkii_writer_t* w) {
+        jkii_write_object_start(w);
+        jkii_write_key_n(w, bytes, 4);
+        jkii_write_int(w, 1);
+        jkii_write_object_end(w);
+    }).err == JKII_WRITE_ERR_VALUE );
+}
+
 TEST_CASE( "A JSON writer's error sticks" ) {
     std::vector<char> buff(64);
     jkii_writer_t w;

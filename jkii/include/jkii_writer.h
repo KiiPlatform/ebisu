@@ -222,11 +222,15 @@ jkii_write_err_t jkii_write_string_n(jkii_writer_t* w, const char* s, size_t n);
  * As jkii_write_string_n(), except that a byte that starts no well-formed
  * UTF-8 sequence where it is, which jkii_write_string_n() refuses, is taken as
  * the Latin-1 character of its value, U+0080 to U+00FF, and written in UTF-8:
- * `caf\xe9` becomes `café`. Well-formed sequences are written as they are, so
- * text that is UTF-8 already comes out unchanged, and so does a Latin-1 pair
- * that happens to form one: `\xc3\xa9` is é, not Ã©. Nothing is refused for
- * what the bytes are, and each byte that isn't UTF-8 can be had back from its
- * character.
+ * `caf\xe9` becomes `caf` and U+00E9. Well-formed sequences are written as
+ * they are, so text that is UTF-8 already comes out unchanged, and so does a
+ * Latin-1 pair that happens to form one: `\xc3\xa9` is U+00E9, not U+00C3
+ * U+00A9. Nothing is refused for what the bytes are, and each byte that isn't
+ * UTF-8 can be had back from its character.
+ *
+ * Latin-1 is ISO-8859-1, not Windows-1252: bytes 0x80 to 0x9F become the C1
+ * controls U+0080 to U+009F, not the euro sign or the curly quotes that
+ * Windows-1252 has there.
  *
  * \param [in, out] w The writer.
  * \param [in] s The bytes. May be NULL when n is 0.

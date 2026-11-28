@@ -245,7 +245,8 @@ static void _put_escaped(jkii_writer_t* w, const char* s, size_t n, int latin1)
         char esc[7] = { '\\', '\0', '\0', '\0', '\0', '\0', '\0' };
         size_t esc_len = 2;
         if (c >= 0x80) {
-            const size_t length = latin1 ? _utf8_length((const unsigned char*)&s[i], n - i) : 1;
+            const size_t length =
+                latin1 ? _utf8_length((const unsigned char*)&s[i], n - i) : 1;
             if (length > 0) {
                 /* A sequence, as it is. */
                 i += length - 1;
@@ -317,7 +318,8 @@ static jkii_write_err_t _begin_key(jkii_writer_t* w)
     return w->_err;
 }
 
-static jkii_write_err_t _write_key(jkii_writer_t* w, const char* key, size_t n, int latin1)
+static jkii_write_err_t _write_key(jkii_writer_t* w, const char* key, size_t n,
+        int latin1)
 {
     if (_stopped(w)) {
         return w->_err;
@@ -351,7 +353,8 @@ jkii_write_err_t jkii_write_key(jkii_writer_t* w, const char* key)
     return jkii_write_key_n(w, key, strlen(key));
 }
 
-static jkii_write_err_t _write_string(jkii_writer_t* w, const char* s, size_t n, int latin1)
+static jkii_write_err_t _write_string(jkii_writer_t* w, const char* s, size_t n,
+        int latin1)
 {
     if ((s == NULL && n > 0) || (s != NULL && !latin1 && !_is_utf8(s, n))) {
         return _fail(w, JKII_WRITE_ERR_VALUE);
