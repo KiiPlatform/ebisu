@@ -787,7 +787,6 @@ static bool _jkii_is_same_key(
 {
     size_t key_i = 0;
     size_t target_i = 0;
-    bool same = true;
 
     for (key_i = 0, target_i = 0;
             key_i < key_len && target_i < target->len; ++key_i) {
@@ -807,20 +806,12 @@ static bool _jkii_is_same_key(
         } else if (key_c == ']' && (target_c1 == '\\' && target_c2 == ']')) {
             target_i += 2;
         } else {
-            same = false;
-            break;
+            return false;
         }
     }
 
-    if (key_i < key_len) {
-        /* key does not reaches at the end of string. */
-        return false;
-    } else if (target_i < target->len) {
-        /* target does not reaches at the end of string. */
-        return false;
-    }
-
-    return same;
+    /* Each to its end: neither longer than the other. */
+    return key_i == key_len && target_i == target->len;
 }
 
 /* The value the path leads to from root, a segment at a time: a member of an

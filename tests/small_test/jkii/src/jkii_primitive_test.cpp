@@ -359,3 +359,48 @@ TEST_CASE("KiiJson, PrimitiveDoubleWhateverTheLocale")
     CHECK(JKII_FIELD_ERR_OK == fields[0].result);
     CHECK(25.5 == fields[0].field_copy.double_value);
 }
+
+#ifndef EBISU_NO_STRTOD
+// A decimal point of more than a byte, as Pashto's U+066B, makes a number with a
+// fraction longer once it is put in for strtod(): one that no longer fits jkii's
+// buffer is invalid, rather than written past it.
+TEST_CASE("KiiJson, PrimitiveDoubleWithADecimalPointOfTwoBytes")
+{
+    const char* const names[] = { "ps_AF.UTF-8", "ps_AF.utf8", "ps_AF" };
+    struct Restore {
+        std::string saved;
+        ~Restore() { setlocale(LC_NUMERIC, saved.c_str()); }
+    } restore = { setlocale(LC_NUMERIC, NULL) };
+    const char* set = NULL;
+    for (const char* name : names) {
+        if (setlocale(LC_NUMERIC, name) != NULL && strlen(localeconv()->decimal_point) == 2) {
+            set = name;
+            break;
+        }
+    }
+    if (set == NULL) {
+        SKIP("no locale with a decimal point of two bytes here, so this isn't tested");
+    }
+    INFO("locale " << set);
+
+    jkii_primitive_t res;
+    REQUIRE(JKII_PRIMITIVE_ERR_OK == jkii_parse_primitive("25.5", 4, &res));
+    CHECK(JKII_FIELD_TYPE_DOUBLE == res.type);
+    CHECK(25.5 == res.value.double_value);
+
+    // The longest number jkii reads is DBL_MAX_10_EXP + 2 bytes. One a byte
+    // shorter still fits with its point of two; the longest no longer does.
+    const std::string fits = "1." + std::string(DBL_MAX_10_EXP - 1, '0');
+    const std::string longest = fits + "0";
+    REQUIRE(longest.size() == (size_t)DBL_MAX_10_EXP + 2);
+    REQUIRE(JKII_PRIMITIVE_ERR_OK == jkii_parse_primitive(fits.c_str(), fits.size(), &res));
+    CHECK(JKII_FIELD_TYPE_DOUBLE == res.type);
+    CHECK(1.0 == res.value.double_value);
+    CHECK(JKII_PRIMITIVE_ERR_INVALID == jkii_parse_primitive(longest.c_str(), longest.size(), &res));
+
+    // In the C locale the longest reads.
+    setlocale(LC_NUMERIC, "C");
+    REQUIRE(JKII_PRIMITIVE_ERR_OK == jkii_parse_primitive(longest.c_str(), longest.size(), &res));
+    CHECK(1.0 == res.value.double_value);
+}
+#endif

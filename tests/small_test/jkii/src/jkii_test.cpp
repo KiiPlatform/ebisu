@@ -28,6 +28,33 @@ TEST_CASE("KiiJson, GetObjectStringByName") {
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 }
 
+// A string with its terminator fits the buffer, or none of it is copied.
+TEST_CASE("KiiJson, GetObjectStringByNameIntoABufferJustLargeEnoughOrNot") {
+    const char json_string[] = "{\"key1\" : \"value1\"}";
+    char buf[8];
+    jkii_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].name = "key1";
+    fields[0].type = JKII_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = buf;
+    fields[1].name = NULL;
+
+    // "value1" and its terminator.
+    memset(buf, 'x', sizeof(buf));
+    fields[0].field_copy_buff_size = 7;
+    CHECK(JKII_ERR_OK == jkii_parse(json_string, strlen(json_string), fields));
+    CHECK(JKII_FIELD_ERR_OK == fields[0].result);
+    CHECK(std::string(buf) == "value1");
+
+    // A byte short: the terminator wouldn't fit.
+    memset(buf, 'x', sizeof(buf));
+    buf[7] = '\0';
+    fields[0].field_copy_buff_size = 6;
+    CHECK(JKII_ERR_PARTIAL == jkii_parse(json_string, strlen(json_string), fields));
+    CHECK(JKII_FIELD_ERR_COPY == fields[0].result);
+    CHECK(std::string(buf) == "xxxxxxx");
+}
+
 // Only an object has names: the elements of an array were taken for pairs of a
 // name and a value.
 TEST_CASE("KiiJson, ByNameInArrayRoot") {
