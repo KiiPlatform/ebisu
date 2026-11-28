@@ -230,8 +230,11 @@ static int _is_utf8(const char* s, size_t n)
     return 1;
 }
 
-/* s's n bytes as a JSON string, escaped as jkii_escape_str() escapes. */
-static void _put_escaped(jkii_writer_t* w, const char* s, size_t n)
+/* s's n bytes as a JSON string, escaped as jkii_escape_str() escapes. With
+   latin1, a byte that starts no well-formed UTF-8 sequence where it is goes
+   out as the UTF-8 of the Latin-1 character of its value, U+0080 to U+00FF;
+   without it, s is UTF-8 already. */
+static void _put_escaped(jkii_writer_t* w, const char* s, size_t n, bool latin1)
 {
     static const char hex_digits[] = "0123456789abcdef";
     _put(w, "\"", 1);
@@ -241,6 +244,22 @@ static void _put_escaped(jkii_writer_t* w, const char* s, size_t n)
         unsigned char c = (unsigned char)s[i];
         char esc[7] = { '\\', '\0', '\0', '\0', '\0', '\0', '\0' };
         size_t esc_len = 2;
+        if (c >= 0x80) {
+            const size_t length =
+                latin1 ? _utf8_length((const unsigned char*)&s[i], n - i) : 1;
+            if (length > 0) {
+                /* A sequence, as it is. */
+                i += length - 1;
+                continue;
+            }
+            esc[0] = (char)(0xc0 | (c >> 6));
+            esc[1] = (char)(0x80 | (c & 0x3f));
+            /* What came before it went out as it was. */
+            _put(w, &s[plain], i - plain);
+            _put(w, esc, esc_len);
+            plain = i + 1;
+            continue;
+        }
         switch (c) {
             case '"':
             case '/':
@@ -299,20 +318,31 @@ static jkii_write_err_t _begin_key(jkii_writer_t* w)
     return w->_err;
 }
 
-jkii_write_err_t jkii_write_key_n(jkii_writer_t* w, const char* key, size_t n)
+static jkii_write_err_t _write_key(jkii_writer_t* w, const char* key, size_t n,
+        bool latin1)
 {
     if (_stopped(w)) {
         return w->_err;
     }
-    if ((key == NULL && n > 0) || (key != NULL && !_is_utf8(key, n))) {
+    if ((key == NULL && n > 0) || (key != NULL && !latin1 && !_is_utf8(key, n))) {
         return _fail(w, JKII_WRITE_ERR_VALUE);
     }
     if (_begin_key(w) != JKII_WRITE_OK && _stopped(w)) {
         return w->_err;
     }
-    _put_escaped(w, key != NULL ? key : "", n);
+    _put_escaped(w, key != NULL ? key : "", n, latin1);
     _put(w, ":", 1);
     return w->_err;
+}
+
+jkii_write_err_t jkii_write_key_n(jkii_writer_t* w, const char* key, size_t n)
+{
+    return _write_key(w, key, n, false);
+}
+
+jkii_write_err_t jkii_write_key_latin1_n(jkii_writer_t* w, const char* key, size_t n)
+{
+    return _write_key(w, key, n, true);
 }
 
 jkii_write_err_t jkii_write_key(jkii_writer_t* w, const char* key)
@@ -323,16 +353,27 @@ jkii_write_err_t jkii_write_key(jkii_writer_t* w, const char* key)
     return jkii_write_key_n(w, key, strlen(key));
 }
 
-jkii_write_err_t jkii_write_string_n(jkii_writer_t* w, const char* s, size_t n)
+static jkii_write_err_t _write_string(jkii_writer_t* w, const char* s, size_t n,
+        bool latin1)
 {
-    if ((s == NULL && n > 0) || (s != NULL && !_is_utf8(s, n))) {
+    if ((s == NULL && n > 0) || (s != NULL && !latin1 && !_is_utf8(s, n))) {
         return _fail(w, JKII_WRITE_ERR_VALUE);
     }
     if (_begin_value(w) != JKII_WRITE_OK && _stopped(w)) {
         return w->_err;
     }
-    _put_escaped(w, s != NULL ? s : "", n);
+    _put_escaped(w, s != NULL ? s : "", n, latin1);
     return _end_value(w);
+}
+
+jkii_write_err_t jkii_write_string_n(jkii_writer_t* w, const char* s, size_t n)
+{
+    return _write_string(w, s, n, false);
+}
+
+jkii_write_err_t jkii_write_string_latin1_n(jkii_writer_t* w, const char* s, size_t n)
+{
+    return _write_string(w, s, n, true);
 }
 
 jkii_write_err_t jkii_write_string(jkii_writer_t* w, const char* s)

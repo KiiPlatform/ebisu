@@ -155,11 +155,19 @@ const std::vector<jkii_member_t>& members() {
     return all;
 }
 
+// Up to 15 bytes of the input, of any value.
+std::string any_bytes(FuzzInput& in) {
+    size_t n = in.take() % 16;
+    std::string bytes;
+    for (size_t i = 0; i < n && in.size > 0; ++i) bytes += (char)in.take();
+    return bytes;
+}
+
 // The calls, the same each time they are made.
 void calls(jkii_writer_t* w, FuzzInput in) {
     static const char* raws[] = { "1", "{}", "[]", "\"r\"", "{\"a\":[true,null]}" };
     while (in.size > 0) {
-        switch (in.take() % 17) {
+        switch (in.take() % 19) {
             case 0: jkii_write_object_start(w); break;
             case 1: jkii_write_object_end(w); break;
             case 2: jkii_write_array_start(w); break;
@@ -213,6 +221,18 @@ void calls(jkii_writer_t* w, FuzzInput in) {
             }
             case 15: jkii_write_member_key(w, &members()[in.take() % members().size()]); break;
             case 16: jkii_write_member_value(w, &members()[in.take() % members().size()]); break;
+            // Any bytes, so that what is written of those that aren't UTF-8 is
+            // checked as UTF-8 too.
+            case 17: {
+                const std::string bytes = any_bytes(in);
+                jkii_write_string_latin1_n(w, bytes.data(), bytes.size());
+                break;
+            }
+            case 18: {
+                const std::string bytes = any_bytes(in);
+                jkii_write_key_latin1_n(w, bytes.data(), bytes.size());
+                break;
+            }
         }
     }
 }

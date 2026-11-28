@@ -193,10 +193,10 @@ only where a character ends, and says whether it cut it.
 A `jkii_writer_t` writes JSON into a buffer, or out through a callback a buffer
 at a time. It puts in the commas, colons and quotes itself, escapes strings as
 `jkii_escape_str()` does, and refuses what wouldn't be JSON: a value where a key
-is expected, the wrong end of a container, or NaN. It never truncates: a buffer
-too small is `JKII_WRITE_ERR_TOO_LARGE`, and `jkii_writer_finish()` says how
-much was needed. Each call returns the first error so far, so the result of
-`jkii_writer_finish()` is the one to check.
+is expected, the wrong end of a container, NaN, or a string that isn't UTF-8. It
+never truncates: a buffer too small is `JKII_WRITE_ERR_TOO_LARGE`, and
+`jkii_writer_finish()` says how much was needed. Each call returns the first
+error so far, so the result of `jkii_writer_finish()` is the one to check.
 
 ```c
 char body[64];
@@ -213,6 +213,11 @@ if (jkii_writer_finish(&w, &len) == JKII_WRITE_OK) {
     // body holds {"power":true,"temperature":21.5}, terminated, and len is 33.
 }
 ```
+
+Text that may not be UTF-8, from a device or a file in a single-byte character
+set, goes out with `jkii_write_string_latin1_n()` and
+`jkii_write_key_latin1_n()`. They take each byte that isn't part of a UTF-8
+sequence as the ISO-8859-1 character of its value, and refuse none.
 
 A value jkii read, with `jkii_next_member()`, `jkii_root_value()` or
 `jkii_find_member()`, goes back out as the document wrote it with

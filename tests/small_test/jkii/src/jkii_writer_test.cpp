@@ -540,6 +540,100 @@ TEST_CASE( "The JSON writer refuses a string or key that isn't UTF-8" ) {
     }
 }
 
+TEST_CASE( "The JSON writer takes bytes that aren't UTF-8 as Latin-1 when asked" ) {
+    struct Case {
+        std::string bytes;
+        std::string json;
+    };
+    const Case cases[] = {
+        { "plain", "plain" },
+        { "caf\xe9", "caf\xc3\xa9" },                                   // Latin-1 é
+        { "\x80", "\xc2\x80" },
+        { "\xff", "\xc3\xbf" },
+        { "caf\xc3", "caf\xc3\x83" },                                   // cut before its last byte
+        { "\xe2\x82", "\xc3\xa2\xc2\x82" },                             // cut
+        { "\xc0\xaf", "\xc3\x80\xc2\xaf" },                             // overlong
+        { "\xed\xa0\x80", "\xc3\xad\xc2\xa0\xc2\x80" },                 // a surrogate, U+D800
+        { "\xf4\x90\x80\x80", "\xc3\xb4\xc2\x90\xc2\x80\xc2\x80" },     // past U+10FFFF
+        { "caf\xc3\xa9 \xe2\x82\xac \xf0\x9f\x98\x80",
+          "caf\xc3\xa9 \xe2\x82\xac \xf0\x9f\x98\x80" },                // UTF-8 already
+        { "\xe9\xc3\xa9\xe9", "\xc3\xa9\xc3\xa9\xc3\xa9" },              // both, side by side
+        { std::string("a\0\xe9\n\"\x7f", 6), "a\\u0000\xc3\xa9\\n\\\"\x7f" }, // escaped as ever
+    };
+    for (const Case& c : cases) {
+        INFO( "bytes " << c.json );
+        const std::string bytes = c.bytes;
+        Written string = into_buffer([&bytes](jkii_writer_t* w) {
+            jkii_write_array_start(w);
+            jkii_write_string_latin1_n(w, bytes.data(), bytes.size());
+            jkii_write_array_end(w);
+        });
+        CHECK( string.err == JKII_WRITE_OK );
+        CHECK( string.json == "[\"" + c.json + "\"]" );
+        CHECK( string.len == string.json.size() );
+        jkii_member_t read;
+        CHECK( jkii_root_value(string.json.c_str(), string.json.size(), &read) == JKII_ERR_OK );
+
+        Written key = into_buffer([&bytes](jkii_writer_t* w) {
+            jkii_write_object_start(w);
+            jkii_write_key_latin1_n(w, bytes.data(), bytes.size());
+            jkii_write_int(w, 1);
+            jkii_write_object_end(w);
+        });
+        CHECK( key.err == JKII_WRITE_OK );
+        CHECK( key.json == "{\"" + c.json + "\":1}" );
+
+        // A byte at a time through a callback, as into a buffer.
+        Written small = through_callback([&bytes](jkii_writer_t* w) {
+            jkii_write_string_latin1_n(w, bytes.data(), bytes.size());
+        }, 1);
+        CHECK( small.err == JKII_WRITE_OK );
+        CHECK( small.json == "\"" + c.json + "\"" );
+    }
+
+    // Nothing, from NULL, is the empty string; NULL with a length is refused.
+    CHECK( json_of([](jkii_writer_t* w) { jkii_write_string_latin1_n(w, nullptr, 0); }) == "\"\"" );
+    CHECK( into_buffer([](jkii_writer_t* w) { jkii_write_string_latin1_n(w, nullptr, 1); }).err
+            == JKII_WRITE_ERR_VALUE );
+    CHECK( into_buffer([](jkii_writer_t* w) {
+        jkii_write_object_start(w);
+        jkii_write_key_latin1_n(w, nullptr, 1);
+    }).err == JKII_WRITE_ERR_VALUE );
+
+    // Where the writer counts for jkii_writer_finish(), the bytes written count.
+    Written too_large = into_buffer([](jkii_writer_t* w) { jkii_write_string_latin1_n(w, "\xe9\xe9", 2); }, 4);
+    CHECK( too_large.err == JKII_WRITE_ERR_TOO_LARGE );
+    CHECK( too_large.len == 6 );
+
+    // Its structure is checked as for any string.
+    CHECK( into_buffer([](jkii_writer_t* w) {
+        jkii_write_object_start(w);
+        jkii_write_string_latin1_n(w, "v", 1);
+    }).err == JKII_WRITE_ERR_STRUCTURE );
+}
+
+TEST_CASE( "A sequence cut by the length is cut, though it goes on past it" ) {
+    // The bytes after the length make the sequence whole: only a writer that
+    // stops at the length sees it cut. A literal's NUL would cut it anyway.
+    const char bytes[] = "caf\xc3\xa9";
+    CHECK( json_of([&bytes](jkii_writer_t* w) { jkii_write_string_latin1_n(w, bytes, 4); })
+            == "\"caf\xc3\x83\"" );
+    CHECK( json_of([&bytes](jkii_writer_t* w) {
+        jkii_write_object_start(w);
+        jkii_write_key_latin1_n(w, bytes, 4);
+        jkii_write_int(w, 1);
+        jkii_write_object_end(w);
+    }) == "{\"caf\xc3\x83\":1}" );
+    CHECK( into_buffer([&bytes](jkii_writer_t* w) { jkii_write_string_n(w, bytes, 4); }).err
+            == JKII_WRITE_ERR_VALUE );
+    CHECK( into_buffer([&bytes](jkii_writer_t* w) {
+        jkii_write_object_start(w);
+        jkii_write_key_n(w, bytes, 4);
+        jkii_write_int(w, 1);
+        jkii_write_object_end(w);
+    }).err == JKII_WRITE_ERR_VALUE );
+}
+
 TEST_CASE( "A JSON writer's error sticks" ) {
     std::vector<char> buff(64);
     jkii_writer_t w;
