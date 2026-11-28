@@ -65,7 +65,7 @@ typedef struct _jkii_value_t {
     JSONTypes_t type;
 } _jkii_value_t;
 
-static int _jkii_is_space(char c)
+static bool _jkii_is_space(char c)
 {
     return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 }
@@ -123,7 +123,7 @@ static void _jkii_value_of_pair(const JSONPair_t* pair, _jkii_value_t* out)
 
 /* The value of the first member of object whose key is name, compared as
  * written, escapes and all. */
-static int _jkii_find_member_by_name(
+static bool _jkii_find_member_by_name(
         const _jkii_value_t* object,
         const char* name,
         _jkii_value_t* out_value)
@@ -137,29 +137,29 @@ static int _jkii_find_member_by_name(
         if (pair.keyLength == name_len &&
                 memcmp(pair.key, name, name_len) == 0) {
             _jkii_value_of_pair(&pair, out_value);
-            return 0;
+            return true;
         }
     }
-    return -1;
+    return false;
 }
 
-static int _jkii_is_all_digit(const char* buf, size_t buf_len)
+static bool _jkii_is_all_digit(const char* buf, size_t buf_len)
 {
     size_t i = 0;
     M_JKII_ASSERT(buf != NULL);
 
     for (i = 0; i < buf_len; ++i) {
         if (!M_JKII_IS_DIGIT(buf[i])) {
-            return 0;
+            return false;
         }
     }
-    return 1;
+    return true;
 }
 
 /* Whether buf is written as an integer: digits, after an optional minus sign.
  * Whether it is an int32_t or an int64_t depends on its value, which this does
  * not look at: see _jkii_to_integer. */
-static int _jkii_is_integer(const char* buf, size_t buf_len)
+static bool _jkii_is_integer(const char* buf, size_t buf_len)
 {
     M_JKII_ASSERT(buf != NULL);
     if (buf_len > 0 && *buf == '-') {
@@ -179,13 +179,13 @@ typedef enum  {
     parser_sts_exp
 } num_parser_sts;
 
-static int _jkii_is_double(const char* buf, size_t buf_len)
+static bool _jkii_is_double(const char* buf, size_t buf_len)
 {
     M_JKII_ASSERT(buf != NULL);
     /* With its terminator, it has to fit the buffer _jkii_to_double() copies
      * it into for strtod(). */
     if (buf_len >= DOUBLEBUFSIZE) {
-        return 0;
+        return false;
     }
 
     num_parser_sts sts = parser_sts_sign;
@@ -205,7 +205,7 @@ static int _jkii_is_double(const char* buf, size_t buf_len)
                     sts = parser_sts_integer;
                     continue;
                 }
-                return 0;
+                return false;
             case parser_sts_integer_start:
                 if (c == '0') {
                     sts = parser_sts_integer0;
@@ -215,7 +215,7 @@ static int _jkii_is_double(const char* buf, size_t buf_len)
                     sts = parser_sts_integer;
                     continue;
                 }
-                return 0;
+                return false;
             case parser_sts_integer0:
                 if (c == '.') {
                     sts = parser_sts_decimal;
@@ -225,7 +225,7 @@ static int _jkii_is_double(const char* buf, size_t buf_len)
                     sts = parser_sts_exp_start;
                     continue;
                 }
-                return 0;
+                return false;
             case parser_sts_integer:
                 if (M_JKII_IS_DIGIT(c)) {
                     continue;
@@ -238,7 +238,7 @@ static int _jkii_is_double(const char* buf, size_t buf_len)
                     sts = parser_sts_exp_start;
                     continue;
                 }
-                return 0;
+                return false;
             case parser_sts_decimal:
                 if (M_JKII_IS_DIGIT(c)) {
                     continue;
@@ -247,23 +247,23 @@ static int _jkii_is_double(const char* buf, size_t buf_len)
                     sts = parser_sts_exp_start;
                     continue;
                 }
-                return 0;
+                return false;
             case parser_sts_exp_start:
                 if (c == '-' || c == '+' || M_JKII_IS_DIGIT(c)) {
                     sts = parser_sts_exp;
                     continue;
                 }
-                return 0;
+                return false;
             case parser_sts_exp:
                 if (M_JKII_IS_DIGIT(c)) {
                     continue;
                 }
-                return 0;
+                return false;
             default:
-                return 0;
+                return false;
         }
     }
-    return 1;
+    return true;
 }
 
 static jkii_primitive_err_t _jkii_to_int64(
@@ -300,10 +300,10 @@ static jkii_field_type_t _jkii_to_jkii_field_type(
     switch (json_type)
     {
         case JSONNumber:
-            if (_jkii_is_integer(buf, buf_len) != 0) {
+            if (_jkii_is_integer(buf, buf_len)) {
                 *out_integer_res = _jkii_to_int64(buf, buf_len, out_integer);
                 return _jkii_integer_type(*out_integer, *out_integer_res);
-            } else if (_jkii_is_double(buf, buf_len) != 0) {
+            } else if (_jkii_is_double(buf, buf_len)) {
                 return JKII_FIELD_TYPE_DOUBLE;
             }
             /* coreJSON has checked it is a number. */
@@ -325,7 +325,7 @@ static jkii_field_type_t _jkii_to_jkii_field_type(
     }
 }
 
-static int _jkii_string_copy(
+static bool _jkii_string_copy(
         const char* target,
         size_t target_size,
         char* out_buf,
@@ -335,12 +335,12 @@ static int _jkii_string_copy(
     M_JKII_ASSERT(out_buf != NULL);
 
     if (out_buf_size <= target_size) {
-        return -1;
+        return false;
     }
     memcpy(out_buf, target, target_size);
     out_buf[target_size] = '\0';
 
-    return 0;
+    return true;
 }
 
 static jkii_primitive_err_t _jkii_to_int64(
@@ -442,23 +442,24 @@ static jkii_primitive_err_t _jkii_to_integer(
 /* Puts the locale's decimal point in place of the '.' in the number of len
  * bytes in buf, terminated, which holds size. strtod() reads the decimal point
  * the locale sets, a comma in many, while JSON's is always '.', so a program
- * that set such a locale had no number with a fraction read. Returns 0, or -1
- * if the number no longer fits, with a decimal point of more than a byte. */
-static int _jkii_localize_decimal_point(char* buf, size_t size, size_t len)
+ * that set such a locale had no number with a fraction read. Returns true,
+ * or false if the number no longer fits, with a decimal point of more than a
+ * byte. */
+static bool _jkii_localize_decimal_point(char* buf, size_t size, size_t len)
 {
     const char* point = localeconv()->decimal_point;
     size_t point_len = strlen(point);
     char* dot = (char*)memchr(buf, '.', len);
     if (dot == NULL || point_len == 0 || (point_len == 1 && point[0] == '.')) {
-        return 0;
+        return true;
     }
     if (len - 1 + point_len >= size) {
-        return -1;
+        return false;
     }
     /* What follows the '.', and the terminator. */
     memmove(dot + point_len, dot + 1, len - (size_t)(dot - buf));
     memcpy(dot, point, point_len);
-    return 0;
+    return true;
 }
 
 static jkii_primitive_err_t _jkii_to_double(
@@ -491,7 +492,7 @@ static jkii_primitive_err_t _jkii_to_double(
         return JKII_PRIMITIVE_ERR_INVALID;
     }
     memcpy(buf, target, target_size);
-    if (_jkii_localize_decimal_point(buf, buf_len, target_size) != 0) {
+    if (!_jkii_localize_decimal_point(buf, buf_len, target_size)) {
         return JKII_PRIMITIVE_ERR_INVALID;
     }
 
@@ -670,7 +671,7 @@ static jkii_primitive_err_t _jkii_to_double(
 }
 #endif
 
-static int _jkii_to_boolean(
+static bool _jkii_to_boolean(
         const char* buf,
         size_t buf_size,
         bool* out_boolean)
@@ -680,12 +681,12 @@ static int _jkii_to_boolean(
 
     if (M_JKII_EQ_LITERAL(buf, buf_size, "true")) {
         *out_boolean = true;
-        return 0;
+        return true;
     } else if (M_JKII_EQ_LITERAL(buf, buf_size, "false")) {
         *out_boolean = false;
-        return 0;
+        return true;
     }
-    return -1;
+    return false;
 }
 
 /* An array index read from a path as a size_t. One that is negative or past
@@ -706,13 +707,13 @@ static size_t _jkii_to_index(int64_t value)
 }
 
 /* Reads the segment at the start of path, "/field" or "/[index]", into
- * target. Returns 0 if it is one, with *next at the '/' that starts the next
- * segment, or NULL if it is the last. Returns -1, with *next NULL, if it is
+ * target. Returns true if it is one, with *next at the '/' that starts the next
+ * segment, or NULL if it is the last. Returns false, with *next NULL, if it is
  * neither, such as an empty field, an index that does not read as a number,
  * or a '[' with no ']' at the end of the segment. The path then finds
  * nothing: taken for the last segment, with target left empty, it would find
  * the value of a "" key. */
-static int _jkii_get_target(
+static bool _jkii_get_target(
         const char* path,
         _jkii_target_t* target,
         const char** next)
@@ -721,7 +722,7 @@ static int _jkii_get_target(
     const char* retval = NULL;
     size_t path_len = strlen(path);
     size_t target_len = 0;
-    int ret = -1;
+    bool ret = false;
 
     M_JKII_ASSERT(path != NULL);
     M_JKII_ASSERT(target != NULL);
@@ -757,7 +758,7 @@ static int _jkii_get_target(
             goto exit;
         }
         target_len -= 2;
-        if (_jkii_is_integer(start, target_len) == 0) {
+        if (!_jkii_is_integer(start, target_len)) {
             retval = NULL;
             goto exit;
         } else if (_jkii_to_int64(start, target_len, &value)
@@ -772,21 +773,21 @@ static int _jkii_get_target(
         target->len = target_len;
         target->parent_type = _JKII_PARENT_TYPE_OBJECT;
     }
-    ret = 0;
+    ret = true;
 
 exit:
     *next = retval;
     return ret;
 }
 
-static int _jkii_is_same_key(
+static bool _jkii_is_same_key(
         _jkii_target_t* target,
         const char* key,
         size_t key_len)
 {
     size_t key_i = 0;
     size_t target_i = 0;
-    int retval = 0;
+    bool same = true;
 
     for (key_i = 0, target_i = 0;
             key_i < key_len && target_i < target->len; ++key_i) {
@@ -806,25 +807,25 @@ static int _jkii_is_same_key(
         } else if (key_c == ']' && (target_c1 == '\\' && target_c2 == ']')) {
             target_i += 2;
         } else {
-            retval = -1;
+            same = false;
             break;
         }
     }
 
     if (key_i < key_len) {
         /* key does not reaches at the end of string. */
-        return -1;
+        return false;
     } else if (target_i < target->len) {
         /* target does not reaches at the end of string. */
-        return -1;
+        return false;
     }
 
-    return retval;
+    return same;
 }
 
 /* The value the path leads to from root, a segment at a time: a member of an
  * object, or an element of an array. */
-static int _jkii_find_by_path(
+static bool _jkii_find_by_path(
         const _jkii_value_t* root,
         const char* path,
         _jkii_value_t* out_value)
@@ -840,18 +841,18 @@ static int _jkii_find_by_path(
         size_t start = 0;
         size_t next = 0;
         size_t i = 0;
-        int found = 0;
+        bool found = false;
         JSONPair_t pair;
         memset(&target, 0x00, sizeof(target));
-        if (_jkii_get_target(next_root, &target, &next_root) != 0) {
-            return -1;
+        if (!_jkii_get_target(next_root, &target, &next_root)) {
+            return false;
         }
         if (current.type == JSONObject &&
                 target.parent_type == _JKII_PARENT_TYPE_OBJECT) {
             while (!found && JSON_Iterate(current.ptr, current.len, &start,
                             &next, &pair) == JSONSuccess) {
                 found = _jkii_is_same_key(&target, pair.key,
-                        pair.keyLength) == 0;
+                        pair.keyLength);
             }
         } else if (current.type == JSONArray &&
                 target.parent_type == _JKII_PARENT_TYPE_ARRAY) {
@@ -861,13 +862,13 @@ static int _jkii_find_by_path(
             }
         }
         if (!found) {
-            return -1;
+            return false;
         }
         _jkii_value_of_pair(&pair, &current);
     } while (next_root != NULL);
 
     *out_value = current;
-    return 0;
+    return true;
 }
 
 static jkii_parse_err_t _jkii_convert_value_to_field(
@@ -929,7 +930,7 @@ static jkii_parse_err_t _jkii_convert_value_to_field(
                             value->ptr,
                             value->len,
                             field->field_copy.string,
-                            field->field_copy_buff_size) == 0) {
+                            field->field_copy_buff_size)) {
                 field->result = JKII_FIELD_ERR_OK;
             } else {
                 field->result = JKII_FIELD_ERR_COPY;
@@ -1034,7 +1035,7 @@ static jkii_parse_err_t _jkii_convert_value_to_field(
                 field->result = JKII_FIELD_ERR_TYPE_MISMATCH;
                 retval = JKII_ERR_PARTIAL;
             } else if (_jkii_to_boolean(value->ptr, value->len,
-                            &(field->field_copy.boolean_value)) == 0) {
+                            &(field->field_copy.boolean_value))) {
                 field->result = JKII_FIELD_ERR_OK;
             } else {
                 field->type = type;
@@ -1070,18 +1071,18 @@ static jkii_parse_err_t _jkii_parse_fields(
 {
     jkii_parse_err_t ret = JKII_ERR_OK;
     for (jkii_field_t* field = fields; field->name != NULL || field->path != NULL; ++field) {
-        int result = -1;
+        bool found = false;
         _jkii_value_t value;
 
         if (field->path != NULL) {
             /* An empty path, which the grammar has none of, finds nothing, as
              * jkii_find_member() has it. */
-            result = (field->path[0] != '\0') ?
-                _jkii_find_by_path(root, field->path, &value) : -1;
+            found = field->path[0] != '\0' &&
+                _jkii_find_by_path(root, field->path, &value);
         } else if (root->type == JSONObject) {
-            result = _jkii_find_member_by_name(root, field->name, &value);
+            found = _jkii_find_member_by_name(root, field->name, &value);
         }
-        if (result != 0)
+        if (!found)
         {
             ret = JKII_ERR_PARTIAL;
             field->result = JKII_FIELD_ERR_NOT_FOUND;
@@ -1243,7 +1244,7 @@ jkii_parse_err_t jkii_find_member(
     if (root.type != JSONArray && root.type != JSONObject) {
         return JKII_ERR_ROOT_TYPE;
     }
-    if (path[0] == '\0' || _jkii_find_by_path(&root, path, &value) != 0) {
+    if (path[0] == '\0' || !_jkii_find_by_path(&root, path, &value)) {
         return JKII_ERR_NOT_FOUND;
     }
     out_member->key = NULL;
@@ -1431,7 +1432,7 @@ jkii_field_err_t jkii_member_boolean(
         return JKII_FIELD_ERR_NULL;
     }
     if (member->type != JKII_FIELD_TYPE_BOOLEAN ||
-            _jkii_to_boolean(member->value, member->value_length, out_value) != 0) {
+            !_jkii_to_boolean(member->value, member->value_length, out_value)) {
         return JKII_FIELD_ERR_TYPE_MISMATCH;
     }
     return JKII_FIELD_ERR_OK;
@@ -1530,8 +1531,8 @@ jkii_primitive_err_t jkii_parse_primitive(
         result->value.boolean_value = false;
         return JKII_PRIMITIVE_ERR_OK;
     }
-    int is_integer = _jkii_is_integer(primitive, primitive_length);
-    if (is_integer != 0) {
+    const bool is_integer = _jkii_is_integer(primitive, primitive_length);
+    if (is_integer) {
         jkii_primitive_t integer;
         jkii_primitive_err_t res =
             _jkii_to_integer(primitive, primitive_length, &integer);
@@ -1541,8 +1542,8 @@ jkii_primitive_err_t jkii_parse_primitive(
         *result = integer;
         return JKII_PRIMITIVE_ERR_OK;
     }
-    int is_double = _jkii_is_double(primitive, primitive_length);
-    if (is_double != 0) {
+    const bool is_double = _jkii_is_double(primitive, primitive_length);
+    if (is_double) {
         double double_value = 0;
                 jkii_primitive_err_t res = 
             _jkii_to_double(primitive, primitive_length, &double_value);

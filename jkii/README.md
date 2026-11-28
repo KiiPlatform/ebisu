@@ -205,7 +205,7 @@ jkii_writer_t w;
 jkii_writer_init_buff(&w, body, sizeof(body));
 jkii_write_object_start(&w);
 jkii_write_key(&w, "power");
-jkii_write_bool(&w, 1);
+jkii_write_bool(&w, true);
 jkii_write_key(&w, "temperature");
 jkii_write_double(&w, 21.5, 1);
 jkii_write_object_end(&w);

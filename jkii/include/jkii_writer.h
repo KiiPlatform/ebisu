@@ -14,7 +14,7 @@
  * jkii_writer_init_buff(&w, body, sizeof(body));
  * jkii_write_object_start(&w);
  * jkii_write_key(&w, "power");
- * jkii_write_bool(&w, 1);
+ * jkii_write_bool(&w, true);
  * jkii_write_key(&w, "temperature");
  * jkii_write_double(&w, 21.5, 1);
  * jkii_write_object_end(&w);
@@ -113,7 +113,7 @@ typedef struct jkii_writer_t {
      * member yet, and whether a key is waiting for its value. */
     unsigned char _levels[JKII_WRITER_MAX_DEPTH]; /**< \private */
     /* Whether the value at the top has been written whole. */
-    int _top_done; /**< \private */
+    bool _top_done; /**< \private */
     /* How many records jkii_write_record_end() has ended. */
     size_t _records; /**< \private */
 } jkii_writer_t;
@@ -266,10 +266,9 @@ jkii_write_err_t jkii_write_uint(jkii_writer_t* w, uint64_t v);
  */
 jkii_write_err_t jkii_write_double(jkii_writer_t* w, double v, int decimals);
 
-/** \brief Writes true, for v other than 0, or false. \param [in, out] w The
- * writer. \param [in] v The value. \return JKII_WRITE_OK or the first error
- * so far. */
-jkii_write_err_t jkii_write_bool(jkii_writer_t* w, int v);
+/** \brief Writes true or false. \param [in, out] w The writer.
+ * \param [in] v The value. \return JKII_WRITE_OK or the first error so far. */
+jkii_write_err_t jkii_write_bool(jkii_writer_t* w, bool v);
 
 /** \brief Writes null. \param [in, out] w The writer. \return JKII_WRITE_OK
  * or the first error so far. */

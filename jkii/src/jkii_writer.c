@@ -33,7 +33,7 @@ void jkii_writer_init_cb(jkii_writer_t* w, char* buff, size_t buff_size,
 }
 
 /* An error after which nothing more is written, nor counted. */
-static int _stopped(const jkii_writer_t* w)
+static bool _stopped(const jkii_writer_t* w)
 {
     return w->_err != JKII_WRITE_OK && w->_err != JKII_WRITE_ERR_TOO_LARGE;
 }
@@ -126,7 +126,7 @@ static jkii_write_err_t _begin_value(jkii_writer_t* w)
 static jkii_write_err_t _end_value(jkii_writer_t* w)
 {
     if (w->_depth == 0 && !_stopped(w)) {
-        w->_top_done = 1;
+        w->_top_done = true;
     }
     return w->_err;
 }
@@ -217,17 +217,17 @@ static size_t _utf8_length(const unsigned char* s, size_t n)
 }
 
 /* Whether s's n bytes are UTF-8, which JSON text is, as RFC 8259 has it. */
-static int _is_utf8(const char* s, size_t n)
+static bool _is_utf8(const char* s, size_t n)
 {
     size_t i = 0;
     while (i < n) {
         const size_t length = _utf8_length((const unsigned char*)&s[i], n - i);
         if (length == 0) {
-            return 0;
+            return false;
         }
         i += length;
     }
-    return 1;
+    return true;
 }
 
 /* s's n bytes as a JSON string, escaped as jkii_escape_str() escapes. With
@@ -495,7 +495,7 @@ static jkii_write_err_t _write_literal(jkii_writer_t* w, const char* literal)
     return _end_value(w);
 }
 
-jkii_write_err_t jkii_write_bool(jkii_writer_t* w, int v)
+jkii_write_err_t jkii_write_bool(jkii_writer_t* w, bool v)
 {
     return _write_literal(w, v ? "true" : "false");
 }
@@ -560,7 +560,7 @@ jkii_write_err_t jkii_write_record_end(jkii_writer_t* w)
         return _fail(w, JKII_WRITE_ERR_STRUCTURE);
     }
     _put(w, "\n", 1);
-    w->_top_done = 0;
+    w->_top_done = false;
     ++w->_records;
     return w->_err;
 }

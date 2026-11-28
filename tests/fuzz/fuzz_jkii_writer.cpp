@@ -204,7 +204,7 @@ void calls(jkii_writer_t* w, FuzzInput in) {
                 }
                 break;
             }
-            case 10: jkii_write_bool(w, in.take() & 1); break;
+            case 10: jkii_write_bool(w, (in.take() & 1) != 0); break;
             case 11: jkii_write_null(w); break;
             case 12: {
                 const char* raw = raws[in.take() % 5];
