@@ -65,7 +65,7 @@ var searchData=
   ['jkii_5froot_5fvalue_62',['jkii_root_value',['../jkii_8h.html#adfa6f89edc29e6f8b9543d9b6d9a4d40',1,'jkii.h']]],
   ['jkii_5fwrite_5farray_5fend_63',['jkii_write_array_end',['../jkii__writer_8h.html#a43068faf6cea12c6537acb54106708c4',1,'jkii_writer.h']]],
   ['jkii_5fwrite_5farray_5fstart_64',['jkii_write_array_start',['../jkii__writer_8h.html#ad4c4c2bb6aaab90242ea69e5926c439a',1,'jkii_writer.h']]],
-  ['jkii_5fwrite_5fbool_65',['jkii_write_bool',['../jkii__writer_8h.html#a1fcc1d2d8aac2c43559a73075a4aa1a0',1,'jkii_writer.h']]],
+  ['jkii_5fwrite_5fbool_65',['jkii_write_bool',['../jkii__writer_8h.html#ab62556a9c58303864ff9f10bb20538b6',1,'jkii_writer.h']]],
   ['jkii_5fwrite_5fdouble_66',['jkii_write_double',['../jkii__writer_8h.html#a7987f45e43166e38eaa5f525459fb7d7',1,'jkii_writer.h']]],
   ['jkii_5fwrite_5ferr_5fcallback_67',['JKII_WRITE_ERR_CALLBACK',['../jkii__writer_8h.html#a034e2b06447b8ec9dffc0489935da5b3ad94ab3fd7e186adfca736193038ed5f6',1,'jkii_writer.h']]],
   ['jkii_5fwrite_5ferr_5fstructure_68',['JKII_WRITE_ERR_STRUCTURE',['../jkii__writer_8h.html#a034e2b06447b8ec9dffc0489935da5b3a8311bf8fe54bdf47d282d3303a340414',1,'jkii_writer.h']]],

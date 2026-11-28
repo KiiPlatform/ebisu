@@ -160,8 +160,8 @@ Functions</h2></td></tr>
 <tr class="memdesc:a23bc3008a259815bc9e25e9bf5b82915"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes an unsigned integer.  <br /></td></tr>
 <tr class="memitem:a7987f45e43166e38eaa5f525459fb7d7" id="r_a7987f45e43166e38eaa5f525459fb7d7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7987f45e43166e38eaa5f525459fb7d7">jkii_write_double</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, double v, int decimals)</td></tr>
 <tr class="memdesc:a7987f45e43166e38eaa5f525459fb7d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a number with a fixed number of decimals.  <br /></td></tr>
-<tr class="memitem:a1fcc1d2d8aac2c43559a73075a4aa1a0" id="r_a1fcc1d2d8aac2c43559a73075a4aa1a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1fcc1d2d8aac2c43559a73075a4aa1a0">jkii_write_bool</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, int v)</td></tr>
-<tr class="memdesc:a1fcc1d2d8aac2c43559a73075a4aa1a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes true, for v other than 0, or false.  <br /></td></tr>
+<tr class="memitem:ab62556a9c58303864ff9f10bb20538b6" id="r_ab62556a9c58303864ff9f10bb20538b6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab62556a9c58303864ff9f10bb20538b6">jkii_write_bool</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, bool v)</td></tr>
+<tr class="memdesc:ab62556a9c58303864ff9f10bb20538b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes true or false.  <br /></td></tr>
 <tr class="memitem:a1dd835d066f81d4566b3123b61882a62" id="r_a1dd835d066f81d4566b3123b61882a62"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1dd835d066f81d4566b3123b61882a62">jkii_write_null</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w)</td></tr>
 <tr class="memdesc:a1dd835d066f81d4566b3123b61882a62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes null.  <br /></td></tr>
 <tr class="memitem:af2cd4b8b9115aed7b28538fdd1ff76ec" id="r_af2cd4b8b9115aed7b28538fdd1ff76ec"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af2cd4b8b9115aed7b28538fdd1ff76ec">jkii_write_raw</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, const char *json, size_t n)</td></tr>
@@ -184,7 +184,7 @@ Functions</h2></td></tr>
 <div class="line"><a class="code hl_function" href="#ab80274bae6c44bdf937e89136b4a2781">jkii_writer_init_buff</a>(&amp;w, body, <span class="keyword">sizeof</span>(body));</div>
 <div class="line"><a class="code hl_function" href="#ab18fc029011f776c7a0c43a705623a43">jkii_write_object_start</a>(&amp;w);</div>
 <div class="line"><a class="code hl_function" href="#a7a44441a314551dfea240a4c07366f68">jkii_write_key</a>(&amp;w, <span class="stringliteral">&quot;power&quot;</span>);</div>
-<div class="line"><a class="code hl_function" href="#a1fcc1d2d8aac2c43559a73075a4aa1a0">jkii_write_bool</a>(&amp;w, 1);</div>
+<div class="line"><a class="code hl_function" href="#ab62556a9c58303864ff9f10bb20538b6">jkii_write_bool</a>(&amp;w, <span class="keyword">true</span>);</div>
 <div class="line"><a class="code hl_function" href="#a7a44441a314551dfea240a4c07366f68">jkii_write_key</a>(&amp;w, <span class="stringliteral">&quot;temperature&quot;</span>);</div>
 <div class="line"><a class="code hl_function" href="#a7987f45e43166e38eaa5f525459fb7d7">jkii_write_double</a>(&amp;w, 21.5, 1);</div>
 <div class="line"><a class="code hl_function" href="#a695a1e3ceccf4f4958baa7622a3f5606">jkii_write_object_end</a>(&amp;w);</div>
@@ -192,12 +192,12 @@ Functions</h2></td></tr>
 <div class="line">    <span class="comment">// body is {&quot;power&quot;:true,&quot;temperature&quot;:21.5}, len 33.</span></div>
 <div class="line">}</div>
 <div class="ttc" id="ajkii__writer_8h_html_a034e2b06447b8ec9dffc0489935da5b3a87d364113d66022016cf8e1ff32f7ab1"><div class="ttname"><a href="#a034e2b06447b8ec9dffc0489935da5b3a87d364113d66022016cf8e1ff32f7ab1">JKII_WRITE_OK</a></div><div class="ttdeci">@ JKII_WRITE_OK</div><div class="ttdoc">Written.</div><div class="ttdef"><b>Definition</b> jkii_writer.h:67</div></div>
-<div class="ttc" id="ajkii__writer_8h_html_a1fcc1d2d8aac2c43559a73075a4aa1a0"><div class="ttname"><a href="#a1fcc1d2d8aac2c43559a73075a4aa1a0">jkii_write_bool</a></div><div class="ttdeci">jkii_write_err_t jkii_write_bool(jkii_writer_t *w, int v)</div><div class="ttdoc">Writes true, for v other than 0, or false.</div></div>
 <div class="ttc" id="ajkii__writer_8h_html_a695a1e3ceccf4f4958baa7622a3f5606"><div class="ttname"><a href="#a695a1e3ceccf4f4958baa7622a3f5606">jkii_write_object_end</a></div><div class="ttdeci">jkii_write_err_t jkii_write_object_end(jkii_writer_t *w)</div><div class="ttdoc">Closes the object open innermost.</div></div>
 <div class="ttc" id="ajkii__writer_8h_html_a7987f45e43166e38eaa5f525459fb7d7"><div class="ttname"><a href="#a7987f45e43166e38eaa5f525459fb7d7">jkii_write_double</a></div><div class="ttdeci">jkii_write_err_t jkii_write_double(jkii_writer_t *w, double v, int decimals)</div><div class="ttdoc">Writes a number with a fixed number of decimals.</div></div>
 <div class="ttc" id="ajkii__writer_8h_html_a7a44441a314551dfea240a4c07366f68"><div class="ttname"><a href="#a7a44441a314551dfea240a4c07366f68">jkii_write_key</a></div><div class="ttdeci">jkii_write_err_t jkii_write_key(jkii_writer_t *w, const char *key)</div><div class="ttdoc">Writes the key of the next member of the object open innermost.</div></div>
 <div class="ttc" id="ajkii__writer_8h_html_aa29b3b9110dcbd550b625f420dfeafac"><div class="ttname"><a href="#aa29b3b9110dcbd550b625f420dfeafac">jkii_writer_finish</a></div><div class="ttdeci">jkii_write_err_t jkii_writer_finish(jkii_writer_t *w, size_t *out_len)</div><div class="ttdoc">Ends the JSON.</div></div>
 <div class="ttc" id="ajkii__writer_8h_html_ab18fc029011f776c7a0c43a705623a43"><div class="ttname"><a href="#ab18fc029011f776c7a0c43a705623a43">jkii_write_object_start</a></div><div class="ttdeci">jkii_write_err_t jkii_write_object_start(jkii_writer_t *w)</div><div class="ttdoc">Opens an object, as a value.</div></div>
+<div class="ttc" id="ajkii__writer_8h_html_ab62556a9c58303864ff9f10bb20538b6"><div class="ttname"><a href="#ab62556a9c58303864ff9f10bb20538b6">jkii_write_bool</a></div><div class="ttdeci">jkii_write_err_t jkii_write_bool(jkii_writer_t *w, bool v)</div><div class="ttdoc">Writes true or false.</div></div>
 <div class="ttc" id="ajkii__writer_8h_html_ab80274bae6c44bdf937e89136b4a2781"><div class="ttname"><a href="#ab80274bae6c44bdf937e89136b4a2781">jkii_writer_init_buff</a></div><div class="ttdeci">void jkii_writer_init_buff(jkii_writer_t *w, char *buff, size_t buff_size)</div><div class="ttdoc">Sets up a writer into a buffer.</div></div>
 <div class="ttc" id="astructjkii__writer__t_html"><div class="ttname"><a href="structjkii__writer__t.html">jkii_writer_t</a></div><div class="ttdoc">A writer. Set it up with jkii_writer_init_buff() or jkii_writer_init_cb(); its members are private.</div><div class="ttdef"><b>Definition</b> jkii_writer.h:102</div></div>
 </div><!-- fragment --><p>Each call returns the first error so far, so checking the result of <a class="el" href="#aa29b3b9110dcbd550b625f420dfeafac" title="Ends the JSON.">jkii_writer_finish()</a> alone is enough.</p>
@@ -330,8 +330,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a1fcc1d2d8aac2c43559a73075a4aa1a0" name="a1fcc1d2d8aac2c43559a73075a4aa1a0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1fcc1d2d8aac2c43559a73075a4aa1a0">&#9670;&#160;</a></span>jkii_write_bool()</h2>
+<a id="ab62556a9c58303864ff9f10bb20538b6" name="ab62556a9c58303864ff9f10bb20538b6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab62556a9c58303864ff9f10bb20538b6">&#9670;&#160;</a></span>jkii_write_bool()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -344,15 +344,15 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>v</em></span>&#160;)</td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>v</em></span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Writes true, for v other than 0, or false. </p>
+<p>Writes true or false. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">w</td><td>The writer.</td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">w</td><td>The writer. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">v</td><td>The value. </td></tr>
   </table>
   </dd>

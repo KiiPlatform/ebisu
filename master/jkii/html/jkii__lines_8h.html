@@ -86,7 +86,8 @@ $(function() {
 
 <p>Reading JSON Lines: one JSON value a line, fed in pieces of any size.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;stddef.h&gt;</code><br />
+<div class="textblock"><code>#include &lt;stdbool.h&gt;</code><br />
+<code>#include &lt;stddef.h&gt;</code><br />
 </div>
 <p><a href="jkii__lines_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -148,11 +149,11 @@ Functions</h2></td></tr>
 <div class="line">    }</div>
 <div class="line">}</div>
 <div class="line"><span class="comment">// And the last line, if the data didn&#39;t end with &#39;\n&#39;.</span></div>
-<div class="ttc" id="ajkii__lines_8h_html_a74827940849d65e5332f034d5ef06f32"><div class="ttname"><a href="#a74827940849d65e5332f034d5ef06f32">jkii_lines_err_t</a></div><div class="ttdeci">jkii_lines_err_t</div><div class="ttdoc">What feeding a reader gives.</div><div class="ttdef"><b>Definition</b> jkii_lines.h:49</div></div>
-<div class="ttc" id="ajkii__lines_8h_html_a74827940849d65e5332f034d5ef06f32ab30d28a57b30357ac0682916514d9f85"><div class="ttname"><a href="#a74827940849d65e5332f034d5ef06f32ab30d28a57b30357ac0682916514d9f85">JKII_LINES_RECORD</a></div><div class="ttdeci">@ JKII_LINES_RECORD</div><div class="ttdoc">A record is whole: it is what the line points to.</div><div class="ttdef"><b>Definition</b> jkii_lines.h:51</div></div>
+<div class="ttc" id="ajkii__lines_8h_html_a74827940849d65e5332f034d5ef06f32"><div class="ttname"><a href="#a74827940849d65e5332f034d5ef06f32">jkii_lines_err_t</a></div><div class="ttdeci">jkii_lines_err_t</div><div class="ttdoc">What feeding a reader gives.</div><div class="ttdef"><b>Definition</b> jkii_lines.h:50</div></div>
+<div class="ttc" id="ajkii__lines_8h_html_a74827940849d65e5332f034d5ef06f32ab30d28a57b30357ac0682916514d9f85"><div class="ttname"><a href="#a74827940849d65e5332f034d5ef06f32ab30d28a57b30357ac0682916514d9f85">JKII_LINES_RECORD</a></div><div class="ttdeci">@ JKII_LINES_RECORD</div><div class="ttdoc">A record is whole: it is what the line points to.</div><div class="ttdef"><b>Definition</b> jkii_lines.h:52</div></div>
 <div class="ttc" id="ajkii__lines_8h_html_aa8a9ab1677e174b7021340555d239846"><div class="ttname"><a href="#aa8a9ab1677e174b7021340555d239846">jkii_lines_feed</a></div><div class="ttdeci">jkii_lines_err_t jkii_lines_feed(jkii_lines_t *r, const char *data, size_t len, size_t *out_consumed, const char **out_line, size_t *out_line_len)</div><div class="ttdoc">Feeds a reader what has come, as it comes: a whole file, or a piece of a response,...</div></div>
 <div class="ttc" id="ajkii__lines_8h_html_af40391c0105795f8215646c6b9421bd8"><div class="ttname"><a href="#af40391c0105795f8215646c6b9421bd8">jkii_lines_init</a></div><div class="ttdeci">void jkii_lines_init(jkii_lines_t *r, char *buff, size_t buff_size)</div><div class="ttdoc">Sets up a reader.</div></div>
-<div class="ttc" id="astructjkii__lines__t_html"><div class="ttname"><a href="structjkii__lines__t.html">jkii_lines_t</a></div><div class="ttdoc">A reader. Set it up with jkii_lines_init(); its members are private.</div><div class="ttdef"><b>Definition</b> jkii_lines.h:67</div></div>
+<div class="ttc" id="astructjkii__lines__t_html"><div class="ttname"><a href="structjkii__lines__t.html">jkii_lines_t</a></div><div class="ttdoc">A reader. Set it up with jkii_lines_init(); its members are private.</div><div class="ttdef"><b>Definition</b> jkii_lines.h:68</div></div>
 </div><!-- fragment --> </div><a name="doc-enum-members" id="doc-enum-members"></a><h2 id="header-doc-enum-members" class="groupheader">Enumeration Type Documentation</h2>
 <a id="a74827940849d65e5332f034d5ef06f32" name="a74827940849d65e5332f034d5ef06f32"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a74827940849d65e5332f034d5ef06f32">&#9670;&#160;</a></span>jkii_lines_err_t</h2>
@@ -264,6 +265,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Ends the data, and gives what is left of it. </p>
+<p>After it, the reader is ready for new data, as <a class="el" href="#af40391c0105795f8215646c6b9421bd8" title="Sets up a reader.">jkii_lines_init()</a> left it. A truncated record it gives stays in the buffer until the next call, as a record <a class="el" href="#aa8a9ab1677e174b7021340555d239846" title="Feeds a reader what has come, as it comes: a whole file, or a piece of a response,...">jkii_lines_feed()</a> gives does.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">r</td><td>The reader. </td></tr>

@@ -21,7 +21,7 @@ var searchData=
   ['jkii_5froot_5fvalue_18',['jkii_root_value',['../jkii_8h.html#adfa6f89edc29e6f8b9543d9b6d9a4d40',1,'jkii.h']]],
   ['jkii_5fwrite_5farray_5fend_19',['jkii_write_array_end',['../jkii__writer_8h.html#a43068faf6cea12c6537acb54106708c4',1,'jkii_writer.h']]],
   ['jkii_5fwrite_5farray_5fstart_20',['jkii_write_array_start',['../jkii__writer_8h.html#ad4c4c2bb6aaab90242ea69e5926c439a',1,'jkii_writer.h']]],
-  ['jkii_5fwrite_5fbool_21',['jkii_write_bool',['../jkii__writer_8h.html#a1fcc1d2d8aac2c43559a73075a4aa1a0',1,'jkii_writer.h']]],
+  ['jkii_5fwrite_5fbool_21',['jkii_write_bool',['../jkii__writer_8h.html#ab62556a9c58303864ff9f10bb20538b6',1,'jkii_writer.h']]],
   ['jkii_5fwrite_5fdouble_22',['jkii_write_double',['../jkii__writer_8h.html#a7987f45e43166e38eaa5f525459fb7d7',1,'jkii_writer.h']]],
   ['jkii_5fwrite_5fint_23',['jkii_write_int',['../jkii__writer_8h.html#ae4c2c98991132cce0d85902b28a74b88',1,'jkii_writer.h']]],
   ['jkii_5fwrite_5fkey_24',['jkii_write_key',['../jkii__writer_8h.html#a7a44441a314551dfea240a4c07366f68',1,'jkii_writer.h']]],

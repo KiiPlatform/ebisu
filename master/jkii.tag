@@ -611,8 +611,8 @@
       <type>jkii_write_err_t</type>
       <name>jkii_write_bool</name>
       <anchorfile>jkii__writer_8h.html</anchorfile>
-      <anchor>a1fcc1d2d8aac2c43559a73075a4aa1a0</anchor>
-      <arglist>(jkii_writer_t *w, int v)</arglist>
+      <anchor>ab62556a9c58303864ff9f10bb20538b6</anchor>
+      <arglist>(jkii_writer_t *w, bool v)</arglist>
     </member>
     <member kind="function">
       <type>jkii_write_err_t</type>
