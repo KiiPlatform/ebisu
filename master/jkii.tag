@@ -560,6 +560,13 @@
     </member>
     <member kind="function">
       <type>jkii_write_err_t</type>
+      <name>jkii_write_key_latin1_n</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>abc3cab86718a39f363f652dbf153ebc6</anchor>
+      <arglist>(jkii_writer_t *w, const char *key, size_t n)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
       <name>jkii_write_string</name>
       <anchorfile>jkii__writer_8h.html</anchorfile>
       <anchor>aae07d95f0d66cdaa66bce4f9b253f11e</anchor>
@@ -570,6 +577,13 @@
       <name>jkii_write_string_n</name>
       <anchorfile>jkii__writer_8h.html</anchorfile>
       <anchor>aba7d17157e85a38d2b4fda6e62e6f4f1</anchor>
+      <arglist>(jkii_writer_t *w, const char *s, size_t n)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_string_latin1_n</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a41bf9878ca93fb13c8b3beabb184a55a</anchor>
       <arglist>(jkii_writer_t *w, const char *s, size_t n)</arglist>
     </member>
     <member kind="function">

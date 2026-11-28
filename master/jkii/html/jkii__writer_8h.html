@@ -146,10 +146,14 @@ Functions</h2></td></tr>
 <tr class="memdesc:a7a44441a314551dfea240a4c07366f68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the key of the next member of the object open innermost.  <br /></td></tr>
 <tr class="memitem:a9496db13114bc5d4b11964513b829187" id="r_a9496db13114bc5d4b11964513b829187"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9496db13114bc5d4b11964513b829187">jkii_write_key_n</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, const char *key, size_t n)</td></tr>
 <tr class="memdesc:a9496db13114bc5d4b11964513b829187"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the key of the next member, of a given length, which may hold null bytes, escaped as jkii_escape_str() does.  <br /></td></tr>
+<tr class="memitem:abc3cab86718a39f363f652dbf153ebc6" id="r_abc3cab86718a39f363f652dbf153ebc6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abc3cab86718a39f363f652dbf153ebc6">jkii_write_key_latin1_n</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, const char *key, size_t n)</td></tr>
+<tr class="memdesc:abc3cab86718a39f363f652dbf153ebc6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the key of the next member from bytes that may not all be UTF-8, as <a class="el" href="#a41bf9878ca93fb13c8b3beabb184a55a" title="Writes a string from bytes that may not all be UTF-8, such as text from a device or a file in a singl...">jkii_write_string_latin1_n()</a> writes a string.  <br /></td></tr>
 <tr class="memitem:aae07d95f0d66cdaa66bce4f9b253f11e" id="r_aae07d95f0d66cdaa66bce4f9b253f11e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aae07d95f0d66cdaa66bce4f9b253f11e">jkii_write_string</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, const char *s)</td></tr>
 <tr class="memdesc:aae07d95f0d66cdaa66bce4f9b253f11e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a string, escaped as jkii_escape_str() does.  <br /></td></tr>
 <tr class="memitem:aba7d17157e85a38d2b4fda6e62e6f4f1" id="r_aba7d17157e85a38d2b4fda6e62e6f4f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aba7d17157e85a38d2b4fda6e62e6f4f1">jkii_write_string_n</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, const char *s, size_t n)</td></tr>
 <tr class="memdesc:aba7d17157e85a38d2b4fda6e62e6f4f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a string of a given length, which may hold null bytes.  <br /></td></tr>
+<tr class="memitem:a41bf9878ca93fb13c8b3beabb184a55a" id="r_a41bf9878ca93fb13c8b3beabb184a55a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a41bf9878ca93fb13c8b3beabb184a55a">jkii_write_string_latin1_n</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, const char *s, size_t n)</td></tr>
+<tr class="memdesc:a41bf9878ca93fb13c8b3beabb184a55a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a string from bytes that may not all be UTF-8, such as text from a device or a file in a single-byte character set.  <br /></td></tr>
 <tr class="memitem:ae4c2c98991132cce0d85902b28a74b88" id="r_ae4c2c98991132cce0d85902b28a74b88"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae4c2c98991132cce0d85902b28a74b88">jkii_write_int</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, int64_t v)</td></tr>
 <tr class="memdesc:ae4c2c98991132cce0d85902b28a74b88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a signed integer.  <br /></td></tr>
 <tr class="memitem:a23bc3008a259815bc9e25e9bf5b82915" id="r_a23bc3008a259815bc9e25e9bf5b82915"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a23bc3008a259815bc9e25e9bf5b82915">jkii_write_uint</a> (<a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *w, uint64_t v)</td></tr>
@@ -457,6 +461,43 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="abc3cab86718a39f363f652dbf153ebc6" name="abc3cab86718a39f363f652dbf153ebc6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc3cab86718a39f363f652dbf153ebc6">&#9670;&#160;</a></span>jkii_write_key_latin1_n()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a> jkii_write_key_latin1_n </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *</td>          <td class="paramname"><span class="paramname"><em>w</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>key</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>n</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Writes the key of the next member from bytes that may not all be UTF-8, as <a class="el" href="#a41bf9878ca93fb13c8b3beabb184a55a" title="Writes a string from bytes that may not all be UTF-8, such as text from a device or a file in a singl...">jkii_write_string_latin1_n()</a> writes a string. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">w</td><td>The writer. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">key</td><td>The key. May be NULL when n is 0. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>Its length. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JKII_WRITE_OK or the first error so far. </dd></dl>
+
+</div>
+</div>
 <a id="a9496db13114bc5d4b11964513b829187" name="a9496db13114bc5d4b11964513b829187"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9496db13114bc5d4b11964513b829187">&#9670;&#160;</a></span>jkii_write_key_n()</h2>
 
@@ -750,6 +791,45 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">w</td><td>The writer. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">s</td><td>The string, terminated. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JKII_WRITE_OK or the first error so far. </dd></dl>
+
+</div>
+</div>
+<a id="a41bf9878ca93fb13c8b3beabb184a55a" name="a41bf9878ca93fb13c8b3beabb184a55a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a41bf9878ca93fb13c8b3beabb184a55a">&#9670;&#160;</a></span>jkii_write_string_latin1_n()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a034e2b06447b8ec9dffc0489935da5b3">jkii_write_err_t</a> jkii_write_string_latin1_n </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structjkii__writer__t.html">jkii_writer_t</a> *</td>          <td class="paramname"><span class="paramname"><em>w</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>s</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>n</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Writes a string from bytes that may not all be UTF-8, such as text from a device or a file in a single-byte character set. </p>
+<p>As <a class="el" href="#aba7d17157e85a38d2b4fda6e62e6f4f1" title="Writes a string of a given length, which may hold null bytes.">jkii_write_string_n()</a>, except that a byte that starts no well-formed UTF-8 sequence where it is, which <a class="el" href="#aba7d17157e85a38d2b4fda6e62e6f4f1" title="Writes a string of a given length, which may hold null bytes.">jkii_write_string_n()</a> refuses, is taken as the Latin-1 character of its value, U+0080 to U+00FF, and written in UTF-8: <span class="tt">caf\xe9</span> becomes <span class="tt">caf</span> and U+00E9. Well-formed sequences are written as they are, so text that is UTF-8 already comes out unchanged, and so does a Latin-1 pair that happens to form one: <span class="tt">\xc3\xa9</span> is U+00E9, not U+00C3 U+00A9. Nothing is refused for what the bytes are, and each byte that isn't UTF-8 can be had back from its character.</p>
+<p>Latin-1 is ISO-8859-1, not Windows-1252: bytes 0x80 to 0x9F become the C1 controls U+0080 to U+009F, not the euro sign or the curly quotes that Windows-1252 has there.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">w</td><td>The writer. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">s</td><td>The bytes. May be NULL when n is 0. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>How many. </td></tr>
   </table>
   </dd>
 </dl>
